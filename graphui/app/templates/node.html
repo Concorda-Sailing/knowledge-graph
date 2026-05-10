@@ -20,14 +20,44 @@
   </div>
 
   {% if queue_position %}
-  <div class="review-strip">
+  <div class="review-strip" id="review-strip">
     <span class="review-title">Review queue</span>
     <span class="review-pos">{{ queue_position }} / {{ queue_total }}</span>
     {% if prev_node %}<a href="/graph/node/{{ prev_node.id }}">← prev (fan {{ prev_node.fan_out }})</a>{% else %}<span class="muted">← prev</span>{% endif %}
-    {% if next_node %}<a href="/graph/node/{{ next_node.id }}">next (fan {{ next_node.fan_out }}) →</a>{% else %}<span class="muted">next →</span>{% endif %}
+    {% if next_node %}<a href="/graph/node/{{ next_node.id }}" id="next-link">next (fan {{ next_node.fan_out }}) →</a>{% else %}<span class="muted">next →</span>{% endif %}
     <a href="/graph/review?tier={{ node.tier }}" class="muted">queue</a>
-    <code class="bump-cmd" title="copy &amp; paste in a terminal to mark this dossier reviewed">~/concorda/depgraph/bin/depgraph dossier-bump '{{ node.id }}'</code>
+    <button class="approve-btn" onclick="approveDossier('{{ node.id }}', {% if next_node %}'/graph/node/{{ next_node.id }}'{% else %}'/graph/review?tier={{ node.tier }}'{% endif %})">
+      ✓ Approve as current
+    </button>
+    <span id="approve-status" class="approve-status"></span>
   </div>
+  <script>
+  async function approveDossier(nodeId, nextHref) {
+    const btn = document.querySelector('.approve-btn');
+    const status = document.getElementById('approve-status');
+    btn.disabled = true;
+    status.textContent = 'bumping…';
+    status.className = 'approve-status pending';
+    try {
+      const res = await fetch('/graph/api/bump', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({node_id: nodeId, status: 'current'}),
+      });
+      const body = await res.json();
+      if (!res.ok || !body.ok) {
+        throw new Error(body.stderr || `HTTP ${res.status}`);
+      }
+      status.textContent = '✓ bumped — advancing';
+      status.className = 'approve-status ok';
+      setTimeout(() => { location.href = nextHref; }, 350);
+    } catch (e) {
+      status.textContent = `✗ ${e.message}`;
+      status.className = 'approve-status err';
+      btn.disabled = false;
+    }
+  }
+  </script>
   {% endif %}
 
   <div class="cols">

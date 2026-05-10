@@ -8,6 +8,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+import subprocess
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -15,6 +17,8 @@ from fastapi.templating import Jinja2Templates
 
 from . import loader
 from . import markdown_render
+
+DEPGRAPH_BIN = Path.home() / "concorda" / "depgraph" / "bin" / "depgraph"
 
 APP_ROOT = Path(__file__).parent
 TEMPLATES = Jinja2Templates(directory=str(APP_ROOT / "templates"))
@@ -238,6 +242,32 @@ def ontology_detail(request: Request, ont_id: str) -> HTMLResponse:
             "dossier_html": dossier_html,
         },
     )
+
+
+@app.post("/graph/api/bump")
+async def bump_dossier(request: Request) -> JSONResponse:
+    """Run `bin/depgraph dossier-bump <node_id>`. Used by the Approve button
+    on the node detail page. POST-only so a wandering GET can't trigger it."""
+    payload = await request.json()
+    node_id = payload.get("node_id")
+    new_status = payload.get("status", "current")
+    if not node_id:
+        raise HTTPException(400, "missing node_id")
+    if new_status not in ("current", "llm_drafted", "unreviewed"):
+        raise HTTPException(400, f"unsupported status: {new_status}")
+    try:
+        result = subprocess.run(
+            [str(DEPGRAPH_BIN), "dossier-bump", node_id, "--status", new_status],
+            capture_output=True, text=True, timeout=15,
+        )
+    except subprocess.TimeoutExpired:
+        raise HTTPException(504, "dossier-bump timed out")
+    if result.returncode != 0:
+        return JSONResponse(
+            {"ok": False, "stderr": result.stderr.strip()[:500]},
+            status_code=500,
+        )
+    return JSONResponse({"ok": True, "stdout": result.stdout.strip()[:500]})
 
 
 @app.get("/graph/healthz")
