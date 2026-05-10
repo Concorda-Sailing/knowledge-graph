@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8ec01c4ae8719daa1b7a3f2260435ede3d6316452289543ea804f47643275d3c
-status: llm_drafted
+status: current
 ---
 
 # AcceptedSection

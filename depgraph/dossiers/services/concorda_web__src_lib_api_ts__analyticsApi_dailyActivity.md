@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 212b7230f8ed937a3342598b54d04c21dbc605047cb375b98e58e08374dc230c
-status: llm_drafted
+status: current
 ---
 
 # analyticsApi.dailyActivity

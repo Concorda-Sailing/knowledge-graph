@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 3775de27eecfa6f0cfda4e820c2c2344ce88eb680304d71a171592b6ff1a9b10
-status: llm_drafted
+status: current
 ---
 
 # policiesApi.get

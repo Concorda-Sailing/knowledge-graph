@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 5dd568f5a0581aebdba2ec22d716efe3cb228b665ba6c53e403348dc1f749ca0
-status: llm_drafted
+status: current
 ---
 
 # GET /api/events/my-schedule

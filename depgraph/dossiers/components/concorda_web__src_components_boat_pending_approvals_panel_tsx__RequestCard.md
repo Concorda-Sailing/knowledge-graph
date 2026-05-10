@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 1bd087297be35e1c9e87f6d8ad46d579502e8719f8f4a5c86d3c50b5700e0a05
-status: llm_drafted
+status: current
 ---
 
 # RequestCard

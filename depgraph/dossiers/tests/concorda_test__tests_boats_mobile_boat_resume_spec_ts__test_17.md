@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 71ccd8c9238f29ff444379107906454be01df86e7dbc0e5de858cc53ead9bc6a
-status: llm_drafted
+status: current
 ---
 
 # tab bar renders as a single scrollable row

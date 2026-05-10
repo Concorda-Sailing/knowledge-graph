@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 0abf2e5a1ec8935e1a71aa5e9cc5a51af98d4a5272b80ca5fcaf8eb7f861bef5
-status: llm_drafted
+status: current
 ---
 
 # boatApi.getShareInviteStatus

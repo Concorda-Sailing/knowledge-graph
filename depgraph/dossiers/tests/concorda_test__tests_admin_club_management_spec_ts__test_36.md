@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 5e0859741348b9364b1acc74ab5e6c214fca2de61eee652cb03b9c8202af24bf
-status: llm_drafted
+status: current
 ---
 
 # can create a new club

@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 754d605a7ced76648f8adbe0115ff09a45acba40c5eec15f615f82c8ecf98486
-status: llm_drafted
+status: current
 ---
 
 # register link navigates correctly

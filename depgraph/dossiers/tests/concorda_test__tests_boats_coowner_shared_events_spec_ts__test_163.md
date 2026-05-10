@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: a7e21b1e3782485da9e0b7e06e38a15d74267e5078f8f7848857c36e3abf9eed
-status: llm_drafted
+status: current
 ---
 
 # Co-owner Dan is invited (not auto-accepted) when Bob sends a crew invite

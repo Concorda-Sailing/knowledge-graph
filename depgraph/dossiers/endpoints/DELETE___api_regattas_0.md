@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: f696796282bfd31a46bd8ca6c092926558ae73bada13ff19c0935fe0156ef68b
-status: llm_drafted
+status: current
 ---
 
 # DELETE /api/regattas/{regatta_id}

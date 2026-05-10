@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 583d5966f66df5077497981971d00087ca5ec01b0f16a827d17fbeb9dce7d587
-status: llm_drafted
+status: current
 ---
 
 # send_crewfinder_contact_email

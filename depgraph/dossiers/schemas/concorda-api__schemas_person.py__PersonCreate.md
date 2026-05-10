@@ -4,7 +4,7 @@ node_kind: schema
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 06a4385d0a2b0bdfa2872e38df9b9c4741a692edc5c0fdfb8b55dba4c39af6fd
-status: llm_drafted
+status: current
 ---
 
 # PersonCreate

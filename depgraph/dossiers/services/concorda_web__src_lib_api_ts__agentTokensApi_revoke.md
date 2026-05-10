@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 681755215545a4fba703c5890a487d87c3ed9f4454f4515695a7eeb9f5abb6c9
-status: llm_drafted
+status: current
 ---
 
 # agentTokensApi.revoke

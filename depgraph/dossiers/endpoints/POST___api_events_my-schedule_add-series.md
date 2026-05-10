@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: da1c25dc9fc358356be04cd188becdd461932598ace8121fbcb4abc8cf359ae1
-status: llm_drafted
+status: current
 ---
 
 # POST /api/events/my-schedule/add-series

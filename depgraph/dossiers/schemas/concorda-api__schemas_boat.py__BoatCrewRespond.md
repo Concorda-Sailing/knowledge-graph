@@ -4,7 +4,7 @@ node_kind: schema
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: fad649deeb02542abdb3935509b288bbe4f462bff2e0c2e078ae415506d07e22
-status: llm_drafted
+status: current
 ---
 
 # BoatCrewRespond

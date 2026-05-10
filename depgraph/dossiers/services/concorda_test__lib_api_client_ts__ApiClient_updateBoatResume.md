@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: aee6b5813979a3190b6785a7d0a81b773bea4129e79dffe7d9181c0846bf9eca
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.updateBoatResume

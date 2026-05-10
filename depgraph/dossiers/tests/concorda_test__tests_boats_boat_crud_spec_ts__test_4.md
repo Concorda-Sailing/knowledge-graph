@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 4ce9d15eb6622849e59a353a973e96158e79461d5aab73a7d315c18e71334475
-status: llm_drafted
+status: current
 ---
 
 # dashboard loads for boat owner

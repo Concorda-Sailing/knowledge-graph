@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: c7532a6b4238650176afcfd57943593b5e6768c5824af45060d7370a9676bc46
-status: llm_drafted
+status: current
 ---
 
 # CrewfinderOptinSection

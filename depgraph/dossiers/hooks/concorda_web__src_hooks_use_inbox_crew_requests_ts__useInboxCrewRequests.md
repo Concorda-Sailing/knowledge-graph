@@ -4,7 +4,7 @@ node_kind: hook
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: f7d153ca1bd2e0faf4206850cb7cf8b2303cecca350bb7f0ef345f81cf893119
-status: llm_drafted
+status: current
 ---
 
 # useInboxCrewRequests

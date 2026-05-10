@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: f1a85c5697dfd27de47095bdbccdbdd2d205bb12b224bd4977db180be1856ebe
-status: llm_drafted
+status: current
 ---
 
 # getAuthToken

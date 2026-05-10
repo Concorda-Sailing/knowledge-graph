@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: c3878976076ba995b8d9a78b13a258215feb16ab72c87234dda9374fdce4dae4
-status: llm_drafted
+status: current
 ---
 
 # BoatCrewInvite

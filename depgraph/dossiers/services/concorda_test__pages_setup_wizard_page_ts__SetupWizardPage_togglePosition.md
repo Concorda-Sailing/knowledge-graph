@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 584ade8c66f6c733c5426871b13973dd42e4693777afc85ab9e1714f034cd982
-status: llm_drafted
+status: current
 ---
 
 # SetupWizardPage.togglePosition

@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: b0a727a991fd6cd2f063535411a9fea0a8fc0f6e7668532d9d9131f8b20336b0
-status: llm_drafted
+status: current
 ---
 
 # InboxPage

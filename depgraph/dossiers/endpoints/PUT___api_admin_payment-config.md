@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 611d23e045752fbdae685b1622be2acbf968f81891f28bfc17d670732975912e
-status: llm_drafted
+status: current
 ---
 
 # PUT /api/admin/payment-config

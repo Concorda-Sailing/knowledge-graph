@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 117e87217e6172049944147e366a678b11c4a09e9ed37c111aa76b9a770e0681
-status: llm_drafted
+status: current
 ---
 
 # FinderPage

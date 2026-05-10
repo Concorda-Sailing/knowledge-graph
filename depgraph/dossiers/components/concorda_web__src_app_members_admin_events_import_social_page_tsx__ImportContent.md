@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 72ddce95f12f7b266e4578ed321c9460f116574a0e923d42e1915f2b35a58c76
-status: llm_drafted
+status: current
 ---
 
 # ImportContent

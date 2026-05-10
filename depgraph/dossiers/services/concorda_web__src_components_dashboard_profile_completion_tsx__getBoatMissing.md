@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ae66ff79a68a2b3dc7bbac90f3e04d49409a299eca7ca97dc51f9df90252a2ac
-status: llm_drafted
+status: current
 ---
 
 # getBoatMissing

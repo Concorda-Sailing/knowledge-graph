@@ -4,7 +4,7 @@ node_kind: schema
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 531d9f6025728e9f787534459cb9c2dfb8f204382fa4c813a5de57c067972ce7
-status: llm_drafted
+status: current
 ---
 
 # NotableRace

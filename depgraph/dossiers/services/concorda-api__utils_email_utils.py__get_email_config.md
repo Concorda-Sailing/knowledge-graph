@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 1ddb7ad2711c02cd6b884d373b6b38abe3d8090e0229f6d28d569e51feb63a92
-status: llm_drafted
+status: current
 ---
 
 # get_email_config

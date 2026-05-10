@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: b43792c02647675239384773b62a88bab201cbcf55e089ce714c948acf6e1fea
-status: llm_drafted
+status: current
 ---
 
 # PUT /api/profile

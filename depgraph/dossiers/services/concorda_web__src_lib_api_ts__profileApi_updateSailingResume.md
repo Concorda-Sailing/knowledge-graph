@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e0c935bce10c3d3535d8e45a1e17eef70cd6b5627adc8d7b41c550ce2a90d463
-status: llm_drafted
+status: current
 ---
 
 # profileApi.updateSailingResume

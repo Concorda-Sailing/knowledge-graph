@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: a0841a3afcc9a1c9ae63a626a941d12643cd96d894b13f0fa320b8cda249b2be
-status: llm_drafted
+status: current
 ---
 
 # selectMembership

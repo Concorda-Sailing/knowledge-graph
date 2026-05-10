@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 874cfcd2bf2dccc6a3f3c872e9f7306d8f9d2cc882a9c1c4da58ab3e62431422
-status: llm_drafted
+status: current
 ---
 
 # POST /api/events/{event_id}/image

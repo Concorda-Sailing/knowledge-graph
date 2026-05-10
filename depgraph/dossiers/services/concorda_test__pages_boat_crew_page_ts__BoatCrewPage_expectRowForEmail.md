@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: c29556c160a9a85e7e45a8798786f842786a387c298a89542d06d7c888b564a6
-status: llm_drafted
+status: current
 ---
 
 # BoatCrewPage.expectRowForEmail

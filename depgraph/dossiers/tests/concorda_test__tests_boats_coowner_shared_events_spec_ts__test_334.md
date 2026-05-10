@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: da6acfa6eb3e83c48cddbacec3fb8166f3822629ea59d17ee00f5fbb1dc6830d
-status: llm_drafted
+status: current
 ---
 
 # Dan can send boat-level crew invites

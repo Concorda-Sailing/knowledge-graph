@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 53422ecd090997e99fc56a1653f12834549dedfb1162d0656cdbede13ba7d94d
-status: llm_drafted
+status: current
 ---
 
 # seeded events are visible

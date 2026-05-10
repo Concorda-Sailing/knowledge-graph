@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: fc5530dbfb94368c9f818fd601ffce2f3ed749319f053ee1d5df1f4bd610d6cc
-status: llm_drafted
+status: current
 ---
 
 # get_notification_config

@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 209574644c7a76e7697d6533bd7f4c8b89083a39586b0e63a61fb0a8f78d17ee
-status: llm_drafted
+status: current
 ---
 
 # can edit an existing user

@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 818c17f824a546d96e0081593fab93ba4d26a360086d460b0387df43a679303e
-status: llm_drafted
+status: current
 ---
 
 # drawer contains Dashboard and Finder; excludes My Schedule and separate Finder entries

@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 392c1670c798f3a1f5a9b927fbda2cc78967dc1c197b0f4b118b990bf78bdd0c
-status: llm_drafted
+status: current
 ---
 
 # adminNotificationConfigApi.update

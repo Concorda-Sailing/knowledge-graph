@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: bf76e6ca116dbe0308b6b6db4ad33fef4b7e5aa359a40d6592570afb7fcc2591
-status: llm_drafted
+status: current
 ---
 
 # PUT /api/media/files/{file_id}

@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e6da79a70595d0fb2362d91a56e74ec72521ee566ec77359ece3b73ec667edd0
-status: llm_drafted
+status: current
 ---
 
 # POST /api/events/check-duplicates

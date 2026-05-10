@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ba046c5064d3ccf9cb25707b6d6d7441d72b9d3c58b1446682b480ed25efe629
-status: llm_drafted
+status: current
 ---
 
 # POST /api/invite/respond

@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e1ebcfffca258d71e67241e1ad549ceb37091bc036c430c38ed2f1b30495c87c
-status: llm_drafted
+status: current
 ---
 
 # ChampionshipSection

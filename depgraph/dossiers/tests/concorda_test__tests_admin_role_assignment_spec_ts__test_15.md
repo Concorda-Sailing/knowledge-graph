@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: fdbca24a91c8d2a4580449a57a60f481b0906acad638c8f30b1e05f3a54e82ed
-status: llm_drafted
+status: current
 ---
 
 # admin grants and revokes event_manager role on a member

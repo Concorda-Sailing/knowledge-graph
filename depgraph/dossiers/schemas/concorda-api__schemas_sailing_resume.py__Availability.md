@@ -4,7 +4,7 @@ node_kind: schema
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 03eeba055b4694e43a81f309c95dbee3f97634baddcf703ff1f6968d108f0e89
-status: llm_drafted
+status: current
 ---
 
 # Availability

@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 517a0ae2b4edfa4ce584ea9e1a8f9eb5ee545604138669af8cc6ba6b91a94bda
-status: llm_drafted
+status: current
 ---
 
 # event detail page shows registration options

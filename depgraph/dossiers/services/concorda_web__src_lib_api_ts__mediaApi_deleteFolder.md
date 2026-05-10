@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 0dfb6f6d3b8664231efb7c15f22279b7a7161630cdc2965e3fa2072a53ce31f7
-status: llm_drafted
+status: current
 ---
 
 # mediaApi.deleteFolder

@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 4a13328e8cf2b318df17c49525770404ee0416ea5ae1497027350a782ce82059
-status: llm_drafted
+status: current
 ---
 
 # users page renders mobile card list, no visible table

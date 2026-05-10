@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e7be5bdd380a263d2a8d4cd961cc3e451dcf3e7cf323b3e48591626bc1975158
-status: llm_drafted
+status: current
 ---
 
 # all three tabs still render at desktop width

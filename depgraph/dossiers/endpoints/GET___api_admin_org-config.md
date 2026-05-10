@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 3d0fe0bbd3c0af1ad41ad3045bfdb5b6267a649a3f62930be8b55793ee1f4ca8
-status: llm_drafted
+status: current
 ---
 
 # GET /api/admin/org-config

@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: eb17a0278f38166ef6ea3f2339d6ec57255953ce6eb83967aced4630027c1376
-status: llm_drafted
+status: current
 ---
 
 # GET /api/profile/sailing-resume

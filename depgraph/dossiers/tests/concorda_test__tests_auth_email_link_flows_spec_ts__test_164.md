@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 126b982e9bae81d43fde9e85b0ee292a42fb855adc242566a8e3fc81bf99b795
-status: llm_drafted
+status: current
 ---
 
 # accept link flips EventCrew status to accepted

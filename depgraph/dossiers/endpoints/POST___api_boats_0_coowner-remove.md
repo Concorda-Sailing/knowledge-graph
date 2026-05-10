@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 49aff4a0f89d700bb231562301319ec473027e63d16b7a72364f028d5a7e3f1d
-status: llm_drafted
+status: current
 ---
 
 # POST /api/boats/{boat_id}/coowner-remove

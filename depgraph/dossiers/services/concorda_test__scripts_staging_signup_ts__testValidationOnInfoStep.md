@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ddafeb63ba364e48ab78bd981b8116a96ed0f8d5f0bae64df84faf4434029391
-status: llm_drafted
+status: current
 ---
 
 # testValidationOnInfoStep

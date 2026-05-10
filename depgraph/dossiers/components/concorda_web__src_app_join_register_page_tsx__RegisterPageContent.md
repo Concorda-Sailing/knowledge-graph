@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 6ca582108b699cb66eb95728f2ee24aa56ea073190345ea3fd3e38642588fab6
-status: llm_drafted
+status: current
 ---
 
 # RegisterPageContent

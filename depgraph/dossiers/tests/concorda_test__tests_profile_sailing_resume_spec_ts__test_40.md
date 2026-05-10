@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 58a46b505a5f5949a93896338fbdea9cf1409a697cac4fad57b7f13047551438
-status: llm_drafted
+status: current
 ---
 
 # can edit about me field

@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 91e7e1df2b86c7a7010326b815a8c6882dc2a3cd6ccba043cc1757d09378ca92
-status: llm_drafted
+status: current
 ---
 
 # WhatsAppConfigPage

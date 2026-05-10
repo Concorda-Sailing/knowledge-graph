@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8a22f29354e95de36aa8a98c5e54497ee1a5e4292357b4ff5dab1d797ca969b5
-status: llm_drafted
+status: current
 ---
 
 # GET /api/events/slug/{slug}/discounts

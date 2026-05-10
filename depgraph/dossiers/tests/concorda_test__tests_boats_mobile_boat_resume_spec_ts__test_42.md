@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 50a2789eff44ea03311d078cedab36a5b1404004def774701334c620ee301664
-status: llm_drafted
+status: current
 ---
 
 # (unnamed)

@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 44c8b405693c43b5b2854278bb51526b75cd117c08422b79f82a0f9fc50bc2b3
-status: llm_drafted
+status: current
 ---
 
 # crew bookmark → Crew pill DOES render (regression guard)

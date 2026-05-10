@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: db034a6e0bdcae7e36cd6ed76fe60a9bd2327daf0f76bb7ee75bd923c9d9166e
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.getUserIdByEmail

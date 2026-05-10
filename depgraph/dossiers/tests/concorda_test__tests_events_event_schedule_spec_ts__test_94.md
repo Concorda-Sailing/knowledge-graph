@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8687a6dbf4ee45f54071b1e9a35da76a17c79cb047f39856adeaa551d968d79b
-status: llm_drafted
+status: current
 ---
 
 # event with logistics filled but no crew → view mode

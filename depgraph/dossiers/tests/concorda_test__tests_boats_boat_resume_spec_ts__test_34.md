@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: becc4d3d2e97fe77cd73b52de0d6d0ac5ede1c29662add00343f8a43c8f4cfb1
-status: llm_drafted
+status: current
 ---
 
 # boat resume shows correct data

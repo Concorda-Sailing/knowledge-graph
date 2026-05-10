@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: c3e54ce02d1c89b91512eba36133dc412d0380bbfcc08c2106a0d22cdbdf0222
-status: llm_drafted
+status: current
 ---
 
 # pdf_page_to_base64

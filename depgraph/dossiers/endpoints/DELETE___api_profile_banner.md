@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: c9277f42413e203009d470b9efa2a4caf46ce74ac29f8d5587c0ce2fd43ae7ae
-status: llm_drafted
+status: current
 ---
 
 # DELETE /api/profile/banner

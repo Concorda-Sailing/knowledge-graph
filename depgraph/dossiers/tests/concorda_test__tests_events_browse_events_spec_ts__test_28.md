@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e126628af98421114b00a5bdaafc81c457f3daf4cc3de75078c19d31f332fcbc
-status: llm_drafted
+status: current
 ---
 
 # event card shows date and location

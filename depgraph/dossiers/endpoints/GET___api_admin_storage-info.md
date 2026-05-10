@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: a9b206ccdfd62525599f75baa4bb192280afaae1305bc8e663d9d0e1cfadf9b3
-status: llm_drafted
+status: current
 ---
 
 # GET /api/admin/storage-info

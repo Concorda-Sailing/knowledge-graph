@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 0b8fafd7aaa92bc2849cbb810ca9b1ca926b1a7269f053a434db977b35147fd3
-status: llm_drafted
+status: current
 ---
 
 # AdminSystemPage.gotoEmailConfig

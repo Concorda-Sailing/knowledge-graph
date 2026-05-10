@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 393bb596ed7f547b295459cd56cf5bcd3f767ba2a53ef9fbc3de9730598a1ae1
-status: llm_drafted
+status: current
 ---
 
 # NotificationsPage.expectUnread

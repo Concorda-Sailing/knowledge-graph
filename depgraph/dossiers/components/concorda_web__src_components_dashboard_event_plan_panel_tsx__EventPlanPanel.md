@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 0d4b24b27967a56d6845c3df6a60fdc14febed2864e96c99eb85fbc0c7477fc4
-status: llm_drafted
+status: current
 ---
 
 # EventPlanPanel

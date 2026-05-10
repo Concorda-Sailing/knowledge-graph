@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 3ccb437f2df6745d9d9bcf6fc3d321cac45aee07aad44b97b858609c8bdb4aaa
-status: llm_drafted
+status: current
 ---
 
 # DELETE /api/events/{event_id}/image

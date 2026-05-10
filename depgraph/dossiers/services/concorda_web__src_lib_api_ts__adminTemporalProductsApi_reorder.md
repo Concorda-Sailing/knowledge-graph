@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e9567054eee377a4d98c9f1681e3ca674fd314de2745e5519bf20063ca28cd6f
-status: llm_drafted
+status: current
 ---
 
 # adminTemporalProductsApi.reorder

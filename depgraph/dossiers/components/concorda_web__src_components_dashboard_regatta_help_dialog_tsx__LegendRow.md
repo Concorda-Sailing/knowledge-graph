@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 6d40aa926ad3e3f1ba1f8e5d7241cb538154c5b94bc0d30c64d7c4c837d7c877
-status: llm_drafted
+status: current
 ---
 
 # LegendRow

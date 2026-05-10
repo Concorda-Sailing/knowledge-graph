@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 27c9dc2a821a5d7fd13d31bb587a4327dffb09c6523b91150a05a1059ed7f49a
-status: llm_drafted
+status: current
 ---
 
 # GET /api/invite/{invite_code}

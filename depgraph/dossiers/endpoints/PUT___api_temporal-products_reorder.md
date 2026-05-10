@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 557d6760b1ce9dec4d19073ccdc358537447ae06747c47983f29b28d1fdbd4a5
-status: llm_drafted
+status: current
 ---
 
 # PUT /api/temporal-products/reorder

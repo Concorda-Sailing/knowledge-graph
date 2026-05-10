@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: a9a3d3914e4131b1f4957ba355b70dbd8eb6f6d758078934c7102f26c8f402e7
-status: llm_drafted
+status: current
 ---
 
 # send_password_reset_email

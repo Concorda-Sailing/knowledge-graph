@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 0e94216352ee33ac79367d8dbba2ff45b7eecf12439f482b4bcfd39b0edd4039
-status: llm_drafted
+status: current
 ---
 
 # shows opted-in members

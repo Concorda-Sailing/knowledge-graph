@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 1320b466de577aa751b5fe4461cf3a9d86004ba098797c71ff6075b4dd5d557d
-status: llm_drafted
+status: current
 ---
 
 # GET /api/approval-requests

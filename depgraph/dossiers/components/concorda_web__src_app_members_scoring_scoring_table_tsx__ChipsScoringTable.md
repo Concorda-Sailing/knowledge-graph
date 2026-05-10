@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 5148859f22104696738afeb6f6661bef16ddfd60d41c724dd6f194651a6d87ca
-status: llm_drafted
+status: current
 ---
 
 # ChipsScoringTable

@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: c18208253fa19676bed6f29116344a461eb21e743e26a9fdbd0b5c2c92b64efe
-status: llm_drafted
+status: current
 ---
 
 # DELETE /api/series/{series_id}

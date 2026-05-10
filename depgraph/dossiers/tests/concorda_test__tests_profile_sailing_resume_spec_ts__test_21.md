@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: bcf8d00dc2adb3f049af9baf8e1d4521e4e86d4b29b60b9f55cdce491e6b0c8e
-status: llm_drafted
+status: current
 ---
 
 # sailing resume section is visible

@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8d226e7124b1c267cf5f6f7497aa3f589162fbcfa3e44954613de25052da7605
-status: llm_drafted
+status: current
 ---
 
 # authApi.validateResetToken

@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ecc2cb09d02f4dc9ec5903e863bd205f0dec1f75859b7e270ebf52dcd37a9181
-status: llm_drafted
+status: current
 ---
 
 # AdminUsersPage.goto

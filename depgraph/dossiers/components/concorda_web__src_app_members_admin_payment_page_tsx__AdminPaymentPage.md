@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 3d7e6148a0357dea63ec9179669bf5e99caa47d49e3a45ea03ed1ed7c6538ec8
-status: llm_drafted
+status: current
 ---
 
 # AdminPaymentPage

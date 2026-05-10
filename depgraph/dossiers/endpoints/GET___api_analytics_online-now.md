@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 5bf4cd50872b71ee5fc2cdcefa1cd9a5d37a19a7cc4f46680c4ebc7e00d7e365
-status: llm_drafted
+status: current
 ---
 
 # GET /api/analytics/online-now

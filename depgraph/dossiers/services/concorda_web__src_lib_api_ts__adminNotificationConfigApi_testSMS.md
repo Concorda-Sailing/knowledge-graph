@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: d1366c604c2882e4e8f4daf02160637a45ca2c03a5c029882f285d5802eb4f17
-status: llm_drafted
+status: current
 ---
 
 # adminNotificationConfigApi.testSMS

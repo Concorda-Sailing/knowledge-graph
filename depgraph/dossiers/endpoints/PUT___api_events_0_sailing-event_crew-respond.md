@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 4b2fc2de75c1f5a9b0dd221c96c9750cd39aa9fe21446e1f1ee3acbbff0bdcbc
-status: llm_drafted
+status: current
 ---
 
 # PUT /api/events/{event_id}/sailing-event/crew-respond

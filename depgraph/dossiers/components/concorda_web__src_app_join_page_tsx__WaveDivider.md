@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 01249f2f0c47d2753080869cf7905bb026c88e7a8715bee490a60f3a3d52df6b
-status: llm_drafted
+status: current
 ---
 
 # WaveDivider

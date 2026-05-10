@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: c1e3167d62ce46c675c2c17a21916431a16fcdf0488dc80d4c1f1c77b071dbd4
-status: llm_drafted
+status: current
 ---
 
 # owner sees pending approval and can accept it

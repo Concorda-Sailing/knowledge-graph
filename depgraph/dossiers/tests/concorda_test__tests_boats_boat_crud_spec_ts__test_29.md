@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 95a0d579567a574cefdff92d04dae03baaa2e229dae09d8480f66ac0c8a9b7bb
-status: llm_drafted
+status: current
 ---
 
 # boat detail page shows boat info

@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: bf101eddb65906f0d71b39f781b5573392f1eeccf53cfa9dcb6d6a8678f8de3b
-status: llm_drafted
+status: current
 ---
 
 # cropImage

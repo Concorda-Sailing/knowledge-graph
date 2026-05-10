@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 756de1d1a478ddc5a13a97181147cf49e2f3917a5fd16aa250d3ca8337573ae5
-status: llm_drafted
+status: current
 ---
 
 # RequestHelpDialog

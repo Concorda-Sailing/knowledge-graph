@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8a57f18a103531a9861da33ba4cc5416abca6741c5b699e1cc4068772cb9f8af
-status: llm_drafted
+status: current
 ---
 
 # adminOrgConfigApi.uploadLogo

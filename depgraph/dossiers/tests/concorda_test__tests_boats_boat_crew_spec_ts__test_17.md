@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8900fe78caac9a1c307bfa03d0d36a5397453d08262e1b60e686cc20e7c1f573
-status: llm_drafted
+status: current
 ---
 
 # crew tab is accessible

@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 7a811b52bfe90bbb9674b520e65c518ef933e2fe7cc2938c0447373c1e933f09
-status: llm_drafted
+status: current
 ---
 
 # can create a new user

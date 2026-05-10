@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 52b8b7ab5296a2966463d9073ed14767e2bdfd34fac10ab8a7b3a5ed9b2a9313
-status: llm_drafted
+status: current
 ---
 
 # partsInTz

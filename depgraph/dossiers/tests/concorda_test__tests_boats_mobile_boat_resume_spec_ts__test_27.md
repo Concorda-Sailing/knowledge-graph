@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: a3cee596c86ade7f395cce52711c384ba4eb376ef0a8e628d921df5815803c2e
-status: llm_drafted
+status: current
 ---
 
 # hero action buttons visible on mobile (no hover required)

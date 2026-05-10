@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 0aee96878d77186408e42d69825bc17356fe218f668afdd76c493c2f71edd03a
-status: llm_drafted
+status: current
 ---
 
 # schedule page loads

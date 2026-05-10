@@ -4,7 +4,7 @@ node_kind: schema
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: d478d2634bf51db662933b1de1b4c1f8bc8f3784c48fa314d3db6f2351dda9a3
-status: llm_drafted
+status: current
 ---
 
 # ProfileUpdate

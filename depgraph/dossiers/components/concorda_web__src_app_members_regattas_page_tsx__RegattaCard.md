@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e16df73080765e50fa4d60e5d25859d4862f6aedb85a8b8a3470c102ef93854e
-status: llm_drafted
+status: current
 ---
 
 # RegattaCard

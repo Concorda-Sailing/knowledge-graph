@@ -4,7 +4,7 @@ node_kind: schema
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 482f7c19e30481e70ef437b98fd9a0547b39174d38d698c239db257980024805
-status: llm_drafted
+status: current
 ---
 
 # TemporalProductPublic

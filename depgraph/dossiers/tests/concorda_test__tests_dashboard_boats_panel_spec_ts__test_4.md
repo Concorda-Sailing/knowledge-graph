@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 17f9b8b5c62a04f6c75a389ca333a62fced317d3e732a91bb8a96816ab032e22
-status: llm_drafted
+status: current
 ---
 
 # Boats tab renders cards for owned + crewed boats

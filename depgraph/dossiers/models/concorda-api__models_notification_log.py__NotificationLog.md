@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 1c58182c94168cc91d99b61acdf4a8799dc44a57196fc093ac2784b81487ed77
-status: llm_drafted
+status: current
 ---
 
 # NotificationLog

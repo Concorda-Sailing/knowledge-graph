@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 2b915b9aed2c113f4f71a0769b867d2aa4f7e6bf85f9abc6fe73bda214eb0c3c
-status: llm_drafted
+status: current
 ---
 
 # PersonBoat

@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8aa6f3228ffe5ba5fcdd20dcfbd5977aefd55ae35fc09d9c77441d8fab33457a
-status: llm_drafted
+status: current
 ---
 
 # submitting valid email shows success message

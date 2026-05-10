@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 18dd477ea16abe914e55758b37b3569b207f5798a5752d156505f55abe8f13f4
-status: llm_drafted
+status: current
 ---
 
 # GET /api/auth/validate-setup-token

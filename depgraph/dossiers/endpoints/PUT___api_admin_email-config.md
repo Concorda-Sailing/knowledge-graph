@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: c25e316559870e4fdda969a960a836af4f885bba83a21e98ed6f1f5f22b806f5
-status: llm_drafted
+status: current
 ---
 
 # PUT /api/admin/email-config

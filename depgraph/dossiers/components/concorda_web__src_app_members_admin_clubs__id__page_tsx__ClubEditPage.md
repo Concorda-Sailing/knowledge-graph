@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: c97a73b9a247800e572d1c2d85b8685c162ad6765038fbc4a385e4c61f719f77
-status: llm_drafted
+status: current
 ---
 
 # ClubEditPage

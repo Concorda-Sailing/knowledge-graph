@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 500bb472eee0c3fdd295874606f958172b47ccde56b3790c9d6d674566464730
-status: llm_drafted
+status: current
 ---
 
 # POST /api/admin/notifications/test-sms

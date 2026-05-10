@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 1fe81327e62b132876f7c81aa89d852ffcb814a0afe4a80ed0db69a1880e4372
-status: llm_drafted
+status: current
 ---
 
 # CrewRequestsCard

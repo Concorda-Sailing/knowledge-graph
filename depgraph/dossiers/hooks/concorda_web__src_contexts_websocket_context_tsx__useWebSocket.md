@@ -4,7 +4,7 @@ node_kind: hook
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: d998c64fd0477d09ee88287bb88890a2614f8658bae0b6b415b2b6ae31a9ac58
-status: llm_drafted
+status: current
 ---
 
 # useWebSocket

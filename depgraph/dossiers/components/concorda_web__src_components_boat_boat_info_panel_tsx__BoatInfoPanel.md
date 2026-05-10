@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: a1f0724aeb219ea2d603ea1a9ec8d184544a51d2f167fc7a4ac8358131346e9f
-status: llm_drafted
+status: current
 ---
 
 # BoatInfoPanel

@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: fd9abf1de30760063052e768078ddfed52bca9c9cd4f4683c44774e4aeb918b3
-status: llm_drafted
+status: current
 ---
 
 # payment config page loads

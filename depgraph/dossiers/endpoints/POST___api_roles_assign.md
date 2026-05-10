@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 7781de131e8dd08dd92f5cf9b061d51df4b5b64ec896f6e118229463d3623479
-status: llm_drafted
+status: current
 ---
 
 # POST /api/roles/assign

@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 6b9a57a4ddf88f49971dd89ce144bc48326b09b71e934f652b20f57999162874
-status: llm_drafted
+status: current
 ---
 
 # PUT /api/admin/llm-config

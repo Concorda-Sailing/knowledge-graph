@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 345a480aa04e18359c28c0cf92d1501526608300e9ee3838487872c5d9bf0209
-status: llm_drafted
+status: current
 ---
 
 # POST /api/admin/email-config/test

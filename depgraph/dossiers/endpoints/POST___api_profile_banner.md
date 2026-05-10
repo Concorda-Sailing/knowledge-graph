@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 6002adaf6eb675226b01b15cd2e71606b74263caca56afa0143ef5ea469878cf
-status: llm_drafted
+status: current
 ---
 
 # POST /api/profile/banner

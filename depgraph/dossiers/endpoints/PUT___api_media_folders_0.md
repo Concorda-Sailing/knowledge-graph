@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 0467aa3e76965d3f1feca76e9ab50d2b07dce3216df593c554e03dd9c1b097e8
-status: llm_drafted
+status: current
 ---
 
 # PUT /api/media/folders/{folder_id}

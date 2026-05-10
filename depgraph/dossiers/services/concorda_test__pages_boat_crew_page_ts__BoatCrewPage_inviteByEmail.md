@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: da63187cb09cf342faf894bd78357e66506f95f95bdbe9283788c18dd7c825a4
-status: llm_drafted
+status: current
 ---
 
 # BoatCrewPage.inviteByEmail

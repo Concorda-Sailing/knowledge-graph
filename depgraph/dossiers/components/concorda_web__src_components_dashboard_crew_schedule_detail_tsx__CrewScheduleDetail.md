@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e4b30773e7e80f19a7eb387f492e43059494a049ae41b368c08e6210050157f3
-status: llm_drafted
+status: current
 ---
 
 # CrewScheduleDetail

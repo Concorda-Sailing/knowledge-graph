@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: b47f631b986c991232b0043af2d1245f84aa756e1dc9ac454739a817e702c5a2
-status: llm_drafted
+status: current
 ---
 
 # FindCrewPanel

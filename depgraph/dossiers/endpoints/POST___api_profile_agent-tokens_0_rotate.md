@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 2ba9df582f563b1e39290fd98cc47d4e94c9fb101fe3d56ba898f8f7dde1e0a4
-status: llm_drafted
+status: current
 ---
 
 # POST /api/profile/agent-tokens/{token_id}/rotate

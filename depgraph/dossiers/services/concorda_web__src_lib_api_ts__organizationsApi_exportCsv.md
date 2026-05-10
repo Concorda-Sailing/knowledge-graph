@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: c7cba2136acc12d63789dd4b8814feaf85a185aa3b67e823347c00e2288cf817
-status: llm_drafted
+status: current
 ---
 
 # organizationsApi.exportCsv

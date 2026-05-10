@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: cfa9cf6990e5b975637c98f921c090ec996ef2e1b8dc2688a6cd08a4968ca011
-status: llm_drafted
+status: current
 ---
 
 # boatfinderApi.apply

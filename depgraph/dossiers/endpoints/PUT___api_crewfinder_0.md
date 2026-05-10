@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: daa0d3ec6b48a49af750174c78e3b726e0400e3434a36aeddc95cc2a15f76de4
-status: llm_drafted
+status: current
 ---
 
 # PUT /api/crewfinder/{resume_id}

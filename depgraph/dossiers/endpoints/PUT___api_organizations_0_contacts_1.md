@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: bcf5044d0845d2281df09c67be400935305f16e2689b8bd38df681479cd13306
-status: llm_drafted
+status: current
 ---
 
 # PUT /api/organizations/{org_id}/contacts/{contact_role_id}

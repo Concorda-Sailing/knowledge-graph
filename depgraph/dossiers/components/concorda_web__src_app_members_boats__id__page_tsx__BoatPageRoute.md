@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: b6a952094bd634463218b0cecf5fcc26d6629fecb516019b8e3756e112f596c1
-status: llm_drafted
+status: current
 ---
 
 # BoatPageRoute

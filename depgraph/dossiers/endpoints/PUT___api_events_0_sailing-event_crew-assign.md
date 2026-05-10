@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 0b47d045c703930f432ca71fb9dd4af1e5ec3493c7c19f4f6a8ddf286ee9b97d
-status: llm_drafted
+status: current
 ---
 
 # PUT /api/events/{event_id}/sailing-event/crew-assign

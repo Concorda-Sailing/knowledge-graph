@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8b34851d6c4ceb9d952363c3f4cd4a1fe0b079f7f67a4cad95ba657844f2ee16
-status: llm_drafted
+status: current
 ---
 
 # requester can cancel a pending request

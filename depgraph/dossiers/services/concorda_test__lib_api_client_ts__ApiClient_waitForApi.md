@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 9fdc0d9e9ec919c7573829563826b3d66f552d73bdc9b85745332c4221d9cd1d
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.waitForApi

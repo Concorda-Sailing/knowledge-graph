@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 85fd3a990ec8ebe8f4b573b27e207810bea363ee439f377dd61286fb590c023b
-status: llm_drafted
+status: current
 ---
 
 # GET /api/auth/me

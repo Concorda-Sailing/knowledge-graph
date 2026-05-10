@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 9a1a78e4c09e8e6f6ec22a4bb9e8bea28a91ac00fc39f6e6d2481aab9e5f3366
-status: llm_drafted
+status: current
 ---
 
 # POST /api/profile/membership/upgrade

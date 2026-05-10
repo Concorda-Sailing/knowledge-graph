@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8519b1a4cd30af52660b5a36a8ee93adb7c8be4b2922818c3ad5199bfa688f5d
-status: llm_drafted
+status: current
 ---
 
 # BoatInvitationsBanner

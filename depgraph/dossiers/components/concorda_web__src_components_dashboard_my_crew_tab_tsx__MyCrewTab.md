@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: f816954beb5137b3a5f07953daf650b3ab30cbd4b7f5a881a3dd84288a27bdd6
-status: llm_drafted
+status: current
 ---
 
 # MyCrewTab

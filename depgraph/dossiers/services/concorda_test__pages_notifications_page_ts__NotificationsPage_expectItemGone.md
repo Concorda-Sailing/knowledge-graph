@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: b0840002e373aabe3fd273593cfac546935a7a14289d3f3bb38285990ade4dda
-status: llm_drafted
+status: current
 ---
 
 # NotificationsPage.expectItemGone

@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8fa73b53b03919ee8ddcafd7a5d463905f112902580ec4b75018ac6d6a276a83
-status: llm_drafted
+status: current
 ---
 
 # bobClient

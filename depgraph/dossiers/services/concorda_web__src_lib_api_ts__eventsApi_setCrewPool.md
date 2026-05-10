@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 6458ea33385e81cfe01d4def9e2b7b06c47c40c432dee485c09fd137e50b0eb6
-status: llm_drafted
+status: current
 ---
 
 # eventsApi.setCrewPool

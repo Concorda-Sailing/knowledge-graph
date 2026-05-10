@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 1f4e1204deb40633747e7a6e2fbfcaf94cff5e7e0f9d3e93c96b537cb1d54ed0
-status: llm_drafted
+status: current
 ---
 
 # CrewfinderRedirectPage

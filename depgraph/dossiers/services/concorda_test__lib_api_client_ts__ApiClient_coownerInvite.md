@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: fbc50b047e1d9b0adee11875bee506de5a59d5ea488493d8f536288601bbef3e
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.coownerInvite

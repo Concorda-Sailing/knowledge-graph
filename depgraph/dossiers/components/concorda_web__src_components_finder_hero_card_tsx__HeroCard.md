@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 3a9385498dfaafeafc6e85e99c2289833fbdc5858e0b250761a273875af758e3
-status: llm_drafted
+status: current
 ---
 
 # HeroCard

@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 07f50a7804e522a8f5e5d4088ed971efffe14e448d191bcc34c9cb8f94b32d5c
-status: llm_drafted
+status: current
 ---
 
 # eventsApi.notifyCrew

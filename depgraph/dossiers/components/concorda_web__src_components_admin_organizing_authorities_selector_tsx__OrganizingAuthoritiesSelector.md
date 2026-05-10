@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: a23b672639ab2c975d4d523cc10c0d07ca114d21a312c89b0ad113efd9405bfa
-status: llm_drafted
+status: current
 ---
 
 # OrganizingAuthoritiesSelector

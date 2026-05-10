@@ -4,7 +4,7 @@ node_kind: schema
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 1a22f7292a045de23ca070bd4e20be5c7fe0719011c0d5a236b66c07083b5fe2
-status: llm_drafted
+status: current
 ---
 
 # OrganizingAuthoritySummary

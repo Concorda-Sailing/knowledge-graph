@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: c8e91527aa9a36c2927629cf119a2837c7aa4fd60b0634e4175e1d6518dd64e1
-status: llm_drafted
+status: current
 ---
 
 # mobile card grid renders real member cards (not empty state)

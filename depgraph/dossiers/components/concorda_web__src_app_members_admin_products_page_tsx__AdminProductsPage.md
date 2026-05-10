@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8a5ed92634a75cf7c1e402ac081f5f5628f21e3099c40a035d6b92c9a751b446
-status: llm_drafted
+status: current
 ---
 
 # AdminProductsPage

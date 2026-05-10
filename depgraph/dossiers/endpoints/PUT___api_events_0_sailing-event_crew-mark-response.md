@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: dc5d1d1a3f8438620d144d02df052adde4f41a15b47271f45e360303eae59425
-status: llm_drafted
+status: current
 ---
 
 # PUT /api/events/{event_id}/sailing-event/crew-mark-response

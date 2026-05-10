@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ec5b62e8e5282a547edc297ae0923a946a63ca6496df27ec62b1a0fd3e86d0a1
-status: llm_drafted
+status: current
 ---
 
 # view toggle switches between grid and list

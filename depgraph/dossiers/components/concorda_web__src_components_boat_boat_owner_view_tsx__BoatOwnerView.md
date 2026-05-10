@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 3c982821af582f59eb183eb742d455d1d55fcb9823fe34be9eb3cb8926e685e1
-status: llm_drafted
+status: current
 ---
 
 # BoatOwnerView

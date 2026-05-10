@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: a609592c2c13a3c5e6ff3e268b05130f02333e7ee77b70decd23d5a12f1970d2
-status: llm_drafted
+status: current
 ---
 
 # calendarApi.rotate

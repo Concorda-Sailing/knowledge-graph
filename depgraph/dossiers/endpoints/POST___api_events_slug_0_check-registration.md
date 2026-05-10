@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 679dfad02bc424fa2d3ac9d5ffd6c91fa983ef453cbff42efedbec655734b50c
-status: llm_drafted
+status: current
 ---
 
 # POST /api/events/slug/{slug}/check-registration

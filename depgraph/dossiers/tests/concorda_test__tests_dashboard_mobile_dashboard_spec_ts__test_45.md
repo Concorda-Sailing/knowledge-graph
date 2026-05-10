@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ea7868c95b9f63c072d6abf9c9d1d6f88bfd8c38890f0d45c2edc28d772b88a1
-status: llm_drafted
+status: current
 ---
 
 # hamburger is hidden on desktop

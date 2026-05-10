@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: bb01bdaf34aaf474ed72b422ceba0d7aed18213f39dc955124e7dc792a019f0c
-status: llm_drafted
+status: current
 ---
 
 # LLMConfigPage

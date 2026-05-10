@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: de62b28f7e80e94310a7dcb9213aa0b6d985c2c14e9a603706c60b56f3daf00c
-status: llm_drafted
+status: current
 ---
 
 # Dan can send event crew invites for the shared boat event

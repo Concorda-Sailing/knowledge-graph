@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 85d821df62b95bf3c1be169ece33c99d252c49c5262ba71186562668bfd39a89
-status: llm_drafted
+status: current
 ---
 
 # RegisterPage.fillPersonalInfo

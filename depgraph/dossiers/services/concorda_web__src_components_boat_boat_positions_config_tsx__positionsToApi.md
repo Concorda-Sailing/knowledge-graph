@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 1827670e23aefd14e3a55ab6df4db1ea1b6227545363274dd492f6d0af1bf75f
-status: llm_drafted
+status: current
 ---
 
 # positionsToApi

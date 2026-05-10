@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 5a0abd1dd14b601489cfd3ee76d3fd27473e019bf2408e4a0b5490527b0122f0
-status: llm_drafted
+status: current
 ---
 
 # Square

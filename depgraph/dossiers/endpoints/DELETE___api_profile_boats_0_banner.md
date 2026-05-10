@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: c7b19114216454c17a8610215b30a72730ed31ceaa5034d695260897fe3f3e73
-status: llm_drafted
+status: current
 ---
 
 # DELETE /api/profile/boats/{boat_id}/banner

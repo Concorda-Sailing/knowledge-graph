@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: daa759cbc4418eeb25cd1aa1e82101c76c0e324b75c61dbf2945aa4631c549fd
-status: llm_drafted
+status: current
 ---
 
 # owner sees their boat with Owner badge

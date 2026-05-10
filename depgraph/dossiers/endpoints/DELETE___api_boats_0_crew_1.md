@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 67b6dc6f4dbf77cd99bbacf01e271a0412912f1242baa433e6275597a2712816
-status: llm_drafted
+status: current
 ---
 
 # DELETE /api/boats/{boat_id}/crew/{crew_id}

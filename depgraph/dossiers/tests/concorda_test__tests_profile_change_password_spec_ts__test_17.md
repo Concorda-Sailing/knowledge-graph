@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: c172540322baa877479d7d863162b67bf63fcb5c88a5435a12c3166444782105
-status: llm_drafted
+status: current
 ---
 
 # password change section is accessible

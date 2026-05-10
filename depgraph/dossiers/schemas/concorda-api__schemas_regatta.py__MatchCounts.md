@@ -4,7 +4,7 @@ node_kind: schema
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: f7a3dd35b966fab57642f7c75406b003b02812a0ef4e8e5379032c6eca8aef61
-status: llm_drafted
+status: current
 ---
 
 # MatchCounts

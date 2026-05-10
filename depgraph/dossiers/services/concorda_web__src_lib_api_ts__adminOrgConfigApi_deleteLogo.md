@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: fc7ddd0026f58dec78aa53e8c976b25ae7e9ec2ec1745347e56e5ea93035853e
-status: llm_drafted
+status: current
 ---
 
 # adminOrgConfigApi.deleteLogo

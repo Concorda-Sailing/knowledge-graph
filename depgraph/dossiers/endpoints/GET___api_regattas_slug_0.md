@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 5fbf3e6c749127616ecc3abb5a392bacd9ae77ef73ed9648c493ed63e04527e8
-status: llm_drafted
+status: current
 ---
 
 # GET /api/regattas/slug/{slug}

@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 0a61b41da9cb6ae18445f7266f56a4d068d6a5225810c903c044e60180ec9723
-status: llm_drafted
+status: current
 ---
 
 # personas.carol

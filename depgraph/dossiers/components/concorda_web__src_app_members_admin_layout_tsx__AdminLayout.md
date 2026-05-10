@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 49d23cc79cd01da1c7cc8ae6b729234c59d2cb744407c04113636e534d930ff7
-status: llm_drafted
+status: current
 ---
 
 # AdminLayout

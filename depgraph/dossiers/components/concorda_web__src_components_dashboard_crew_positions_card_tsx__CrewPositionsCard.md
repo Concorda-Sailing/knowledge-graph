@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 42cb199336793ec00f05f88b7b7544db766d2defc6891ca3cc2412cdbd07e99c
-status: llm_drafted
+status: current
 ---
 
 # CrewPositionsCard

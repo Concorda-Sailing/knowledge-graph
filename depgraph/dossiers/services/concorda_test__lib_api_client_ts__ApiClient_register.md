@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: fcd178f9d5fbb0f0d3524713d7213c41759b6b4046357370116ec922ecc11d7f
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.register

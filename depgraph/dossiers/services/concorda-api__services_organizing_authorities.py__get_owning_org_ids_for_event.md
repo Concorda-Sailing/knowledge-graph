@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 499752acdafd769add04f0aa26c9ed5e3fb3ab25f9cebe11ff049e53f97e15f2
-status: llm_drafted
+status: current
 ---
 
 # get_owning_org_ids_for_event

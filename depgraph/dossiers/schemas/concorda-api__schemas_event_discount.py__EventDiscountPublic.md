@@ -4,7 +4,7 @@ node_kind: schema
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 6a114210649026feca38b4388c762af8fec7e68ba1bdf5a38ab5601843c3b1d4
-status: llm_drafted
+status: current
 ---
 
 # EventDiscountPublic

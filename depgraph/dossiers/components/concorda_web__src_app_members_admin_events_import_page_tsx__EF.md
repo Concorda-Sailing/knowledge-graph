@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: d42ace3dd586d8717ed1aea6e8065bca1e3b076c1141d2cc3434982a0f2e8696
-status: llm_drafted
+status: current
 ---
 
 # EF

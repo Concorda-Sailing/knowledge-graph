@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 524b9cf0da3a60c2513dac0fc571bb98ffaa142d236fb972fe2466549329ac2a
-status: llm_drafted
+status: current
 ---
 
 # send_coowner_invite_email

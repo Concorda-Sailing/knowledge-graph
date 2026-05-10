@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 0f2f9715a3b11e1cbbb4ff109ec616e6da1d9420dc5d5b52d6c7ffbd93460fb5
-status: llm_drafted
+status: current
 ---
 
 # RacesPage

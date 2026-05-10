@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: b29e18282b16e071cdb63dea9631ab3ca3232c845fb29cec208b25cdef80e11f
-status: llm_drafted
+status: current
 ---
 
 # PositionRow

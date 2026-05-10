@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: f3c2d3e172822f013e9aab91effcaead13b0c376a74df4a2688fb23e1187ab16
-status: llm_drafted
+status: current
 ---
 
 # DeleteConfirmDialog

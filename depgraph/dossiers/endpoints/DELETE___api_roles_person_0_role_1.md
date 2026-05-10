@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: c604a0c5018f88ff0110261a146d9f76005cb4f1f2fd9e3323c8949b442a276d
-status: llm_drafted
+status: current
 ---
 
 # DELETE /api/roles/person/{person_id}/role/{role_name}

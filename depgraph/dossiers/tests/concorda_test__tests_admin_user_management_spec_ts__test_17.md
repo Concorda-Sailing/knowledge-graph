@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: c04e727924e56fab354c538b305d754bf85129061cfb0506470ec5761f440555
-status: llm_drafted
+status: current
 ---
 
 # shows seeded users in table

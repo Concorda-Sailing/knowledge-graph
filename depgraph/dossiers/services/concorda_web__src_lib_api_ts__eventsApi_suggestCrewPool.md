@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 3fdb64807972a2ca1d25f4434043c704ade4cafc1e988641363d1da32ae9b9f7
-status: llm_drafted
+status: current
 ---
 
 # eventsApi.suggestCrewPool

@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: d40b8c30451082b5c2548588a22dd2bba28143e01b703a070c900d77afb4fa33
-status: llm_drafted
+status: current
 ---
 
 # Cell

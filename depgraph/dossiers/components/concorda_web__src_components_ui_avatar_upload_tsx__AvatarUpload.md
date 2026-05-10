@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 87228476692a3cb8b14e04fd9914e1850026fcab74fe18e6f0d0c64c607b6b5e
-status: llm_drafted
+status: current
 ---
 
 # AvatarUpload

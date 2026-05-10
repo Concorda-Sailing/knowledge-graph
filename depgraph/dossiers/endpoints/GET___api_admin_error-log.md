@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 612c24f0d4e55f44ff0fe9d57b210f8890741a3e56ab809f0ca0a8cb3dd0c09b
-status: llm_drafted
+status: current
 ---
 
 # GET /api/admin/error-log

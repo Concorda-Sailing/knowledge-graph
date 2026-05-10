@@ -4,7 +4,7 @@ node_kind: schema
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 439ec41cb69a2032b98fbfaf49cf2144c1ce7cf00ad5e5e51476b6ca6048ce9f
-status: llm_drafted
+status: current
 ---
 
 # RosterCrew

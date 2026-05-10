@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 5775296b0eb19bc83dee13eb873bea11cea8dbb6eda10dda7137de6fe6d9ff6e
-status: llm_drafted
+status: current
 ---
 
 # DELETE /api/profile/boats/{boat_id}/resume

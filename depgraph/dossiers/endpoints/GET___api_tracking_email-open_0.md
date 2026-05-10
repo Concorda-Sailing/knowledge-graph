@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: bd4127c79fb71676e3251721b7606f1151f636bbbd9cf8060e1a24bd60b6873b
-status: llm_drafted
+status: current
 ---
 
 # GET /api/tracking/email-open/{token}

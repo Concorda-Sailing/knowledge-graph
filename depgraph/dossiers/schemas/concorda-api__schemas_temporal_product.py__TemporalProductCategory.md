@@ -4,7 +4,7 @@ node_kind: schema
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 357f0e633f24f699a16762f1fb29ce713795dc0ce88760ac52fe58a28612e34f
-status: llm_drafted
+status: current
 ---
 
 # TemporalProductCategory

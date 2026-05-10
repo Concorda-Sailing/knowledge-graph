@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 44f9b1d604b74925b9048c1ebd0199842f693b62d5afe058ffc3fc49cc65c9dc
-status: llm_drafted
+status: current
 ---
 
 # boatApi.getVisibleCrew

@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: dbe68277cc85443bd20c94d9041d244fa84d8c2fb3fd2194650cb4abaaf301ca
-status: llm_drafted
+status: current
 ---
 
 # rolesApi.getUserRoles

@@ -4,7 +4,7 @@ node_kind: schema
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 02274354bc05db35edfb42f9393d32ff2e0104f15b79faeb1df4dee27b3f6119
-status: llm_drafted
+status: current
 ---
 
 # EventCrewInviteSend

@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 2c525deb6c23123198dbbc18eb4003588d4d6f932d5cb86169d704f32701af77
-status: llm_drafted
+status: current
 ---
 
 # adminTemporalProductsApi.delete

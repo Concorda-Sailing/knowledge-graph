@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: b3b7de812d6383704f4a6c51fd11d44c6173aceb0b5a407558dc065e9c15c8ea
-status: llm_drafted
+status: current
 ---
 
 # Permission

@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 39aa972de63e6313e4b0354fc697c4cfca9a58f05876e812d912512caa372d29
-status: llm_drafted
+status: current
 ---
 
 # adminHealthApi.dbStats

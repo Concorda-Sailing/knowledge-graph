@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 0d61c94c8626f3a1b157dca3d159d18853d0957bf281c2715cf16c31fd718580
-status: llm_drafted
+status: current
 ---
 
 # vote reject path finalizes as rejected

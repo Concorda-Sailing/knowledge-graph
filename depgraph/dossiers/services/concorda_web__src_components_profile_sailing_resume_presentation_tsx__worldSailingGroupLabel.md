@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 2b4c6bba14ef1ddf49190230fa33606aa4427e944f267e75c11f3affe9b6952f
-status: llm_drafted
+status: current
 ---
 
 # worldSailingGroupLabel

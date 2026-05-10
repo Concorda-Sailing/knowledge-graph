@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 45f38d0390f592fd96c7f8b5b30e995720e78b85bbec57c7e9de99115340399e
-status: llm_drafted
+status: current
 ---
 
 # email settings section is accessible

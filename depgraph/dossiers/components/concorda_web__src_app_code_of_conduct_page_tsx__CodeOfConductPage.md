@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 90b1d7839d61794ad7897fee587ebdbee97a4cb43885ce94d9f325c53c3255c1
-status: llm_drafted
+status: current
 ---
 
 # CodeOfConductPage

@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 998ad69db9d72d4d142af75a9543d6e239e40dfd2f58e336904cb792802d5411
-status: llm_drafted
+status: current
 ---
 
 # crew-request endpoint rejects when accept_crew_requests=false

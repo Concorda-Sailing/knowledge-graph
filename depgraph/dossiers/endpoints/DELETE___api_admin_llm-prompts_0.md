@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 19b3eba4f6d27a621e966c3e49c84cfdc1ec4084a38d86af51d712f81eec0488
-status: llm_drafted
+status: current
 ---
 
 # DELETE /api/admin/llm-prompts/{prompt_id}

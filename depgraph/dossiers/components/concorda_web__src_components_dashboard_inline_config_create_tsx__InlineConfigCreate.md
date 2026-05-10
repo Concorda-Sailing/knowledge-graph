@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: b5190a55fdb5f965a59cde4e0c374d1b3a9147504786faaad595fe2e9b8a6b1c
-status: llm_drafted
+status: current
 ---
 
 # InlineConfigCreate

@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 2c26c6c5267ade25c5ef19e8d6abb6b46c4da9c8aa7488c10b38b45afbf57ada
-status: llm_drafted
+status: current
 ---
 
 # PersonAuth

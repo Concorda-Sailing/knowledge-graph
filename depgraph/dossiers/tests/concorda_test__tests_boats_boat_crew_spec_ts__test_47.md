@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: f3abe3c9b8047644581e2fdb8ea665ad691d47ed98bee48e93b88cb7bcc5287e
-status: llm_drafted
+status: current
 ---
 
 # invite crew by email

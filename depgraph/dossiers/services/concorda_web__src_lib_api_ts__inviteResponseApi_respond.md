@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: d399356d92186b3a1fbbd0da48d0da7396d2d250ea6b1e5051c59af9d6a9ae5e
-status: llm_drafted
+status: current
 ---
 
 # inviteResponseApi.respond

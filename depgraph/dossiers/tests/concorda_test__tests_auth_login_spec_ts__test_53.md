@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 0aafe0323f400bd02e4cac572296a471fdfef9462f70c8f2250dde075d362fb9
-status: llm_drafted
+status: current
 ---
 
 # show/hide password toggle works

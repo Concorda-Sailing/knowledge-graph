@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 9aea86bd21a8946fe906a24d0fca296e2bc290ad43d50dd45f7dd6c029ed35ad
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.getSailingResume

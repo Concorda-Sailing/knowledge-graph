@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: b04be53e8f8e64da7458ff29b92dbeb1fe6a4cc5bfd617a16d41cfa2ad58a325
-status: llm_drafted
+status: current
 ---
 
 # BoatInline

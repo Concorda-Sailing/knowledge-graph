@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: a0501f3fe5f56d8a04bc7e21b17a59ea733348f0073fc2cc64ea89f735f05d8d
-status: llm_drafted
+status: current
 ---
 
 # profileApi.transferBoat

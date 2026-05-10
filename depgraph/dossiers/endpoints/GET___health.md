@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ed4f27ccf73a68afa5c65f9f1a73106781448c8b205c6a39abbfc3019d53eed4
-status: llm_drafted
+status: current
 ---
 
 # GET /health

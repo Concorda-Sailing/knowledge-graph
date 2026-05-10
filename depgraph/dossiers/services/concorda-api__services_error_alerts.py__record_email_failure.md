@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: baad0840b7427e720e79bdd7db4c73e8678f777d8985706dabefe8fe9e2e60d5
-status: llm_drafted
+status: current
 ---
 
 # record_email_failure

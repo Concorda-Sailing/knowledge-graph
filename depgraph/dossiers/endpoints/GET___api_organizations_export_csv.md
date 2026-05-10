@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 2433dd3e3d71b852605733b725e1c7463b3873652a31cd42f3e5abd03e3ccaea
-status: llm_drafted
+status: current
 ---
 
 # GET /api/organizations/export/csv

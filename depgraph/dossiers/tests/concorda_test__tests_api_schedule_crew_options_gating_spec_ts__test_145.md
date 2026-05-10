@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: bec270d0d8c89b450867dcc59601a0b00e4a6312b902e2be79a4cd37ed1c145b
-status: llm_drafted
+status: current
 ---
 
 # captain with peer-boat EventCrew row keeps Crew badge off

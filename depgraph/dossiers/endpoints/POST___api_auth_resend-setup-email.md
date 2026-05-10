@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: de323e24d2a6e7a1afac7526a329ff7724b4f9da4e27fe19fcf1acde1bc0505a
-status: llm_drafted
+status: current
 ---
 
 # POST /api/auth/resend-setup-email

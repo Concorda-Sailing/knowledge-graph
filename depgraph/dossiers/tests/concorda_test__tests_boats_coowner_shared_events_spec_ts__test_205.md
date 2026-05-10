@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: d74f1492cdf5a08cfa6149a9452b0d99c27c19deda7db92c7898d6c35864f940
-status: llm_drafted
+status: current
 ---
 
 # Inviter auto-accepts themselves (Bob inviting Bob stays accepted)

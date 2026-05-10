@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 6ec9c5d232219a6533680cddd6cdf8185a5da4f55df84fa324e031228a9cd54a
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.getAvailableProducts

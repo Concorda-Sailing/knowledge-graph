@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: bfc4a2345f7a02e1a6122181de6cf146d3665d12489644b44a0dc4c3b08a030a
-status: llm_drafted
+status: current
 ---
 
 # GET /api/roles/person/{person_id}/roles

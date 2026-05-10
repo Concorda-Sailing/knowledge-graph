@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8b16ee1bc329b6fc4e326fabf3dd9c0e71b8153e95b5060186ebaa973e954fec
-status: llm_drafted
+status: current
 ---
 
 # adminApi.changePassword

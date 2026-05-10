@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 71d2138194b6e2fc7e4ae0c139b80dfd1a5cb20d41ba04014f0c209abc42300e
-status: llm_drafted
+status: current
 ---
 
 # adminPaymentConfigApi.update

@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: d236fb30156d61618d1c1f5b098ed8d5c61ab93ecb23bc08871f8b8f06548bc6
-status: llm_drafted
+status: current
 ---
 
 # POST /api/profile/boats/{boat_id}/transfer

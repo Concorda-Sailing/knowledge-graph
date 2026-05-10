@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e3b70dc490292074b2740cd726ac1c66841ded195d7e5269a6de46a415116505
-status: llm_drafted
+status: current
 ---
 
 # personal info save row is side-by-side on desktop

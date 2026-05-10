@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ea1d84413713dbb03ed90b7998473ffea4c1c17686376cc3935ce25f2033744b
-status: llm_drafted
+status: current
 ---
 
 # get_match_roster

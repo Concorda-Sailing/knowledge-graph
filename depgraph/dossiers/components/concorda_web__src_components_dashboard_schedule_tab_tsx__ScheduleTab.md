@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: cc194387aecb39bf32f352218aeb1fa9ae7d9fece7cc7bde147e73d23ac1b7de
-status: llm_drafted
+status: current
 ---
 
 # ScheduleTab

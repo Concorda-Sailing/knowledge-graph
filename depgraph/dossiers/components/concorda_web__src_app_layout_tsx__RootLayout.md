@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: b0c0d256589f4f359b6abc9af1c28140c34f8011b370a2d2ba8cf7b2ff8edd59
-status: llm_drafted
+status: current
 ---
 
 # RootLayout

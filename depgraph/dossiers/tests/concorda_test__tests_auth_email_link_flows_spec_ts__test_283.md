@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 38b135bfdbe7df2b7c28954c42300b67f32fa3e62e9282fa2391022806aaa0a3
-status: llm_drafted
+status: current
 ---
 
 # decline link flips BoatCrew status to declined

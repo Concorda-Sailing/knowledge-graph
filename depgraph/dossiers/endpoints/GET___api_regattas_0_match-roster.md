@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e4f78c7513103f0c7a49ff6b04fe56c1a82e8ad376aca6f74c6ce1c381ad94bc
-status: llm_drafted
+status: current
 ---
 
 # GET /api/regattas/{regatta_id}/match-roster

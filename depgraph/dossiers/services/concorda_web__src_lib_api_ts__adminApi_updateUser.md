@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 10bb19934a6c3d4dd0c1c98c11a465d9946e96945f9a84656145ab8850d8e94b
-status: llm_drafted
+status: current
 ---
 
 # adminApi.updateUser

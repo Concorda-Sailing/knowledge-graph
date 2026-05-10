@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 608ab29beeaa43078a46bd6b67389d95b0acb62b3ebe6767d01c0baaee78f06d
-status: llm_drafted
+status: current
 ---
 
 # my schedule tab on dashboard shows events

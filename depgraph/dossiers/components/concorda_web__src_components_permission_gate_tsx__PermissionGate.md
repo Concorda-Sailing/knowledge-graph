@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: a3bb564b71fd4c5fdcbde2a5913100649b4d9bc861628ddad4734fd71e19ee00
-status: llm_drafted
+status: current
 ---
 
 # PermissionGate

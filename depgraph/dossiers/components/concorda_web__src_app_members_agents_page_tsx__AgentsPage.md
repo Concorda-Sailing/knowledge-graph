@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: b180582715408c570cfe6e0d95ce5227f4cea11e9f5fa1870692132d08fccda5
-status: llm_drafted
+status: current
 ---
 
 # AgentsPage

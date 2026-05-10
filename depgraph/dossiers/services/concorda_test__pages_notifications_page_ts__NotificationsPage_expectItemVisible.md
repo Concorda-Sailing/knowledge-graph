@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 4be175bf8067918df98a2caecc0a4f76ab8ee73cab71798f4a942649a841ad93
-status: llm_drafted
+status: current
 ---
 
 # NotificationsPage.expectItemVisible

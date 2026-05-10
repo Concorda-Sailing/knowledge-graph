@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 97bdeb759043bf28b6023244216f50e97876266714c37edfa795414b7f3294ea
-status: llm_drafted
+status: current
 ---
 
 # add club button opens dialog

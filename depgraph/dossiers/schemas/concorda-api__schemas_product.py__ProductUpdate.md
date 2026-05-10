@@ -4,7 +4,7 @@ node_kind: schema
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: d27f6227c57c58674b9300c7fedffe8571f60efeac46b5c6629ff227dd5a12fa
-status: llm_drafted
+status: current
 ---
 
 # ProductUpdate

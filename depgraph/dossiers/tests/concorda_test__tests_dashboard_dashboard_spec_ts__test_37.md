@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e954f80316f45e6b0587071793123c49bb537f08309c8de615dbf6186b2d5260
-status: llm_drafted
+status: current
 ---
 
 # dashboard has tab navigation

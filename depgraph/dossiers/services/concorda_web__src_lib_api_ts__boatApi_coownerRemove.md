@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 3aa4304d3118c584a116d0cc64c491fcf706983a9c6c68c1d31f8f3c4471e014
-status: llm_drafted
+status: current
 ---
 
 # boatApi.coownerRemove

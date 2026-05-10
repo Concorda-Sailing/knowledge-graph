@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 75e9b0dcb9fbebeafb8571034c5dea2c0e44209bcdf1bc667fefca9e0bfb02e6
-status: llm_drafted
+status: current
 ---
 
 # AdminClubsPage.goto

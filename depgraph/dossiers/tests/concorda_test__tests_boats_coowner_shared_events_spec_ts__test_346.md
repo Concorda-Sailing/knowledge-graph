@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 0657aaf9199a53af3b5a2b74a0147d01589dcf3c498288c7f25ecbc20ad87279
-status: llm_drafted
+status: current
 ---
 
 # UI: Dan sees the shared boat event on his schedule tab

@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 1b92a7c8d46b13b5b85a6a85f0bbe0a38fb7caf7c185c7c875345af1b8474e12
-status: llm_drafted
+status: current
 ---
 
 # GET /api/organizations/{org_id}/contacts

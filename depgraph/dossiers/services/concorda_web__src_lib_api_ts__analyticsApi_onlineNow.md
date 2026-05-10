@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 367225b46f82020dc77ef67d88a8a07c899425f1d80d225270bf5dbae58e07c3
-status: llm_drafted
+status: current
 ---
 
 # analyticsApi.onlineNow

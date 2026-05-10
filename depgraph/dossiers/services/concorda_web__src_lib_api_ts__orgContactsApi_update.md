@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: a78c18feeca4f7482f67e91b9646b3c5e1d1f10b9f275397d86efcc37968046c
-status: llm_drafted
+status: current
 ---
 
 # orgContactsApi.update

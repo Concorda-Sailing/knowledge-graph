@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 32388c8e3a527030622a6fb720f844bc03bd47fb9fcccec78cdc1bc326e1644b
-status: llm_drafted
+status: current
 ---
 
 # InvitationsBanner

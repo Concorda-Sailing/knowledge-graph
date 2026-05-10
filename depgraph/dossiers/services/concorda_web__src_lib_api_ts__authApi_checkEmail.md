@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: a96d64c5fd5ce0a7a375b94cdda31638fef52e87036199bd1205d740fec68c59
-status: llm_drafted
+status: current
 ---
 
 # authApi.checkEmail

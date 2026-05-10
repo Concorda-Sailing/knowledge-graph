@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 7cd5dd36de63bff57282238d423b5227f844cd213f2ed8c5a433c2ae2b6c81e5
-status: llm_drafted
+status: current
 ---
 
 # clicking My Schedule tab shows schedule content

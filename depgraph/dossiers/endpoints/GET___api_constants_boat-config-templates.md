@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: c974bcb9a7fde3a947a3bc42bbcfc5d8e779d445a15cff6b6019015de04d0249
-status: llm_drafted
+status: current
 ---
 
 # GET /api/constants/boat-config-templates

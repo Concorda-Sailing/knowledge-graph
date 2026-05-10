@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 75655aa10e4f5b1567ab0fcb294a20e6eecbdb3c85d2f7445d93f892e6af1c62
-status: llm_drafted
+status: current
 ---
 
 # adminEventsApi.deleteImage

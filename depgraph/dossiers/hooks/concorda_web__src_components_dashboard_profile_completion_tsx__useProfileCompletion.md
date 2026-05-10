@@ -4,7 +4,7 @@ node_kind: hook
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 17495ddec568fd2ea2368fd7ee1e157e3531aaad4227aa2fe8f6c09bd512f1b2
-status: llm_drafted
+status: current
 ---
 
 # useProfileCompletion

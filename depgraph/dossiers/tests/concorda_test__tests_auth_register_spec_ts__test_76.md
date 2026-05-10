@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 2788cf463d50aaf0a44f372429aef8bd43716f4ebb1a931d8daf1a1b416352ce
-status: llm_drafted
+status: current
 ---
 
 # duplicate email shows error and blocks progression

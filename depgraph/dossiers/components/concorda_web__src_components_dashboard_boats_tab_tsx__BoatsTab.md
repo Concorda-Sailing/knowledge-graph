@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 81ce3faf6a3f26caf3b72b6f1794156ecb18c618f5309bd93d0588509b8a8966
-status: llm_drafted
+status: current
 ---
 
 # BoatsTab

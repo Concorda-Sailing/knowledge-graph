@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: d33a1dde28fbbd6c59b866e908306baec43112e5fe6332bf679fbd73c0dd13be
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.resetPassword

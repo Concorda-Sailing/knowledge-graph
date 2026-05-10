@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: eb6909035960357df3c7066d43701f514a2cf572356dc5ac2e1692cf07240b74
-status: llm_drafted
+status: current
 ---
 
 # POST /api/nor/upload-and-extract

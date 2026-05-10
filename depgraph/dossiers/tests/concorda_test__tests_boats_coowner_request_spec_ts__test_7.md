@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: a32b16dd51da9731663b6ac9bc3757a161cfcf4c53b2e5b3ef237040c254d88e
-status: llm_drafted
+status: current
 ---
 
 # shows sail-number conflict panel during registration

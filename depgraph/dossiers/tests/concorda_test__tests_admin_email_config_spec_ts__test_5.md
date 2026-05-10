@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ffb6edcd654f7b92d313275dcf6750c2779a4c04fa2954d76884af24cac3c994
-status: llm_drafted
+status: current
 ---
 
 # email config page loads

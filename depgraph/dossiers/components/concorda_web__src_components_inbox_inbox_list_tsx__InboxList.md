@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: f659b6147898000ccf20f4b49e3d62057654df2085682eb3aa2c888f0c9d4523
-status: llm_drafted
+status: current
 ---
 
 # InboxList

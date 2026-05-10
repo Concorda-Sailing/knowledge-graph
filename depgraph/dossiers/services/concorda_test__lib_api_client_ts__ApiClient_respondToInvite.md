@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 1bfd1fe8d8e307ea3f220f7fec6b9a8a6cf59c2e315f17e95ef5f67264a06430
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.respondToInvite

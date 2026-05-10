@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 34889d1e82052354daba865966fb13b23d2ae5bc850e26a3d2edc2eab15a539e
-status: llm_drafted
+status: current
 ---
 
 # paymentsApi.createEventIntent

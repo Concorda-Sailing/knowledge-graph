@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 3535e5bb138945aa87ddb600964199b5ec2bbb16814e471a516a0bda859de157
-status: llm_drafted
+status: current
 ---
 
 # ProfileGrid

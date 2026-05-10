@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ccc0d1f1860b6236697c7af78d6833c398cafe5608730d330dea839064e40cce
-status: llm_drafted
+status: current
 ---
 
 # GET /api/boats/{boat_id}/share-invite/{invite_token}

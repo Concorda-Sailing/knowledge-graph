@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 094f06f988522a3305473b7b60011494c7201644fc22efc7995b965ad5f3423e
-status: llm_drafted
+status: current
 ---
 
 # PUT /api/boats/{boat_id}/crew/reorder

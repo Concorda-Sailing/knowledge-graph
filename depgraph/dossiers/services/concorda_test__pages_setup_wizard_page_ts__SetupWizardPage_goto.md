@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 7210ac1f968a66967d77a3ec9ed2924182d4dc13e0b6218974aa26fcfc68ff97
-status: llm_drafted
+status: current
 ---
 
 # SetupWizardPage.goto

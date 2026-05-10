@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 4c8ed55fdf613aa5893002f8d0a429cb10ed5a455414ac38508fbdfd4527c3ff
-status: llm_drafted
+status: current
 ---
 
 # RegattaDocument

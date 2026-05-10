@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: bdd040a0f2f240f8472df8398b875b480a36bb7b27ef2adb8f787b0c3a466288
-status: llm_drafted
+status: current
 ---
 
 # decline link finalizes the request as rejected

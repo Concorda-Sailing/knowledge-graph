@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: b1fc23dad4a0ff98fefbf69218101f4bf8c63b7ff8ab804de0e12eda398a68ee
-status: llm_drafted
+status: current
 ---
 
 # DashboardPage.navigateTo

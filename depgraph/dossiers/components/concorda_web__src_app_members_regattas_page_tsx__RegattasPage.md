@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 624b2f9d992a1ffea8b5da58e7d5652f7f08b488a7a227a3a98380dbf64e1f0a
-status: llm_drafted
+status: current
 ---
 
 # RegattasPage

@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 13147e4e5c723ab3026ac4be546d74e0706781fa90ef76459ca7aedf9756e0c3
-status: llm_drafted
+status: current
 ---
 
 # My Crew tab is hidden when user owns no boats

@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 979ce7d72c9930ee29ad5dae50aec282aa9d122e99ffdc6d877c184e0901d04b
-status: llm_drafted
+status: current
 ---
 
 # PaymentConfig

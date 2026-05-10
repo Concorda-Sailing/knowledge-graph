@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 122d4217ba4ca7cda38ebfbcb080b1e9af87786ee400d153b68185aee2bd6486
-status: llm_drafted
+status: current
 ---
 
 # authApi.resendSetupEmail

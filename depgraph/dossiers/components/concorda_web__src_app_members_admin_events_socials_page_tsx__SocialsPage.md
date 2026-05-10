@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 7ad999d682381ce469c44aa6cbb681834b02c28fcdf4ba778637a239c3ce45cb
-status: llm_drafted
+status: current
 ---
 
 # SocialsPage

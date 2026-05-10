@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 965f4798d8c5a36e4291ed02c01a0bf0edd1c17820d66e15c0695c6f70c7e2a3
-status: llm_drafted
+status: current
 ---
 
 # SidebarAdmin

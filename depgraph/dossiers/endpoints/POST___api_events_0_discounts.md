@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: d04d686186f9e8d2a77d8ee193c8377e6e989e60ae2f5477af22b96a1e3665fe
-status: llm_drafted
+status: current
 ---
 
 # POST /api/events/{event_id}/discounts

@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 75b4ee09e42df90d9683d9095d3e55941b140a744367f978f313d4d093891f73
-status: llm_drafted
+status: current
 ---
 
 # mediaApi.updateFolder

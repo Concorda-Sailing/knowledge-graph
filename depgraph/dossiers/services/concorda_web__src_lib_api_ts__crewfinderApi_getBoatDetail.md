@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ea9a4481a39a9ed6616b9e7f50c65e7a68ed940c44ec35106306e604b500939c
-status: llm_drafted
+status: current
 ---
 
 # crewfinderApi.getBoatDetail

@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 296e119605c2f50b647728f3630a8007e39a9c8d0acc628d497171f4e26f290e
-status: llm_drafted
+status: current
 ---
 
 # seriesApi.generateRaces

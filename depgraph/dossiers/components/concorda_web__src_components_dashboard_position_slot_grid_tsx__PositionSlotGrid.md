@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 5906b4bc87f7f0ded164228adb6bd1fa7890f6a8d788563922b67cd1230bcbad
-status: llm_drafted
+status: current
 ---
 
 # PositionSlotGrid

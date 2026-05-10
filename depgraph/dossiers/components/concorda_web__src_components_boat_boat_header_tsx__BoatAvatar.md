@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: f351cd7ce3eace8d7cb0724c68b578a06471c69ccaed82f47e15548b423d17d5
-status: llm_drafted
+status: current
 ---
 
 # BoatAvatar

@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 39340e4b01b45bf3a463cb5f721a85ed73cb9117a82c9c42455ea05150683f95
-status: llm_drafted
+status: current
 ---
 
 # GET /api/auth/validate-reset-token

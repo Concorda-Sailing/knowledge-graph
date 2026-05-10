@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8cb15ed01611ccb64a2560d1f04f34a3e2724845602b5cb2689cb204b13b194b
-status: llm_drafted
+status: current
 ---
 
 # IconSquare

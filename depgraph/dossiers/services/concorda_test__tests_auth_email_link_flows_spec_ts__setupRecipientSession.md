@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8f3c424c683347fd156d255e70ad58d4589c56b9e46f586d41d5721c925aaeb5
-status: llm_drafted
+status: current
 ---
 
 # setupRecipientSession

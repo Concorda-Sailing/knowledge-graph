@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 7af7e1740a66c4f1f4ce37bdb9d9e6d9a2c46b94c408b1d10c751ae48cb22d04
-status: llm_drafted
+status: current
 ---
 
 # DELETE /api/media/files/{file_id}

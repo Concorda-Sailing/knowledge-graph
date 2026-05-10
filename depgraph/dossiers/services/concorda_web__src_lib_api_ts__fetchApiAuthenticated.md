@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 449f7097917b3b24854a4ccfd4818679bde2b7397f3f24b4df41b6787727766c
-status: llm_drafted
+status: current
 ---
 
 # fetchApiAuthenticated

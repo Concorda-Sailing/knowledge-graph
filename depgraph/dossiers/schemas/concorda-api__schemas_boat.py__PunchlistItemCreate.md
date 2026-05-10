@@ -4,7 +4,7 @@ node_kind: schema
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 501b7e2d000071c9d780aa67a8b3d8b933af320ebb361308002f2025c60e15d9
-status: llm_drafted
+status: current
 ---
 
 # PunchlistItemCreate

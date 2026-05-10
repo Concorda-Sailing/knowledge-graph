@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: a27fdd411bf24917542aa364de36b5764061973459328662f544fb7fd21081f4
-status: llm_drafted
+status: current
 ---
 
 # boatApi.createPunchlistItem

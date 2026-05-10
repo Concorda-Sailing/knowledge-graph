@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 3f8d5afdc84590d907331ef56749ed3313b9a8c08395aecd13029f755dfb0b84
-status: llm_drafted
+status: current
 ---
 
 # can navigate to event detail page

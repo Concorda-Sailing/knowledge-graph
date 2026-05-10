@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 1c2c356a29597b7ed9e9272d992368cdc020d03ee9c8373c8e3ce39a6d6e2fce
-status: llm_drafted
+status: current
 ---
 
 # GET /api/series/{series_id}/races

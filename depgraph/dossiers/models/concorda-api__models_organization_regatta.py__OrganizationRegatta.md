@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ab3222e6675dd0b70834b434b93c1e3e0ad5fc51f9745b843daac547b7a4bc5b
-status: llm_drafted
+status: current
 ---
 
 # OrganizationRegatta

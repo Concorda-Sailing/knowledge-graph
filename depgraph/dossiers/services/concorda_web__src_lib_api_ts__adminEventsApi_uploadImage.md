@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 2767e3c5959a58b81c26462ba59f7222687c27dcc75998bea43a08606c1f0bc4
-status: llm_drafted
+status: current
 ---
 
 # adminEventsApi.uploadImage

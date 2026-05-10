@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 3b41660167e878903b3bc3d2e4902907d03f2052f5e073f80b23ece767fcf530
-status: llm_drafted
+status: current
 ---
 
 # search filters clubs

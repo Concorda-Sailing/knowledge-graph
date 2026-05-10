@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 03fd91edf387dce7bd8cca7d41cb98c86207cc007ade5f7c0baa58ef51b3990d
-status: llm_drafted
+status: current
 ---
 
 # BoatfinderRedirectPage

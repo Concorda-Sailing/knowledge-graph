@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: a9924d3937eb5fc9df0ef5d10b033cb2f976dc69533d58cdc53eed307fa3b890
-status: llm_drafted
+status: current
 ---
 
 # SetupWizardPage.fillSailingResume

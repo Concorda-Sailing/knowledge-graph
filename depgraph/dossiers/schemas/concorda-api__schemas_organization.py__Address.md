@@ -4,7 +4,7 @@ node_kind: schema
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 5442cdc3cd8dd5de84c611381f393fc36ab8a2965e76358bbdbb3dd9a683fe62
-status: llm_drafted
+status: current
 ---
 
 # Address

@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 03b85f8f74e5be0fae20fc792b1843f32946620601c12a534d8befbd6566d1a0
-status: llm_drafted
+status: current
 ---
 
 # per-boat tabs are gone

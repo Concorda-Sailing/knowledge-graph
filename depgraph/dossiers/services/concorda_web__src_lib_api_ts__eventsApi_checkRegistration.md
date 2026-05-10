@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 344df2b2668472589981b3ac5952576537cce4aa42a972267b30fbbc65e6a6f9
-status: llm_drafted
+status: current
 ---
 
 # eventsApi.checkRegistration

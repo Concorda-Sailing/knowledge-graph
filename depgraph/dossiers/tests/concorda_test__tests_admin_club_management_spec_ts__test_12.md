@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8ad991408f523251aea9fd36ade32a34b5435faa09737894903e2d3dbccd2d14
-status: llm_drafted
+status: current
 ---
 
 # clubs page loads with seeded organizations

@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ff91ae0e627ce6944751b54024db58ddb8d2e9d90f2677518126ec0112f05034
-status: llm_drafted
+status: current
 ---
 
 # BoatHeader

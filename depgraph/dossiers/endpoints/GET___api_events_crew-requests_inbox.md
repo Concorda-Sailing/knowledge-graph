@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 9b3a93c8280b6897135a2e4ed4c34324fa628dfc5589c28a8ef559751b478669
-status: llm_drafted
+status: current
 ---
 
 # GET /api/events/crew-requests/inbox

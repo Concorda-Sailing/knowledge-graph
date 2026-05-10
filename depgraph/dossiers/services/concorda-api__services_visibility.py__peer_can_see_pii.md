@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 567b6ad8057bd1aef02766762a80d07874c1c7abc599c088191f8fa7f854118e
-status: llm_drafted
+status: current
 ---
 
 # peer_can_see_pii

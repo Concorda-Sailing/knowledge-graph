@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ad2c1b6a8ded6021f3c693c36fc2dd8de420bc0af7fd0d09a5cfff2829083edc
-status: llm_drafted
+status: current
 ---
 
 # asPersona

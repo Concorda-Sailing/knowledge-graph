@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 33374426516b13855cd51e29b7e1b610c2529b4b813ceaf682eeb60da813c2be
-status: llm_drafted
+status: current
 ---
 
 # adminApi.deleteUser

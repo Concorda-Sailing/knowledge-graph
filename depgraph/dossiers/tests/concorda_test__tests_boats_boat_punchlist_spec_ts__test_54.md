@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 1eca1bb19abc1eb833bcbe13fc2701668ff57288f97beccafa37f5b3af6f4c7f
-status: llm_drafted
+status: current
 ---
 
 # can change punchlist item status

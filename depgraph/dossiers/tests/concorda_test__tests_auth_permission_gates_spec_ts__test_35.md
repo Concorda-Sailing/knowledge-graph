@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 6b9fde185d30910db52b2727c6192514ed88471c0f11e6d8867b19266657d5dc
-status: llm_drafted
+status: current
 ---
 
 # garbage token is rejected and triggers redirect

@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 2557761b4e3eb382d1159283cec7788c1862829ccd0704df9e70bce63b46a9c6
-status: llm_drafted
+status: current
 ---
 
 # adminEmailTemplatesApi.list

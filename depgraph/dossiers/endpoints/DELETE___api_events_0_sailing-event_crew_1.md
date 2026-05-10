@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: acbda45749116723887b17a30ff29e7f5218965ab325c52ac2b11362dae004f2
-status: llm_drafted
+status: current
 ---
 
 # DELETE /api/events/{event_id}/sailing-event/crew/{person_uuid}

@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 9ad338fb23ab14560f1c65f3ee079d5ad9e0f460a655e8880a8911ed4d3ebee6
-status: llm_drafted
+status: current
 ---
 
 # mediaApi.updateFile

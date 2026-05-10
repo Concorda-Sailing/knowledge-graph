@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 31d375f3f39aefafdf76521ab96722d622c2f748a3957621ea65d7eb18502757
-status: llm_drafted
+status: current
 ---
 
 # POST /api/events/my-schedule/add-events

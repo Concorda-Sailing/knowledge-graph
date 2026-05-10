@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: b2b306ff33909ad876eead6ccfb791e5728e825953db95ea2ce70347778a2ed9
-status: llm_drafted
+status: current
 ---
 
 # AwardsPage

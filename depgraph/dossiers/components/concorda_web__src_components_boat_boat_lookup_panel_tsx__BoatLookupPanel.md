@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: af9ca05f2e44436bcde70278f48e9133dd17c39dbc5e37818362811d33b021eb
-status: llm_drafted
+status: current
 ---
 
 # BoatLookupPanel

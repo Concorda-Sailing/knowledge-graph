@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 3dcdf0ef225b078898a79b323e575fb20dd40635ab83a3034415a951574fcbc7
-status: llm_drafted
+status: current
 ---
 
 # full free membership registration flow

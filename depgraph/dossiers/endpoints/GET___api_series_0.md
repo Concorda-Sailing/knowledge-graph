@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 0d8456177789f72ec7e4a9e6098c43b28ecb419509ef6b5b635e24126bcf8bd8
-status: llm_drafted
+status: current
 ---
 
 # GET /api/series/{series_id}

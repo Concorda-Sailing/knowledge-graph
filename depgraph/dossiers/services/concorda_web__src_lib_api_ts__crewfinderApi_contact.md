@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 0a39c39b6b749872fa0a7f3f900e884723d1fac535d3d31e90da1bdd455f90d2
-status: llm_drafted
+status: current
 ---
 
 # crewfinderApi.contact

@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: b0b6250120ca41e60ef79ae23061d9427a97ea3906e8dcb43eb4f7469adc8c92
-status: llm_drafted
+status: current
 ---
 
 # desktop list view renders a real table

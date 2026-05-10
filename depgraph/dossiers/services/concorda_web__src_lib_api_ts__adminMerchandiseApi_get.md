@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 1b18bddffa8a3c7f322676ea7c4a5edf30acd0ca1bce2429b22a14b25002a6a9
-status: llm_drafted
+status: current
 ---
 
 # adminMerchandiseApi.get

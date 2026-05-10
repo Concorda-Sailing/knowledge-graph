@@ -4,7 +4,7 @@ node_kind: hook
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 6433da73d6b0f5a8033fc293709f358d97b831edc0f928a8d1f37590748ecf9b
-status: llm_drafted
+status: current
 ---
 
 # useChart

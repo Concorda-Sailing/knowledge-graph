@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: b9b6f3673d01feae9c4342bdbc4450f3dbbdcc5035d140c055a37dd6f77f374a
-status: llm_drafted
+status: current
 ---
 
 # POST /api/crewfinder

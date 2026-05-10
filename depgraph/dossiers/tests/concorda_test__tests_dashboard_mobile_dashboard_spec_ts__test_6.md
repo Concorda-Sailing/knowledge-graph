@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: d16062adc29bb257578ac626f4cee4692a685aedf937ba3c437c7f937c929206
-status: llm_drafted
+status: current
 ---
 
 # hamburger visible on mobile; opens drawer

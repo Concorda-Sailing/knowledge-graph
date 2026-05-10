@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 53e4f4d119f036fe3507f604caf3cdc0c6624fb00a0f978bbf86d5869b67e8b2
-status: llm_drafted
+status: current
 ---
 
 # GET /api/boatfinder/search

@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: fda9c4c66d01f5f8a1536e64e3233292636ad5f361dc7e4d2eb60cd142bc8c2a
-status: llm_drafted
+status: current
 ---
 
 # profileApi.createCrewPool

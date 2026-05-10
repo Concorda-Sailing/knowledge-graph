@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 6f4e35f101333337bde191df8eaee85c0aea5a85b103ba37e5a16a6d418ecaf1
-status: llm_drafted
+status: current
 ---
 
 # poolBadgeVariant

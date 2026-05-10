@@ -2,8 +2,8 @@
 node_id: POST::/api/invite/{0}/accept
 node_kind: endpoint
 feature: crew-invites
-last_reviewed: 2026-05-09
-last_reviewed_against_hash: EXAMPLE_HASH_REGEN_TO_REPLACE_8c2fa1d4e09b
+last_reviewed: 2026-05-10
+last_reviewed_against_hash: 8e22ea289b2522bfcd21c1a447056b79b5068d31485b4b4f86778ed226b0ff10
 status: current
 ---
 

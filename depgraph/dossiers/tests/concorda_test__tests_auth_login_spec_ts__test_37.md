@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 74d1821d81b8d460cc4c07ff49aef65183281c92f0922164c3c5ea75f12d73e4
-status: llm_drafted
+status: current
 ---
 
 # empty form shows validation

@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 1631bf347738b031a662aae92fd25a1162c0dd28f933a11aa3f55ac693c067d8
-status: llm_drafted
+status: current
 ---
 
 # adminEmailConfigApi.update

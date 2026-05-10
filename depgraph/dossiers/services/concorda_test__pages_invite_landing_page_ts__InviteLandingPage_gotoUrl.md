@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 4f54d140905d94eaf8172996c4f32b8f157978053409c3a520c976facdf9ccdc
-status: llm_drafted
+status: current
 ---
 
 # InviteLandingPage.gotoUrl

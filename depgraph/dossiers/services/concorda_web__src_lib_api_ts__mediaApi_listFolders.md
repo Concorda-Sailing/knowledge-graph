@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 70ba404ba969bcbfd6faf891ad58212ab9ecb85a0224c816fcceb269d76ce69b
-status: llm_drafted
+status: current
 ---
 
 # mediaApi.listFolders

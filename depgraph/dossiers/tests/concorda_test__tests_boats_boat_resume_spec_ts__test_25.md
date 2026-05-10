@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 19e8b2ace287336ada5d4cadf6e1a317898b20551e58579c4dd0dce350041e78
-status: llm_drafted
+status: current
 ---
 
 # boat profile section is accessible from Overview

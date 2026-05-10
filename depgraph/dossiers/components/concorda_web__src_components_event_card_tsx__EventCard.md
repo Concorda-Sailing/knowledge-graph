@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 9ee5f96e5fee5eb094d9db66fcd3c626d2516fbc77cdd7e5945ea473582b44e3
-status: llm_drafted
+status: current
 ---
 
 # EventCard

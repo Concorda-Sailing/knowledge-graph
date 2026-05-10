@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ae10d6e250d6f1da8a3f2c6e6011b11fda1f2442f7ede9bca85d0272dae6e3d3
-status: llm_drafted
+status: current
 ---
 
 # SMSConfigPage

@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 0f21d248956c14e7fb52ab3de258c7625e5cde1b691c52df997c0ddb77ead8e6
-status: llm_drafted
+status: current
 ---
 
 # BoatPhotos

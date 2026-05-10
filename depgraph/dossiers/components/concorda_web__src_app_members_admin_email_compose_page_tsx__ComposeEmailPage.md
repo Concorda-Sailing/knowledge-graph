@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 6d60b9bb3ed6650d8d18671e025b1d3147b142a8af4a1f870c11d661bda3d1d5
-status: llm_drafted
+status: current
 ---
 
 # ComposeEmailPage

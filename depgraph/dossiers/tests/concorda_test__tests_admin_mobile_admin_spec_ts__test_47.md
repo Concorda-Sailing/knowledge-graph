@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 80b38657f00b5edd6e6eab93b270159ca1b2a9a933911cfe3656a885b6a5d8ff
-status: llm_drafted
+status: current
 ---
 
 # users page still shows desktop table

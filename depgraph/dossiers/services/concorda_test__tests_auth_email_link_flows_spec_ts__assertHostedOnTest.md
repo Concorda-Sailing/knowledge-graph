@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: b053695937f95bac150250464f1d7e3140db6877520048f3119904eff848423c
-status: llm_drafted
+status: current
 ---
 
 # assertHostedOnTest

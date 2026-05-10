@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: f53ef92f1ea596ab82c327363ac34c610af6a6b045f08afa4f3053867fe2f3d7
-status: llm_drafted
+status: current
 ---
 
 # GET without a filter returns 400

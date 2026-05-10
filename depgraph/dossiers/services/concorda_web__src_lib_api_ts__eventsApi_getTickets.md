@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: d305895ed0e679d1f15a3d9d3c60f4bda0a0d04ddd3177a78afdd1632107365b
-status: llm_drafted
+status: current
 ---
 
 # eventsApi.getTickets

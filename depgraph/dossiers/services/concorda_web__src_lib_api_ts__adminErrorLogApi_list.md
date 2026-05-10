@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 3f0d0b1dac55e92c3d900acd471dc1418afdbece5b5d0a889ac4797c8226f839
-status: llm_drafted
+status: current
 ---
 
 # adminErrorLogApi.list

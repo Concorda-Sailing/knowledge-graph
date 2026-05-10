@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 37c226e7dfc47d309c0080d68c9ef34d0c32d7b18c14030bc65402520ac4f824
-status: llm_drafted
+status: current
 ---
 
 # Step

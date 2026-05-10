@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: d7300ba5d307e4ed26c70c7a74cb5e7c1751562b74287cb0b020e44a09f91861
-status: llm_drafted
+status: current
 ---
 
 # YearbookHeader

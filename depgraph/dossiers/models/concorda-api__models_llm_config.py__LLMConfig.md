@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8d99c301de9b30fb4c44442f9d086b8db62cde93990820a7d932f3b6c587e41c
-status: llm_drafted
+status: current
 ---
 
 # LLMConfig

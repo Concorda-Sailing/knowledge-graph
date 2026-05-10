@@ -4,7 +4,7 @@ node_kind: hook
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: c976e8f7033af9415cc266ec9a4713d4b3442d394acfbc98f679ee4e13726d9c
-status: llm_drafted
+status: current
 ---
 
 # useDashboardBadges

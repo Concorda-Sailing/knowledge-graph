@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: d5edee31d1a6b691b59b111c2273d272360d4298918d3df5ce1bfba1f832db82
-status: llm_drafted
+status: current
 ---
 
 # captain w/ peer EventCrew → no Crew pill, no request-to-crew avatars

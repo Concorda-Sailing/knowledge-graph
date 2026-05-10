@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 90233a92f730960197bc5fe47b62d295ffbf0a565ed48aa2071da885eb654a1c
-status: llm_drafted
+status: current
 ---
 
 # PUT /api/admin/notifications/config

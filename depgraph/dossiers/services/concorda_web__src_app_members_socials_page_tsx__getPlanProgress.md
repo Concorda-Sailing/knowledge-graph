@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 871b69b7873feb2e88d176d970a2b4ffdd4b733df5071d9c3ea723653e76f0bf
-status: llm_drafted
+status: current
 ---
 
 # getPlanProgress

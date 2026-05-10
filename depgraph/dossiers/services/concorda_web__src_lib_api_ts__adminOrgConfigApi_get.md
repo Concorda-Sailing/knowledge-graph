@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ee6bedb98664ce8212f2a10f7a278d52513fd3683876edc5d402699237e65b5a
-status: llm_drafted
+status: current
 ---
 
 # adminOrgConfigApi.get

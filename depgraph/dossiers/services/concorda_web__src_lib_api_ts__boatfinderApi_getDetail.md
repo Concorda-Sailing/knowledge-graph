@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: cd3726566a21cb09fb497f67926b975f98d443295eed4919025f3042221d400b
-status: llm_drafted
+status: current
 ---
 
 # boatfinderApi.getDetail

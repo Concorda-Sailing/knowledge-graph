@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 7799129de4846deb4a174e933206c4f88503941b5c88f5fc39124c4c6b354151
-status: llm_drafted
+status: current
 ---
 
 # POST /api/payments/create-intent

@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 079fb5ba203827af841dc1dcdf41adee24be843edcfdd7b5c8b094844ae51ce0
-status: llm_drafted
+status: current
 ---
 
 # ResetPasswordPage

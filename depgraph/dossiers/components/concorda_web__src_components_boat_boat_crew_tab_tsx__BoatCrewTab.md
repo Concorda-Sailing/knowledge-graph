@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 0fe52007a962f8c09068f781668440d4f17381e7bc6df26fc6b9be60ab2c98da
-status: llm_drafted
+status: current
 ---
 
 # BoatCrewTab

@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: d22201df3d6b4a9472dfa2f6816cf52ade60c1124284565cb15eebe4de922d09
-status: llm_drafted
+status: current
 ---
 
 # DELETE /api/profile/agent-tokens/{token_id}

@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 4249b4e5b24f54f4546de143f5a0bb1da6358fcec9d456f80c267685b05cfb0b
-status: llm_drafted
+status: current
 ---
 
 # organizationsApi.importCsv

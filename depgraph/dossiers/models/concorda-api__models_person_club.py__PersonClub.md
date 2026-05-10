@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 503fbca0f6ff30a6687c21f0ae00f7932c713b408a4e251f10a57b26dc59fd79
-status: llm_drafted
+status: current
 ---
 
 # PersonClub

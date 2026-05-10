@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e422f32acacfe39bcb749a4119a6ff3e04a6f07e71ddb1f2f2a6d2a5b73004a0
-status: llm_drafted
+status: current
 ---
 
 # ClubDialog

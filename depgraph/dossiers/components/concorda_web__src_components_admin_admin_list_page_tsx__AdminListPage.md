@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: bba44fd171d05f840e9d4703194f1a6df88bc573e653ec969d002d204422234e
-status: llm_drafted
+status: current
 ---
 
 # AdminListPage

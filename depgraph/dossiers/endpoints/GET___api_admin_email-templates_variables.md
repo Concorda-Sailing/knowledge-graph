@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 7c4610207e3b236af163326c912dfd49d01692fcb192d6e5173e0a0236dcf24f
-status: llm_drafted
+status: current
 ---
 
 # GET /api/admin/email-templates/variables

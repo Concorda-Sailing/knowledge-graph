@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 0b93b2b60da3f24233700ded66c1e5efe695ab5a6964e51e7b502a8da2664901
-status: llm_drafted
+status: current
 ---
 
 # Toaster

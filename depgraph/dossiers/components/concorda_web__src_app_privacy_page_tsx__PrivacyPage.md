@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e991c469b939b0b5ed21d8bb78ea881c5978529a8534d1982f1552d5e8ec5bba
-status: llm_drafted
+status: current
 ---
 
 # PrivacyPage

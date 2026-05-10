@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: d683812015997f6bc80bff143e038b03d8c65fc1117fc6c7b12337e86443d6da
-status: llm_drafted
+status: current
 ---
 
 # RegattaHelpDialog

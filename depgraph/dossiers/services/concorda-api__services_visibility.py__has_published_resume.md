@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: dbeb95c30647db5d115e070d8162fe71b00158a6a733a5bd24b0be4ff3605749
-status: llm_drafted
+status: current
 ---
 
 # has_published_resume

@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8cb5e9186b3e69e9d095879e57afb3041de2d5594955496023e2d51fffedea0e
-status: llm_drafted
+status: current
 ---
 
 # BoatCrewView

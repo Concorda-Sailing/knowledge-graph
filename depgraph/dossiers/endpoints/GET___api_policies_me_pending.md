@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 0e7725a832592d6f352fa4502e3c79fd2d7f70f2341aa91ef2c292253d5cd128
-status: llm_drafted
+status: current
 ---
 
 # GET /api/policies/me/pending

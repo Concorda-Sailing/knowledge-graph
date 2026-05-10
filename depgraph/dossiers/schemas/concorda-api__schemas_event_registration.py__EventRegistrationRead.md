@@ -4,7 +4,7 @@ node_kind: schema
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 3f8b4f876b433599a2ce99b156a7302710f63d450a1d5c0e941f986a4e803285
-status: llm_drafted
+status: current
 ---
 
 # EventRegistrationRead

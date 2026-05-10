@@ -4,7 +4,7 @@ node_kind: schema
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: d9f2ff106937061c68bcee048c89af72902d3ec5595b73284a35966f58a63768
-status: llm_drafted
+status: current
 ---
 
 # MerchandiseCreate

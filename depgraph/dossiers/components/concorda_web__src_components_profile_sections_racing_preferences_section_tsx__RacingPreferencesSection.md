@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: c22a75f33c5e151e975d8a5e7a777df14bd437721b2845e889f9c5d8c446cbb7
-status: llm_drafted
+status: current
 ---
 
 # RacingPreferencesSection

@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 675f3d438c4fb96ac14ccad00e982f0704819d45e6c95efbd082989e40c26d8d
-status: llm_drafted
+status: current
 ---
 
 # POST /api/boats/{boat_id}/crew/invite-batch

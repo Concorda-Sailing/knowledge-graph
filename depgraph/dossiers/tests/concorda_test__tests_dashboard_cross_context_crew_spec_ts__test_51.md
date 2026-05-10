@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 627bf4c62acb70e799949f2ea611c9bcb1f2f141856e099acbcac6e87853cb80
-status: llm_drafted
+status: current
 ---
 
 # crew member sees the race they were invited to in My Schedule

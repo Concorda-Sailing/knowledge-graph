@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 2224245fe728a01282aec4473f3f096be8659adf591792ccb698b2d76d745d01
-status: llm_drafted
+status: current
 ---
 
 # Badge

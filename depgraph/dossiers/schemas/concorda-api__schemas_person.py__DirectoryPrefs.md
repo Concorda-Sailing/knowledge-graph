@@ -4,7 +4,7 @@ node_kind: schema
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 32353720da54e7e0db2546f9330b235719ab7c41d9acf99e58e0b9300f4853de
-status: llm_drafted
+status: current
 ---
 
 # DirectoryPrefs

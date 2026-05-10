@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: aadfbedefceae431b24d435790eac951cf90b7f31dd3427618daeb2e4f31ec1a
-status: llm_drafted
+status: current
 ---
 
 # boatApi.coownerInvite

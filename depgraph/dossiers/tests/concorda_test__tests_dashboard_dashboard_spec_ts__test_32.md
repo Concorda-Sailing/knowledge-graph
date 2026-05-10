@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 322338dcd7a0017f9fe075f39ab62a65c436c56fa5ff942f299db64b2bf0e8cb
-status: llm_drafted
+status: current
 ---
 
 # member directory link navigates correctly

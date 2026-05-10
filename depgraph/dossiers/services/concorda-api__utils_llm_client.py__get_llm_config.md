@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8041df41ec0c31b62707fe828f98c45c3de2915ad8966aba28d5c9f012f9d8b7
-status: llm_drafted
+status: current
 ---
 
 # get_llm_config

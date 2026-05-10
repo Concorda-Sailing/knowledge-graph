@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 908fe062d8194f53aa628efbbaa481c260850dcd6eec1402ffd097d423a06b83
-status: llm_drafted
+status: current
 ---
 
 # InfoCard

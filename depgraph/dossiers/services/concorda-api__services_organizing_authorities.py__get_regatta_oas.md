@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 437c7bb3bf8ae904c055d95b727350321fee8401acedec2a5bfb1d8f1048c2ee
-status: llm_drafted
+status: current
 ---
 
 # get_regatta_oas

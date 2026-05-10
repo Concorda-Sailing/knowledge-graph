@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 1d2934138529d11568b6e4faeb6f40b79b9ff6f049bbf4eedc0931cd2262a912
-status: llm_drafted
+status: current
 ---
 
 # successful login redirects to dashboard

@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: d3ce6290759a8c657dcdde7db06e750e9670cd514f69e8b33057eacf07cb0485
-status: llm_drafted
+status: current
 ---
 
 # RegattaIntent

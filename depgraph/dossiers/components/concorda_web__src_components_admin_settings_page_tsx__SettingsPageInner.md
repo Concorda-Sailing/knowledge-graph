@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ba103e7d333cae8a01883df0f0ced268afb6ff8fbaeb4d181945d1be373c288b
-status: llm_drafted
+status: current
 ---
 
 # SettingsPageInner

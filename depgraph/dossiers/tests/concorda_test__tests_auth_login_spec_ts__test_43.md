@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 0912a19e6ac56302861c3cae616a643058645c15a1d05936b8d1fc4b30652638
-status: llm_drafted
+status: current
 ---
 
 # forgot password link navigates correctly

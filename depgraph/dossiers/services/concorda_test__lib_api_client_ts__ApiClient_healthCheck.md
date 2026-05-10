@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: b70f797b5c8f3f32a143ea9bfa78f42e47c3bef0ca6e7eb7b15a77bea33660b0
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.healthCheck

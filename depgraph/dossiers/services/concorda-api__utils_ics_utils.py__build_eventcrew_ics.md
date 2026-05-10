@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ceeeb30a19d99d8d25a0512769ced8fa30b10c4912f3f43dfed2aaa05fa441ab
-status: llm_drafted
+status: current
 ---
 
 # build_eventcrew_ics

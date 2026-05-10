@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 6750128a73496727c67585cfbc655c912ef9825c07b38c652ea572610cb89c9d
-status: llm_drafted
+status: current
 ---
 
 # event with logistics and crew set up → view mode

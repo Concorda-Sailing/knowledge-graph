@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 3d5ac66b174593f874c69b0f24662d8f37c65b5e4971e7ec67471c8745eb4f53
-status: llm_drafted
+status: current
 ---
 
 # GET /api/policies

@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 431477e097e721ccf70b46e16c9cb94582a9b65dda6669171f806c322372235a
-status: llm_drafted
+status: current
 ---
 
 # BoatPunchlist

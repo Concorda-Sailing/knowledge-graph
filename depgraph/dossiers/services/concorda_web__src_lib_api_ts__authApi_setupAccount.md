@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: a82b91306ab1ce0dd0c4fb2013ac231061545214278dc1086289dd534dff1df6
-status: llm_drafted
+status: current
 ---
 
 # authApi.setupAccount

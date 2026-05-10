@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 1d1d378b3e5accaf10041cf1e550abdab49231dbaeaeea165b09de72b8fe0bcf
-status: llm_drafted
+status: current
 ---
 
 # send_sms

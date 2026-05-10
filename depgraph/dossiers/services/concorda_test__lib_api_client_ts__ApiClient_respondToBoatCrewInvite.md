@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 21a3a2c6c8d011d06f5ccb5fa5dab2bd4059d7cfbb189914b5504326f20aba0f
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.respondToBoatCrewInvite

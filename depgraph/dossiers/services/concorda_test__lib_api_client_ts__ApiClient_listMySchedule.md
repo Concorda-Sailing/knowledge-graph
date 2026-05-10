@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: f1f89e1d52f0defae31c9e2427643c684527f70938c7d501106581caa5af195e
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.listMySchedule

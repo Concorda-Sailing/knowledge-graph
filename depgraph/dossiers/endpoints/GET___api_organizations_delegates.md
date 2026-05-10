@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 53d68f9de16b4f392e83b86460340fdcd3bce23076d218e4751a84db90d91a5a
-status: llm_drafted
+status: current
 ---
 
 # GET /api/organizations/delegates

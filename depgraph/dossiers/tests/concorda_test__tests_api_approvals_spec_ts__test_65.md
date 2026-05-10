@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 3460ccad328e4a69ed852dde2abc10a4b816e2867619ea0ad0f5c1347360552f
-status: llm_drafted
+status: current
 ---
 
 # create → list → vote approve flow finalizes as approved

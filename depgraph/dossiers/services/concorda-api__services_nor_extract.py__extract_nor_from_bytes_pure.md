@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 87061c6214adb2743a7ba54df74dd18d7bd8ea83001e059a9b0a6d1da53eb638
-status: llm_drafted
+status: current
 ---
 
 # extract_nor_from_bytes_pure

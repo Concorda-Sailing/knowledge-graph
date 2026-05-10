@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: fc216691216c580a3183c7980fa9c5c43fd0534f0134c07c183eaf94302ac24c
-status: llm_drafted
+status: current
 ---
 
 # user can pay $30 with Stripe test card and complete signup

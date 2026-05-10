@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 633ea35e112950caeb00c3edc18ec88fbee888719ede232115bba88971c993c1
-status: llm_drafted
+status: current
 ---
 
 # members-only event requires auth

@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 7c0497fec9bc1aee755c8bba77b7873623c60fd39f6f5c944c524b8e033a656f
-status: llm_drafted
+status: current
 ---
 
 # POST /api/temporal-products

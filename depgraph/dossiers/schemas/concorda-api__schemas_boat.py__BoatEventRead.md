@@ -4,7 +4,7 @@ node_kind: schema
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 1323241e8896b9d9b8f52c99b9df2205510f4e9d6bfadd9b850cd363195811e8
-status: llm_drafted
+status: current
 ---
 
 # BoatEventRead

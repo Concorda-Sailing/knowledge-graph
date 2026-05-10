@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 5a49c3532365e67bb95e52541e8d5714d4ba90e28fd0b1c016f77214556c01d1
-status: llm_drafted
+status: current
 ---
 
 # system settings page loads

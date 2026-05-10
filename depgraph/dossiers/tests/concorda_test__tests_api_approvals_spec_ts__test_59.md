@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 408422e2897fd62bbdf965b048bc80c6577edd3d343fe36ce88701f8cc335dd1
-status: llm_drafted
+status: current
 ---
 
 # lookup returns exists=false for unknown boat

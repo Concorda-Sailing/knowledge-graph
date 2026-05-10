@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 50ea3ad2e680a9710707ad4dff4fbe7751f157585e1f807a68941b2581265ba0
-status: llm_drafted
+status: current
 ---
 
 # AdminEventsPage.gotoRaces

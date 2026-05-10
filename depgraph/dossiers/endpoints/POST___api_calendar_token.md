@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8e8daae6456885b126e4175c383fa0b68ff4ad1f8d905b85bc7795af93f984db
-status: llm_drafted
+status: current
 ---
 
 # POST /api/calendar/token

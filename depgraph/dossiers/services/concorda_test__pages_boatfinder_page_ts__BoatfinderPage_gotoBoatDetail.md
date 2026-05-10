@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: cddd547f222ae9c1dac9b172db4e9167be798d27ab1c6d9a47006a22867d345a
-status: llm_drafted
+status: current
 ---
 
 # BoatfinderPage.gotoBoatDetail

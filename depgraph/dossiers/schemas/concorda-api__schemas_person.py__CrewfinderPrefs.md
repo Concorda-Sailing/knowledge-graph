@@ -4,7 +4,7 @@ node_kind: schema
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 3570996b57a083557b29d61548d7ce377d2502a6aa557d59c0ac4fc77229ec59
-status: llm_drafted
+status: current
 ---
 
 # CrewfinderPrefs

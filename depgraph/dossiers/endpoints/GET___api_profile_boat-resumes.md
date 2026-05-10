@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 3f7d7c492e16fa2328b6a784849b89d76589eb5d8671f3a024ce1422eab7b792
-status: llm_drafted
+status: current
 ---
 
 # GET /api/profile/boat-resumes

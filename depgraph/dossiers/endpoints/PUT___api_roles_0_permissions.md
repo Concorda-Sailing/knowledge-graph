@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: c1b4287c0c7299f72c5c43e140003c62a67cfa7ab460014e857c456fa702d425
-status: llm_drafted
+status: current
 ---
 
 # PUT /api/roles/{role_name}/permissions

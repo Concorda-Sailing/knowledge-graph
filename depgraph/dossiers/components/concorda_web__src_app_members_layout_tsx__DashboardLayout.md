@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: d3dc18efb6923f187f46100b7a1e7680a6f8e8436c26eaf01f26ca53697ed596
-status: llm_drafted
+status: current
 ---
 
 # DashboardLayout

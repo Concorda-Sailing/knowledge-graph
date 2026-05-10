@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8a643dd05bf3fd0a995b323a496d9057af7bdbdcedb9dc615c67977579b4bad5
-status: llm_drafted
+status: current
 ---
 
 # socialsApi.list

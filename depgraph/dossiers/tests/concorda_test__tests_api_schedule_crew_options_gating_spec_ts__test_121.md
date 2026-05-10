@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 48956be1df2d52db7ee97e377559e975d69d5acae1c0e1c43f48f3a587dc9b9d
-status: llm_drafted
+status: current
 ---
 
 # captain-mode bookmark hides crew_boats

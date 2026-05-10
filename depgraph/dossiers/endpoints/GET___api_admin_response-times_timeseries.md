@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 015676f4aef1448b51ef9b272860a836c457c2249f96c2ea80a86c5d390dc3ff
-status: llm_drafted
+status: current
 ---
 
 # GET /api/admin/response-times/timeseries

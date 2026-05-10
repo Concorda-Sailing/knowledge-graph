@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 0539379a43849f5b6def797f0706683205d11990d06f481c666ecf6df32f33d6
-status: llm_drafted
+status: current
 ---
 
 # can select ticket quantity

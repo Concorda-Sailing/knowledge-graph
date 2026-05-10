@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e27e850ad05fbaf5bd0ce637d51f82c7bd8fbfe13f70b7d2043ce07fe3bf74f3
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.rawRequest

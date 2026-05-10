@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: a3577c05345bdbaf2bb524dfa7ca623f493089a24ffcf629aeff844fcab3f73a
-status: llm_drafted
+status: current
 ---
 
 # LegacyEventRedirect

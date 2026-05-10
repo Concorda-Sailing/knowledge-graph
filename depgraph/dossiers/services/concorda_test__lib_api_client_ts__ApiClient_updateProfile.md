@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 388766abd0344d1c8a531e16e13202a286299bd7c43c93ca5dc567a365c53af3
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.updateProfile

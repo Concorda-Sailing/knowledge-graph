@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 337df289acf45e762e87d2641276d8293a354f190e3842cbd27ca177b1f92a7a
-status: llm_drafted
+status: current
 ---
 
 # VerifyEmailContent

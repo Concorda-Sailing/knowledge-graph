@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 836c0c5c2079e26016c499fe5ab947496f117de1cf10b69a125816a85bf2725b
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.verifyEmail

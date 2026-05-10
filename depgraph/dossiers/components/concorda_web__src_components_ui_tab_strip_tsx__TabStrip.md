@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 003cb77280592509f9bd55f32918dda895edf956516fd568bf4f08789a415d5b
-status: llm_drafted
+status: current
 ---
 
 # TabStrip

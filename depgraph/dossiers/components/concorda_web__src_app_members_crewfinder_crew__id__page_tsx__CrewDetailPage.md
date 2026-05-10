@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 0fc539784a9e442dae07c07742baf5cf86762502a8c4a99d602436ba1b60b20d
-status: llm_drafted
+status: current
 ---
 
 # CrewDetailPage

@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ac11a65611652975c0dc31cf448a6c114f0b26e23e36e6d68893782aa66e04d0
-status: llm_drafted
+status: current
 ---
 
 # ApplyDialog

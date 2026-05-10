@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 3bc717095f9171d471ad7123b9039a6170556b513b5a27ef0a0ff8e8b111b74d
-status: llm_drafted
+status: current
 ---
 
 # UrgentBanner

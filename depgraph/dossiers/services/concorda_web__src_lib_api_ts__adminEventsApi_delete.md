@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 670830ec8ee9ee8818b1c8ab9e825811ba2dcf829e37d993fa788cd35774b273
-status: llm_drafted
+status: current
 ---
 
 # adminEventsApi.delete

@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 458f91a6a7c59697f7065480a04e4225c056aab138a5698e7778435f8d7f8aa0
-status: llm_drafted
+status: current
 ---
 
 # HeroBanner

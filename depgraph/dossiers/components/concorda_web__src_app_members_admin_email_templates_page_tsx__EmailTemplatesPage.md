@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: f7e53a1425fdb9f2905347556e7341b70451877b8ec060621f48f6086befa55d
-status: llm_drafted
+status: current
 ---
 
 # EmailTemplatesPage

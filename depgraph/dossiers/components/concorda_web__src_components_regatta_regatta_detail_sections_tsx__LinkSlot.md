@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 55c889798702eb8d85dfa3138ec6dbcce88e460d20a2c227e901cfbd26898c77
-status: llm_drafted
+status: current
 ---
 
 # LinkSlot

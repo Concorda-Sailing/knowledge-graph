@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 7ec91b57a79241b68677db09e9db7f181dd3166af6f25d8307ec8378ca923613
-status: llm_drafted
+status: current
 ---
 
 # GET /api/roles/person/{person_id}/permissions

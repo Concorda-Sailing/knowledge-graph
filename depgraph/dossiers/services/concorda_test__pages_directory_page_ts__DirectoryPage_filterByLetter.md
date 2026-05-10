@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: f31b982dbc21ac6245a303761f49a537731955b9c3531e2f245270c905e2e28e
-status: llm_drafted
+status: current
 ---
 
 # DirectoryPage.filterByLetter

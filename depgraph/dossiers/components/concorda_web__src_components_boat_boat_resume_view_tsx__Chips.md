@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8b6fa62fdff1f30f4230596353da304365db914f94d61f7e0f1e443204a7299d
-status: llm_drafted
+status: current
 ---
 
 # Chips

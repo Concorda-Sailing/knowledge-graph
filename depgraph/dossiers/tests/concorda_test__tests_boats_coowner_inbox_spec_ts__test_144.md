@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 2272d1fb07b185a1720aef11d8ed15d2969f4003c5a32c4abd9c91f9b0fc0192
-status: llm_drafted
+status: current
 ---
 
 # inviter cancels an outgoing co-owner invite from the Inbox

@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 312abe5b574514539aa6b1bf080a214afb1138b5dc4dffe519cbbe8c4dbe236b
-status: llm_drafted
+status: current
 ---
 
 # ThemeProvider

@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 950ea3519a2c670625b57dc4ee053c47469c3767ddcc7fffdf92c09defa1ee46
-status: llm_drafted
+status: current
 ---
 
 # PUT /api/admin/org-config

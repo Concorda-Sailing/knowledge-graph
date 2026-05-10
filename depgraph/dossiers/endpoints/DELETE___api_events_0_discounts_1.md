@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 9b7ce6004499ecbece4397593f2ec81b1e1995420bb269b3ec6444d719fd2952
-status: llm_drafted
+status: current
 ---
 
 # DELETE /api/events/{event_id}/discounts/{discount_id}

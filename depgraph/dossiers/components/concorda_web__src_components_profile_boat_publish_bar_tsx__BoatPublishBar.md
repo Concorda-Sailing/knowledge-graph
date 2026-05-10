@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 6bf5e5c794295ed7d35138681adb437b07ffd22af13a33ff27272b83214b68af
-status: llm_drafted
+status: current
 ---
 
 # BoatPublishBar

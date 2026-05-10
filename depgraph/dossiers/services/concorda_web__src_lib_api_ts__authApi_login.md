@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 9863cc3d2eb5879e6ce1d3f1e7082cc649ec44d72a05ec014d3349b0caecfaf5
-status: llm_drafted
+status: current
 ---
 
 # authApi.login

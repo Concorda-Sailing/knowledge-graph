@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 5e5f58295d6fc0d8054d837dc7f33adcae62ef95a9fbd48efef13bf70e4ce918
-status: llm_drafted
+status: current
 ---
 
 # no horizontal overflow on profile tab

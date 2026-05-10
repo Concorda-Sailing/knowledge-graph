@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 6939c6706d4c37c0fe313df2b2ecef4da05b2662bf83a9108aaa8e89d1358b46
-status: llm_drafted
+status: current
 ---
 
 # add event button is present

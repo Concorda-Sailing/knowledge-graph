@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 194a0de3d4b5d75834a18056b94949009e4b075bb94b12f45a02e4f3f4051f80
-status: llm_drafted
+status: current
 ---
 
 # ResponseTimeDrilldown

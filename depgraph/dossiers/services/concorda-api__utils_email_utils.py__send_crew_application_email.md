@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 87ca6e1cd4cadac296569ca9f1f9103f0aae879d1c8e8074049bd2970a1b4823
-status: llm_drafted
+status: current
 ---
 
 # send_crew_application_email

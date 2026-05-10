@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 95123e019c3c3a6b5861653953e1746522b42279ba9016a84739b6a4a3cb4d33
-status: llm_drafted
+status: current
 ---
 
 # CrewfinderWidget

@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: b292a1772b442a63446886bd5f3ec68ccedcda45d115236d343aed3a85d63d0d
-status: llm_drafted
+status: current
 ---
 
 # get_owning_org_ids_for_regatta

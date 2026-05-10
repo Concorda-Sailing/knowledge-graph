@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 6989ba384d2a255b2162f6cef6bae5fec886b627e4d4f4686a3bc86e5e75a628
-status: llm_drafted
+status: current
 ---
 
 # ConfigForm

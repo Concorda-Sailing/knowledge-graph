@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 71731c1adc1acd4141d98852c2a5d8db5a6bab5e5b7e32d8c1524f85629c6e1f
-status: llm_drafted
+status: current
 ---
 
 # non-admin member sees "Access Denied" on /members/admin/users

@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: d2fc0aaf823ebd1cce8d4cf44710da23a02611c6d5da83f1f174e81cf778cd83
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.getPendingPolicies

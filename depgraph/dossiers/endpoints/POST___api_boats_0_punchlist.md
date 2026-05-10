@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 620e647e986a36b474a55324679fa2b6c358f820ccfca18c19d7ae8149b0ee16
-status: llm_drafted
+status: current
 ---
 
 # POST /api/boats/{boat_id}/punchlist

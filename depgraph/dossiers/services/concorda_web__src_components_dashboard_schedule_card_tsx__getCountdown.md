@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 5210dbf20416a49f5201d0ee2ae6d25a387aacfb09893b883a024758d397d0ab
-status: llm_drafted
+status: current
 ---
 
 # getCountdown

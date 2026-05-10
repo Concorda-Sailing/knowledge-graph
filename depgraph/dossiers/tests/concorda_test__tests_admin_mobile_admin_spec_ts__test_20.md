@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 0e3660fb9984812775fc09071ce826a224b9a214b7377629538b63f068e3c092
-status: llm_drafted
+status: current
 ---
 
 # admin dialog fits within viewport when opened

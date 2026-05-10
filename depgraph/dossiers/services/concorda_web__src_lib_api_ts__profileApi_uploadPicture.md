@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e14f0d66b0addad5e5c3ce9db3a41e92f2e1d5371910c6d9a4fdb6ea6b9e5e7d
-status: llm_drafted
+status: current
 ---
 
 # profileApi.uploadPicture

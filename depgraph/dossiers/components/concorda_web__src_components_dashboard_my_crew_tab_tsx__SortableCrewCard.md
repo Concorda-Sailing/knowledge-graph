@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: d7aea9213b5993fd34469bf1b568022b294dde3e62cc685bffe7c9b75790c31d
-status: llm_drafted
+status: current
 ---
 
 # SortableCrewCard

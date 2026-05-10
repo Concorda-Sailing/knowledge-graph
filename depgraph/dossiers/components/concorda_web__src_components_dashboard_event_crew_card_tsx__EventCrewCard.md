@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 05d526bc129f7740aea5b05841d155e8fa30bb80118923c52e0f7646784c78e3
-status: llm_drafted
+status: current
 ---
 
 # EventCrewCard

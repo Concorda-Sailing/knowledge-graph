@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: d49031cdc1f46aa4ee379f9ad9c958df53612ae867d153aa256a775358b5d63d
-status: llm_drafted
+status: current
 ---
 
 # GET /api/media/serve/{filename}

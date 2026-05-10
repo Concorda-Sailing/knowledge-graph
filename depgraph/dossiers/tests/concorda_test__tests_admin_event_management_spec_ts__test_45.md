@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8dbf551fcb400eb6a83a4b8daed49710602e395eeb3d71151da1a805d139d0bb
-status: llm_drafted
+status: current
 ---
 
 # add event button navigates to form

@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: dc232955b0ec6500ba3c7be14af012393377816b145ae350757ef09d79523a6a
-status: llm_drafted
+status: current
 ---
 
 # DELETE /api/admin/email-templates/{template_id}

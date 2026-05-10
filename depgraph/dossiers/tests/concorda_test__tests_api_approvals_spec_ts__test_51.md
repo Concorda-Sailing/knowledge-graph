@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ef87638fc0184d52e96ff9de43a03b24a600a1cfcd75bb7f955ab09dae129403
-status: llm_drafted
+status: current
 ---
 
 # lookup returns existing boat with owner list

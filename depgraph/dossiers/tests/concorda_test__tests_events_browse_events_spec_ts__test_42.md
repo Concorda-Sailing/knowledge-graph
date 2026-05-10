@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 2ea12ba3b7f2f77cab11c8c92cee3ddf24cec228e4afa7565a16239a1fa094bd
-status: llm_drafted
+status: current
 ---
 
 # member events page loads when authenticated

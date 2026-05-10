@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: fdf190f57bdbfa32cc485779b02ccb9944589704a6635a95361ca3241dbdf4b4
-status: llm_drafted
+status: current
 ---
 
 # InlineEditProvider

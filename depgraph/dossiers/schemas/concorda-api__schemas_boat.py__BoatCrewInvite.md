@@ -4,7 +4,7 @@ node_kind: schema
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 9aaf5d38e39e6ff47ea649d6bdc8d081bf0ab0957aa21575d86e383e197e9688
-status: llm_drafted
+status: current
 ---
 
 # BoatCrewInvite

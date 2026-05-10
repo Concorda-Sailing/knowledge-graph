@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: b7293e28e49f05b52af1a00e95031c283acf7173e94b524c264a4dea2d8ea5ab
-status: llm_drafted
+status: current
 ---
 
 # adminApi.getUser

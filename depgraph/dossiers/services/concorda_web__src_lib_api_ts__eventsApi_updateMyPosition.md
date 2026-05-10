@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 672506fca43f8a6dfb68fc585ea00066293dae9a8a2e036b591272f5916c85e6
-status: llm_drafted
+status: current
 ---
 
 # eventsApi.updateMyPosition

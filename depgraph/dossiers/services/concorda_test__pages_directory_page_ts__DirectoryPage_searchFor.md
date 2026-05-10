@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: a2f66769b36e72e978709b4bf5b7e49c8c6ff15e3c16465f3b5e77842ba3d84a
-status: llm_drafted
+status: current
 ---
 
 # DirectoryPage.searchFor

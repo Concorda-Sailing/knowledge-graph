@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 6b90ecf44f2467aa653dca1de62bf80fd0ebc4f96f45f6dd00eb91bec5f2ed11
-status: llm_drafted
+status: current
 ---
 
 # BoatsList

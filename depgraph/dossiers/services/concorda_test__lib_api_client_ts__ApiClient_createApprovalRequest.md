@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: cf4161273b5008a3528643d501a6ff12bf39c5e5108f09b006fae6fb038649a1
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.createApprovalRequest

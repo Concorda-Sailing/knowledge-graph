@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 256c58ab8c6cf0f041a0cdc47d59a14750abf2f3860cc8b240add7b5e772d141
-status: llm_drafted
+status: current
 ---
 
 # password change form has required fields

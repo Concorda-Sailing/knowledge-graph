@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 58b856dfdaa559ac5c503489ba23bb9920a2d5043bfbd0dad67dbb6c117171d1
-status: llm_drafted
+status: current
 ---
 
 # profileApi.deleteCrewPool

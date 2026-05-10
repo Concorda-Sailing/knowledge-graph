@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 81219251839f914ec8ada557edd2b431af42eb96e38f6c9bc5a943f347f1c7ac
-status: llm_drafted
+status: current
 ---
 
 # payment config has mode selector

@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 0e4252b50f6379bc8ce21f42854041378e5ccf9245aadeca7d0f752b8fcc08d3
-status: llm_drafted
+status: current
 ---
 
 # SailingExperienceSection

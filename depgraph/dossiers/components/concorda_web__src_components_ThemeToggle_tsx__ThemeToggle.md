@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e7307dbb0e3211bb8791d94bff927d50bfdc071dbb8600d7cd1fe95a3f220fbe
-status: llm_drafted
+status: current
 ---
 
 # ThemeToggle

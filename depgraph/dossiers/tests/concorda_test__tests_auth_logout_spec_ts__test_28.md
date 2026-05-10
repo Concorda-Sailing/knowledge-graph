@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 5e663ee3d9590e7b90d3070d6c3aa31a5ebd8f9bcc9e3edd1b4f525aba69ca4f
-status: llm_drafted
+status: current
 ---
 
 # accessing /members after logout redirects to login

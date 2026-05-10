@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 0d625c755565061abba9e90cfd4652d2f8e873e5523455f1cc8083517c0cbfad
-status: llm_drafted
+status: current
 ---
 
 # CoursesPage

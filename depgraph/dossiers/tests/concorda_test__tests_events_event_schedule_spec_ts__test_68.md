@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 1d18b5640b06028ed1a65cb1290499481d872033acab42511ddc0c0718b949e7
-status: llm_drafted
+status: current
 ---
 
 # fresh event with no plan and no crew → auto edit mode

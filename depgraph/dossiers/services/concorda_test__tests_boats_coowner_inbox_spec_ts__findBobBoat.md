@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: b77f8c46c062fa38d43bfe9e2cb32173d1567dc45d839801c9524c538014cef8
-status: llm_drafted
+status: current
 ---
 
 # findBobBoat

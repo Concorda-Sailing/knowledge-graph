@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: c6536c32f39eca61dfce5c1cc38264485817c94ac4afd1cba5dd0dddb99bc6a2
-status: llm_drafted
+status: current
 ---
 
 # DetailPageHeader

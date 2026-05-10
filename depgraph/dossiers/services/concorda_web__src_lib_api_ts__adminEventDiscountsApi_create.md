@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 3a3b2767cc9cf8d3827b213f4f7e4863bb1a1607350ae50e8684b939767abe86
-status: llm_drafted
+status: current
 ---
 
 # adminEventDiscountsApi.create

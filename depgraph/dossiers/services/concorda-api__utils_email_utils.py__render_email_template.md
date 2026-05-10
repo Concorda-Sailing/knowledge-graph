@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: cb852036d55d6d8017c45469a4136e243757fbbbc2dbd64a8a7c3f59670e989a
-status: llm_drafted
+status: current
 ---
 
 # render_email_template

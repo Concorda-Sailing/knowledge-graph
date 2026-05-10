@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: cfba604f8e4ec9c6425e99d2d2c1b4673c42407382394729c75ae9e21b461ec0
-status: llm_drafted
+status: current
 ---
 
 # calendarApi.status

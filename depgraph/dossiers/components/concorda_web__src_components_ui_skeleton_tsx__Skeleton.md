@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e5f316484541b75cf0f609e2a5b653df78c89fc3e03b29953fe69f72bf16fdb4
-status: llm_drafted
+status: current
 ---
 
 # Skeleton

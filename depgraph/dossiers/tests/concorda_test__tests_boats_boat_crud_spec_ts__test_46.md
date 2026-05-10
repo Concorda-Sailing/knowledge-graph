@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 12455fdfa505dfbd0e6b299ec3a3d1f11aa05b3907b6993a8c70c290d2932254
-status: llm_drafted
+status: current
 ---
 
 # add boat dialog opens

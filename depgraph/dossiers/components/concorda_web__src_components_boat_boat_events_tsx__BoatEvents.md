@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 7d26fce4dc45cc88c8e7b1fe57ee2bdf72928ff3ae03ac53146dee1b32fc078a
-status: llm_drafted
+status: current
 ---
 
 # BoatEvents

@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ab4cda0bb3009eca0c32e891fec74aa40a77ac865b507e6c70bdae5889cee3e7
-status: llm_drafted
+status: current
 ---
 
 # Dan is confirmed as co-owner of Test Breeze

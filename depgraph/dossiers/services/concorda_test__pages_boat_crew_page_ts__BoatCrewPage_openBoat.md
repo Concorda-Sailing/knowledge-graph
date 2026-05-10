@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 1e869b928a588d4f3d063eebb41bec1f049800db72cf0c8b6bceb64573313c96
-status: llm_drafted
+status: current
 ---
 
 # BoatCrewPage.openBoat

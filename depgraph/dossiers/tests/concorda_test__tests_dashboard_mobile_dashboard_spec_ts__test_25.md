@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 281cde5643f449421639a4b6d9c61ff94836b4580739ded437973c3b0e91c5c5
-status: llm_drafted
+status: current
 ---
 
 # pending invite banner renders above first upcoming event

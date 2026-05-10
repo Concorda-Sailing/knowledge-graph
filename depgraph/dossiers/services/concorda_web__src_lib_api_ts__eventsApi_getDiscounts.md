@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 152bf43581ab446abc59efdc959d92ffc0b48032549fdff47c39c7fe06065146
-status: llm_drafted
+status: current
 ---
 
 # eventsApi.getDiscounts

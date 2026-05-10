@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 959ae4356388d311b74d081d4e88753611f3d2576517e9e202735fc9b1f02f79
-status: llm_drafted
+status: current
 ---
 
 # BoatProfileTab

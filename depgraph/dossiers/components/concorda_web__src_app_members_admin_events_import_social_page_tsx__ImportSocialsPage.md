@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e4989b678ceb9f4043ccbfac3fb93ff9e960ddbd5ccb928a7e1deda5754f25f4
-status: llm_drafted
+status: current
 ---
 
 # ImportSocialsPage

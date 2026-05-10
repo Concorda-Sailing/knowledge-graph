@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 4b37526075fd52e2185ea9d41223d25608acab8426496a67fa92d0bd48836fc0
-status: llm_drafted
+status: current
 ---
 
 # shows published boats accepting crew

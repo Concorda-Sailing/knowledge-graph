@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 4098a1ac745bfdd2b87e13ab5876ebef9f2443668634e9150624f465d129df93
-status: llm_drafted
+status: current
 ---
 
 # can open change password dialog

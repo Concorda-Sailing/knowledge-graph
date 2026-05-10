@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 95a55282e85b9104c36b3aab541ae46d875ab4504e824d77f3f4006637879aac
-status: llm_drafted
+status: current
 ---
 
 # adminEventsApi.checkDuplicates

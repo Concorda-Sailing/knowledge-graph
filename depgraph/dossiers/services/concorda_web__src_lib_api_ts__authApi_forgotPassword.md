@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 5f740fbe998a3f49edeb92d670c8eed88190c833a9b6fb69dd4eac2e6baa160a
-status: llm_drafted
+status: current
 ---
 
 # authApi.forgotPassword

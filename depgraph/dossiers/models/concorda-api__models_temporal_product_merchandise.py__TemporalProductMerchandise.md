@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 4fd5662c88d6a18a65738508b0b43436b5546ccd2413d49b850ad19f5d84c8db
-status: llm_drafted
+status: current
 ---
 
 # TemporalProductMerchandise

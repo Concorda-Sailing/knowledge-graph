@@ -4,7 +4,7 @@ node_kind: schema
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 4d3ac54ad3c350f0cd9845d36aaf98c4226c315818c22f4cffb5d11337a01322
-status: llm_drafted
+status: current
 ---
 
 # CrewfinderProfileDetail

@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 3925994b616c4c84fe25f05d3ec4e9a7bb0a7f7566c162883de7c612d504780c
-status: llm_drafted
+status: current
 ---
 
 # authenticated user can request co-owner status from profile add-boat

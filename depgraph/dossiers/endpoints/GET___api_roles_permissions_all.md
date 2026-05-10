@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 3de148dc08d002dd7b478fc416a3969456c7ecec7cb90a244e5884167642c2d8
-status: llm_drafted
+status: current
 ---
 
 # GET /api/roles/permissions/all

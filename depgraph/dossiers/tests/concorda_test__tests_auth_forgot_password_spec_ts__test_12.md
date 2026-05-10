@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: a3b765ba9930fe75b683f35759a3e428a61b740c50d42613166dc4d282ad213a
-status: llm_drafted
+status: current
 ---
 
 # page loads with email input and submit button

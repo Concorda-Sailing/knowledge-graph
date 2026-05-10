@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 1ba3320d9eddacc1d17232df23477c84eb6ce543357465a7e80bf127a883d9b9
-status: llm_drafted
+status: current
 ---
 
 # finder link navigates to unified finder page

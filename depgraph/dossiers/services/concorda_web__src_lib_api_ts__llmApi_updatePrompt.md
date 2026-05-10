@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 5dbf6be856f0866f174d49432f7a34e2965e33c07a0d6068e411c8b39b42a921
-status: llm_drafted
+status: current
 ---
 
 # llmApi.updatePrompt

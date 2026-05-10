@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: f03a823733b94efd8dd049fd52b6055b3df42483736cbd8224fb358745b7a563
-status: llm_drafted
+status: current
 ---
 
 # send_crew_calendar_email

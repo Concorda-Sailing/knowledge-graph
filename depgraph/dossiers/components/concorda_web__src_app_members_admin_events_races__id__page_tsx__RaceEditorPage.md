@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 7566351a28c78ab30a9187a537186cb565e500d27895cc35b086c6dcb4fb5ed4
-status: llm_drafted
+status: current
 ---
 
 # RaceEditorPage

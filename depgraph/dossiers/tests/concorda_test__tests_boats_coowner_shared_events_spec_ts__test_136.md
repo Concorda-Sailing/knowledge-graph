@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 21ba6529c3d1713eee5f7427dced4b11099dd038cb7aa4ae2735720b7dcf956a
-status: llm_drafted
+status: current
 ---
 
 # regatta Bob attaches to Test Breeze appears on Dan's schedule

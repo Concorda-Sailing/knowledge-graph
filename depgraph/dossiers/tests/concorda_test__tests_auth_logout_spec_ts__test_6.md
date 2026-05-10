@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 73d17ddc8b22f14c0dd7088240e7c0cb8d54d3e58e04143ef8d2021235e4d86d
-status: llm_drafted
+status: current
 ---
 
 # logout clears auth and redirects to login

@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 355da980d584e7352d4e11e95206f7eb415c77164e6317ab9cd1f3bd5ce38602
-status: llm_drafted
+status: current
 ---
 
 # fetchApiUpload

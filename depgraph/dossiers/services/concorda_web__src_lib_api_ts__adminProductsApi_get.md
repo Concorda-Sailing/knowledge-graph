@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 2914235cb4004988782bb1c4e213d1de11c61776b4302fc44db4ca9eab20c1f6
-status: llm_drafted
+status: current
 ---
 
 # adminProductsApi.get

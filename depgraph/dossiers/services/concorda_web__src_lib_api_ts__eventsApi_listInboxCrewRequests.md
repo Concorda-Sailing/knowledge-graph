@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e825507568483a3080d59a3baa6e16b86fd081fa7b817cafcd3617c9fac6cd03
-status: llm_drafted
+status: current
 ---
 
 # eventsApi.listInboxCrewRequests

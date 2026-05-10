@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 3d72f571c412d6c9265b87cb0859cf4872d42357c9cb872a6f89c80871f329e8
-status: llm_drafted
+status: current
 ---
 
 # LoginPage.loginAndWait

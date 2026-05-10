@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: fb212f00faa14a605c11f122501a47ca02ddd4621b4a029d91fb8e96709e4364
-status: llm_drafted
+status: current
 ---
 
 # boat card shows relevant info

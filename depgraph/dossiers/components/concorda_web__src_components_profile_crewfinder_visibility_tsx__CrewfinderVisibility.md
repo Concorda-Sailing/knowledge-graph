@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ea06dd0619714b546708e12f426ec6778ba95ab62204e2a0795f1c4374dcbbe1
-status: llm_drafted
+status: current
 ---
 
 # CrewfinderVisibility

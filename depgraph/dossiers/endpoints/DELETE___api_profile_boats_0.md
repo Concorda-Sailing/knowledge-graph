@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 9590d605dc1f424dfe16ef7672325301b3c8725ec40fe5828f9fff613c28bd20
-status: llm_drafted
+status: current
 ---
 
 # DELETE /api/profile/boats/{boat_id}

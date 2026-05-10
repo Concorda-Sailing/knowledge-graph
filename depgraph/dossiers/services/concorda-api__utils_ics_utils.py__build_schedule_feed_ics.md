@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 370e1f3b60ae404c3d964b671e9205e67c8ed604c6f8e3a36a46e365389080fc
-status: llm_drafted
+status: current
 ---
 
 # build_schedule_feed_ics

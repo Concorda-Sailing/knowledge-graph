@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 3a031c275959efa63b4c450f5330cfdc09838f3775eda64587df07c59e497cd7
-status: llm_drafted
+status: current
 ---
 
 # PersonRegatta

@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ad71b1aadd7a754125a01351ac8646c7d3e692de95ca9bd0a92a9dee8c794653
-status: llm_drafted
+status: current
 ---
 
 # OutgoingApprovalRow

@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: d422614ae7234615bb39f82eb420047938bb2cb1a7e102b430e9bdac280634a8
-status: llm_drafted
+status: current
 ---
 
 # ProfilePage.goto

@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 56792b817df3c975457b7e5564b58e61e3c5ca71162f24d1257b1e911a0c8351
-status: llm_drafted
+status: current
 ---
 
 # MarkTable

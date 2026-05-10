@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 4f35940b99096ae7d219cc160c458b3a12049772b8ec3218d54318e86d6e513a
-status: llm_drafted
+status: current
 ---
 
 # SetupWizardPage.selectExperience

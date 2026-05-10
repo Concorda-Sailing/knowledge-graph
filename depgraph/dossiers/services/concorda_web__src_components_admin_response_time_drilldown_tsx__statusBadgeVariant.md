@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 833561c9428560286fca661644dbf64170e955c71d3c8acc03d892f42df6eccf
-status: llm_drafted
+status: current
 ---
 
 # statusBadgeVariant

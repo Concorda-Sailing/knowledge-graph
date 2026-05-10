@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 26f224cb6e6eb1d4c4ab9be546dd82df33a80ee118996e5600935601619478dc
-status: llm_drafted
+status: current
 ---
 
 # ForgotPasswordPageInner

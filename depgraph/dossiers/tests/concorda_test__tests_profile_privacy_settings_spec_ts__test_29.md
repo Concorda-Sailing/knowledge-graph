@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 5a7f4ce16c79757c925b79a7d16b4861fee0c1d357a68bf59299b9e87caa3492
-status: llm_drafted
+status: current
 ---
 
 # directory opt-in toggle is visible

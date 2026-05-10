@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 527cfb2e4d906137fedfffd05b255b06f47987f73700c4985612c30b74676007
-status: llm_drafted
+status: current
 ---
 
 # CrewManagementHelpDialog

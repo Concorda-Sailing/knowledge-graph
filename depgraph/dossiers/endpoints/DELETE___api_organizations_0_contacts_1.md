@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: bd414d4d4f07e9a1a59431ad435fa546967682c2e9eb630fcc91435f32a5f94d
-status: llm_drafted
+status: current
 ---
 
 # DELETE /api/organizations/{org_id}/contacts/{contact_role_id}

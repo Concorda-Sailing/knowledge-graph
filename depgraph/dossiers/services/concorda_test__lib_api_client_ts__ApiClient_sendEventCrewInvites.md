@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 0596346f7a2b088b4cf201afc68c097a030fe69befd2b0e98e583f8a1e486b2f
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.sendEventCrewInvites

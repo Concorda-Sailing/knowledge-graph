@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: dc768661570e3f800019554509c72ca6211568c27c955846d427056cb71dfa56
-status: llm_drafted
+status: current
 ---
 
 # organizationsApi.delete

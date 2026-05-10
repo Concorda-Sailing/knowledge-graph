@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 05a022324f53119d169e6b1a586abc9b8579817389855a9d0c5ad79320c0642b
-status: llm_drafted
+status: current
 ---
 
 # ImportRacesPage

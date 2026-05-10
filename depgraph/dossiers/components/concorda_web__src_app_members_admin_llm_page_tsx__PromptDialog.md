@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 373e5198181260a8c90848747633c560b31f1d014768d25b5bc0460349e0cf9c
-status: llm_drafted
+status: current
 ---
 
 # PromptDialog

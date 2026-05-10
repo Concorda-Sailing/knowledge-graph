@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ce0cb2462fddbc066688acd82883a55058c4755db9f6ef26e2da8bbc82f67cdb
-status: llm_drafted
+status: current
 ---
 
 # PUT /api/persons/{person_id}

@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 4c01df3e2b35e783615111ef132eccc7d1201ce1a5ffb732ce6b3d781588cb87
-status: llm_drafted
+status: current
 ---
 
 # BoatSpecsCard

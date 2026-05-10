@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: b5d69b4d0623acd5f277aff9c0b3b11267906b6f9b9d3bd490230d7a585e0d27
-status: llm_drafted
+status: current
 ---
 
 # SaveBar

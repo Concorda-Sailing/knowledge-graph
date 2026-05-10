@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 6fbefe6647b2a079dc7b8a0767f1b1c4b4abc6c98c1ba26cfa80e2d2af5ded58
-status: llm_drafted
+status: current
 ---
 
 # getResumeMissing

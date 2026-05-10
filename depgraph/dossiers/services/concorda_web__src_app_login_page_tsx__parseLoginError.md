@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 6c67f6c290ca83507265558cdd19b3f8c4140cebe5b151d9b47e392444ac32fc
-status: llm_drafted
+status: current
 ---
 
 # parseLoginError

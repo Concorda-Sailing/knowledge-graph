@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 7dedc444484e82d82c3d6d7c1e30cdd1e0cb9c690ddcfc255d26e8ec979d94a2
-status: llm_drafted
+status: current
 ---
 
 # adminApi.createUser

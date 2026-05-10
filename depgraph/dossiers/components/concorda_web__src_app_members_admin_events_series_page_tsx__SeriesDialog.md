@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: dccafd1e31523af0c188722adc3b40fe7db43e8de260a33e0f375e8f4292475e
-status: llm_drafted
+status: current
 ---
 
 # SeriesDialog

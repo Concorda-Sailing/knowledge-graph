@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 4cdbb0cb1288fb61129639238d526faac4b58e16e05c2d51357f026fa27994b4
-status: llm_drafted
+status: current
 ---
 
 # BoatCrewPage.openCrewTab

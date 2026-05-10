@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: da96fcd63d31d6a70038da529ca3e3bfb6a248ea71117e5bf81a99b3f8f3f57d
-status: llm_drafted
+status: current
 ---
 
 # RootPage

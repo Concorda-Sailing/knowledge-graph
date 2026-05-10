@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 6575fac495c93109afdc0994fce972526bc051adc940f0ef31c3901a413290ca
-status: llm_drafted
+status: current
 ---
 
 # SetupAccountContent

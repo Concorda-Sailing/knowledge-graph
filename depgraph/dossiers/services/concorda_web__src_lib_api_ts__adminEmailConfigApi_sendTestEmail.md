@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8bdfa943e1c391cb3f300f8b9532d0228899f18d82ff95bb03dce409fc2d2f36
-status: llm_drafted
+status: current
 ---
 
 # adminEmailConfigApi.sendTestEmail

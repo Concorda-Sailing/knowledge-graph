@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 3928e774bfc32171dc9c4cd2594ba5274f86cc678218e9f913f3e7d1f02ef908
-status: llm_drafted
+status: current
 ---
 
 # DashboardPage.selectTab

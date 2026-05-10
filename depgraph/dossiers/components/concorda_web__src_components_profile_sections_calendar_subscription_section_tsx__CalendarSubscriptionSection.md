@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8b5e5bb60fbd09b21a83d1b4c23e0cb9b520284899be6c81d477e6a57e665288
-status: llm_drafted
+status: current
 ---
 
 # CalendarSubscriptionSection

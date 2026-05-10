@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 6c2378df4a7cd2bc1cb391078ace0195eca81ff215b6973d80f83d45b55dc113
-status: llm_drafted
+status: current
 ---
 
 # getPayloadConfigFromPayload

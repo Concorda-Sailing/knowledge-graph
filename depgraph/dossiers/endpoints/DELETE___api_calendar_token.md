@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: fff85fd6c6495b3df5f1f882cfbdca7faeea0a9a9bafd876e68284f17d8d5977
-status: llm_drafted
+status: current
 ---
 
 # DELETE /api/calendar/token

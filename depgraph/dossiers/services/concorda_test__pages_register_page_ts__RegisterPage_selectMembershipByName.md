@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 665243556c28a878c5ee1c3a46913a59177231da65f691144b76fa2727c6550c
-status: llm_drafted
+status: current
 ---
 
 # RegisterPage.selectMembershipByName

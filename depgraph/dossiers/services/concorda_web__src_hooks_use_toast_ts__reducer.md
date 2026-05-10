@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: d4b10dbaa1b029d2a959aaa38a1de358a671ddb18f860afbf1e86a9ecff9dae6
-status: llm_drafted
+status: current
 ---
 
 # reducer

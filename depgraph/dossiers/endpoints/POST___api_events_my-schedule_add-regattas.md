@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 5d32a4313d9cb9cc9e512e1b6c6a5bca5ee18675c05c8a5a1860799b2e107e3f
-status: llm_drafted
+status: current
 ---
 
 # POST /api/events/my-schedule/add-regattas

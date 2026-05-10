@@ -4,7 +4,7 @@ node_kind: schema
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 4e5dfaf7acc1601c0066dc2c2f7b7e834be9e058ec506109b842cb91beee0682
-status: llm_drafted
+status: current
 ---
 
 # PersonDirectory

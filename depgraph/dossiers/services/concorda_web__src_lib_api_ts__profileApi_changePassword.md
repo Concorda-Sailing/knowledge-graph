@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 770a825dcdcb10a605622eb98ef5e2de5777ede7e918e7fab489cb532063ad85
-status: llm_drafted
+status: current
 ---
 
 # profileApi.changePassword

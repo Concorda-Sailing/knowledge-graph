@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 63fedecb79326a218bac0124a99d863525390f2f89c9d85e99152f67b06454cd
-status: llm_drafted
+status: current
 ---
 
 # publish toggle is visible on boat profile

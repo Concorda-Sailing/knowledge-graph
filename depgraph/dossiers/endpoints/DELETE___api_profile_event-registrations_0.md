@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 989300496f4a1a58491839e7d2f39312b0004c3ca3e7b6546cf5a066173199cc
-status: llm_drafted
+status: current
 ---
 
 # DELETE /api/profile/event-registrations/{registration_id}

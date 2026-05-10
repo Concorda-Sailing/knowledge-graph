@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: b4971571e5b3fa88d5bebc4611a4df3c39b0616213b34a5741dfec7464cedb7c
-status: llm_drafted
+status: current
 ---
 
 # directory page loads

@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 074be389324419235e10728940f7cff57238acb81cc158e46689661d8b36946f
-status: llm_drafted
+status: current
 ---
 
 # GET /api/profile/boats/{boat_id}/crew-pools

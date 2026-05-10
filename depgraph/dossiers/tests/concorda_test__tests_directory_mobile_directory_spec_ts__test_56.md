@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ef6390eddeba537b0ba49875c4ce4dada99ba63c612d277c14cb1f662f413737
-status: llm_drafted
+status: current
 ---
 
 # view toggle visible on desktop

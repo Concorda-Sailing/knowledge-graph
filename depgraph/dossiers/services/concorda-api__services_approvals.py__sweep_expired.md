@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 6c4a76f812b2e10170e9cb0ce47d73547e5864be9de6dd253ee8861b6919f978
-status: llm_drafted
+status: current
 ---
 
 # sweep_expired

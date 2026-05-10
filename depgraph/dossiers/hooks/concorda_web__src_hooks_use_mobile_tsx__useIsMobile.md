@@ -4,7 +4,7 @@ node_kind: hook
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8ae1bd66b21ef7b7a2ebba21233eb8c420f0f9e1bdde424ce668fcabde0be1c8
-status: llm_drafted
+status: current
 ---
 
 # useIsMobile

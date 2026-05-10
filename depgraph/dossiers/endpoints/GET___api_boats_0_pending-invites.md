@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 195370a56e54d6793188b720238a8fcc711a1ec82f1083d3f426c50401239c75
-status: llm_drafted
+status: current
 ---
 
 # GET /api/boats/{boat_id}/pending-invites

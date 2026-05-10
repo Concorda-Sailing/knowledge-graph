@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 70b1e6053855be8581572e3b364938efab552824749725e73f4ea4f24a7963ff
-status: llm_drafted
+status: current
 ---
 
 # DateField

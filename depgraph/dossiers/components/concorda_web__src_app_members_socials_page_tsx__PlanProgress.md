@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8a051ea8293512b5a443348be6d34c8c41036c086d886380e2476845dad78d8d
-status: llm_drafted
+status: current
 ---
 
 # PlanProgress

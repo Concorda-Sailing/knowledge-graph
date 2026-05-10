@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8bb03005b9f158cef65cd988224f2e975f31fe6e28adef2d7127eab65a6ffd3f
-status: llm_drafted
+status: current
 ---
 
 # getWsUrl

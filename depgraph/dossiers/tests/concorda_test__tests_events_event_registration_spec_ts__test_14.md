@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 4dc8c5b884791e00a0d84abedaa1c0c900c68e2320bc9860105d19525ab03a5f
-status: llm_drafted
+status: current
 ---
 
 # ticket options are displayed

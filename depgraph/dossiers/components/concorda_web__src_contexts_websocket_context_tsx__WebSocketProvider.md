@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 4737a1a4e6e7c8d05368323e0a2265a8bc8f416d7d979ca32b57a1b24a061c86
-status: llm_drafted
+status: current
 ---
 
 # WebSocketProvider

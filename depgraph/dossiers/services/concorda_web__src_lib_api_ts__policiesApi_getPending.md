@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e251a0880b7c624fa5317ef746d6d3ba3036092b090138d6a5e53d62b1ea978f
-status: llm_drafted
+status: current
 ---
 
 # policiesApi.getPending

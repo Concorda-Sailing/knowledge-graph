@@ -4,7 +4,7 @@ node_kind: schema
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: f1678833377fd6c62e33d2e1ab8311e23088ac1b7903836838fa39a7978d5c8e
-status: llm_drafted
+status: current
 ---
 
 # SailingResumeCreate

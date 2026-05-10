@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 88e3e6925e0de184fc22624735047ed3316f5ad50cb6abfb12839e75589ae332
-status: llm_drafted
+status: current
 ---
 
 # profileApi.uploadBanner

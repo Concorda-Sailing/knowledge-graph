@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 27e894b295d809935134c7e3a39e64a8b3fdc3e3e6a4ddcd197d8b4616cc8d40
-status: llm_drafted
+status: current
 ---
 
 # GET /api/profile/agent-tokens

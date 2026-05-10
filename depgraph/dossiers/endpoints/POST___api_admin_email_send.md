@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 72cd1f8f777b400f5268d097a9d9091aa2055cfc1b5ce22df1a998113e8789de
-status: llm_drafted
+status: current
 ---
 
 # POST /api/admin/email/send

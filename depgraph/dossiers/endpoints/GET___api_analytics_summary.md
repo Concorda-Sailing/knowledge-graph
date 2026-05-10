@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: f5fcb8e3fa86b2609d58ab9f2522828c689685584fb9fc01689376e659f87852
-status: llm_drafted
+status: current
 ---
 
 # GET /api/analytics/summary

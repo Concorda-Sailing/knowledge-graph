@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 4ee129b3233dc915bf0175fd644862347db0d6f7402127b63a66267d64a942ec
-status: llm_drafted
+status: current
 ---
 
 # aliceClient

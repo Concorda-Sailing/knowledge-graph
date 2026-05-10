@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 86f507cd7815eed7284722609c59a6cfafe1b6e99aeddf0a39edba3bc55893c6
-status: llm_drafted
+status: current
 ---
 
 # DELETE /api/profile/sailing-resume

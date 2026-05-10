@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 659ec22fd1d9f1c7f1b4f04d92553141879d60c9e5cd30a554d87d3361462026
-status: llm_drafted
+status: current
 ---
 
 # NotificationsPage.declineItem

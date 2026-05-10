@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 5acc578b7d63c11eb4b9276b699e696a4014020a2886e6e24bacc621ab136862
-status: llm_drafted
+status: current
 ---
 
 # forgot-password email is captured

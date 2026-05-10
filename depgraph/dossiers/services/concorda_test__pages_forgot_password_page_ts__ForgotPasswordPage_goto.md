@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 310c1682a9d17ae016714c9b5a85bdadf334754847d01b1153dcfd71359b512b
-status: llm_drafted
+status: current
 ---
 
 # ForgotPasswordPage.goto

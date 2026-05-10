@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: b0f0a7b49b018bf7c25d3a66cdc4d053843bb7e4e2a2a16180f2cbc5b5557832
-status: llm_drafted
+status: current
 ---
 
 # user can reset password via emailed link and log in with the new one

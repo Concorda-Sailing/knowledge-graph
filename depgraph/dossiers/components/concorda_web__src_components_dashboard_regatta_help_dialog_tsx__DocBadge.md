@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 7b6fc6a9db821e75c235a322716d58dc2c9b258799fa0760f7fe2fa8e01f8a0e
-status: llm_drafted
+status: current
 ---
 
 # DocBadge

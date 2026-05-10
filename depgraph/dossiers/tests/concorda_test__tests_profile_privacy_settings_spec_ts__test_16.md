@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 13554c3ca1bd5220d8de218e24f97698ecf31845238d61805547b0206265db69
-status: llm_drafted
+status: current
 ---
 
 # privacy section is accessible

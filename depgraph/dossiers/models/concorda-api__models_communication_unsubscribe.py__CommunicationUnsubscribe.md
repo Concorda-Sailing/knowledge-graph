@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: dee46e73d4491c9e4ac53ddde38f8c73ccb344c8f92e36d0a74e0764bd22e431
-status: llm_drafted
+status: current
 ---
 
 # CommunicationUnsubscribe

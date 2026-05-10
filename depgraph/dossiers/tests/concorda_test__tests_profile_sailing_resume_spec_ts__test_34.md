@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 5fa6b663680e8da19fe9a6e77f0ddb94eb1bd1172148159cc94ae7b474aa7ec7
-status: llm_drafted
+status: current
 ---
 
 # can view preferred positions

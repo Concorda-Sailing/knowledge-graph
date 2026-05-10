@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 37da3290c5ad3afef72c0a8e2a3c92c8643f04126f9dae2ec6dbb567ae8476be
-status: llm_drafted
+status: current
 ---
 
 # RaceAreaSelector

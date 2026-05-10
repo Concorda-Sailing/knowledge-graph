@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 6a88712070f438b9489e15160c379eee8ab82a67e7acf9d87a2d36e52c46e206
-status: llm_drafted
+status: current
 ---
 
 # adminNotificationConfigApi.testWhatsApp

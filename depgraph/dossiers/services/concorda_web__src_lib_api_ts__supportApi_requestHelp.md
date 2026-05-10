@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 653788645677d25726f9ce34ccaf5300a9c7c428ec688519ef9f78f3688aa2d2
-status: llm_drafted
+status: current
 ---
 
 # supportApi.requestHelp

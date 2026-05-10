@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 98ceee88c4de636d18ea8b012070eb22b140cc24d3223e66491e47ea31cb378f
-status: llm_drafted
+status: current
 ---
 
 # POST /api/auth/setup-account

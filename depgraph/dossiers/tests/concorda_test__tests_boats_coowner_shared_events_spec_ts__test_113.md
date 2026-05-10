@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 416d256481d18cceb44b8f306e8945b31800cc24092ccf02a6ecd3966679ef61
-status: llm_drafted
+status: current
 ---
 
 # custom event Bob creates on Test Breeze appears on Dan's schedule

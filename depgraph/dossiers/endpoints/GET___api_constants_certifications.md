@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e0ac0ac588d63749573ee579134afc60f34d13a74a31c7df749a793e3f25f103
-status: llm_drafted
+status: current
 ---
 
 # GET /api/constants/certifications

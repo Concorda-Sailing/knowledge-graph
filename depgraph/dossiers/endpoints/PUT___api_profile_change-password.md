@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: bf0d6fe77649a5541b9f65f8443008d05719b25eb1f17d44acba482031decfde
-status: llm_drafted
+status: current
 ---
 
 # PUT /api/profile/change-password

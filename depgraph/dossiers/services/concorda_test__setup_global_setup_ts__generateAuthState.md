@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: bca9b65442ce2f42d3cf24ce442eacabee7aea1fcb415e851d37b615482e1247
-status: llm_drafted
+status: current
 ---
 
 # generateAuthState

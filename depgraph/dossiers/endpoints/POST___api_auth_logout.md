@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 6e57876dd646cd2302d2baf56f9bd2e63f727d499e3793e91f313601606252b4
-status: llm_drafted
+status: current
 ---
 
 # POST /api/auth/logout

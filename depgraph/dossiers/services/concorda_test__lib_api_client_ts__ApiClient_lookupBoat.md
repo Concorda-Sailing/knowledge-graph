@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 1d28e9e1a158b7944ac7cd942712400b3d8adb74acee25f257dd780d9378487f
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.lookupBoat

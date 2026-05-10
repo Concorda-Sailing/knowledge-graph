@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 9371b7c7fe8dfaebf3be65ba44cfb47ff45683bbf58561d1192c19ccf2cc8d1f
-status: llm_drafted
+status: current
 ---
 
 # can click on boat to view detail

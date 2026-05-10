@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 7ab510930774dbc1ce386e4a8b58474918bd16f377366917cd9589cce80095f7
-status: llm_drafted
+status: current
 ---
 
 # InviteLandingPage.clickSignUp

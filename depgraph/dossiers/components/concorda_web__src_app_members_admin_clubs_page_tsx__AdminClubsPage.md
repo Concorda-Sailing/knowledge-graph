@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 817e642ec9d6132c98c5a0019243a02debd784eea0d36f5090abd02e9fd643c9
-status: llm_drafted
+status: current
 ---
 
 # AdminClubsPage

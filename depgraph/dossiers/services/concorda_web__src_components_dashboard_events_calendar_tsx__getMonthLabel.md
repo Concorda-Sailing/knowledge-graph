@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 5f59e64bd85ae86db212dd5efba4422774b5d590508177ec59fd582b08e51078
-status: llm_drafted
+status: current
 ---
 
 # getMonthLabel

@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: dc3a9cd9b1c9b3113f40fc7e075bf54f4a1354dd588c93c46c5e97b1d0586a14
-status: llm_drafted
+status: current
 ---
 
 # receiver accepts an incoming co-owner invite from the Inbox

@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 1f8e1f408ce5e0c7404ec98eb350ea93688fc537cba19bf124d92a8b4744a0f6
-status: llm_drafted
+status: current
 ---
 
 # POST /api/series/{series_id}/generate-races

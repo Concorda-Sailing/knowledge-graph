@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 9572d8836e9ca88fb97751b1be46d007e8e49255ed0e32fa58d46e7027f5d128
-status: llm_drafted
+status: current
 ---
 
 # FilterGroup

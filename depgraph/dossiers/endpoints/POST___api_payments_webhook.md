@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 2fa90658d01596ca80e1f50a1884729f55d60797da2ac756c57bfedfeda20ccb
-status: llm_drafted
+status: current
 ---
 
 # POST /api/payments/webhook

@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 92ce181bc372a3ae98d416f955f61338df6d38071b54f18a99b994bfee0be5de
-status: llm_drafted
+status: current
 ---
 
 # DELETE /api/admin/users/{user_id}

@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: f29aa5fddd3fd369929d6705dc144398bb9bf867e96ffc0a219776867dc4b27e
-status: llm_drafted
+status: current
 ---
 
 # ScheduleCard

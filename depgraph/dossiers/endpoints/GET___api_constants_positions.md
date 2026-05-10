@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ed5bd0f9d0483287f964c0e4b72ae08aec5d1362bedd4edc13783736a61e9ba7
-status: llm_drafted
+status: current
 ---
 
 # GET /api/constants/positions

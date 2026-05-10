@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 62a73d0585cac6accf1976d0a2c87cebc0f28349488d561572c1e4730d264e01
-status: llm_drafted
+status: current
 ---
 
 # DashboardPage

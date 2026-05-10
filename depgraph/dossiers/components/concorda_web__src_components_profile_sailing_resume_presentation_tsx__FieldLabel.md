@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 1ba508c1277b02618c06a2a1575de3660a3d3a585b650f7ca1190193f89f8113
-status: llm_drafted
+status: current
 ---
 
 # FieldLabel

@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8a925db0e90f5f5bb18c606938830782f78ad36a61c5b48f5561e43042d8f7ef
-status: llm_drafted
+status: current
 ---
 
 # getColor

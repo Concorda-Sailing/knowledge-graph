@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 9622fe65553e6ee3197146c103d60ee479a80fde24183c8565efff33b7e3bcdc
-status: llm_drafted
+status: current
 ---
 
 # attachListeners

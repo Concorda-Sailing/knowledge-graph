@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 00e94dc9ce95fed2319d64aa444856d16b27e37c45cc3ea64a515ea5765db9e4
-status: llm_drafted
+status: current
 ---
 
 # boatApi.addCrew

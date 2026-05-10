@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: fb535ded087068dc61526bb993c488d328686d29fd99db067c8b809a9ffb0155
-status: llm_drafted
+status: current
 ---
 
 # DELETE /api/profile/boats/{boat_id}/crew-pools/{pool_id}

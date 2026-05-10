@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: d339243ec7ebb980ad5d4b25cfa6310b679b7c89386c5f3f487e88d5ccfdffe5
-status: llm_drafted
+status: current
 ---
 
 # non-existent email shows error

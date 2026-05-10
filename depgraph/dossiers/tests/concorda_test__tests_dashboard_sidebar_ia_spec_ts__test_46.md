@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 65fbbfa765a83363bff0fad3eef8fa4968ee9af2ad818a66c678773163001464
-status: llm_drafted
+status: current
 ---
 
 # /members/crewfinder redirects to /members/finder?tab=crew

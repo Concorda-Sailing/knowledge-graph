@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 78e78317f885a7e20e031923236d27e8d1109454b38689a44ed8b0c4a4204f85
-status: llm_drafted
+status: current
 ---
 
 # JoinPage

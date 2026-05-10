@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: bf793d7dfaebfeb6090c40e75afabd2883b650dda97e954a0bb7127eb48a2914
-status: llm_drafted
+status: current
 ---
 
 # MyEventsList

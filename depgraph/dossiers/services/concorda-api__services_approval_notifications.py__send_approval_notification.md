@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 571ee2e8acaebab6165721a19fbe840aa57fdfb11d646eec04cf7c76de1a2837
-status: llm_drafted
+status: current
 ---
 
 # send_approval_notification

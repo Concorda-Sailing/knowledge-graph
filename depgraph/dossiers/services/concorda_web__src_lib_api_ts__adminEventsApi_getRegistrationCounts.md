@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 17472b0b80d7d45abe0e36e0fbba4c5fd889471014a606234a8682fbafd93fe5
-status: llm_drafted
+status: current
 ---
 
 # adminEventsApi.getRegistrationCounts

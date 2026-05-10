@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 91a31ba3a3e5f835efdb4e2e77ce45fe5ec68bb62d1cb252f0a106cddcc5b8bc
-status: llm_drafted
+status: current
 ---
 
 # BoatPositionsConfig

@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 61c46349d2d8b611de4b5708c72fade2312fb0c08fe5652773626614b11c51dc
-status: llm_drafted
+status: current
 ---
 
 # EventQRCode

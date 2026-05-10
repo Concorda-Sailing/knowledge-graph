@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 2371b5bee60c9457c36bf15f90c6ffe8e309fdae254c72b3a57ae6871399862d
-status: llm_drafted
+status: current
 ---
 
 # GET /api/skill.md

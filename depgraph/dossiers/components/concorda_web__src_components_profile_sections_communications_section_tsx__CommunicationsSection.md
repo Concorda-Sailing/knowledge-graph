@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: bf92bf77f201b055e4e1742e05382da87691104ce1981f07e881c71c99be9dc9
-status: llm_drafted
+status: current
 ---
 
 # CommunicationsSection

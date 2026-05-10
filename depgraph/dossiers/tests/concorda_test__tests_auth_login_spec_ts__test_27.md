@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 173c122401a4f0188795b0019ba5eabaac1f2d8f3bd49eeaa1152c96cf2a6e9d
-status: llm_drafted
+status: current
 ---
 
 # wrong password shows error

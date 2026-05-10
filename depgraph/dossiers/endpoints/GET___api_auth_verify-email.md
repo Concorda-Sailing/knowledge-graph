@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: d99060b70ca3fb3e71cadafbbba18b13759650f0afd3ac7b8c9482956514a198
-status: llm_drafted
+status: current
 ---
 
 # GET /api/auth/verify-email

@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: cd91f1939be71dece8c6e97901b69597df43cdb1e75db617206320230bdd2d2f
-status: llm_drafted
+status: current
 ---
 
 # readLog

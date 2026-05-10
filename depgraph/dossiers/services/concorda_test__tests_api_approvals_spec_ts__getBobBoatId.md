@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 6b06cb32933616baac1a19247e51f9c76a2d47162eb0eaaf00962ebd519ecd31
-status: llm_drafted
+status: current
 ---
 
 # getBobBoatId

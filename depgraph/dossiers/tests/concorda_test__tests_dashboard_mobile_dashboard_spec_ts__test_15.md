@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: c9abaf2251133d2ec258f17a2c57308ea91b0c509029f3093a4d6dccf2aad5c2
-status: llm_drafted
+status: current
 ---
 
 # dashboard tab list does not wrap at 375px

@@ -4,7 +4,7 @@ node_kind: schema
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 5cebfc6e5beccdda0effdb5a3188ddf5056be4081d6d119221986572c5cb6f04
-status: llm_drafted
+status: current
 ---
 
 # SocialMedia

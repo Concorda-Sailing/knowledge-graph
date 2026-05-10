@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 4c6fff5dc8a987ae6ad17ae1caeea2f83dcdca77c7ac2dff6dd5a6fd6d662162
-status: llm_drafted
+status: current
 ---
 
 # POST /api/profile/picture

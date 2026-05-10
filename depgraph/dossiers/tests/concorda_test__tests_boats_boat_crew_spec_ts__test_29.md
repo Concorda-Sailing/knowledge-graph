@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 45f6020cb1da94b560ba6c2c62d326fb63e8897e11d910325ecca24f82ce7110
-status: llm_drafted
+status: current
 ---
 
 # can open invite crew dialog

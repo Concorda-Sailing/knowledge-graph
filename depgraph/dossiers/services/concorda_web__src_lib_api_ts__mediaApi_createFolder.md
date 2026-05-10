@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 0cd3ffa8032f53e1b246f803cbf5920cf5d58889542b3f06ad7e2ba25cd96c31
-status: llm_drafted
+status: current
 ---
 
 # mediaApi.createFolder

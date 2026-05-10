@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 4a18189b1c7524f7a03b908635def540493082a36072f69b3b92fba4131d4994
-status: llm_drafted
+status: current
 ---
 
 # GET /api/admin/email-config

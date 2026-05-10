@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: c8e5faa9719175037c4019fa7ae4d0d41238c7e01bdc6318fc02f94bb16dddaa
-status: llm_drafted
+status: current
 ---
 
 # can edit name fields

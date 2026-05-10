@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: a063900bb29120aa7b0d31fd0c705844039a530e439fca33e3f17e08821201a3
-status: llm_drafted
+status: current
 ---
 
 # LoginPage

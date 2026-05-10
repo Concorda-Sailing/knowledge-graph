@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 0c751c30e223a8e81c4e150ec13b07ac4423929c175b3112e89482c48c449fb2
-status: llm_drafted
+status: current
 ---
 
 # GET /api/profile/crew

@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 73ee8f07506b2aa7ea69a2feb77a3202c21af99d9394a8efb5c98c8a08e2de68
-status: llm_drafted
+status: current
 ---
 
 # personas.alice

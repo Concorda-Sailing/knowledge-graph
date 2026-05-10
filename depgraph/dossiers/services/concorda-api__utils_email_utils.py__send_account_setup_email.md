@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: f4d3eba3645b0b7dcdfa6ee902ae9de7f94f6aa4ffef35c28a63a9e2addb10f0
-status: llm_drafted
+status: current
 ---
 
 # send_account_setup_email

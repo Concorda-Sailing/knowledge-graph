@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 6b546bbb4d8dec085dd6c920abf25c6d5c8dbe39615624e18b42611eea0e6d8e
-status: llm_drafted
+status: current
 ---
 
 # DELETE /api/temporal-products/{product_id}

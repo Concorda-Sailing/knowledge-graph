@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 7d848f7b0e98d555fb3b7266cfa10faf409d621ae2d103476f502ac5523eb43f
-status: llm_drafted
+status: current
 ---
 
 # send_boat_crew_invitation_email

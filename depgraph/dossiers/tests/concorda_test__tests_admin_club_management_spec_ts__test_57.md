@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 7d9502bdfc2a74e38104cc2056da0223ef7a77eb046b274295bed56aa8e49756
-status: llm_drafted
+status: current
 ---
 
 # can click on club to edit

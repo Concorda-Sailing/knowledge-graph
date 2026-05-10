@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 771e443a15de0706398187f0f0d7a06c34131f82aebbb32889573e73c1271150
-status: llm_drafted
+status: current
 ---
 
 # GET /api/profile/boats

@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 20e6a48dc6503b5db90b1aa54f1985f4ff1938f4e5843786ce1d60d63981a5fb
-status: llm_drafted
+status: current
 ---
 
 # unauthenticated GET returns 401

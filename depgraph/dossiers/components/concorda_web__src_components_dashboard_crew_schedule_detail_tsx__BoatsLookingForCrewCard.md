@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8a0c8fc6ad1ca3b6240c10514d6dc591544f99e9f78d78666927b2fb60b6a165
-status: llm_drafted
+status: current
 ---
 
 # BoatsLookingForCrewCard

@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 73cc571fc18c8a1164b737ad5cbbcd0c2bd1bfa31169cb46a48c780a5d23ece1
-status: llm_drafted
+status: current
 ---
 
 # EventRelationship

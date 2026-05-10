@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: bff3a49b545672de10ed9573d22c6c389729beca50c0491a399ea22c70f1af9b
-status: llm_drafted
+status: current
 ---
 
 # authApi.me

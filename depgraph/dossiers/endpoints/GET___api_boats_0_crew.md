@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 041637eedda227de0191bc7adbd7986a2003cf289babf1f4dad7da1e9563eb66
-status: llm_drafted
+status: current
 ---
 
 # GET /api/boats/{boat_id}/crew

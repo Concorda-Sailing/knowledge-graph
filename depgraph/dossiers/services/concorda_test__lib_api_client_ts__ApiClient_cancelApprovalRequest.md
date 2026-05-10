@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: fa63b032d0a55ee9fa044bed70295caab2a4246be889b993481eab7897798467
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.cancelApprovalRequest

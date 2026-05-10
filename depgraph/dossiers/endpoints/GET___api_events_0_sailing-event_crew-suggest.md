@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 52b98920b2108dfd1c4d5b1173271a6b92c40c45ea9de126a97a053702e24f70
-status: llm_drafted
+status: current
 ---
 
 # GET /api/events/{event_id}/sailing-event/crew-suggest

@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 7bfd8468a3a7b29cccff297f44792a7f9181723781520002add354a43b180b6a
-status: llm_drafted
+status: current
 ---
 
 # /members/boatfinder redirects to /members/finder?tab=boats

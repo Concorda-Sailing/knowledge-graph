@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 06f3e08cd9e88edc0e6ce8aaa6cdeffd5e933f8a5b99451bebe4a429a1c756a4
-status: llm_drafted
+status: current
 ---
 
 # compute_match_counts

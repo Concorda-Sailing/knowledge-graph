@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 334e36c2508979efa17ea84f9f363cf3153b30e70f8fdef1792bfc28776da227
-status: llm_drafted
+status: current
 ---
 
 # POST /api/regattas/check-duplicates

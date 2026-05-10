@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 17261c71d0ec3ec79d69a8322a4644c110b12e5f3e81e8d7ee04f5c1d02a9053
-status: llm_drafted
+status: current
 ---
 
 # submitting non-existent email still shows success (no information leak)

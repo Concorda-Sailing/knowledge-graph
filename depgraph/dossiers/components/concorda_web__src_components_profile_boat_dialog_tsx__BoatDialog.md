@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: cb04bbcfc02033802e347080602c7bde22aee9355ac0ab20baee6f48636bba3b
-status: llm_drafted
+status: current
 ---
 
 # BoatDialog

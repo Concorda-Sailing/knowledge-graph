@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 274a95513ec4101a35118dcc9be9d3c557f9c4fde3a36260fa76732cd3feb98b
-status: llm_drafted
+status: current
 ---
 
 # DELETE /api/events/{event_id}

@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: fe307c018c1ba1683ffffec4d9848d551ad05e8166cee7622d72e5da2ad1d000
-status: llm_drafted
+status: current
 ---
 
 # apply button opens dialog

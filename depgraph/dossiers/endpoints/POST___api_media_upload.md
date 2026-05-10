@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8f40766e6c53fed9b82262076344f3e25f7e7274c697b17918f9a78f40a8092e
-status: llm_drafted
+status: current
 ---
 
 # POST /api/media/upload

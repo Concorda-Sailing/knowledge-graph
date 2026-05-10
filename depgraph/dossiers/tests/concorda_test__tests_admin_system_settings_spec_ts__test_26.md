@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: b2c1d5443653ec08efa62f93f6b246b8fee1f9e1b431f8c41f00964ca42e0589
-status: llm_drafted
+status: current
 ---
 
 # can edit and save org name

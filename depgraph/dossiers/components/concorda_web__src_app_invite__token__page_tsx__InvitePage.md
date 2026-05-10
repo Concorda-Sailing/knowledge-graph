@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: c5a6b0f838b804444ab086ddb5a4f9a0e8c5cde9de3035298a0f7de1689dd65b
-status: llm_drafted
+status: current
 ---
 
 # InvitePage

@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: c965d5aa3675773bb5a353bc14cb98b7090e889c88b73f932aad8689d94b924c
-status: llm_drafted
+status: current
 ---
 
 # bucketSizeForHours

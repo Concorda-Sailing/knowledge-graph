@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ed46bb982de20de1f57f11a2f6556bf96020da62cad328f65971371307d55407
-status: llm_drafted
+status: current
 ---
 
 # NotificationsPage.itemFor

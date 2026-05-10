@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 1ae5d11eb2b1d6a24c1b6ef9b6c884fde01a3fd95f3e6e565e5a5e3a310dca55
-status: llm_drafted
+status: current
 ---
 
 # PUT /api/profile/boats/{boat_id}/crew-pools/{pool_id}

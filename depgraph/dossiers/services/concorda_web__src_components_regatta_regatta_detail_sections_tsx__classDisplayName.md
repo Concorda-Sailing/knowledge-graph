@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 47f46d2f805c1a17189bccd0543a8eafefd1269a72ba6ce14ca9bd15f176293f
-status: llm_drafted
+status: current
 ---
 
 # classDisplayName

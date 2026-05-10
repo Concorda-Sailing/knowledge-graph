@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: c16e17b15cc975bd2829e4584bf73fbfe5591e3347d50b9056ad2b8dac9ac7d0
-status: llm_drafted
+status: current
 ---
 
 # CrewfinderPage.goto

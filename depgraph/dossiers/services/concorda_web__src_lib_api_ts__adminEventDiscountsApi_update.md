@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 6aa2fd294d679cd559ec1ae01b8be4ec53aae27b1c0efc6ad29c6e91baa26a20
-status: llm_drafted
+status: current
 ---
 
 # adminEventDiscountsApi.update

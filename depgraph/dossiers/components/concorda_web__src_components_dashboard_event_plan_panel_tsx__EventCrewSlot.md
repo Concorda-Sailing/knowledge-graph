@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8db715698df58f357b764a51374641a7992000b77bcb5b933390c2d6e2559720
-status: llm_drafted
+status: current
 ---
 
 # EventCrewSlot

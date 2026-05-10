@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 9cf07487a877d7906ddf99717b2f65ab27c894e3c6453bea14112c67849113d0
-status: llm_drafted
+status: current
 ---
 
 # owner can reject an incoming request with a reason

@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 6ac37cefe63f1e9910fc18893a087e1fc5c8ed4b00918ce36de3387075808a28
-status: llm_drafted
+status: current
 ---
 
 # GET /api/events/slug/{slug}/confirmation

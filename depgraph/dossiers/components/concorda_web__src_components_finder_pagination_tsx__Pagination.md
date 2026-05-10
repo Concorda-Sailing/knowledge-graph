@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 6adc8ee7ed07fec030a0c7a5f6313f50fe095a8ee36d30d362db3af00bd056a0
-status: llm_drafted
+status: current
 ---
 
 # Pagination

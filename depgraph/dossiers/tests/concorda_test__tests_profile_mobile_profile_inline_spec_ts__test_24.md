@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: a434c196879e2f99662bb29bf3844e98873a9f4495a321ed916ecae781113440
-status: llm_drafted
+status: current
 ---
 
 # personal info edit toggle works; save row stacks

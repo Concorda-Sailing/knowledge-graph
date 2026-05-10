@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: d135cebd787720e118c5b242009309f4ac65f0f69adfaebeb10e22acd788f395
-status: llm_drafted
+status: current
 ---
 
 # ClubAutocompleteInput

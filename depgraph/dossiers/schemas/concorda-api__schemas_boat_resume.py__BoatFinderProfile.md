@@ -4,7 +4,7 @@ node_kind: schema
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 017628cb9ac2b34ccdb7497d1f3ef11cef94db4c87812cb2b019e644efee47f3
-status: llm_drafted
+status: current
 ---
 
 # BoatFinderProfile

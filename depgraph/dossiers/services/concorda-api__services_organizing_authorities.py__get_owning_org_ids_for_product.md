@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 3c9dbafbf4e000cfa564d520afc40bf7e84cc7390a7e29ee311cd361f98cda73
-status: llm_drafted
+status: current
 ---
 
 # get_owning_org_ids_for_product

@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: a4465406ad3c5aa8c85298d2d8597ebc46c7225b87418ee90a469b733c912534
-status: llm_drafted
+status: current
 ---
 
 # boatApi.inviteCrew

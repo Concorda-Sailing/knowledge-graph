@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: c251edcae0ba3a98c25c394db077a116cb7942b78e41e5379cce8fa38d67ba69
-status: llm_drafted
+status: current
 ---
 
 # Dash

@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 74ef895ce04b4c2a3acf2ea4f0902a3fef4e7a268dd3b9b7bd00eadc1e4418a3
-status: llm_drafted
+status: current
 ---
 
 # adminEmailConfigApi.sendBulk

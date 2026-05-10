@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 74b810e398b537b969b860718764049b10b2cabc81abc44a2f17cba336b421ac
-status: llm_drafted
+status: current
 ---
 
 # POST /api/boats/{boat_id}/share-invite

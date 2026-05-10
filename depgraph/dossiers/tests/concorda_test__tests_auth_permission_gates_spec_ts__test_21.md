@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 0d9bebb63ef2878a886c8c11fdf0953675a4ede70f6e325ca4453d4fb0eb8bfc
-status: llm_drafted
+status: current
 ---
 
 # unauthenticated visit to /members redirects to /login

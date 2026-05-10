@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 85deb7d808a1f6b33c8ee4d8ded2d81a2c00ae118f38440f6c101f868e063aff
-status: llm_drafted
+status: current
 ---
 
 # decline link flips EventCrew status to declined and does not touch BoatCrew

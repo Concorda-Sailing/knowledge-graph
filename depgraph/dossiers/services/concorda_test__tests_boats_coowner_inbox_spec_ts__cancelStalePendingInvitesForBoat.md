@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 527591ab2d3aa2c51e6963b66b8a3359ce9796a2dc0af453d7efdb58c92a5f02
-status: llm_drafted
+status: current
 ---
 
 # cancelStalePendingInvitesForBoat

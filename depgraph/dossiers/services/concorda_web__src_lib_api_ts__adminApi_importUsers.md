@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 7b863d5a8b4c02b54c6dbce536aeba7a37eb30207e5396292b7076a727cd5754
-status: llm_drafted
+status: current
 ---
 
 # adminApi.importUsers

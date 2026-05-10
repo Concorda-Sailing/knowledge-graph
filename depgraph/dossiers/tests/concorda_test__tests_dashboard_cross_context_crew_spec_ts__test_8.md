@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 23d29fbe44ce6fd8bcd218d99debf993da17408b23d7c2b5b08ebaea302807b8
-status: llm_drafted
+status: current
 ---
 
 # crew member sees the boat owner's boat in Boats tab

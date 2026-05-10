@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: c3a677f54423df83a998146b01ef3ebd3002b0c5c0f207b9bcad9a19ce2be6a7
-status: llm_drafted
+status: current
 ---
 
 # eventsApi.removeScheduleSeries

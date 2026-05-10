@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 3cd6fe5e0f4464f9c58fd6c68777c7d40b69db709087b38c50279d9b761875a9
-status: llm_drafted
+status: current
 ---
 
 # POST /api/auth/forgot-password

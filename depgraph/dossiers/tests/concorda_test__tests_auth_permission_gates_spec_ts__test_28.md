@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8ddb02e96bf9501372dcf43f372cfe211c4abe8a360f5cdce6430f9af925baa8
-status: llm_drafted
+status: current
 ---
 
 # unauthenticated visit to a deep member route redirects to /login

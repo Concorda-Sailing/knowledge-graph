@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 9e338643deee042293dd5f9bb778fe8d8749fde4d8d95585faf55866f4395456
-status: llm_drafted
+status: current
 ---
 
 # can create a punchlist item

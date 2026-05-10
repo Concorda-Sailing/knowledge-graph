@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 7e12fbaf73d691283ac90445adf11cf00b207bde1c6070209852d4ae46c35419
-status: llm_drafted
+status: current
 ---
 
 # PATCH /api/policies/admin/versions/{contract_uuid}

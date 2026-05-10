@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 668e6a17624c91b1a3556b8b2601a3c0aeb1aa07b9e39c4fd37891c23f0df185
-status: llm_drafted
+status: current
 ---
 
 # dispatch

@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 3d4005e0ab7b24d6a49ffe691799bfe3a095138346bce48b899d50711fa48281
-status: llm_drafted
+status: current
 ---
 
 # POST /api/admin/notifications/test-whatsapp

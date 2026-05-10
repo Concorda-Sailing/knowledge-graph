@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 51a9cb40b54a43016d81ee2089dccf64c550f4ea1eb5061692cfa27641269c76
-status: llm_drafted
+status: current
 ---
 
 # POST /api/events/{event_id}/sailing-event/crew-confirm

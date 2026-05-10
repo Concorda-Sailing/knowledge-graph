@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e2d2c49f194d4400ef0ce1976e863b5a9d74ada99449c4d096f798c4ce89f3ab
-status: llm_drafted
+status: current
 ---
 
 # dashboard loads with sidebar navigation

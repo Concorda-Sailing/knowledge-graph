@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 5116e73d60dcb1ff78c76a885caf8d0a4809f432f300f1b95c30d894eb0a4206
-status: llm_drafted
+status: current
 ---
 
 # admin can deactivate and reactivate a member; login follows

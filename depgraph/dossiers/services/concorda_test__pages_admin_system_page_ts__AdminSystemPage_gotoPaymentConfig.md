@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 0b792dae3d9e913142018f67719548997e73de176d0e9521272dc08138ab444d
-status: llm_drafted
+status: current
 ---
 
 # AdminSystemPage.gotoPaymentConfig

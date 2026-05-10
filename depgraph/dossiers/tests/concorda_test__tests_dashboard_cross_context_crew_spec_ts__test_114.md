@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 233f5c435859715875402b73b6c3a4537c5c12e985259bc3837fb1e5aeb7dc78
-status: llm_drafted
+status: current
 ---
 
 # crew member sees one schedule card with logistics, and detail page shows Sailing with

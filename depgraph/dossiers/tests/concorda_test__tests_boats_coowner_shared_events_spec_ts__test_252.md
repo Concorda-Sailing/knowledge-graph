@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 7f9d028a4a3e37162b64c32b7dbd4c48d502ad86e97911bfc12e6ca74a42edde
-status: llm_drafted
+status: current
 ---
 
 # Bob modifies the event; the change is visible to Dan

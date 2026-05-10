@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e893744f371b18c94afab235b5d76d56d5bf243110209efd7479be39c35ab62d
-status: llm_drafted
+status: current
 ---
 
 # RegattaDetailPanel

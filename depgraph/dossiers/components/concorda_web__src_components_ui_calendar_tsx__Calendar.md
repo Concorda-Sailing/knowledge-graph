@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e3bc07c1480f65744a46a2bb56401fac9722159f6af15e9704e5efb80040c7be
-status: llm_drafted
+status: current
 ---
 
 # Calendar

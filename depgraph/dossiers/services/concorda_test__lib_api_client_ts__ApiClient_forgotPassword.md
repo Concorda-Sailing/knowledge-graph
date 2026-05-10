@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 19ee53cd7b24fca18d074b567ee8ab313a17d8f0dbf070211674267181903ed3
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.forgotPassword

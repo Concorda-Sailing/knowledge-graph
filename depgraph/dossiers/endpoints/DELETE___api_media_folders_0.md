@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e7d1ba0c9ac3d6bde2c8152333517f4ed8297d75213534f98eeb7605f98e8bbc
-status: llm_drafted
+status: current
 ---
 
 # DELETE /api/media/folders/{folder_id}

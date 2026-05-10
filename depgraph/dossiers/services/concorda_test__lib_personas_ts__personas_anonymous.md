@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ca0b6b9cbd091d8d5e4e1dac90c266ed01c3416dc5f45dbf61d6c0c2a8788ccd
-status: llm_drafted
+status: current
 ---
 
 # personas.anonymous

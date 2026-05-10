@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 9537cfbd7d478981fb53e0484f4b875e8f855aec6a0b41f7f2ba2ca747e460d0
-status: llm_drafted
+status: current
 ---
 
 # GET /api/constants/experience-levels

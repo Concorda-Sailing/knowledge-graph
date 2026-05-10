@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: aa8df8232056a54c011f9ef86c8daf499576e7cd008aefd8cbed50433e2b92ea
-status: llm_drafted
+status: current
 ---
 
 # boatApi.reorderCrew

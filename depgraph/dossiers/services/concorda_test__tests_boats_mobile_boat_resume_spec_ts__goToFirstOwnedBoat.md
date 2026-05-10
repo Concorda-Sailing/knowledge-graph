@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 5862447b98e549b63f554533a35eba6b1bea4d01e0c6297c47095b1ea5dfd36c
-status: llm_drafted
+status: current
 ---
 
 # goToFirstOwnedBoat

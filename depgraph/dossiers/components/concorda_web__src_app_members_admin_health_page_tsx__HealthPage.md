@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 59f489507006c188272603b7c54452fe55f1202e8622f37f5e0f75ec606c1927
-status: llm_drafted
+status: current
 ---
 
 # HealthPage

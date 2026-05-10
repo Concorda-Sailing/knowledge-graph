@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8a500b688dde8535703b144d94c2344fc796446801d73bb3ac95c1fee4e6f86b
-status: llm_drafted
+status: current
 ---
 
 # DELETE /api/profile/boats/{boat_id}/picture

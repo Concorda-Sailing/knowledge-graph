@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: fee9c868c93912f78b33d753250aa1e66a3e023315ed79434d390fcfab0212ac
-status: llm_drafted
+status: current
 ---
 
 # clicking My Profile tab loads profile content

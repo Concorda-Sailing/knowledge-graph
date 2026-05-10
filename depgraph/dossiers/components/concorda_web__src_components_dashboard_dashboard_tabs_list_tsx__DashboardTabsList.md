@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 36676f7648d8a410bbf4df5c7ef1fbdc0d743f196325905fa3a66776cc66844f
-status: llm_drafted
+status: current
 ---
 
 # DashboardTabsList

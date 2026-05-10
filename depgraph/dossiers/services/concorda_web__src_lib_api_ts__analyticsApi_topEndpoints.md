@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 52c43a774e89887ee76818c95ed7f3ac486cdd5d8d7e568dec5dff6053b8b7af
-status: llm_drafted
+status: current
 ---
 
 # analyticsApi.topEndpoints

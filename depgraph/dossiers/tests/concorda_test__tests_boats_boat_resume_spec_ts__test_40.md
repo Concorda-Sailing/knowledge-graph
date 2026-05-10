@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: fde878b70cad169b32b9c4c8b101b03e1c8569de5f0d4eedafa1cc79f7c6c976
-status: llm_drafted
+status: current
 ---
 
 # can edit boat resume about field

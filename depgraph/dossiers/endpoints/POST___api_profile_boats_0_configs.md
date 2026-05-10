@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 698f356a910dbd24e6c46674b4b21e65cbb13ce07b61de34e41d11496208672d
-status: llm_drafted
+status: current
 ---
 
 # POST /api/profile/boats/{boat_id}/configs

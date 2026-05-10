@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 82faeb774e0029fb68d0af05ad2e912c988b41bbe3b9c415f0daa4731ad6bf10
-status: llm_drafted
+status: current
 ---
 
 # SetupPage

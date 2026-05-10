@@ -4,7 +4,7 @@ node_kind: schema
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 62fb829117d2548ab87128fe0414cbeb8a6f2fe47ffbe28f539bd06dd387faee
-status: llm_drafted
+status: current
 ---
 
 # RosterBoat

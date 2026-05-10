@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e8eebef3a03cf06744def06d649e8b9efe4f82357762e1c249e504b647572e67
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.listRegattas

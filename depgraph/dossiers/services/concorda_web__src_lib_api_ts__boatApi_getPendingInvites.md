@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 1c1e7d87a0d2f95c48dcd5bf23932b55a31ce5b99d88e4a6b93bf377ad57f211
-status: llm_drafted
+status: current
 ---
 
 # boatApi.getPendingInvites

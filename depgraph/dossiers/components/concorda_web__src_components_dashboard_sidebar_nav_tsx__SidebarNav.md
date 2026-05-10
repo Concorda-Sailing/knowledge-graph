@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 3f50e51adc1e36b993f4626fc179dfa3320744a4ba778a818d7d2a4e9c882cb3
-status: llm_drafted
+status: current
 ---
 
 # SidebarNav

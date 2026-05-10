@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: b5ee1393d829992bd2e601a4abaea1ff51fa07276fbe24f7a8f1bcc8b7bbbee2
-status: llm_drafted
+status: current
 ---
 
 # can edit phone number

@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 31ab76ad571e7a08bd2df7c93bcda4e10068b2d736b619028a233e83d73b0b90
-status: llm_drafted
+status: current
 ---
 
 # PUT /api/profile/boats/{boat_id}/resume

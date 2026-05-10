@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 4ac8767633c646b4cda9d5b236fbda111a06f2b798a8bcff2aa0d68255d9a9e6
-status: llm_drafted
+status: current
 ---
 
 # PersonRow

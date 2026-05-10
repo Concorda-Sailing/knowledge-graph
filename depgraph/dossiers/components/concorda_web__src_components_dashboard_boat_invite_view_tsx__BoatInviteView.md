@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 11571ea7126911292806d36c3ab05a6bf26a42c900e71eb43f2b1872f599fbbe
-status: llm_drafted
+status: current
 ---
 
 # BoatInviteView

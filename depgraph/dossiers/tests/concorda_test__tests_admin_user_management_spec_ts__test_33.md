@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: f47a06beefd3e8df186d6ae47b7b3c85dfe444713f91a58e054cd427969d6bc8
-status: llm_drafted
+status: current
 ---
 
 # add user button opens dialog

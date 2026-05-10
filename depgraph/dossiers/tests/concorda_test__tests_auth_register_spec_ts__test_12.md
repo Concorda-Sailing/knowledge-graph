@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 53d4a9ebb12370c4b48aa905a9dddfcfdbdcce2705045beb8870a5652b0f8753
-status: llm_drafted
+status: current
 ---
 
 # registration page loads with membership options

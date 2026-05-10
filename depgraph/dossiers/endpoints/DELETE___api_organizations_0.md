@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 252d565eceff20a4dc377f6b2a025e00b4c75e13b942b463e433a24598061c34
-status: llm_drafted
+status: current
 ---
 
 # DELETE /api/organizations/{org_id}

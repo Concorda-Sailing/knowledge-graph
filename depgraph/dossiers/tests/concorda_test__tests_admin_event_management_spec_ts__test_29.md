@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ce1459e5577b4951843feecbe717d7c1919638f60daa5c2670b754db46f67483
-status: llm_drafted
+status: current
 ---
 
 # seeded events appear in list

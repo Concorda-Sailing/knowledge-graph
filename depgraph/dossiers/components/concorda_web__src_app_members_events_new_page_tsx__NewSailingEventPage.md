@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 811b925f174c890323b4d5846be4aef2207fddce1297bc26b24fc485f903e47d
-status: llm_drafted
+status: current
 ---
 
 # NewSailingEventPage

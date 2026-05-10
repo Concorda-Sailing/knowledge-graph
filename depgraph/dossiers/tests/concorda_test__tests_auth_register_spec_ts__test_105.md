@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 36d2dee8f723adfae46cf6fac3cd153ad0ba4a8ead51b9aa107a270fa3fd3d7c
-status: llm_drafted
+status: current
 ---
 
 # weak password shows validation error

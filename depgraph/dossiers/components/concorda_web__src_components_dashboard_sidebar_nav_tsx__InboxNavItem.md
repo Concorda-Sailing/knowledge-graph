@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 7bebd5262949c009ba48671321e35010c7ec7a76bd1c4d721d548dc7ec41f78d
-status: llm_drafted
+status: current
 ---
 
 # InboxNavItem

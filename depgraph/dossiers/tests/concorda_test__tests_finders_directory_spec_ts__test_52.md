@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 4a42fbf7beb5af923c535a7d73c1259a8ac8b1bc3871faaf330b40b69dee75fd
-status: llm_drafted
+status: current
 ---
 
 # view toggle works

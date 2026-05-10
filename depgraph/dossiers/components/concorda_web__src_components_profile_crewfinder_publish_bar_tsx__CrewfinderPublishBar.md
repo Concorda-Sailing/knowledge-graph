@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 4a2136dd42919cc74386646ce66461a3cc618c9f6902c6ef5360d3878684e7a2
-status: llm_drafted
+status: current
 ---
 
 # CrewfinderPublishBar

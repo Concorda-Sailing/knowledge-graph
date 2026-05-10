@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: b55cfc56b4903c4dfd66fbcdd8b8944e7ad2ee6d7244f8ad02b11ed6d29a935c
-status: llm_drafted
+status: current
 ---
 
 # new free member can fill resume and appear in crewfinder

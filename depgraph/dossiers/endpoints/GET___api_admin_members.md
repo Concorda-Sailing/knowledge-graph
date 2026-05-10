@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 04be09a99fa436b13497198a4cb4ad240b8ea16fca19ac21d87a3a81cf1e20da
-status: llm_drafted
+status: current
 ---
 
 # GET /api/admin/members

@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 248716b8518a2b2a6bdaa55db656e453ef3de333f7aca14c9a5a955bf9b17ad8
-status: llm_drafted
+status: current
 ---
 
 # no horizontal overflow on admin users page

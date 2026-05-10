@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 42b247c951890194790795226c2c7d6487683d62ca680acc62c24b8248670b18
-status: llm_drafted
+status: current
 ---
 
 # ProfileBannerHeader

@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: f6441e3f84fd63d144439c26a9e189fea4c1806f05770ff0f009683d11c05b2c
-status: llm_drafted
+status: current
 ---
 
 # authApi.resetPassword

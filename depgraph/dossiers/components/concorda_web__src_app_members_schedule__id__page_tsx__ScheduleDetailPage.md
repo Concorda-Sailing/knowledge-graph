@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e60b378ec527cf59bcc3b3758b95266c1e04541fb6191f1b7771623dc4c99b17
-status: llm_drafted
+status: current
 ---
 
 # ScheduleDetailPage

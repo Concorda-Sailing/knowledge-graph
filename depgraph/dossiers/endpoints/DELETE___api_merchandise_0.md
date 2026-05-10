@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 558e0fe6919252dd5893f8fa9f8065dc2b8c70da4b31d87fc9ef3b64d93063b5
-status: llm_drafted
+status: current
 ---
 
 # DELETE /api/merchandise/{item_id}

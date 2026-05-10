@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ffa5f9ecc9ebc6fcf46ecccb1863325acb030166d59253dd5eb80729d50c2dcf
-status: llm_drafted
+status: current
 ---
 
 # CrewBoatInline

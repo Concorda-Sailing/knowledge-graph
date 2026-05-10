@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 9b63e41055fbb33db3ee70b4317d8913a5adff3d53f07b8d8f8615c4c6d1ab0f
-status: llm_drafted
+status: current
 ---
 
 # ScheduleHelpDialog

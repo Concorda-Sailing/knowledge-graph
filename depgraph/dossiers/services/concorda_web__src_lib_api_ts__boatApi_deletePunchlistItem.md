@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 774394d1f51dbc88d259974b467d8f71fac3b746f90ec50759a7eeaf9fa2409c
-status: llm_drafted
+status: current
 ---
 
 # boatApi.deletePunchlistItem

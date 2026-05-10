@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: d6ef3e9f32165aac5352d03462e7e902844595af3d1d57dc9aa87fecfc9317db
-status: llm_drafted
+status: current
 ---
 
 # PUT /api/admin/email-templates/{template_id}

@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: a5d341d8492ccccbcdeda736c4e8d4a361c23d72fde67da6d2ebc60df06563d7
-status: llm_drafted
+status: current
 ---
 
 # POST /api/temporal-products/duplicate-year

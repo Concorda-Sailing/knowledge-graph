@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: c512e63b54d42858ebae3eee2550da64372a2e776ff50428f235d57aa8c10c1f
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.respondToEventCrewInvite

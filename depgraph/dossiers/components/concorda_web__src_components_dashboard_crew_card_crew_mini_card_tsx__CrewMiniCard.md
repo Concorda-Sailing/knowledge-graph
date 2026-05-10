@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 0ad492857db65c044e0adba9a05f366b936b5d1ed669ef3fd761e21c61c1af15
-status: llm_drafted
+status: current
 ---
 
 # CrewMiniCard

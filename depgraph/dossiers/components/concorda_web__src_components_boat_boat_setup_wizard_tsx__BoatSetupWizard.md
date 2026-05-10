@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 4fe70273c04210da0d8d9e5786b298e446c7e230c40a2efb75aa5e93083e77ff
-status: llm_drafted
+status: current
 ---
 
 # BoatSetupWizard

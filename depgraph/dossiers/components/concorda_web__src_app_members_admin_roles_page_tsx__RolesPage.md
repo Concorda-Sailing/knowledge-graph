@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: f435269defda702d3bfb35519512cea54575cf35c2f7053f01b382ca92a86a49
-status: llm_drafted
+status: current
 ---
 
 # RolesPage

@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 17fd4013bd547e1f7b9309645247f56c0705f048f8a7a3ab9db0dcb8da77fcb6
-status: llm_drafted
+status: current
 ---
 
 # DELETE /api/profile/picture

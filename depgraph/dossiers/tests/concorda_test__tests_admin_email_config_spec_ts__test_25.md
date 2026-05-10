@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ae69c2038b7c62ab23027cb9e3f03c4124ab18c70c02cfb1adbe0c30d108cd88
-status: llm_drafted
+status: current
 ---
 
 # can navigate to email configuration

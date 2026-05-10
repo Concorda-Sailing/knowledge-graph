@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 1d12b0be8d013cafe158283ae599816fb28ef8434670b54fe76b5713b538c263
-status: llm_drafted
+status: current
 ---
 
 # describeOutgoing

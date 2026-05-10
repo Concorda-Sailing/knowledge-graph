@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 32c2cd3fce514509725055b38bbe9c6f0ed955dbef999d2d562284b65a2851ae
-status: llm_drafted
+status: current
 ---
 
 # POST /api/profile/boats/{boat_id}/banner

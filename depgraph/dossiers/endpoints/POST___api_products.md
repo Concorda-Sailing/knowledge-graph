@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e6bfd7c3a423d5f3e9286ac700bb4576d25c60a0e8369298b5ed4a17d6490d48
-status: llm_drafted
+status: current
 ---
 
 # POST /api/products

@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: c8e3efa566b678bef5c99a8951c895dc0f322c815c0047f952bb66d23277907c
-status: llm_drafted
+status: current
 ---
 
 # GET /api/profile

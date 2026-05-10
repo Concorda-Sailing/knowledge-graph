@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e5a0d355863c717d76f011e9854095908b2059510c3366dfdbf6a4df21577102
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.attachBoatToSailingEvent

@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: f24462e6e10b6f8674bc0a3a9912b2a68e7f314ae1662bd20bf02528fb94d7b0
-status: llm_drafted
+status: current
 ---
 
 # DELETE /api/admin/org-config/logo

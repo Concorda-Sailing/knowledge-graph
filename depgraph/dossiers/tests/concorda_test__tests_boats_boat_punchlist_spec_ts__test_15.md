@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 973c859594cdb05762ead612ddd8ce212d5e69156a92279fd3fc3c95721798ad
-status: llm_drafted
+status: current
 ---
 
 # punchlist tab is accessible

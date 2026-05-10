@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 7f69cfdf277d1e1b32fead0ba0c3d59fd2b9b81aca26a24969dce00776f82af2
-status: llm_drafted
+status: current
 ---
 
 # send_email

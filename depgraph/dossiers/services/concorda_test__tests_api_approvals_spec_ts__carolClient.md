@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ddf44710bf8cf7605b2f8a1f0e0cd32d91dd95fb02261cd3a4c40e8aee5cfcbb
-status: llm_drafted
+status: current
 ---
 
 # carolClient

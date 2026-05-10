@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 33c2fbabeb1f9be605b39c09767baed56d81cc462e3835261a0cc2dd5f7c76b7
-status: llm_drafted
+status: current
 ---
 
 # loadClubs

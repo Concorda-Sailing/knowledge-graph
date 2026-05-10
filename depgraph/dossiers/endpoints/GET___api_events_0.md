@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ae139b2c618a16cc66ab28b34c9f52cbf744ceb2a024fa1b253b8a37b8268836
-status: llm_drafted
+status: current
 ---
 
 # GET /api/events/{event_id}

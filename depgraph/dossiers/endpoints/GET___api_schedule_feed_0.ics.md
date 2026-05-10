@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e023f3c9225cc0474db064fd29dd6bad1dda687c2767903c133ef98af63a4779
-status: llm_drafted
+status: current
 ---
 
 # GET /api/schedule/feed/{token}.ics

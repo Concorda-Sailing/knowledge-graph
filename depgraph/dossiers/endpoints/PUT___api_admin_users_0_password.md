@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: f301fde26b716a711af138f18a52e1f41aa63cca2e5ad84edc97d4cd0f38d635
-status: llm_drafted
+status: current
 ---
 
 # PUT /api/admin/users/{user_id}/password

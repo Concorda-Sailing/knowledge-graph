@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: a58bccff96c5be71bf9ef88b153de6f131f1ba244301f27eb3ce186ab9a0d261
-status: llm_drafted
+status: current
 ---
 
 # crew-mode bookmark surfaces crew_boats (regression guard)

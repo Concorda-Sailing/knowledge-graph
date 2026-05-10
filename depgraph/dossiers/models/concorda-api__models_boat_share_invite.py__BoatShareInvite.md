@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 26afbdf981e37ae971d23091e433eac5df593637fa8c772fc5917bb5ffd8f02d
-status: llm_drafted
+status: current
 ---
 
 # BoatShareInvite

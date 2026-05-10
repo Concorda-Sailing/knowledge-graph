@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 5fa7585e23ca95f77b0758338e683fcbbd30cdd6de7ef1570509f36ac7593511
-status: llm_drafted
+status: current
 ---
 
 # RoleDialog

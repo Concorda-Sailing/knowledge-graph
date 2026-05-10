@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: b3169c0f1c1a4dc92d69dc734910c8d0817e79edb1b96e43bfb5d3bc28df06cb
-status: llm_drafted
+status: current
 ---
 
 # POST /api/organizations/import/csv

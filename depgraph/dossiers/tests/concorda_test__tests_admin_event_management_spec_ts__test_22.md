@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 12fe09fe5b73c3a1f1384d3b0da435dd3f4c1706a2f84699ff2fbeb079770c09
-status: llm_drafted
+status: current
 ---
 
 # socials page loads

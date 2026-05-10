@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 07560b35ec8a646174e6355f3a0d1f76c38b052f21308f4ac26d3de56be95cbf
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.inviteCrewByEmail

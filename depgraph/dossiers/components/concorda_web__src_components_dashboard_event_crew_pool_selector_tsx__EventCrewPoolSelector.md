@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 85406e8245a51e76a4a3888dbf3f8e7e85372010fb285bc99ce375ecd325faae
-status: llm_drafted
+status: current
 ---
 
 # EventCrewPoolSelector

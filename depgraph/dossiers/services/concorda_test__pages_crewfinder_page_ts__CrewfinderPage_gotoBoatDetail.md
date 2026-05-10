@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 3ef67807f0f4c1f39525fe9c329c7f19909ab979a7cf96f1dfc85e570a63d5ed
-status: llm_drafted
+status: current
 ---
 
 # CrewfinderPage.gotoBoatDetail

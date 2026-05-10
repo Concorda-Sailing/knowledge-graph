@@ -4,7 +4,7 @@ node_kind: schema
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 26a2e7cfcf64331f2aa76f19303f91a54dcb8a52a5dd676f8380be35ea6dd3f8
-status: llm_drafted
+status: current
 ---
 
 # MatchRoster

@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 2d4a58232245bb1ae17faae3f17b803e1e656c8761381b54332352e283218788
-status: llm_drafted
+status: current
 ---
 
 # accept link flips EventCrew status to accepted and promotes to BoatCrew

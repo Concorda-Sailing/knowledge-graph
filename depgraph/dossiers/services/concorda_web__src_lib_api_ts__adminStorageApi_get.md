@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 2f45fb2ec989295304071b215c06f63bda81abed6e5ad7c677cedc61f74f4bf1
-status: llm_drafted
+status: current
 ---
 
 # adminStorageApi.get

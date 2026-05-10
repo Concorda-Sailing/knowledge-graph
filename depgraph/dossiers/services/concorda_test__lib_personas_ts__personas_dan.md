@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 1aba41fcfb3f05e3e2f8a4a771df52bdc169e0994ef57ca19eab6071486e1a54
-status: llm_drafted
+status: current
 ---
 
 # personas.dan

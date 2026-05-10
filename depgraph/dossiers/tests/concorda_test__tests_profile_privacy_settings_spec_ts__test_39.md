@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: a83ba85e504aa5ba039f06d26fef40c18660417cd0f075e5fbde187a02e891aa
-status: llm_drafted
+status: current
 ---
 
 # can toggle show phone setting

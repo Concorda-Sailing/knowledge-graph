@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 3fe9a467d366d8a3328528ddbff605b5daf50c30159da2708f5910dc4332d8c4
-status: llm_drafted
+status: current
 ---
 
 # SidebarBreakpointSync

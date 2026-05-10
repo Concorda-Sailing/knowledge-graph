@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 7ee0e5a800ee4f800440f24af2029f52877220922c3229ca04aac1d2d5fba9fe
-status: llm_drafted
+status: current
 ---
 
 # SocialCard

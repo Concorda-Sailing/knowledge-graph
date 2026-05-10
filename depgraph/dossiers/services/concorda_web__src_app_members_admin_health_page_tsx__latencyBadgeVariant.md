@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 7c79f42c8500ea92e2382aa176c4320f427d52cf8f89e6b74de42fcdcb14ab8b
-status: llm_drafted
+status: current
 ---
 
 # latencyBadgeVariant

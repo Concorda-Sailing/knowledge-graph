@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 29c2d0a817b5213086cb7afd35ebbe687dd993dce8fe7a92418b01ce342fcc57
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.listEvents

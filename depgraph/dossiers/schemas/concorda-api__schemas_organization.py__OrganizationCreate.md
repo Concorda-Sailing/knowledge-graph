@@ -4,7 +4,7 @@ node_kind: schema
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: fb5d6547ba1ecc515c757b34a5adab3d519593d48799a8222d461bc40ef51638
-status: llm_drafted
+status: current
 ---
 
 # OrganizationCreate

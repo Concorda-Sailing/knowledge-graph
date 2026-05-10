@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 939dc764845c3d9ae902e4a4589552b1ab1f75e6c576d9f9455db0df095b62e1
-status: llm_drafted
+status: current
 ---
 
 # checkApiHealth

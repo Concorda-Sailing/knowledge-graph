@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 90dc28ae94ad03725e0fd03a3b34e35153603e56902f96adba6f39d8a70a30f9
-status: llm_drafted
+status: current
 ---
 
 # regattaApi.get

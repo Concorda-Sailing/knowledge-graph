@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 06e5b4a3599907609574306992b6ec076860548e1e394d09d2116a06ed3a5341
-status: llm_drafted
+status: current
 ---
 
 # ResetPasswordContent

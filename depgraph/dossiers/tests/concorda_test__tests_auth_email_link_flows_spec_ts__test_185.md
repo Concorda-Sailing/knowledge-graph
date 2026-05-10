@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 2bafebae4e04fcd3e849b88718fe65ecf50d51adcd8b6234d6aea2b3b42a57c2
-status: llm_drafted
+status: current
 ---
 
 # decline link flips EventCrew status to declined

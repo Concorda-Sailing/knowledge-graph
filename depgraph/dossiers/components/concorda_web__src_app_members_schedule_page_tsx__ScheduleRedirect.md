@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: cba2a30998223b8999855a28af261881e1ebad4201fe00784423345bf46f24cd
-status: llm_drafted
+status: current
 ---
 
 # ScheduleRedirect

@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: bbee7d4cbf70602608e40b7fcdf41d4969ac72d442e3ad687058d5542e72a85e
-status: llm_drafted
+status: current
 ---
 
 # formatBucketTick

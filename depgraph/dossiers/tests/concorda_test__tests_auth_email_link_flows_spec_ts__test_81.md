@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: c6603b489de0904164bb15107f7d3a2b1741f6164c9c3222ffe23a1be318eb11
-status: llm_drafted
+status: current
 ---
 
 # accept link finalizes the request as approved

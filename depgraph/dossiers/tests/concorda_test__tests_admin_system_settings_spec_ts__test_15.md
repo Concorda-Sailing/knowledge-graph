@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 6e8d441f5bef6efbdcfb1351379fb588f5a6af89b223b9e48224a91ca112a65d
-status: llm_drafted
+status: current
 ---
 
 # org name field is visible

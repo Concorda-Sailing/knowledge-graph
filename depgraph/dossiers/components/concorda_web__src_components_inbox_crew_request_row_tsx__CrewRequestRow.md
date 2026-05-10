@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 20b8be1c6d34d60769bf16759bae9b826efc57f02711c6001fd502d7ac817046
-status: llm_drafted
+status: current
 ---
 
 # CrewRequestRow

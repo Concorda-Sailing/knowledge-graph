@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e4c9ec204f8367c755b49056d09e190d35571697ad3ea62bb80c5433b705895c
-status: llm_drafted
+status: current
 ---
 
 # OrgBrand

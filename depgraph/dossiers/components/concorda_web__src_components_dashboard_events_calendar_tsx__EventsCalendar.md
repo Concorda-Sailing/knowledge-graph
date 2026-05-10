@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 2211d9893fbce5a69cfd8df12b2809591391960b6c26faba402352c281a2d9a3
-status: llm_drafted
+status: current
 ---
 
 # EventsCalendar

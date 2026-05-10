@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 3fb9c4124b2b754e42cd03d87dd13b5f6ac583bb26c8b7678469f0287f18bb4d
-status: llm_drafted
+status: current
 ---
 
 # BoatPage.gotoBoat

@@ -4,7 +4,7 @@ node_kind: schema
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8630e99f24cc2fc16f23a7d003b8ce1eefd944ddfae97a0a229ab3c0fd8b6d36
-status: llm_drafted
+status: current
 ---
 
 # MailingListPrefs

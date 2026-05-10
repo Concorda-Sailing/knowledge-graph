@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 63ccbc918b7a0b1c31ca7cd99da46b08220de11c908df3de53cbf33312c54c4e
-status: llm_drafted
+status: current
 ---
 
 # MembershipCard

@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 4c1ae571a4b93aff0ace129ef0aae90dae53c990c563f3be851c18d9f7d930ac
-status: llm_drafted
+status: current
 ---
 
 # genId

@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: d0f6ecfaf27707744a2f9904ad0fc790fcf88515ab1b99e516eb9a6b38189944
-status: llm_drafted
+status: current
 ---
 
 # agentTokensApi.create

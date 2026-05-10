@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 532691179f411cc621fc7567e756be86f071792439f26993d7ae913352c576e7
-status: llm_drafted
+status: current
 ---
 
 # OrganizationEvent

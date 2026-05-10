@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: db2cdf4f3dd8e8c56ed6bb951ba82930d1ed0a5fa678e2a6c8211aa4af9989e7
-status: llm_drafted
+status: current
 ---
 
 # personas.admin

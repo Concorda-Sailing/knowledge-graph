@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ca35a4deef7f9b8cb571cdcd99c9d81d244adc0dc563d5f6a91675e811f711dd
-status: llm_drafted
+status: current
 ---
 
 # GET /api/analytics/daily-activity

@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 752a8b72b0aa8259beb953f89d40d705820ea256d7eb805adb5eed1685e1b259
-status: llm_drafted
+status: current
 ---
 
 # My Crew tab is visible to boat owner

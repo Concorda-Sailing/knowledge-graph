@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 4c9e3fa42d645b80c9de15f7f52c3ca5e842ba498ae1dece37a8c49b7f7c8bda
-status: llm_drafted
+status: current
 ---
 
 # BoatExclusionList

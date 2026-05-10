@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: afa799d8b84e11cf6106218a1e22584d98ec0a773a62c0dd5e8942d9823f4fc1
-status: llm_drafted
+status: current
 ---
 
 # AdminAccountingPage

@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 305c8fa04c8192333deab629e0dc7bc0f323317f8b63311a0e8b674ed2a3dfc4
-status: llm_drafted
+status: current
 ---
 
 # tab bar does not wrap to two rows at 375px

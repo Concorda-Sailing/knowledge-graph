@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 9b6e94a47e817825c3641b5a9bed4ec38a72e7e8ab601b28d778ec86d05354a4
-status: llm_drafted
+status: current
 ---
 
 # eventsApi.removeEventCrew

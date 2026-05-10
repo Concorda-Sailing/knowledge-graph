@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 4c15092b3b3965fbb06c9ffbfa835b403f1be591c3bdc4e9d2f5d7795f8b3893
-status: llm_drafted
+status: current
 ---
 
 # GET /api/events/slug/{slug}/tickets

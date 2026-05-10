@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: badb8f3bdee0965975cc75f3218a74178d0641ecc0a4c63d2a6a028e7c3eb072
-status: llm_drafted
+status: current
 ---
 
 # AuthProvider

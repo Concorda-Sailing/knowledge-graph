@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ebdbf3dd5b0dea347875eb5e4618b42e535045997f0ef9fabc6e00b9ff5f21f6
-status: llm_drafted
+status: current
 ---
 
 # can navigate to crew member profile from finder

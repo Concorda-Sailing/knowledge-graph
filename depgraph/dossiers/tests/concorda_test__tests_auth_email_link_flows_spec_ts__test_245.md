@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: c5cec2c7f46fd53781544533f99d0c788452f423118acb80e9a9389656d216da
-status: llm_drafted
+status: current
 ---
 
 # accept link flips BoatCrew status to active

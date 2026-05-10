@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 17691910b59012e2bd2f33d6c1c120c2974ddb8126b59d937b506fe89f908c64
-status: llm_drafted
+status: current
 ---
 
 # PendingApprovalsPanel

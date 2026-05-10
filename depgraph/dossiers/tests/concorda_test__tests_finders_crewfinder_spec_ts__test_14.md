@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: aa48d388540146fdf0cfbdb872949f413e8c3af0c90ee56981dc9cbaab3a10b5
-status: llm_drafted
+status: current
 ---
 
 # non-boat-owner sees crew finder (no gate)

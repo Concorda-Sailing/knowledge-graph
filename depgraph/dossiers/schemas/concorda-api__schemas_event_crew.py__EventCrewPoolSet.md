@@ -4,7 +4,7 @@ node_kind: schema
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e758e5cc5a588b81b89c298aa4bee25f4ee923a4a96468d2e9ecf7578cf503ba
-status: llm_drafted
+status: current
 ---
 
 # EventCrewPoolSet

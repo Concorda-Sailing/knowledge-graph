@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 048ad81dadfad13d9251964670446ae8ba09802a497970214e1eba36674da3df
-status: llm_drafted
+status: current
 ---
 
 # CrewRosterRow

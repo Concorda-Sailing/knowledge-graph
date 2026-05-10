@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8a1335a99e3c5b7d73e7c52bb4bb0d31c0cdebd8cc288e2eb5238dde06328cc3
-status: llm_drafted
+status: current
 ---
 
 # EventsPage.gotoMemberEvents

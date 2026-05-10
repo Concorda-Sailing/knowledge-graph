@@ -4,7 +4,7 @@ node_kind: schema
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 547e6e7606a08da82f2a779af6ed1f7d50d35ddf79169f72f66a1df67e5cad19
-status: llm_drafted
+status: current
 ---
 
 # EventCreate

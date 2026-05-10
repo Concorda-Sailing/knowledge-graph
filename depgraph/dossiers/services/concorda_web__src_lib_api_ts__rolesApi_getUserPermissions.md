@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 65d7e144b40a8ec4783fa1cfcf3cd617b4de0726fc9d63aec796978a3c662635
-status: llm_drafted
+status: current
 ---
 
 # rolesApi.getUserPermissions

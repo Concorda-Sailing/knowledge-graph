@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 2404f364173d05562405cc9348414ec631a34d2c53c4a6183878f76981eaa981
-status: llm_drafted
+status: current
 ---
 
 # page loads with expected elements

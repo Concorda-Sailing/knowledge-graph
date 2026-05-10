@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 6fea2b7016a406b1e4a53c16daefd232ea168b1631b9bf943276fd0380ca1983
-status: llm_drafted
+status: current
 ---
 
 # AdminEmailPage

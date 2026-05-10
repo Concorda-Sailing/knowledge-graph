@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: c498c4e00c9074ffd97105b5cf55352c190298c9cca0a46b657ffa45bee27149
-status: llm_drafted
+status: current
 ---
 
 # boatApi.lookup

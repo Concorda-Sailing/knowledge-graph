@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 52c97bd61c561082bcb3c0261ddfea48c482b3ad33c0b0572f21bf552552d12d
-status: llm_drafted
+status: current
 ---
 
 # ForgotPasswordPage.submitEmail

@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: eacbd812c87c3cf1b0b8406861dc07176106528bd24a77ddc2fd46b97b7f2d93
-status: llm_drafted
+status: current
 ---
 
 # Finder navigates to /members/finder with crew tab selected

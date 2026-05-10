@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: fef1e8bfb77d57ee96b4e23231824950260ad9f7bc7d6241ebebf3d20fb53116
-status: llm_drafted
+status: current
 ---
 
 # can create a new boat

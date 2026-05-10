@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e078e693f75b6802bcab1f118c7ae9d5e2993570246c77a6f363cedb48681523
-status: llm_drafted
+status: current
 ---
 
 # EmailConfig

@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: f0dc21fda70a89bed070cd7e4702638c5bb8e82031a0d6f5d616b5c38321f46e
-status: llm_drafted
+status: current
 ---
 
 # globalSetup

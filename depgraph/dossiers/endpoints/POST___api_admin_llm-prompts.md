@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 34e1ca05c04dd646a9cf71862ae84963f5342b5adb0a250c31f16c9d306fbdae
-status: llm_drafted
+status: current
 ---
 
 # POST /api/admin/llm-prompts

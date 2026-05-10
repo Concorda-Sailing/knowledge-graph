@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: b5f0a7626f5cd4efee86e79ff7962fd6fd2ea1065c6738cd573326b5d7ddd26e
-status: llm_drafted
+status: current
 ---
 
 # Dan (co-owner) can remove a shared event Bob created

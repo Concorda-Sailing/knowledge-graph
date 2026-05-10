@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 5cc3f1633dfc0662ad8b79595f40522844b067272d69475903c05b4ae5b303f2
-status: llm_drafted
+status: current
 ---
 
 # OrganizationRelationship

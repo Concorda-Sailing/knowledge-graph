@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 7e4e4f522d689f3778520096baf1e2236902f9349ea04e93876967219c0d5e90
-status: llm_drafted
+status: current
 ---
 
 # get_oas_bulk

@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 149ccb023a33414ce2ec64dec93d802d1a6200c8aa29f72342fd012df5498380
-status: llm_drafted
+status: current
 ---
 
 # can create a new event

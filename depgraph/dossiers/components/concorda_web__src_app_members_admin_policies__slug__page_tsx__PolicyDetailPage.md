@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: abf8cb073094b4dd25da04ee5782db5aca6a78284379603258768d7259db6b62
-status: llm_drafted
+status: current
 ---
 
 # PolicyDetailPage

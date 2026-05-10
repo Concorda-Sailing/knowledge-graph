@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 8d0d9a2ea6c1f91e3df0a3d5def86ff3138ee9721ca2d05bc90733929289238d
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.addRegattasToSchedule

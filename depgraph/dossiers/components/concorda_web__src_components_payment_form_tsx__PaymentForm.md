@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 11c3682f524ab45bf73f5f59b01eee9d12209c15ec01f45a7c217a45d6dc4479
-status: llm_drafted
+status: current
 ---
 
 # PaymentForm

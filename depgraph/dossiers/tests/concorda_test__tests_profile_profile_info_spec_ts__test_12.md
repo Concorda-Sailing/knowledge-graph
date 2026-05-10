@@ -4,7 +4,7 @@ node_kind: test
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ab2cb38d7c5b80fe7480e444a956da6851e7d82ea4877e120d031ea9d1b0819e
-status: llm_drafted
+status: current
 ---
 
 # profile page loads with user data

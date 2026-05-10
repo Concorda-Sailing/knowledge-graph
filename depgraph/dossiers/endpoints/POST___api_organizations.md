@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 2486b34f1630753481c78d9516afe3321f2f3c063fb086364aa949039f7a1db8
-status: llm_drafted
+status: current
 ---
 
 # POST /api/organizations

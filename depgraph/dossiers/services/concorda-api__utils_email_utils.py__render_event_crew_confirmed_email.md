@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 9573c0a300bfb20472dad1384c8ca7e69d1afe4cf1c4205b51b7313320f66c5c
-status: llm_drafted
+status: current
 ---
 
 # render_event_crew_confirmed_email

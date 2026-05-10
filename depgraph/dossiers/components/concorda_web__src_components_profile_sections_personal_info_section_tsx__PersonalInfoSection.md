@@ -4,7 +4,7 @@ node_kind: component
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: cd940bad3aa4cb0f73bf17d7de71536fcb0240740eaab70c4e9dc769b7378280
-status: llm_drafted
+status: current
 ---
 
 # PersonalInfoSection

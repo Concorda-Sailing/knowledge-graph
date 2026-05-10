@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 88046a937f944a3830e6e16c3d0125ff10fdf7384774dcac5433ba21672def0e
-status: llm_drafted
+status: current
 ---
 
 # RegisterPage.goto

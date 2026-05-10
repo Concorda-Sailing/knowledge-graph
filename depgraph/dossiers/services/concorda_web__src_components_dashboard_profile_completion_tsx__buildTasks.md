@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e21e4762f1edfd109f46221e0c9b5f04daa227d07b4ea7c8ddcd2718a3b8ddf9
-status: llm_drafted
+status: current
 ---
 
 # buildTasks

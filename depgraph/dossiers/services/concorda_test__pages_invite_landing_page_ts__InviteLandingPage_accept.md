@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: b2dd3deec05c8e8eebc6c81a261a9ba8c9f0cc565378e35a2a22174834dd2955
-status: llm_drafted
+status: current
 ---
 
 # InviteLandingPage.accept
