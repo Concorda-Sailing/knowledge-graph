@@ -10,24 +10,26 @@ status: llm_drafted
 # adminProductsApi.create
 
 ## Purpose
-`adminProductsApi.create` is a service method used to persist new product entities (Memberships or Events) to the backend. It is distinct from the `list` or `get` methods by performing a state-changing `POST` operation. A future agent should reach for this when implementing administrative interfaces that require creating new revenue or service-based products, ensuring the payload matches the `ProductCreate` interface.
+
+Creates a new product (Membership or Event-based) via the admin API. This method is the entry point for adding new revenue or registration streams to the platform. It is distinct from `eventsApi` methods, as it handles the creation of the product entity itself rather than the event-specific scheduling or crew assignments.
 
 ## Invariants
-* Uses `POST` method on the `/api/products` endpoint.
-* Requires authenticated access via `fetchApiAuthenticated`.
-* Returns a `Promise<Product>` representing the newly created resource.
-* The payload must conform to the `ProductCreate` type (defined near line 2536).
+
+- **HTTP Method is `POST`** to `/api/products`.
+- **Requires `fetchApiAuthenticated`** to establish the admin session.
+- **Input must satisfy `ProductCreate`** (specifically requiring `name`, `slug`, and `price`).
+- **Returns a `Product` object** upon successful creation.
 
 ## Gotchas
-* Ensure the `slug` provided in the `ProductCreate` payload is unique and URL-friendly to avoid backend validation failures.
-* The `category` must be one of the valid `ProductCategory` values ("Membership" or "Event") to satisfy the type system and server-side logic.
+
+- **Requires `ProductCategory` alignment.** The `category` field must be one of the strictly typed values `"Membership"` or `"Event"` (see `PRODUCT_CATEGORIES` in `api.ts`).
+- **Slug uniqueness.** While not explicitly guarded in the frontend type, the `slug` is a required part of the `ProductCreate` interface and is used for URL routing; duplicate slugs will likely cause a backend error.
 
 ## Cross-cutting concerns
-* **Auth**: Requires a valid session/token via `fetchApi-authenticated` wrapper.
-* **Side Effects**: Creating a product may impact event-related logic or membership availability in the dashboard.
+
+- **Auth**: Uses `fetchApiAuthenticated` — requires an active admin session.
+- **Side effects**: Successful creation of a product may impact the visibility of registration options on the `EventDetailContent` page (see `page.tsx:474` and `page.tsx:683`).
 
 ## External consumers
-* `concorda-web::src/app/members/admin/events/[id]/page.tsx` (via `EventDetailContent`)
 
-## Open questions
-* None.
+None known.

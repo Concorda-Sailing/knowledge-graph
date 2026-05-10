@@ -10,23 +10,26 @@ status: llm_drafted
 # eventsApi.getConfirmation
 
 ## Purpose
-`getConfirmation` retrieves registration details for a specific user via a registration ID and an event slug. It is used to display post-registration success states or verify registration status without requiring full authentication. Use this function when you need to display a "confirmation" view for a public event page, as it returns an array of registration objects (typically containing one entry) rather than a single object.
+
+Fetches the registration confirmation details for a specific user at a specific event. It retrieves a list of registration objects (including `ticket_name`, `status`, and `transaction_id`) by matching a unique `slug` and a `regId`. This is used by the public event view to display success states or status updates to a user who has just registered or checked in.
 
 ## Invariants
-* HTTP Method: GET.
-* Path: `/api/events/slug/${slug}/confirmation?reg=${encodeURIComponent(regId)}`.
-* Returns an array of objects containing `id`, `first_name`, `email`, `status`, `created`, `ticket_name`, and `ticket_price`.
-* `transaction_id` is an optional field in the returned objects.
+
+- **Method is GET** — Uses a query parameter `reg` to identify the registration.
+- **Input is URL-encoded** — The `regId` must be passed through `encodeURIComponent` to ensure the request is valid.
+- **Returns an array of objects** — Even if there is only one registration, the return type is `Array<{...}>`.
+- **Requires a valid event slug** — The slug is a required part of the path.
 
 ## Gotchas
-* The function returns an array (`[]`) rather than a single object, even though it is conceptually a single registration lookup; consumers must handle the array index (e.g., `data[0]`).
-* The `regId` must be URI encoded before being passed to the query parameter to prevent path/query breakage.
+
+- **Coupling with `mySchedule`** — Per commit `1b5d864`, there was a previous issue where the detail page was too tightly coupled to `mySchedule`; ensure this endpoint remains a lightweight fetch for specific registration status rather than a full schedule load.
+- **Registration vs. Identity** — This endpoint relies on a `regId` (registration ID) rather than a user ID, making it a public-facing lookup for a specific registration event.
 
 ## Cross-cutting concerns
-* This is a public-facing endpoint (uses `fetchApi` rather than `fetchApiAuthenticated`), meaning it does not require a session/JWT but relies on the `regId` for data retrieval.
+
+- **Auth**: None. This is a public-facing endpoint used by `PublicEventPage` to show registration status without requiring a logged-in session.
+- **Side effects**: Used by `PublicEventPage` to render the post-registration/check-in state for a user.
 
 ## External consumers
-* concorda-web::src/app/events/[slug]/page.tsx (PublicEventPage)
 
-## Open questions
-* None.
+- `concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage` (via `hook_call`)

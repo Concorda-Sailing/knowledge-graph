@@ -10,25 +10,26 @@ status: llm_drafted
 # profileApi.updateCrewPool
 
 ## Purpose
-`updateCrewPool` is a specialized API wrapper used to modify the properties of an existing crew pool within a specific boat's scope. It is distinct from `createCrewPool` (which uses POST) and `listCrewPools` (which is a GET request). A future agent should reach for this function when a user is editing the name or the membership list of an existing pool, rather than creating a new one.
+
+Updates the configuration of an existing crew pool for a specific boat. It is used to modify the `name` or the list of `member_ids` associated with a pool. This is a specialized update method for boat-scoped resources, distinct from the broader `eventsApi` or `seriesApi` methods.
 
 ## Invariants
-*   **HTTP Method/Path**: Uses `PUT` on `/api/profile/boats/${boatId}/crew-pools/${poolId}`.
-*   **Auth Requirement**: Requires an authenticated session via `fetchApiAuthenticated`.
-*   **Return Shape**: Returns the updated `CrewPool` object upon success.
-*   **Required Fields**: The `data` object accepts optional `name` (string) and `member_ids` (array of strings).
-*   **Scope**: Operations are strictly scoped to the provided `boatId`.
+
+- **HTTP Method is `PUT`** — performs a full replacement of the specific resource fields.
+- **Path structure is `/api/profile/boats/${boatId}/crew-pools/${poolId}`** — requires both `boatId` and `poolId` to target the correct resource.
+- **Payload is a partial update** — the `data` object accepts optional `name` and `member_ids`.
+- **Returns the updated `CrewPool` object** — allows the caller to immediately sync local state with the server response.
 
 ## Gotchas
-*   **Partial Updates**: The `data` object uses optional properties (`name?`, `member_ids?`). Ensure the client-side state management accounts for the fact that omitting a field in the payload might be interpreted by the backend as a request to keep the existing value or (depending on backend implementation) clear it.
-*   **ID Dependency**: Both `boatId` and `poolId` are required in the URL path; failure to provide a valid `poolId` will result in a 404 or routing error.
+
+- **Requires `fetchApiAuthenticated`** — as a profile-scoped action, it relies on the bearer token established via the auth flow.
+- **Boat-scoped dependency** — the `boatId` must be valid for the authenticated user's profile context; attempting to update a pool for a boat the user does not own/access will result in a 403 or 404.
 
 ## Cross-cutting concerns
-*   **Auth**: Relies on `fetchApi-authenticated` to ensure the user has permission to modify the boat's resources.
-*   **Side Effects**: Changes to crew pools may impact the visibility of crew availability in the dashboard or event-specific views.
+
+- **Auth**: Uses `fetchApiAuthenticated` to ensure the user has permission to modify the boat's crew configuration.
+- **Side effects**: Updates to crew pools via this method impact the visibility of crew status on the `MyCrewTab` component in the dashboard.
 
 ## External consumers
-*   `concorda-web::src/components/dashboard/my-crew-tab.tsx` (via `MyCrewTab` component).
 
-## Open questions
-*   Does the backend support partial updates (PATCH-style) for the `member_ids` array, or must the full list be sent to avoid accidental deletions?
+None known.

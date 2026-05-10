@@ -10,27 +10,28 @@ status: llm_drafted
 # norApi.uploadAndExtract
 
 ## Purpose
-`norApi.uploadAndExtract` is a specialized service for uploading a file and triggering an immediate extraction process via the NOR (Notice of Readiness) pipeline. It is distinct from `norApi.extract`, which only triggers extraction on an existing `fileId`. A future agent should reach for this function when the user is providing a new file (via a `File` object) and requires the extracted data (like `extracted_data` or `extracted_items`) to be returned in the same request cycle.
+
+Handles the multipart/form-data upload of a file to the NOR (Notice of Race) extraction service. It wraps a `POST` request to `/api/nor/upload-and-extract` that accepts a `File` and a `document_type`. Use this when a user is uploading a document that needs to be parsed into structured data (e.g., `extracted_data` or `extracted_items`).
 
 ## Invariants
-* HTTP Method: `POST`.
-* Endpoint: `/api/nor/upload-and-extract`.
-* Authentication: Requires a valid Bearer token; throws an explicit "Not authenticated" error if `getAuthToken()` is empty.
-* Payload: Uses `multipart/form-data` containing a `file` and a `document_type`.
-* Return Shape: Returns a `Promise<NORExtractResponse>` containing optional `extracted_data` (Record) and `extracted_items` (Array of Records).
+
+- **Method is `POST`** — The endpoint expects a multipart form-data body.
+- **Requires authentication** — Calls `getAuthToken()` and injects it into the `Authorization` header; throws an error if no token is present.
+- **Default `document_type` is `"nor"`** — If no second argument is provided, the API assumes a Notice of Race document.
+- **Returns `Promise<NORExtractResponse>`** — The response is parsed as JSON and includes fields like `file_id`, `file_url`, and extracted data objects.
+- **Error handling is explicit** — If `res.ok` is false, the function attempts to parse the JSON body to extract a `detail` string for the error message.
 
 ## Gotchas
-* **Manual Error Handling**: Unlike `fetchApiAuthenticated`, this function uses a raw `fetch` call and manually parses the error response to extract the `detail` field from the JSON body (lines 3238-3240).
-* **Default Type**: The `documentType` defaults to `"nor"` if not explicitly provided.
-* **Silent JSON Failures**: The error detail extraction contains a `try/catch` block that suppresses errors if the response body is not valid JSON, which might hide the true cause of a failed request.
+
+- **Manual `FormData` construction** — Unlike `fetchApiAuthenticated` used in sibling methods, this uses a raw `fetch` call to ensure the `FormData` boundary and `file` attachment are handled correctly for the multipart upload.
+- **Error detail extraction** — If the server returns a non-JSON error body, the `try/catch` block in the `.then` chain prevents a crash by defaulting the error message to the status code (e.g., `"400"`).
 
 ## Cross-cutting concerns
-* **Auth**: Requires manual token retrieval via `getAuthToken()` and explicit header injection.
-* **Side Effects**: Triggers backend extraction logic which may involve heavy processing/LLM calls on the server.
+
+- **Auth**: Requires a valid bearer token via `getAuthToken()`.
+- **Side effects**: Successful extraction is used by the import flows in `ImportContent` and `ImportRacesContent` to populate structured data from uploaded files.
 
 ## External consumers
-* `concorda-web::src/app/members/admin/events/import-social/page.tsx` (ImportContent)
-* `concorda-web::src/app/members/admin/events/import/page.tsx` (ImportRacesContent)
 
-## Open questions
-* None.
+- `concorda-web::src/app/members/admin/events/import-social/page.tsx`
+- `concorda-web::src/app/members/admin/events/import/page.tsx`

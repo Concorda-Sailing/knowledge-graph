@@ -10,25 +10,26 @@ status: llm_drafted
 # boatApi.updateCrew
 
 ## Purpose
-`boatApi.updateCrew` is a specialized service method used to modify the attributes of an existing crew member within a specific boat. It is distinct from `addCrew` (which creates a new entry) and `reorderCrew` (which only modifies the sequence of members). A future agent should reach for this function when a user needs to update non-structural metadata like a person's `role`, `position`, `status`, or `notes`.
+
+Updates the details of an existing crew member for a specific boat. This method is used to modify attributes like `role`, `position`, `status`, or `notes`. It is distinct from `addCrew` (which creates a new record) and `reorderCrew` (which only changes the sequence of existing members).
 
 ## Invariants
-* Performs a `PUT` request to `/api/boats/${boatId}/crew/${crewId}`.
-* Requires an authenticated session via `fetchApiAuthenticated`.
-* Returns a `BoatCrewMember` object on success.
-* The `boatId` and `crewId` must be valid identifiers for the target boat and crew member respectively.
+
+- **HTTP Method is `PUT`** — Performs a partial update on the resource.
+- **Requires `boatId` and `crewId`** — Both must be provided in the URL path to target the specific member.
+- **Returns `BoatCrewMember`** — The response contains the updated state of the member.
+- **Payload is partial** — The `data` object allows for optional fields (`role?`, `position?`, etc.), enabling targeted updates without overwriting the entire member object.
 
 ## Gotchas
-* **Partial Updates**: The function accepts an object with optional fields (`role`, `position`, `config_uuid`, `status`, `notes`), implying a partial update pattern; however, ensure the backend handles missing keys as "no change" rather than nulling them out.
-* **Configuration Sensitivity**: Recent changes (commit `bf15808`) suggest that `boat_config_id` is a critical piece of data; ensure that updates involving configuration-aware fields are handled carefully to avoid breaking the `config-aware count` logic on schedule cards.
+
+- **Role/Position dependency** — Per commit `bf44b09`, the system now handles `EventCrewStatus` and pool handling; ensure updates to `role` or `position` do not conflict with the logic used for schedule-card pool displays.
+- **Config-aware updates** — Per commit `bf15808`, the API relies on `boat_config_id` rather than shape-matching; ensure that updates to the crew member do not inadvertently strip or mismatch the configuration context.
 
 ## Cross-cutting concerns
-* **State Synchronization**: Updates to crew members (especially `status` or `role`) may affect the display of "Accepting-Crew" badges or "Looking for a ride" status on regatta detail views and schedule cards.
-* **Auth**: Requires valid user authentication to modify boat-specific crew data.
+
+- **Auth**: Uses `fetchApiAuthenticated` — requires a valid bearer token.
+- **Side effects**: Updates to crew members may affect the visibility of the "accepting-crew" status on regatta detail pages (per commit `2d6b8a7`).
 
 ## External consumers
-* `concorda-web::src/components/boat/boat-crew-table.tsx` (BoatCrewTable)
-* `concorda-web::src/components/dashboard/my-crew-tab.tsx` (MyCrewTab)
 
-## Open questions
-* None.
+None known.

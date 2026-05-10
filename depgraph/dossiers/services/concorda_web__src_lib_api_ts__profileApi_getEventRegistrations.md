@@ -10,26 +10,26 @@ status: llm_drafted
 # profileApi.getEventRegistrations
 
 ## Purpose
-Fetches the list of all events a specific user is currently registered for. This is a read-only retrieval of the user's personal event participation history. Use this when building views that require a list of a user's upcoming commitments, such as the "My Events" section or dashboard summaries. It is distinct from `eventsApi` calls which fetch general event details; this is strictly scoped to the authenticated user's profile.
+
+Fetches the list of events a specific user is currently registered for. It is used to populate user-facing lists that show upcoming commitments, such as the "My Events" view and the dashboard. Use this instead of `eventsApi` when you need to filter the global event list down to the authenticated user's specific participation.
 
 ## Invariants
-* HTTP Method: GET.
-* Path: `/api/profile/event-registrations`.
-* Auth: Requires an authenticated session via `fetchApiAuthenticated`.
-* Return Shape: An array of `MyEventRegistration` objects.
-* Dependency: Relies on the server-side session to identify the user.
+
+- **GET request** to `/api/profile/event-registrations`.
+- **Requires authentication** via `fetchApiAuthenticated`.
+- **Returns an array of `MyEventRegistration` objects**, which are specialized versions of the `Event` interface.
+- **Data is user-centric**; the response is scoped to the identity of the bearer token.
 
 ## Gotchas
-* The return type is `MyEventRegistration[]`, which is a specialized view of an `Event` tailored for the user's profile context.
-* Ensure the UI handles empty arrays gracefully if a user has no active registrations.
+
+- **Coupling with schedule detail:** Per commit `1b5d864`, this endpoint is distinct from the `/api/events/{id}/detail` pattern. Avoid attempting to merge registration state into the general event detail endpoint to prevent tight coupling between the global schedule and user-specific profiles.
+- **Count vs. Live State:** Per commit `b4d60c6`, ensure that UI components using this data distinguish between "accepted invites" and "live slot counts." This endpoint provides the registration record, but the actual availability of slots is driven by the event's configuration.
 
 ## Cross-cutting concerns
-* Auth: Requires a valid user session; calls will fail with 401/403 if the user is unauthenticated.
-* Side Effects: This is a pure GET request and does not trigger state changes in the event system.
+
+- **Auth**: Uses `fetchApiAuthenticated` to ensure the request is scoped to the logged-in user.
+- **Side effects**: Updates to the registration state (via `cancelEventRegistration`) will affect the visibility of items in the `UpcomingEvents` component and the `MyEventsList` component.
 
 ## External consumers
-* `concorda-web::src/components/dashboard/upcoming-events.tsx` (UpcomingEvents component)
-* `concorda-web::src/components/profile/my-events-list.tsx` (MyEventsList component)
 
-## Open questions
-* None.
+- None known.

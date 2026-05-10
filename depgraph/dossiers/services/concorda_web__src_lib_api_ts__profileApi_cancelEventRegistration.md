@@ -10,26 +10,25 @@ status: llm_drafted
 # profileApi.cancelEventRegistration
 
 ## Purpose
-`cancelEventRegistration` is a service method used to remove a user's association with a specific event. It is a thin wrapper around a `DELETE` request to the `/api/profile/event-registrations/{id}` endpoint. A future agent should reach for this when a user needs to opt-out of an event they previously joined, such as via the `MyEventsList` component or the `UpcomingEvents` dashboard.
+
+The `cancelEventRegistration` method handles the removal of a user's registration for a specific event. It is used when a user chooses to opt-out of an event they previously joined. This is distinct from `deleteCrewPool`, which manages the availability of crew slots, whereas this method specifically targets the user's personal registration record.
 
 ## Invariants
-* HTTP Method: `DELETE`.
-* Path: `/api/profile/event-registrations/${id}`.
-* Auth: Requires an authenticated session via `fetchApiAuthenticated`.
-* Return Shape: A JSON object containing a `{ message: string }`.
-* Dependency: Relies on a valid registration `id` string.
+
+- **HTTP Method is `DELETE`** — The endpoint expects a deletion request to remove the registration.
+- **Requires `id` parameter** — The registration ID must be passed as a string in the URL path.
+- **Returns `{ message: string }`** — A successful call returns a confirmation message from the server.
+- **Uses `fetchApiAuthenticated`** — The request is authenticated via the user's current session/token.
 
 ## Gotchas
-* **ID-based deletion**: The function expects a specific registration ID, not an event ID. Passing an event ID instead of the registration ID will result in a 404 or incorrect deletion.
-* **UI State Sync**: Since this is a `DELETE` operation, the calling component (e.g., `MyEventsList`) must handle the local state update or re-fetch to ensure the removed registration disappears from the UI immediately.
+
+- **Recent coupling changes** — Per commit `b4d60c6`, the system has moved away from strict "position-name" gating to ensure that count calculations (like accepted invites vs. live slots) remain accurate even when registration states change.
 
 ## Cross-cutting concerns
-* **Auth**: Requires a valid user session; failure to authenticate will result in a failed request.
-* **Side Effects**: Successful cancellation likely impacts the "accepted count" and "slots" availability for the event, though this is handled server-side.
+
+- **Auth**: Uses `fetchApiAuthenticated` to ensure the user can only cancel their own registrations.
+- **Side effects**: Triggers updates to the `UpcomingEvents` component in the dashboard and the `MyEventsList` component in the user profile.
 
 ## External consumers
-* `concorda-web::src/components/dashboard/upcoming-events.tsx` (via `UpcomingEvents`)
-* `concorda-web::src/components/profile/my-events-list.tsx` (via `MyEventsList`)
 
-## Open questions
-* None.
+None known.

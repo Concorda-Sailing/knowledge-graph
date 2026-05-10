@@ -10,24 +10,25 @@ status: llm_drafted
 # crewfinderApi.searchBoats
 
 ## Purpose
-`crewfinderApi.searchBoats` provides a specialized search mechanism for finding boats within the Crewfinder service. It is distinct from the standard `searchBoats` (which likely handles broader criteria) by accepting a single string query `q` and returning an array of `BoatSearchResult` objects. Use this function when the UI requires a text-based autocomplete or a simple keyword search for boat names/details rather than a filtered parameter-based search.
+
+Provides a text-based search for boats within the Crewfinder module. It is distinct from the parameterized `searchBoats` (which filters by experience, position, and race area) by accepting a raw query string `q` for broader keyword matching. Use this when the user is performing a free-text search rather than applying structured filters.
 
 ## Invariants
-* Performs a GET request to `/api/crewfinder/boats/search`.
-* Requires authentication via `fetchApiAuthenticated`.
-* The input parameter `q` is URI encoded using `encodeURIComponent` to prevent malformed query strings.
-* Returns a Promise resolving to `BoatSearchResult[]`.
+
+- **Input is a raw string.** The query `q` is passed via `encodeURIComponent` to ensure special characters do not break the URL structure.
+- **Returns `BoatSearchResult[]`.** The response is a typed array of boat search results.
+- **Uses `fetchApiAuthenticated`.** This method requires a valid bearer token and will fail if the user is not authenticated.
 
 ## Gotchas
-* **Query Encoding**: The function uses `encodeURIComponent(q)` for the query string; ensure that any complex objects passed as `q` are pre-serialized or that the caller expects a string-only input.
-* **Type Mismatch**: Ensure the consumer expects an array of `BoatSearchResult`; if the API returns a single object or a different shape, the type assertion will fail at runtime.
+
+- **Search is not a filter.** Unlike the parameterized search method, this does not take `experience_level` or `race_area` as structured arguments; it relies on the backend's implementation of the `q` parameter.
+- **Dependency on `fetchApiAuthenticated`.** If the authentication layer is modified, this method's ability to retrieve results is immediately impacted.
 
 ## Cross-cutting concerns
-* **Auth**: Relies on `fetchApiAuthenticated` for session-based authorization.
-* **Side Effects**: None identified for this specific search endpoint.
+
+- **Auth**: Requires authentication via `fetchApiAuthenticated`.
+- **Side effects**: Results from this search are consumed by the `BoatExclusionList` component to allow users to filter out specific boats from their view.
 
 ## External consumers
-concorda-web::src/components/profile/boat-exclusion-list.tsx (via BoatExclusionList)
 
-## Open questions
-* It is unclear if the backend supports advanced search operators within the `q` string or if it is strictly a literal substring match.
+None known.
