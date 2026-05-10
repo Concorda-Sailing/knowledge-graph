@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 20078574cd0eee9d56132c70fddad8b59d7c5da057777960d63847864a0cfddd
-status: llm_drafted
+status: current
 ---
 
 # AgentToken

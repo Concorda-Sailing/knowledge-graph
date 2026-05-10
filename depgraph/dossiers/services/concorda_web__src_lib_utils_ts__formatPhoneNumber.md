@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e057ec3340bf5ba4b95f43bdff3747224ca0b2dbe7065fc8cf4a6db3a9b9ddf2
-status: llm_drafted
+status: current
 ---
 
 # formatPhoneNumber

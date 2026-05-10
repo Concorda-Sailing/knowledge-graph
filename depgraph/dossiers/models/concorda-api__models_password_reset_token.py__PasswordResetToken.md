@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ede4bb62118cd00df5bb67086aec0ff58849088d783c9b2dfe79cf0c7612fe38
-status: llm_drafted
+status: current
 ---
 
 # PasswordResetToken

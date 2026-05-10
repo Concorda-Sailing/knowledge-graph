@@ -4,7 +4,7 @@ node_kind: hook
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 042548df9f79e1cce5f4bac84ce371cc13e07414a6f341e2ca24f1223cb6f005
-status: llm_drafted
+status: current
 ---
 
 # usePendingApprovals

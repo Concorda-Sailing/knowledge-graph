@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: b36197754c03ddffa78efb53d4e456ec69fa7efc093e8f6de55dbb6a56546f1e
-status: llm_drafted
+status: current
 ---
 
 # AuthToken

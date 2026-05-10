@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: cddefab3cd0a255f919b7d3ff47ed5ad91e5213f74c4360ef878b01782f0c27a
-status: llm_drafted
+status: current
 ---
 
 # delete_upload

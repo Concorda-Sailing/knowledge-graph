@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: de0cc2e26bd4cb71aeefeeceb4a906803430aa2c259170d9bba3ac6a6f3fc18f
-status: llm_drafted
+status: current
 ---
 
 # PersonContractAcceptance

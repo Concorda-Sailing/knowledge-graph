@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 96bf3d240e7ae264ff5b08ca7445e4dd84a8496bb36d5dd1385dc1b2ade2c0df
-status: llm_drafted
+status: current
 ---
 
 # LLMPrompt

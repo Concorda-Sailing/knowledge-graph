@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 618650548e10f8fd4bcb851870f54a05e29e7981c4e2b72f22518ffeb76537af
-status: llm_drafted
+status: current
 ---
 
 # formatCoord

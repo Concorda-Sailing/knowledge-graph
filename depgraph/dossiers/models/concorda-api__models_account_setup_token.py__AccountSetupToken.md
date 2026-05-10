@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ffb3adef2bc6a3423c51e35cfa069d3fec41f5614e3bb0e798031d31d175235a
-status: llm_drafted
+status: current
 ---
 
 # AccountSetupToken

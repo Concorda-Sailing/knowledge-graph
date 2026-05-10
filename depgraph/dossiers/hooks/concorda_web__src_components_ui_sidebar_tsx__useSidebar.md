@@ -4,7 +4,7 @@ node_kind: hook
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 84370d556a88ee22b67203aa7fa8bd08141722283906dcab4aa1d632dc730a55
-status: llm_drafted
+status: current
 ---
 
 # useSidebar

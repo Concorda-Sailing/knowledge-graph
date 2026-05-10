@@ -4,7 +4,7 @@ node_kind: hook
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ead61dd18b89bd0aaa644ef825640e233976d2703760ed35e154d5c9eb5f6c64
-status: llm_drafted
+status: current
 ---
 
 # useInlineEdit

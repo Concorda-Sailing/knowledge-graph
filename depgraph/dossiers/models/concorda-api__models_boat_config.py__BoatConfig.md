@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 4be81f2479bd7accb2e239c310bd7c5714e027ee9918032da1da68682b0aab08
-status: llm_drafted
+status: current
 ---
 
 # BoatConfig

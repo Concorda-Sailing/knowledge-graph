@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: b9d5262c5a6c4be63970e9b2eeeb3f0f0c6c9d8956c42b3c1b1c93d2ba8ff0a5
-status: llm_drafted
+status: current
 ---
 
 # EventDiscount

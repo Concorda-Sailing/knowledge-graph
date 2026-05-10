@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 2b60410616e73b5d10d7d225e51ef491a8fc58137a689c458f3e5f1feec2fd46
-status: llm_drafted
+status: current
 ---
 
 # Merchandise

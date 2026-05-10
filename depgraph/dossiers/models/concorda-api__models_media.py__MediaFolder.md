@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: f50f131c17db512caedb55ea76d9564745953d082e89324569d1d2fd6c5b5622
-status: llm_drafted
+status: current
 ---
 
 # MediaFolder

@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 603091be806ee851e7907e06789e7af160cf6f14c0056068d1ee2c20aa0bd860
-status: llm_drafted
+status: current
 ---
 
 # Transaction

@@ -4,7 +4,7 @@ node_kind: schema
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: da54574788a1accb7c7444ac9771114e2ba459a6faa9b06af0ccdf492ecfd50f
-status: llm_drafted
+status: current
 ---
 
 # MerchandiseRead

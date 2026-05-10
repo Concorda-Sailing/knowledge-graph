@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 0e4b4b9b1b203469677e5e43383254958528c1bd7fa9aa1d836fd4eaf411d85a
-status: llm_drafted
+status: current
 ---
 
 # AdminEventsPage.gotoSocials
