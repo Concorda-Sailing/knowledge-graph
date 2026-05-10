@@ -4,11 +4,17 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}graphui{% endblock %} · concorda</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/graph/static/style.css">
 </head>
 <body>
   <header class="topbar">
-    <a href="/graph/" class="brand">graphui</a>
+    <a href="/graph/" class="brand">
+      <span class="brand-mark">◆</span>
+      <span class="brand-text">graphui</span>
+    </a>
     <nav>
       <a href="/graph/">index</a>
       <a href="/graph/review">review</a>
@@ -17,7 +23,8 @@
     </nav>
     <span class="meta-stamp">
       {% if meta and meta.depgraph %}
-        depgraph {{ meta.depgraph.git_commit[:8] }} · {{ meta.depgraph.node_count }} nodes
+        <span class="commit-pill">{{ meta.depgraph.git_commit[:8] }}</span>
+        <span class="node-count">{{ meta.depgraph.node_count }} nodes</span>
       {% endif %}
     </span>
   </header>
