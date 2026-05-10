@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "boatApi.getPunchlist",
-    "line": 3159
+    "line": 3171
   },
   "signature": {
     "name": "boatApi.getPunchlist",
@@ -19,7 +19,7 @@
     {
       "target": "GET::/api/boats/{0}/punchlist",
       "via": "string_url",
-      "where": "api.ts:3160",
+      "where": "api.ts:3172",
       "confidence": "fuzzy"
     }
   ],

@@ -4,25 +4,25 @@
       "confidence": "exact",
       "target": "concorda-api::services/visibility.py::peer_can_see_pii",
       "via": "import",
-      "where": "routers/events.py:2399"
+      "where": "routers/events.py:2400"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::schemas/event_crew.py::EventCrewRead",
       "via": "import",
-      "where": "routers/events.py:2379"
+      "where": "routers/events.py:2380"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/event_crew.py::EventCrew",
       "via": "db_query",
-      "where": "routers/events.py:2391"
+      "where": "routers/events.py:2392"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/person.py::Person",
       "via": "db_query",
-      "where": "routers/events.py:2398"
+      "where": "routers/events.py:2399"
     }
   ],
   "dossier": "dossiers/endpoints/GET___api_events_0_sailing-event_crew.md",
@@ -40,7 +40,7 @@
     "response_schema_ref": "list"
   },
   "source": {
-    "line": 2380,
+    "line": 2381,
     "path": "routers/events.py",
     "repo": "concorda-api",
     "symbol": "get_event_crew"

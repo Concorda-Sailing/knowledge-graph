@@ -4,25 +4,25 @@
       "confidence": "exact",
       "target": "concorda-api::schemas/event_crew.py::EventCrewPoolSet",
       "via": "import",
-      "where": "routers/events.py:2412"
+      "where": "routers/events.py:2413"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::utils/websocket_manager.py::broadcast_event",
       "via": "websocket",
-      "where": "routers/events.py:2455"
+      "where": "routers/events.py:2456"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::schemas/event_crew.py::EventCrewRead",
       "via": "import",
-      "where": "routers/events.py:2409"
+      "where": "routers/events.py:2410"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/event_crew.py::EventCrew",
       "via": "db_query",
-      "where": "routers/events.py:2445"
+      "where": "routers/events.py:2446"
     }
   ],
   "dossier": "dossiers/endpoints/PUT___api_events_0_sailing-event_crew-pool.md",
@@ -40,7 +40,7 @@
     "response_schema_ref": "list"
   },
   "source": {
-    "line": 2410,
+    "line": 2411,
     "path": "routers/events.py",
     "repo": "concorda-api",
     "symbol": "set_crew_pool"

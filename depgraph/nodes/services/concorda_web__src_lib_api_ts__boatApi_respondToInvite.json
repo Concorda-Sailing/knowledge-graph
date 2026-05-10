@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "boatApi.respondToInvite",
-    "line": 3120
+    "line": 3132
   },
   "signature": {
     "name": "boatApi.respondToInvite",
@@ -19,7 +19,7 @@
     {
       "target": "PUT::/api/boats/{0}/crew-invite/respond",
       "via": "string_url",
-      "where": "api.ts:3121",
+      "where": "api.ts:3133",
       "confidence": "fuzzy"
     }
   ],

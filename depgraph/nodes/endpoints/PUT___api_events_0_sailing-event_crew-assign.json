@@ -4,25 +4,25 @@
       "confidence": "exact",
       "target": "concorda-api::schemas/event_crew.py::EventCrewAssign",
       "via": "import",
-      "where": "routers/events.py:2739"
+      "where": "routers/events.py:2740"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::utils/websocket_manager.py::broadcast_event",
       "via": "websocket",
-      "where": "routers/events.py:2765"
+      "where": "routers/events.py:2766"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::schemas/event_crew.py::EventCrewRead",
       "via": "import",
-      "where": "routers/events.py:2736"
+      "where": "routers/events.py:2737"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/event_crew.py::EventCrew",
       "via": "db_query",
-      "where": "routers/events.py:2752"
+      "where": "routers/events.py:2753"
     }
   ],
   "dossier": "dossiers/endpoints/PUT___api_events_0_sailing-event_crew-assign.md",
@@ -40,7 +40,7 @@
     "response_schema_ref": "EventCrewRead"
   },
   "source": {
-    "line": 2737,
+    "line": 2738,
     "path": "routers/events.py",
     "repo": "concorda-api",
     "symbol": "assign_event_crew"

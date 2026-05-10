@@ -4,7 +4,7 @@
       "confidence": "exact",
       "target": "concorda-api::models/event.py::Event",
       "via": "db_query",
-      "where": "routers/events.py:1188"
+      "where": "routers/events.py:1189"
     }
   ],
   "dossier": "dossiers/endpoints/POST___api_events_check-duplicates.md",
@@ -22,7 +22,7 @@
     "response_schema_ref": "list"
   },
   "source": {
-    "line": 1186,
+    "line": 1187,
     "path": "routers/events.py",
     "repo": "concorda-api",
     "symbol": "check_event_duplicates"

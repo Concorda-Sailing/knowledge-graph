@@ -4,31 +4,31 @@
       "confidence": "exact",
       "target": "concorda-api::models/event.py::Event",
       "via": "db_query",
-      "where": "routers/events.py:1364"
+      "where": "routers/events.py:1365"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::schemas/event.py::EventReadWithRegatta",
       "via": "import",
-      "where": "routers/events.py:1351"
+      "where": "routers/events.py:1352"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/product.py::Product",
       "via": "db_query",
-      "where": "routers/events.py:1389"
+      "where": "routers/events.py:1390"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::services/organizing_authorities.py::set_event_oas",
       "via": "import",
-      "where": "routers/events.py:1403"
+      "where": "routers/events.py:1404"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::services/organizing_authorities.py::get_event_oas",
       "via": "import",
-      "where": "routers/events.py:1401"
+      "where": "routers/events.py:1402"
     }
   ],
   "dossier": "dossiers/endpoints/POST___api_events_0_duplicate.md",
@@ -46,7 +46,7 @@
     "response_schema_ref": "EventReadWithRegatta"
   },
   "source": {
-    "line": 1352,
+    "line": 1353,
     "path": "routers/events.py",
     "repo": "concorda-api",
     "symbol": "duplicate_event"

@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "adminProductsApi.update",
-    "line": 2462
+    "line": 2474
   },
   "signature": {
     "name": "adminProductsApi.update",
@@ -19,7 +19,7 @@
     {
       "target": "PUT::/api/products/{0}",
       "via": "string_url",
-      "where": "api.ts:2463",
+      "where": "api.ts:2475",
       "confidence": "fuzzy"
     }
   ],

@@ -4,7 +4,7 @@
       "confidence": "exact",
       "target": "concorda-api::models/event.py::Event",
       "via": "db_query",
-      "where": "routers/events.py:651"
+      "where": "routers/events.py:652"
     }
   ],
   "dossier": "dossiers/endpoints/GET___api_events_0_detail.md",
@@ -22,7 +22,7 @@
     "response_schema_ref": "dict"
   },
   "source": {
-    "line": 639,
+    "line": 640,
     "path": "routers/events.py",
     "repo": "concorda-api",
     "symbol": "get_event_detail"

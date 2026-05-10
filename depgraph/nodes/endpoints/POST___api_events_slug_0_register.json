@@ -4,37 +4,37 @@
       "confidence": "exact",
       "target": "concorda-api::schemas/event_registration.py::EventRegistrationCreate",
       "via": "import",
-      "where": "routers/events.py:1658"
+      "where": "routers/events.py:1659"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/event_registration.py::EventRegistration",
       "via": "db_query",
-      "where": "routers/events.py:1744"
+      "where": "routers/events.py:1745"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::schemas/event_registration.py::EventRegistrationRead",
       "via": "import",
-      "where": "routers/events.py:1655"
+      "where": "routers/events.py:1656"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/event.py::Event",
       "via": "db_query",
-      "where": "routers/events.py:1663"
+      "where": "routers/events.py:1664"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/product.py::Product",
       "via": "db_query",
-      "where": "routers/events.py:1673"
+      "where": "routers/events.py:1674"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/transaction.py::Transaction",
       "via": "db_query",
-      "where": "routers/events.py:1703"
+      "where": "routers/events.py:1704"
     }
   ],
   "dossier": "dossiers/endpoints/POST___api_events_slug_0_register.md",
@@ -52,7 +52,7 @@
     "response_schema_ref": "EventRegistrationRead"
   },
   "source": {
-    "line": 1656,
+    "line": 1657,
     "path": "routers/events.py",
     "repo": "concorda-api",
     "symbol": "register_for_event"

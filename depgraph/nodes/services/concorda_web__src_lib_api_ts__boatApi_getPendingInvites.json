@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "boatApi.getPendingInvites",
-    "line": 3081
+    "line": 3093
   },
   "signature": {
     "name": "boatApi.getPendingInvites",
@@ -19,7 +19,7 @@
     {
       "target": "GET::/api/boats/{0}/pending-invites",
       "via": "string_url",
-      "where": "api.ts:3082",
+      "where": "api.ts:3094",
       "confidence": "fuzzy"
     }
   ],

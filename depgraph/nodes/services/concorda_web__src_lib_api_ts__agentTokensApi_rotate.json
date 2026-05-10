@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "agentTokensApi.rotate",
-    "line": 3333
+    "line": 3345
   },
   "signature": {
     "name": "agentTokensApi.rotate",
@@ -19,7 +19,7 @@
     {
       "target": "POST::/api/profile/agent-tokens/{0}/rotate",
       "via": "string_url",
-      "where": "api.ts:3334",
+      "where": "api.ts:3346",
       "confidence": "fuzzy"
     }
   ],

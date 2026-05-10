@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "boatApi.resendInvite",
-    "line": 3125
+    "line": 3137
   },
   "signature": {
     "name": "boatApi.resendInvite",
@@ -19,7 +19,7 @@
     {
       "target": "POST::/api/boats/{0}/crew/{1}/resend-invite",
       "via": "string_url",
-      "where": "api.ts:3126",
+      "where": "api.ts:3138",
       "confidence": "fuzzy"
     }
   ],

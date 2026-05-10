@@ -4,37 +4,37 @@
       "confidence": "exact",
       "target": "concorda-api::models/event.py::Event",
       "via": "db_query",
-      "where": "routers/events.py:3095"
+      "where": "routers/events.py:3096"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/boat_crew.py::BoatCrew",
       "via": "db_query",
-      "where": "routers/events.py:3076"
+      "where": "routers/events.py:3077"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/person.py::Person",
       "via": "db_query",
-      "where": "routers/events.py:3089"
+      "where": "routers/events.py:3090"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/event_crew.py::EventCrew",
       "via": "db_query",
-      "where": "routers/events.py:3091"
+      "where": "routers/events.py:3092"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/sailing_event.py::SailingEvent",
       "via": "db_query",
-      "where": "routers/events.py:3092"
+      "where": "routers/events.py:3093"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/boat.py::Boat",
       "via": "db_query",
-      "where": "routers/events.py:3088"
+      "where": "routers/events.py:3089"
     }
   ],
   "dossier": "dossiers/endpoints/GET___api_events_crew-requests_inbox.md",
@@ -52,7 +52,7 @@
     "response_schema_ref": null
   },
   "source": {
-    "line": 3065,
+    "line": 3066,
     "path": "routers/events.py",
     "repo": "concorda-api",
     "symbol": "list_inbox_crew_requests"
@@ -64,7 +64,7 @@
     {
       "code": "weakly_typed_response",
       "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
-      "where": "routers/events.py:3065"
+      "where": "routers/events.py:3066"
     }
   ]
 }

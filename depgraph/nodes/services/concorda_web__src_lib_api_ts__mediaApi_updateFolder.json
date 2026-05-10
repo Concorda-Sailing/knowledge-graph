@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "mediaApi.updateFolder",
-    "line": 2919
+    "line": 2931
   },
   "signature": {
     "name": "mediaApi.updateFolder",
@@ -19,7 +19,7 @@
     {
       "target": "PUT::/api/media/folders/{0}",
       "via": "string_url",
-      "where": "api.ts:2920",
+      "where": "api.ts:2932",
       "confidence": "fuzzy"
     }
   ],

@@ -4,13 +4,13 @@
       "confidence": "exact",
       "target": "concorda-api::schemas/event.py::EventReadWithRegatta",
       "via": "import",
-      "where": "routers/events.py:152"
+      "where": "routers/events.py:153"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/event.py::Event",
       "via": "db_query",
-      "where": "routers/events.py:154"
+      "where": "routers/events.py:155"
     }
   ],
   "dossier": "dossiers/endpoints/GET___api_events_slug_0.md",
@@ -28,7 +28,7 @@
     "response_schema_ref": "EventReadWithRegatta"
   },
   "source": {
-    "line": 153,
+    "line": 154,
     "path": "routers/events.py",
     "repo": "concorda-api",
     "symbol": "get_event_by_slug"

@@ -15,7 +15,7 @@
     "name": "EventCrewInviteSend"
   },
   "source": {
-    "line": 43,
+    "line": 45,
     "path": "schemas/event_crew.py",
     "repo": "concorda-api",
     "symbol": "EventCrewInviteSend"

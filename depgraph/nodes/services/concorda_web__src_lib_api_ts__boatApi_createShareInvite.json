@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "boatApi.createShareInvite",
-    "line": 3083
+    "line": 3095
   },
   "signature": {
     "name": "boatApi.createShareInvite",
@@ -19,7 +19,7 @@
     {
       "target": "POST::/api/boats/{0}/share-invite",
       "via": "string_url",
-      "where": "api.ts:3084",
+      "where": "api.ts:3096",
       "confidence": "fuzzy"
     }
   ],

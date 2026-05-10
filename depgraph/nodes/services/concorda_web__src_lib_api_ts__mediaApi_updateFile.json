@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "mediaApi.updateFile",
-    "line": 2874
+    "line": 2886
   },
   "signature": {
     "name": "mediaApi.updateFile",
@@ -19,7 +19,7 @@
     {
       "target": "PUT::/api/media/files/{0}",
       "via": "string_url",
-      "where": "api.ts:2875",
+      "where": "api.ts:2887",
       "confidence": "fuzzy"
     }
   ],

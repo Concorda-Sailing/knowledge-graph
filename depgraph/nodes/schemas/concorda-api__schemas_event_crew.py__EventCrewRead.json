@@ -33,7 +33,7 @@
     "name": "EventCrewRead"
   },
   "source": {
-    "line": 6,
+    "line": 8,
     "path": "schemas/event_crew.py",
     "repo": "concorda-api",
     "symbol": "EventCrewRead"

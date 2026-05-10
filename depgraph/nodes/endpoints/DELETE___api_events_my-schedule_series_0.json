@@ -4,13 +4,13 @@
       "confidence": "exact",
       "target": "concorda-api::models/person_event.py::PersonEvent",
       "via": "db_query",
-      "where": "routers/events.py:1086"
+      "where": "routers/events.py:1087"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/event.py::Event",
       "via": "db_query",
-      "where": "routers/events.py:1076"
+      "where": "routers/events.py:1077"
     }
   ],
   "dossier": "dossiers/endpoints/DELETE___api_events_my-schedule_series_0.md",
@@ -28,7 +28,7 @@
     "response_schema_ref": null
   },
   "source": {
-    "line": 1062,
+    "line": 1063,
     "path": "routers/events.py",
     "repo": "concorda-api",
     "symbol": "remove_series_from_schedule"

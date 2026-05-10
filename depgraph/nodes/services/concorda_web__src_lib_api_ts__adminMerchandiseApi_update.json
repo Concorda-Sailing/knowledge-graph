@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "adminMerchandiseApi.update",
-    "line": 2665
+    "line": 2677
   },
   "signature": {
     "name": "adminMerchandiseApi.update",
@@ -19,7 +19,7 @@
     {
       "target": "PUT::/api/merchandise/{0}",
       "via": "string_url",
-      "where": "api.ts:2666",
+      "where": "api.ts:2678",
       "confidence": "fuzzy"
     }
   ],

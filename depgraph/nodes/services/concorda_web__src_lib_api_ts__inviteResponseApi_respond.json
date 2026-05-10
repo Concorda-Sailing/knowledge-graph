@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "inviteResponseApi.respond",
-    "line": 3267
+    "line": 3279
   },
   "signature": {
     "name": "inviteResponseApi.respond",
@@ -19,7 +19,7 @@
     {
       "target": "POST::/api/invite/respond",
       "via": "http_call",
-      "where": "api.ts:3268",
+      "where": "api.ts:3280",
       "confidence": "exact"
     }
   ],

@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "boatApi.updateCrew",
-    "line": 3096
+    "line": 3108
   },
   "signature": {
     "name": "boatApi.updateCrew",
@@ -19,7 +19,7 @@
     {
       "target": "PUT::/api/boats/{0}/crew/{1}",
       "via": "string_url",
-      "where": "api.ts:3097",
+      "where": "api.ts:3109",
       "confidence": "fuzzy"
     }
   ],

@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "boatApi.reorderCrew",
-    "line": 3105
+    "line": 3117
   },
   "signature": {
     "name": "boatApi.reorderCrew",
@@ -19,7 +19,7 @@
     {
       "target": "PUT::/api/boats/{0}/crew/reorder",
       "via": "string_url",
-      "where": "api.ts:3106",
+      "where": "api.ts:3118",
       "confidence": "fuzzy"
     }
   ],

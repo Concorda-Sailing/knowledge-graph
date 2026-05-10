@@ -4,25 +4,25 @@
       "confidence": "exact",
       "target": "concorda-api::models/person_event.py::PersonEvent",
       "via": "db_query",
-      "where": "routers/events.py:972"
+      "where": "routers/events.py:973"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/event.py::Event",
       "via": "db_query",
-      "where": "routers/events.py:986"
+      "where": "routers/events.py:987"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/boat_crew.py::BoatCrew",
       "via": "db_query",
-      "where": "routers/events.py:1009"
+      "where": "routers/events.py:1010"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/sailing_event.py::SailingEvent",
       "via": "db_query",
-      "where": "routers/events.py:1011"
+      "where": "routers/events.py:1012"
     }
   ],
   "dossier": "dossiers/endpoints/DELETE___api_events_my-schedule_events_0.md",
@@ -40,7 +40,7 @@
     "response_schema_ref": null
   },
   "source": {
-    "line": 960,
+    "line": 961,
     "path": "routers/events.py",
     "repo": "concorda-api",
     "symbol": "remove_event_from_schedule"

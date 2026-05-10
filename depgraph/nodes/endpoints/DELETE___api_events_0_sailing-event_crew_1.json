@@ -4,13 +4,13 @@
       "confidence": "exact",
       "target": "concorda-api::utils/websocket_manager.py::broadcast_event",
       "via": "websocket",
-      "where": "routers/events.py:2493"
+      "where": "routers/events.py:2494"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/event_crew.py::EventCrew",
       "via": "db_query",
-      "where": "routers/events.py:2474"
+      "where": "routers/events.py:2475"
     }
   ],
   "dossier": "dossiers/endpoints/DELETE___api_events_0_sailing-event_crew_1.md",
@@ -28,7 +28,7 @@
     "response_schema_ref": null
   },
   "source": {
-    "line": 2464,
+    "line": 2465,
     "path": "routers/events.py",
     "repo": "concorda-api",
     "symbol": "delete_event_crew"

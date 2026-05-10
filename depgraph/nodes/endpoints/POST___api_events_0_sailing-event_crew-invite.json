@@ -4,49 +4,55 @@
       "confidence": "exact",
       "target": "concorda-api::schemas/event_crew.py::EventCrewInviteSend",
       "via": "import",
-      "where": "routers/events.py:2520"
+      "where": "routers/events.py:2521"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::utils/websocket_manager.py::broadcast_event",
       "via": "websocket",
-      "where": "routers/events.py:2624"
+      "where": "routers/events.py:2625"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/event_crew.py::EventCrew",
       "via": "db_query",
-      "where": "routers/events.py:2535"
+      "where": "routers/events.py:2536"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::schemas/event_crew.py::EventCrewRead",
       "via": "import",
-      "where": "routers/events.py:2517"
+      "where": "routers/events.py:2518"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/event_crew.py::EventCrewStatus",
+      "via": "db_query",
+      "where": "routers/events.py:2538"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/org_config.py::OrgConfig",
       "via": "db_query",
-      "where": "routers/events.py:2579"
+      "where": "routers/events.py:2580"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/event.py::Event",
       "via": "db_query",
-      "where": "routers/events.py:2527"
+      "where": "routers/events.py:2528"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/boat.py::Boat",
       "via": "db_query",
-      "where": "routers/events.py:2528"
+      "where": "routers/events.py:2529"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/person.py::Person",
       "via": "db_query",
-      "where": "routers/events.py:2587"
+      "where": "routers/events.py:2588"
     }
   ],
   "dossier": "dossiers/endpoints/POST___api_events_0_sailing-event_crew-invite.md",
@@ -64,7 +70,7 @@
     "response_schema_ref": "list"
   },
   "source": {
-    "line": 2518,
+    "line": 2519,
     "path": "routers/events.py",
     "repo": "concorda-api",
     "symbol": "send_crew_invites"

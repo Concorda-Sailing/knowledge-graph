@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "boatApi.getCrew",
-    "line": 3079
+    "line": 3091
   },
   "signature": {
     "name": "boatApi.getCrew",
@@ -19,7 +19,7 @@
     {
       "target": "GET::/api/boats/{0}/crew",
       "via": "string_url",
-      "where": "api.ts:3080",
+      "where": "api.ts:3092",
       "confidence": "fuzzy"
     }
   ],

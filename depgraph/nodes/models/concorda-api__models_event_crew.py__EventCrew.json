@@ -13,7 +13,7 @@
     "tablename": "event_crew"
   },
   "source": {
-    "line": 6,
+    "line": 37,
     "path": "models/event_crew.py",
     "repo": "concorda-api",
     "symbol": "EventCrew"

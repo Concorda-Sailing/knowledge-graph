@@ -4,49 +4,49 @@
       "confidence": "exact",
       "target": "concorda-api::models/event.py::Event",
       "via": "db_query",
-      "where": "routers/events.py:210"
+      "where": "routers/events.py:211"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/person_event.py::PersonEvent",
       "via": "db_query",
-      "where": "routers/events.py:217"
+      "where": "routers/events.py:218"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/event_crew.py::EventCrew",
       "via": "db_query",
-      "where": "routers/events.py:244"
+      "where": "routers/events.py:245"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::schemas/event.py::EventRead",
       "via": "import",
-      "where": "routers/events.py:415"
+      "where": "routers/events.py:416"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/boat_crew.py::BoatCrew",
       "via": "db_query",
-      "where": "routers/events.py:178"
+      "where": "routers/events.py:179"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/event_registration.py::EventRegistration",
       "via": "db_query",
-      "where": "routers/events.py:229"
+      "where": "routers/events.py:230"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/sailing_event.py::SailingEvent",
       "via": "db_query",
-      "where": "routers/events.py:244"
+      "where": "routers/events.py:245"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/boat.py::Boat",
       "via": "db_query",
-      "where": "routers/events.py:442"
+      "where": "routers/events.py:443"
     }
   ],
   "dossier": "dossiers/endpoints/GET___api_events_my-schedule.md",
@@ -64,7 +64,7 @@
     "response_schema_ref": "list"
   },
   "source": {
-    "line": 161,
+    "line": 162,
     "path": "routers/events.py",
     "repo": "concorda-api",
     "symbol": "get_my_schedule"

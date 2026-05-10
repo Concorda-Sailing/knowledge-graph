@@ -15,7 +15,7 @@
     "response_schema_ref": "SailingEventRead"
   },
   "source": {
-    "line": 1928,
+    "line": 1929,
     "path": "routers/events.py",
     "repo": "concorda-api",
     "symbol": "get_sailing_event"

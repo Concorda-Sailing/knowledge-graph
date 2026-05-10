@@ -4,13 +4,13 @@
       "confidence": "exact",
       "target": "concorda-api::utils/websocket_manager.py::broadcast_event",
       "via": "websocket",
-      "where": "routers/events.py:2513"
+      "where": "routers/events.py:2514"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::schemas/event_crew.py::EventCrewRead",
       "via": "import",
-      "where": "routers/events.py:2498"
+      "where": "routers/events.py:2499"
     }
   ],
   "dossier": "dossiers/endpoints/POST___api_events_0_sailing-event_crew-notify.md",
@@ -28,7 +28,7 @@
     "response_schema_ref": "list"
   },
   "source": {
-    "line": 2499,
+    "line": 2500,
     "path": "routers/events.py",
     "repo": "concorda-api",
     "symbol": "notify_crew_endpoint"

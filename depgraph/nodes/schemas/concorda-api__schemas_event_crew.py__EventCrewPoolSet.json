@@ -16,7 +16,7 @@
     "name": "EventCrewPoolSet"
   },
   "source": {
-    "line": 38,
+    "line": 40,
     "path": "schemas/event_crew.py",
     "repo": "concorda-api",
     "symbol": "EventCrewPoolSet"

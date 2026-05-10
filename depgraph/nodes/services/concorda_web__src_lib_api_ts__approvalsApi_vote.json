@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "approvalsApi.vote",
-    "line": 3297
+    "line": 3309
   },
   "signature": {
     "name": "approvalsApi.vote",
@@ -19,7 +19,7 @@
     {
       "target": "POST::/api/approval-requests/{0}/vote",
       "via": "string_url",
-      "where": "api.ts:3298",
+      "where": "api.ts:3310",
       "confidence": "fuzzy"
     }
   ],

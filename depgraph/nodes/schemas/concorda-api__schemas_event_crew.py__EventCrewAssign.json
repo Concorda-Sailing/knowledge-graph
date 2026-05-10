@@ -16,7 +16,7 @@
     "name": "EventCrewAssign"
   },
   "source": {
-    "line": 52,
+    "line": 54,
     "path": "schemas/event_crew.py",
     "repo": "concorda-api",
     "symbol": "EventCrewAssign"

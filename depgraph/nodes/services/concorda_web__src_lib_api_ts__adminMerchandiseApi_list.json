@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "adminMerchandiseApi.list",
-    "line": 2652
+    "line": 2664
   },
   "signature": {
     "name": "adminMerchandiseApi.list",
@@ -19,7 +19,7 @@
     {
       "target": "GET::/api/merchandise{0}",
       "via": "string_url",
-      "where": "api.ts:2656",
+      "where": "api.ts:2668",
       "confidence": "fuzzy"
     }
   ],

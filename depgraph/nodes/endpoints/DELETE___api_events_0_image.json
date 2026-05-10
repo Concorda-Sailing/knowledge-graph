@@ -4,19 +4,19 @@
       "confidence": "exact",
       "target": "concorda-api::utils/image_utils.py::delete_upload",
       "via": "import",
-      "where": "routers/events.py:1440"
+      "where": "routers/events.py:1441"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::schemas/event.py::EventRead",
       "via": "import",
-      "where": "routers/events.py:1429"
+      "where": "routers/events.py:1430"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/event.py::Event",
       "via": "db_query",
-      "where": "routers/events.py:1435"
+      "where": "routers/events.py:1436"
     }
   ],
   "dossier": "dossiers/endpoints/DELETE___api_events_0_image.md",
@@ -34,7 +34,7 @@
     "response_schema_ref": "EventRead"
   },
   "source": {
-    "line": 1430,
+    "line": 1431,
     "path": "routers/events.py",
     "repo": "concorda-api",
     "symbol": "delete_event_image"
