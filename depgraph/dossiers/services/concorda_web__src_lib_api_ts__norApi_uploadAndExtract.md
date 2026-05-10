@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: a4bbb5c13ade4241621297cf20a644291f026a9a3f7a39803a4b566258342e37
-status: llm_drafted
+status: current
 ---
 
 # norApi.uploadAndExtract

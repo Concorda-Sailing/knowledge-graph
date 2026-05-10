@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ab3b4ea458d0130098e5778dd9e5654a73065100abdfc4d23342a87d2a6949d7
-status: llm_drafted
+status: current
 ---
 
 # PUT /api/events/{event_id}/sailing-event

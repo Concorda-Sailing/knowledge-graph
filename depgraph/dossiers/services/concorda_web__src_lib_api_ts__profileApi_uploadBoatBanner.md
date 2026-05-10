@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 2a5499b329f0d3c70903731b9c57be606c9682481a3e276e2d9d80d7305d01bd
-status: llm_drafted
+status: current
 ---
 
 # profileApi.uploadBoatBanner

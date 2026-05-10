@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: fc83ac063b441d7a19743683c8808e93ec1c15542032288904617171a504a150
-status: llm_drafted
+status: current
 ---
 
 # profileApi.createBoatConfig

@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 3df4c45f92eeec2fea1db2e07a5e7c9c2899f4128467dcd76206374f6c5d1005
-status: llm_drafted
+status: current
 ---
 
 # organizationsApi.list

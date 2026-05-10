@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 594006a91d53ed4006eb652243ce6d4c02c579c6f546b4fc3e469464917963cf
-status: llm_drafted
+status: current
 ---
 
 # temporalProductsApi.getAvailable

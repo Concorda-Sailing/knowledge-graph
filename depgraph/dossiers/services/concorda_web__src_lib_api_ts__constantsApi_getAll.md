@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: c5258471074a5fdc99d17cbe3fa91953c2d73474b162ae092606c38f077244fb
-status: llm_drafted
+status: current
 ---
 
 # constantsApi.getAll

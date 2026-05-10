@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 56338e7e201845e16f30a2282cb80ea07f0834b0106d26f74485985a66991778
-status: llm_drafted
+status: current
 ---
 
 # BoatResume

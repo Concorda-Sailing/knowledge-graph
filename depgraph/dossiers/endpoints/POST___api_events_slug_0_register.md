@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: a986f9affd8a633625a1f500a615ac970cbde5773ce8bfc92625caa677948689
-status: llm_drafted
+status: current
 ---
 
 # POST /api/events/slug/{slug}/register

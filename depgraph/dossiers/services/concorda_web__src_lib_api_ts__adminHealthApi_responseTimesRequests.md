@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 19dfc9c14ec19515632520d95349fe42ba23843bb99a16453e122ce6f15346c9
-status: llm_drafted
+status: current
 ---
 
 # adminHealthApi.responseTimesRequests

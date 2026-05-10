@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: d98ec2e71589d20bb36d29accd2c3571d5a33a09b001be7d6ec405a7b2819972
-status: llm_drafted
+status: current
 ---
 
 # set_event_oas

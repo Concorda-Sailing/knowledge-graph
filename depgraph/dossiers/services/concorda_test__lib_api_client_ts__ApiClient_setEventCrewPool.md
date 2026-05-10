@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: a4102315e57b853502a96df2adf4c021117dad939353d8c41401c9758600113d
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.setEventCrewPool

@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ef61b56aaccd17d0b3d25e7e3f4dfcb122734b94044d60427890304724d9475b
-status: llm_drafted
+status: current
 ---
 
 # eventsApi.sendCrewInvites

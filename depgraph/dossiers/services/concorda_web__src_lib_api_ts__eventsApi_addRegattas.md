@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: d9c36cfc024dedeaf9d01a42b48ebe6ad7aebdc14b89aab408091b1b09943514
-status: llm_drafted
+status: current
 ---
 
 # eventsApi.addRegattas

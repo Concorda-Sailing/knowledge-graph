@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: c1f122143f667efaac622c1bfeb81660090908eab73e7aba23cdca34e740cc24
-status: llm_drafted
+status: current
 ---
 
 # profileApi.getMyCrew

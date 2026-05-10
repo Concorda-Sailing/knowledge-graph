@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: f491b7c29db033f748a2db8e78200c937ead7720dceb7d56b9bec972245fe922
-status: llm_drafted
+status: current
 ---
 
 # boatApi.getDetail

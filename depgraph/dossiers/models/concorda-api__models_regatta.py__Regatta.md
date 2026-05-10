@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 31f181e8e8e6a3ddcd56255ee27d8db6e61fd02fb1769e442bf23e0a801f14bb
-status: llm_drafted
+status: current
 ---
 
 # Regatta

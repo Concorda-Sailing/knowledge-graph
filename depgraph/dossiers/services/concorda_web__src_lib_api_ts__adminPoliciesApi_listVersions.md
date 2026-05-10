@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 97468321b960364cff683baf56d30de30dc2e140621dba2837e2a1da6acf4046
-status: llm_drafted
+status: current
 ---
 
 # adminPoliciesApi.listVersions

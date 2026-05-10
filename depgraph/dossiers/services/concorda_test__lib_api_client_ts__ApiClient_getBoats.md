@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 9ded4cb9e21a100bb6d4e465708f8c09b6b1c8a014511c1bf3f5681908dc8256
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.getBoats

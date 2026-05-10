@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: f73a3affacfccd8bb89bda1ab9df6d12ee591bdea33d7761264fe0880a8d0629
-status: llm_drafted
+status: current
 ---
 
 # mediaApi.listFiles

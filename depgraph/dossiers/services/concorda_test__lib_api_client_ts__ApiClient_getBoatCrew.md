@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: ef20e1dc0d844691fe51cfe5985f63baa24c17e84cb06df4c75b7695cc1e1be8
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.getBoatCrew

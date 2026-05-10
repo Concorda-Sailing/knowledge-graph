@@ -4,7 +4,7 @@ node_kind: schema
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 51b8bd380c6c7accb3749937b5c34dae47990225cc96480e33933075d5af6b64
-status: llm_drafted
+status: current
 ---
 
 # OrganizationRead

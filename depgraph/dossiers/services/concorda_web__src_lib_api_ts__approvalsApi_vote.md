@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 5dbc153c1dc29d3098373c6c85dc6efcf406b568f9fd871da6edda820ee4e12b
-status: llm_drafted
+status: current
 ---
 
 # approvalsApi.vote

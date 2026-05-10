@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 6ba8bdb1eff6aedfeff2a28e0f24cc29f72eec35f31758f8a561b6848a6acdd0
-status: llm_drafted
+status: current
 ---
 
 # mediaApi.deleteFile

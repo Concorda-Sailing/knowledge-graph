@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: f5c7d7ac1c621a3bca9d4f9f6a63f5ef95c86ffd7748cf44e9953d5e89a86404
-status: llm_drafted
+status: current
 ---
 
 # CrewPool

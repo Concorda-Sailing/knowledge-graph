@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 828fa71fad79141f23e049262be4c038d148115eaa6159d9fd94395775a7056d
-status: llm_drafted
+status: current
 ---
 
 # eventsApi.mySchedule

@@ -4,7 +4,7 @@ node_kind: endpoint
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 22571e464f7d9254751b4d9d65a21505bd4aa06e76afe3a1a0c898547409dcf2
-status: llm_drafted
+status: current
 ---
 
 # GET /api/persons/directory

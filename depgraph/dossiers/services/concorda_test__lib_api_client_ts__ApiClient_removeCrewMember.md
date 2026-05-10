@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 3560e59810ce89c72b09ebd2ce8d1319925f276f74d433294a841d2a4bfbcb51
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.removeCrewMember

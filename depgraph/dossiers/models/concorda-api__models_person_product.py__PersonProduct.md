@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 58f5a5aa153b0333d24628081dc2ff257e556b663afb3fead0f893a64203e21d
-status: llm_drafted
+status: current
 ---
 
 # PersonProduct

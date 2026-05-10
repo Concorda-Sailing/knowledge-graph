@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: d295f966a6a2ccade23c9bbe3e4566b48f35e6a4ad97229779332f2554f065f8
-status: llm_drafted
+status: current
 ---
 
 # boatApi.removeCrew

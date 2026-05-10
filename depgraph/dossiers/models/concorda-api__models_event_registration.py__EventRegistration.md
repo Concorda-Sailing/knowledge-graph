@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 5891ab1b4549f8cb8d851a56e58ce395f424a87900003f7b846249e134519f41
-status: llm_drafted
+status: current
 ---
 
 # EventRegistration

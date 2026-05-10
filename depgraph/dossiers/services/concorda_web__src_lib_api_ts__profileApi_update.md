@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 6e6873772013b442fc77669c004fed25d6e5b6512da44f2dc6edb4af60dadcc6
-status: llm_drafted
+status: current
 ---
 
 # profileApi.update

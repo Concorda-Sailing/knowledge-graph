@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e92a6828dacb913172aaf2504e2a4123ce78bfbf0a76139e1de4c2529dc6294e
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.getMyCrewData

@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 666f44d2335945e2ba8e02b7d9ab035adb4872dc18155110b439a50f0c52debf
-status: llm_drafted
+status: current
 ---
 
 # profileApi.getBoats

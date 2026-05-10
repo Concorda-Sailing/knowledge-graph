@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: be3fa3ad5d1f4e49918a7c06fac8486b8998628cc3b1cc0d38f27062aaf0cfba
-status: llm_drafted
+status: current
 ---
 
 # eventsApi.upsertSailingEvent

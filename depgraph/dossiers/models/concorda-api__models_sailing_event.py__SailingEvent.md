@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: b8a9d77d2afb4e2b2673f38f3687364e638abdc383d0a8f28889de5089ed422e
-status: llm_drafted
+status: current
 ---
 
 # SailingEvent

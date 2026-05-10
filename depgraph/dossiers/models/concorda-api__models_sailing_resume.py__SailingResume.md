@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: d0983df0e2995d5a6cbd8091710272a8cd33b4f20783d01cb6757739326ef613
-status: llm_drafted
+status: current
 ---
 
 # SailingResume

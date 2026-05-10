@@ -4,7 +4,7 @@ node_kind: schema
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 4bdc96f48ecfa05edac70a7ad0d1ee126befe3ce8b1128852820529603366511
-status: llm_drafted
+status: current
 ---
 
 # RegattaRead

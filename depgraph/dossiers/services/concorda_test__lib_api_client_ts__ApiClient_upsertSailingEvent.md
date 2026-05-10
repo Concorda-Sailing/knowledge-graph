@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 23fb4cf536e3f0e82456df424d2b4d0afd27454060cf0b2fcacafeab6b22f1d3
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.upsertSailingEvent

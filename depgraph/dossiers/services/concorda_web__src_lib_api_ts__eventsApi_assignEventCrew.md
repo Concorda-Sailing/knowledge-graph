@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: f52862224e1904889576eab7f121d2b73aa4ef6d9c0b9052bad532d900cdcc5b
-status: llm_drafted
+status: current
 ---
 
 # eventsApi.assignEventCrew

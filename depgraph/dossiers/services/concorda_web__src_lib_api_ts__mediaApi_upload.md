@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 6f6eaf71fc2ccb46c48994d5f73389bfecea6b0de0ebe9030e3a1824c7f98d0c
-status: llm_drafted
+status: current
 ---
 
 # mediaApi.upload

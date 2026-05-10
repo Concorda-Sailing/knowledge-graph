@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 0d06779a1f86d8c3f107b72ebd888732dee36e96d99bf439c4ae5b2bf5c17f33
-status: llm_drafted
+status: current
 ---
 
 # paymentsApi.getConfig

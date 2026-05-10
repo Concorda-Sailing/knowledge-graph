@@ -4,7 +4,7 @@ node_kind: hook
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: dc2a96a6de06801d08ac56c43ed12e0ef790c9cc97345a2c1efc99fa41f9f69d
-status: llm_drafted
+status: current
 ---
 
 # useBoats

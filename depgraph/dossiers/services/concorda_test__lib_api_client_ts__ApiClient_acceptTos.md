@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 14bc477f6c896576971297c317372091507ce828e78e92adad44fe77f57c1510
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.acceptTos

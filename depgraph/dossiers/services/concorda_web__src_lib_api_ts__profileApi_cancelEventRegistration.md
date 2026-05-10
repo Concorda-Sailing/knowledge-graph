@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 9986502d26c4d7cd5874001166e8303c5f924aa926c3fa67dc7b504cc59ed3fa
-status: llm_drafted
+status: current
 ---
 
 # profileApi.cancelEventRegistration

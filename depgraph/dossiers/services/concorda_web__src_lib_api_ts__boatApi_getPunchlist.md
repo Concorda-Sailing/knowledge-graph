@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: c4f598a1135eeb2e3d13c66278fb95b8e8dc09beb965aa56f3327a0b2defc7e4
-status: llm_drafted
+status: current
 ---
 
 # boatApi.getPunchlist

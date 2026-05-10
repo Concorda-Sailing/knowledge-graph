@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 149af649a33a622c12dfcbbac37729e9fe29834d3997e847653de0dbd6b44543
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.listApprovalRequests

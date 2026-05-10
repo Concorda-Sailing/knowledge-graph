@@ -4,7 +4,7 @@ node_kind: service
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: e4632a3d03b38e24a711eef3104617121d8b20b1ade324c346b2e188e997ee65
-status: llm_drafted
+status: current
 ---
 
 # ApiClient.removeScheduleEvent
