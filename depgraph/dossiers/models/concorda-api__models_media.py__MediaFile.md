@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: 74f748c8270160af431cffc160a56694d1e69c406fe397e592193dbe5c365b81
-status: llm_drafted
+status: current
 ---
 
 # MediaFile
