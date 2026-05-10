@@ -1,0 +1,40 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/media.py::MediaFolder",
+      "via": "db_query",
+      "where": "routers/media.py:238"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/media.py::MediaFile",
+      "via": "db_query",
+      "where": "routers/media.py:244"
+    }
+  ],
+  "dossier": "dossiers/endpoints/DELETE___api_media_folders_0.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "DELETE::/api/media/folders/{0}",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "DELETE",
+    "path": "/api/media/folders/{folder_id}",
+    "request_schema_ref": null,
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 233,
+    "path": "routers/media.py",
+    "repo": "concorda-api",
+    "symbol": "delete_folder"
+  },
+  "structural_hash": "e7d1ba0c9ac3d6bde2c8152333517f4ed8297d75213534f98eeb7605f98e8bbc",
+  "tests": [],
+  "title": "DELETE /api/media/folders/{folder_id}",
+  "warnings": []
+}

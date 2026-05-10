@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::lib/api-client.ts::ApiClient.getProfile",
+  "kind": "service",
+  "title": "ApiClient.getProfile",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "lib/api-client.ts",
+    "symbol": "ApiClient.getProfile",
+    "line": 200
+  },
+  "signature": {
+    "name": "ApiClient.getProfile",
+    "kind": "service"
+  },
+  "structural_hash": "3436adf2a11510b29ad805cbc2110619778693d9802a390f7dea708b4f1d6231",
+  "depends_on": [
+    {
+      "target": "GET::/api/profile",
+      "via": "http_call",
+      "where": "api-client.ts:201",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__lib_api_client_ts__ApiClient_getProfile.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

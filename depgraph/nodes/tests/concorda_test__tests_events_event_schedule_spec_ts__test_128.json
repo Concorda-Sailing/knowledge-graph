@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/events/event-schedule.spec.ts::test@128",
+  "kind": "test",
+  "title": "event with logistics and crew set up → view mode",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/events/event-schedule.spec.ts",
+    "symbol": "test@128",
+    "line": 128
+  },
+  "signature": {
+    "name": "test@128",
+    "kind": "test"
+  },
+  "structural_hash": "6750128a73496727c67585cfbc655c912ef9825c07b38c652ea572610cb89c9d",
+  "depends_on": [
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.login",
+      "via": "hook_call",
+      "where": "event-schedule.spec.ts:130",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.setToken",
+      "via": "hook_call",
+      "where": "event-schedule.spec.ts:131",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.getMyCrewData",
+      "via": "hook_call",
+      "where": "event-schedule.spec.ts:132",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.me",
+      "via": "hook_call",
+      "where": "event-schedule.spec.ts:134",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.createSailingEvent",
+      "via": "hook_call",
+      "where": "event-schedule.spec.ts:137",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.upsertSailingEvent",
+      "via": "hook_call",
+      "where": "event-schedule.spec.ts:143",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.setEventCrewPool",
+      "via": "hook_call",
+      "where": "event-schedule.spec.ts:149",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.setToken",
+      "via": "hook_call",
+      "where": "event-schedule.spec.ts:157",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.removeScheduleEvent",
+      "via": "hook_call",
+      "where": "event-schedule.spec.ts:158",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_events_event_schedule_spec_ts__test_128.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

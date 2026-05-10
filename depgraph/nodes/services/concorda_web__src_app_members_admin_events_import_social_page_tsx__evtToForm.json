@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/admin/events/import-social/page.tsx::evtToForm",
+  "kind": "service",
+  "title": "evtToForm",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/admin/events/import-social/page.tsx",
+    "symbol": "evtToForm",
+    "line": 38
+  },
+  "signature": {
+    "name": "evtToForm",
+    "kind": "service"
+  },
+  "structural_hash": "2bbdf22466f69047b2669c845584e34354c0d32336bdfeedc9262595987057c1",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_app_members_admin_events_import_social_page_tsx__evtToForm.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

@@ -1,0 +1,52 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/boat_crew.py::BoatCrew",
+      "via": "db_query",
+      "where": "routers/profile.py:822"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/boat.py::Boat",
+      "via": "db_query",
+      "where": "routers/profile.py:789"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/person.py::Person",
+      "via": "db_query",
+      "where": "routers/profile.py:807"
+    }
+  ],
+  "dossier": "dossiers/endpoints/POST___api_profile_boats_0_transfer.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "POST::/api/profile/boats/{0}/transfer",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "POST",
+    "path": "/api/profile/boats/{boat_id}/transfer",
+    "request_schema_ref": "TransferBoatRequest",
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 777,
+    "path": "routers/profile.py",
+    "repo": "concorda-api",
+    "symbol": "transfer_boat"
+  },
+  "structural_hash": "d236fb30156d61618d1c1f5b098ed8d5c61ab93ecb23bc08871f8b8f06548bc6",
+  "tests": [],
+  "title": "POST /api/profile/boats/{boat_id}/transfer",
+  "warnings": [
+    {
+      "code": "weakly_typed_response",
+      "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
+      "where": "routers/profile.py:777"
+    }
+  ]
+}

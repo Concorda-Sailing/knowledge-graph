@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/admin/events/import/page.tsx::DateField",
+  "kind": "component",
+  "title": "DateField",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/admin/events/import/page.tsx",
+    "symbol": "DateField",
+    "line": 465
+  },
+  "signature": {
+    "name": "DateField",
+    "kind": "component"
+  },
+  "structural_hash": "70b1e6053855be8581572e3b364938efab552824749725e73f4ea4f24a7963ff",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/datetime.ts::utcIsoToOrgInput",
+      "via": "hook_call",
+      "where": "page.tsx:466",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::orgInputToUtcIso",
+      "via": "hook_call",
+      "where": "page.tsx:477",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_admin_events_import_page_tsx__DateField.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

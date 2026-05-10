@@ -1,0 +1,25 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/models/concorda-api__models_organization.py__Organization.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::models/organization.py::Organization",
+  "kind": "model",
+  "schema_version": 1,
+  "signature": {
+    "kind": "model",
+    "name": "Organization",
+    "tablename": "organizations"
+  },
+  "source": {
+    "line": 10,
+    "path": "models/organization.py",
+    "repo": "concorda-api",
+    "symbol": "Organization"
+  },
+  "structural_hash": "ccd783b83da7a5b24ed0e0f7de32aa3aa91ec8c062e67eecab0eb6337e030df6",
+  "tests": [],
+  "title": "Organization",
+  "warnings": []
+}

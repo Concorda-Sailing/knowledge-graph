@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/join/page.tsx::WaveDivider",
+  "kind": "component",
+  "title": "WaveDivider",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/join/page.tsx",
+    "symbol": "WaveDivider",
+    "line": 19
+  },
+  "signature": {
+    "name": "WaveDivider",
+    "kind": "component"
+  },
+  "structural_hash": "01249f2f0c47d2753080869cf7905bb026c88e7a8715bee490a60f3a3d52df6b",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_join_page_tsx__WaveDivider.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

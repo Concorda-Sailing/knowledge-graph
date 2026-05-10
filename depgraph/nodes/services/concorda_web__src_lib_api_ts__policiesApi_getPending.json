@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::policiesApi.getPending",
+  "kind": "service",
+  "title": "policiesApi.getPending",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "policiesApi.getPending",
+    "line": 297
+  },
+  "signature": {
+    "name": "policiesApi.getPending",
+    "kind": "service"
+  },
+  "structural_hash": "e251a0880b7c624fa5317ef746d6d3ba3036092b090138d6a5e53d62b1ea978f",
+  "depends_on": [
+    {
+      "target": "GET::/api/policies/me/pending",
+      "via": "http_call",
+      "where": "api.ts:297",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__policiesApi_getPending.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

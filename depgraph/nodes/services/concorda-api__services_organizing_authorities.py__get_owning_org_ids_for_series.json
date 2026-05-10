@@ -1,0 +1,28 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/services/concorda-api__services_organizing_authorities.py__get_owning_org_ids_for_series.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::services/organizing_authorities.py::get_owning_org_ids_for_series",
+  "kind": "service",
+  "schema_version": 1,
+  "signature": {
+    "args": [
+      "db",
+      "series_uuid"
+    ],
+    "kind": "service",
+    "name": "get_owning_org_ids_for_series"
+  },
+  "source": {
+    "line": 155,
+    "path": "services/organizing_authorities.py",
+    "repo": "concorda-api",
+    "symbol": "get_owning_org_ids_for_series"
+  },
+  "structural_hash": "7b94619319ac274fdba3317c7163b5ce5d1f709168a347099d693e24a54583a2",
+  "tests": [],
+  "title": "get_owning_org_ids_for_series",
+  "warnings": []
+}

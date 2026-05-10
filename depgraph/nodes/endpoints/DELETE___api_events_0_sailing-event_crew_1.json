@@ -1,0 +1,40 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::utils/websocket_manager.py::broadcast_event",
+      "via": "websocket",
+      "where": "routers/events.py:2306"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/event_crew.py::EventCrew",
+      "via": "db_query",
+      "where": "routers/events.py:2287"
+    }
+  ],
+  "dossier": "dossiers/endpoints/DELETE___api_events_0_sailing-event_crew_1.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "DELETE::/api/events/{0}/sailing-event/crew/{1}",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "DELETE",
+    "path": "/api/events/{event_id}/sailing-event/crew/{person_uuid}",
+    "request_schema_ref": null,
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 2277,
+    "path": "routers/events.py",
+    "repo": "concorda-api",
+    "symbol": "delete_event_crew"
+  },
+  "structural_hash": "acbda45749116723887b17a30ff29e7f5218965ab325c52ac2b11362dae004f2",
+  "tests": [],
+  "title": "DELETE /api/events/{event_id}/sailing-event/crew/{person_uuid}",
+  "warnings": []
+}

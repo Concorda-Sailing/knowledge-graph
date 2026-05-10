@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/dashboard/event-plan-panel.tsx::EventCrewSlot",
+  "kind": "component",
+  "title": "EventCrewSlot",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/dashboard/event-plan-panel.tsx",
+    "symbol": "EventCrewSlot",
+    "line": 699
+  },
+  "signature": {
+    "name": "EventCrewSlot",
+    "kind": "component"
+  },
+  "structural_hash": "8db715698df58f357b764a51374641a7992000b77bcb5b933390c2d6e2559720",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_dashboard_event_plan_panel_tsx__EventCrewSlot.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

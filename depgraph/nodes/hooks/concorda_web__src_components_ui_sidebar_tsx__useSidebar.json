@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/ui/sidebar.tsx::useSidebar",
+  "kind": "hook",
+  "title": "useSidebar",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/ui/sidebar.tsx",
+    "symbol": "useSidebar",
+    "line": 42
+  },
+  "signature": {
+    "name": "useSidebar",
+    "kind": "hook"
+  },
+  "structural_hash": "84370d556a88ee22b67203aa7fa8bd08141722283906dcab4aa1d632dc730a55",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/hooks/concorda_web__src_components_ui_sidebar_tsx__useSidebar.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

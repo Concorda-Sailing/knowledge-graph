@@ -1,0 +1,25 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/models/concorda-api__models_communication_unsubscribe.py__CommunicationUnsubscribe.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::models/communication_unsubscribe.py::CommunicationUnsubscribe",
+  "kind": "model",
+  "schema_version": 1,
+  "signature": {
+    "kind": "model",
+    "name": "CommunicationUnsubscribe",
+    "tablename": "communication_unsubscribes"
+  },
+  "source": {
+    "line": 6,
+    "path": "models/communication_unsubscribe.py",
+    "repo": "concorda-api",
+    "symbol": "CommunicationUnsubscribe"
+  },
+  "structural_hash": "dee46e73d4491c9e4ac53ddde38f8c73ccb344c8f92e36d0a74e0764bd22e431",
+  "tests": [],
+  "title": "CommunicationUnsubscribe",
+  "warnings": []
+}

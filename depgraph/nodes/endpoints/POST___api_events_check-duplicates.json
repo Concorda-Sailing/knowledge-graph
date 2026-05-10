@@ -1,0 +1,34 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/event.py::Event",
+      "via": "db_query",
+      "where": "routers/events.py:997"
+    }
+  ],
+  "dossier": "dossiers/endpoints/POST___api_events_check-duplicates.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "POST::/api/events/check-duplicates",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "POST",
+    "path": "/api/events/check-duplicates",
+    "request_schema_ref": "EventDuplicateCheckRequest",
+    "response_schema_ref": "list"
+  },
+  "source": {
+    "line": 995,
+    "path": "routers/events.py",
+    "repo": "concorda-api",
+    "symbol": "check_event_duplicates"
+  },
+  "structural_hash": "e6da79a70595d0fb2362d91a56e74ec72521ee566ec77359ece3b73ec667edd0",
+  "tests": [],
+  "title": "POST /api/events/check-duplicates",
+  "warnings": []
+}

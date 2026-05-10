@@ -1,0 +1,39 @@
+{
+  "_archived_at": "2026-05-09T11:23:39.008804Z",
+  "_archived_reason": "domain_orphan_symbol_removed",
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_product.py__ProductCreate.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/product.py::ProductCreate",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "description",
+      "effective_date",
+      "end_date",
+      "event_id",
+      "is_active",
+      "name",
+      "price",
+      "publish_date",
+      "quantity",
+      "slug",
+      "sort_order"
+    ],
+    "kind": "schema",
+    "name": "ProductCreate"
+  },
+  "source": {
+    "line": 7,
+    "path": "schemas/product.py",
+    "repo": "concorda-api",
+    "symbol": "ProductCreate"
+  },
+  "structural_hash": "d47c6f18e07e10d1c0d74ed25333b7f703433e575bdaf03285a2b46537273b9a",
+  "tests": [],
+  "title": "ProductCreate",
+  "warnings": []
+}

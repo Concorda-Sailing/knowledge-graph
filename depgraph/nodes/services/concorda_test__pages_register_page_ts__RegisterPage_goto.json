@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::pages/register.page.ts::RegisterPage.goto",
+  "kind": "service",
+  "title": "RegisterPage.goto",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "pages/register.page.ts",
+    "symbol": "RegisterPage.goto",
+    "line": 44
+  },
+  "signature": {
+    "name": "RegisterPage.goto",
+    "kind": "service"
+  },
+  "structural_hash": "88046a937f944a3830e6e16c3d0125ff10fdf7384774dcac5433ba21672def0e",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__pages_register_page_ts__RegisterPage_goto.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

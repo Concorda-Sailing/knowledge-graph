@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/profile/sections/crewfinder-optin-section.tsx::hasAnyAvailabilityDay",
+  "kind": "service",
+  "title": "hasAnyAvailabilityDay",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/profile/sections/crewfinder-optin-section.tsx",
+    "symbol": "hasAnyAvailabilityDay",
+    "line": 9
+  },
+  "signature": {
+    "name": "hasAnyAvailabilityDay",
+    "kind": "service"
+  },
+  "structural_hash": "2aaa78b6fc7480aeba7d005a1b08a152dd5afbf14c5eb73cd7d2401c14646181",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_components_profile_sections_crewfinder_optin_section_tsx__hasAnyAvailabilityDay.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

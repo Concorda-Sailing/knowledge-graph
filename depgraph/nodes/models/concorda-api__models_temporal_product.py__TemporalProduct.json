@@ -1,0 +1,25 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/models/concorda-api__models_temporal_product.py__TemporalProduct.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::models/temporal_product.py::TemporalProduct",
+  "kind": "model",
+  "schema_version": 1,
+  "signature": {
+    "kind": "model",
+    "name": "TemporalProduct",
+    "tablename": "temporal_products"
+  },
+  "source": {
+    "line": 15,
+    "path": "models/temporal_product.py",
+    "repo": "concorda-api",
+    "symbol": "TemporalProduct"
+  },
+  "structural_hash": "a1d57d27639ae4efb0b76aa0e51efe7140d7d6b18c912701c23394c5ef19ffe3",
+  "tests": [],
+  "title": "TemporalProduct",
+  "warnings": []
+}

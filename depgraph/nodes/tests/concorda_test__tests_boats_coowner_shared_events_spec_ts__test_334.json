@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/boats/coowner-shared-events.spec.ts::test@334",
+  "kind": "test",
+  "title": "Dan can send boat-level crew invites",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/boats/coowner-shared-events.spec.ts",
+    "symbol": "test@334",
+    "line": 334
+  },
+  "signature": {
+    "name": "test@334",
+    "kind": "test"
+  },
+  "structural_hash": "da6acfa6eb3e83c48cddbacec3fb8166f3822629ea59d17ee00f5fbb1dc6830d",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_boats_coowner_shared_events_spec_ts__test_334.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

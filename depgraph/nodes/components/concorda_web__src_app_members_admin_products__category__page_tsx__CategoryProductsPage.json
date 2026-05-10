@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/admin/products/[category]/page.tsx::CategoryProductsPage",
+  "kind": "component",
+  "title": "CategoryProductsPage",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/admin/products/[category]/page.tsx",
+    "symbol": "CategoryProductsPage",
+    "line": 63
+  },
+  "signature": {
+    "name": "CategoryProductsPage",
+    "kind": "component"
+  },
+  "structural_hash": "33d188b1b65df78eae7cdcb103ea3867eb06de47679122ca5620f5eded4ae514",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/api.ts::adminTemporalProductsApi.list",
+      "via": "hook_call",
+      "where": "page.tsx:119",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::adminMerchandiseApi.list",
+      "via": "hook_call",
+      "where": "page.tsx:125",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::adminTemporalProductsApi.reorder",
+      "via": "hook_call",
+      "where": "page.tsx:153",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::adminTemporalProductsApi.update",
+      "via": "hook_call",
+      "where": "page.tsx:234",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::adminTemporalProductsApi.create",
+      "via": "hook_call",
+      "where": "page.tsx:236",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::adminTemporalProductsApi.delete",
+      "via": "hook_call",
+      "where": "page.tsx:256",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_admin_products__category__page_tsx__CategoryProductsPage.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

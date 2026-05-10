@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/profile/sections/calendar-subscription-section.tsx::CalendarSubscriptionSection",
+  "kind": "component",
+  "title": "CalendarSubscriptionSection",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/profile/sections/calendar-subscription-section.tsx",
+    "symbol": "CalendarSubscriptionSection",
+    "line": 11
+  },
+  "signature": {
+    "name": "CalendarSubscriptionSection",
+    "kind": "component"
+  },
+  "structural_hash": "8b5e5bb60fbd09b21a83d1b4c23e0cb9b520284899be6c81d477e6a57e665288",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/hooks/use-toast.ts::useToast",
+      "via": "hook_call",
+      "where": "calendar-subscription-section.tsx:12",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::calendarApi.status",
+      "via": "hook_call",
+      "where": "calendar-subscription-section.tsx:20",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::calendarApi.rotate",
+      "via": "hook_call",
+      "where": "calendar-subscription-section.tsx:34",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::calendarApi.disable",
+      "via": "hook_call",
+      "where": "calendar-subscription-section.tsx:53",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_profile_sections_calendar_subscription_section_tsx__CalendarSubscriptionSection.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

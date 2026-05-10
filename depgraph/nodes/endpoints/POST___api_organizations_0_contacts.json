@@ -1,0 +1,52 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/contact.py::Contact",
+      "via": "db_query",
+      "where": "routers/organizations.py:288"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/contact_role.py::ContactRole",
+      "via": "db_query",
+      "where": "routers/organizations.py:296"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/organization.py::Organization",
+      "via": "db_query",
+      "where": "routers/organizations.py:283"
+    }
+  ],
+  "dossier": "dossiers/endpoints/POST___api_organizations_0_contacts.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "POST::/api/organizations/{0}/contacts",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "admin",
+    "method": "POST",
+    "path": "/api/organizations/{org_id}/contacts",
+    "request_schema_ref": "ContactCreate",
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 276,
+    "path": "routers/organizations.py",
+    "repo": "concorda-api",
+    "symbol": "add_org_contact"
+  },
+  "structural_hash": "4d679892d1ba95a066408a0680bc7932b41f3efdf744b84969590c5fdc69aba6",
+  "tests": [],
+  "title": "POST /api/organizations/{org_id}/contacts",
+  "warnings": [
+    {
+      "code": "weakly_typed_response",
+      "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
+      "where": "routers/organizations.py:276"
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::schemas/event_registration.py::MyEventRegistration",
+      "via": "import",
+      "where": "routers/profile.py:308"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/event.py::Event",
+      "via": "db_query",
+      "where": "routers/profile.py:303"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/product.py::Product",
+      "via": "db_query",
+      "where": "routers/profile.py:301"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/event_registration.py::EventRegistration",
+      "via": "db_query",
+      "where": "routers/profile.py:302"
+    }
+  ],
+  "dossier": "dossiers/endpoints/GET___api_profile_event-registrations.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/profile/event-registrations",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "GET",
+    "path": "/api/profile/event-registrations",
+    "request_schema_ref": null,
+    "response_schema_ref": "list"
+  },
+  "source": {
+    "line": 293,
+    "path": "routers/profile.py",
+    "repo": "concorda-api",
+    "symbol": "get_my_event_registrations"
+  },
+  "structural_hash": "3928fc5be61cfc1f5ca8869599f9fdab2d08e00396f7995dd57e2d4c6126c9ad",
+  "tests": [],
+  "title": "GET /api/profile/event-registrations",
+  "warnings": []
+}

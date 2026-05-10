@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::pages/invite-landing.page.ts::InviteLandingPage.gotoUrl",
+  "kind": "service",
+  "title": "InviteLandingPage.gotoUrl",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "pages/invite-landing.page.ts",
+    "symbol": "InviteLandingPage.gotoUrl",
+    "line": 41
+  },
+  "signature": {
+    "name": "InviteLandingPage.gotoUrl",
+    "kind": "service"
+  },
+  "structural_hash": "4f54d140905d94eaf8172996c4f32b8f157978053409c3a520c976facdf9ccdc",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__pages_invite_landing_page_ts__InviteLandingPage_gotoUrl.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

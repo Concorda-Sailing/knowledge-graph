@@ -1,0 +1,70 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/person.py::Person",
+      "via": "db_query",
+      "where": "routers/admin.py:144"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/temporal_product.py::TemporalProduct",
+      "via": "db_query",
+      "where": "routers/admin.py:156"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/organization.py::Organization",
+      "via": "db_query",
+      "where": "routers/admin.py:146"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/event.py::Event",
+      "via": "db_query",
+      "where": "routers/admin.py:147"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/regatta.py::Regatta",
+      "via": "db_query",
+      "where": "routers/admin.py:148"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/person_product.py::PersonProduct",
+      "via": "db_query",
+      "where": "routers/admin.py:155"
+    }
+  ],
+  "dossier": "dossiers/endpoints/GET___api_admin_stats.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/admin/stats",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "GET",
+    "path": "/api/admin/stats",
+    "request_schema_ref": null,
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 140,
+    "path": "routers/admin.py",
+    "repo": "concorda-api",
+    "symbol": "get_stats"
+  },
+  "structural_hash": "44f1486d0883358c4e4308f01182b427459893a646a4a7abbfffe52a27dc8c4b",
+  "tests": [],
+  "title": "GET /api/admin/stats",
+  "warnings": [
+    {
+      "code": "weakly_typed_response",
+      "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
+      "where": "routers/admin.py:140"
+    }
+  ]
+}

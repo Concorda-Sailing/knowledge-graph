@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/admin/response-time-drilldown.tsx::formatBucketTick",
+  "kind": "service",
+  "title": "formatBucketTick",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/admin/response-time-drilldown.tsx",
+    "symbol": "formatBucketTick",
+    "line": 49
+  },
+  "signature": {
+    "name": "formatBucketTick",
+    "kind": "service"
+  },
+  "structural_hash": "bbee7d4cbf70602608e40b7fcdf41d4969ac72d442e3ad687058d5542e72a85e",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
+      "via": "hook_call",
+      "where": "response-time-drilldown.tsx:51",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
+      "via": "hook_call",
+      "where": "response-time-drilldown.tsx:54",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
+      "via": "hook_call",
+      "where": "response-time-drilldown.tsx:56",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_components_admin_response_time_drilldown_tsx__formatBucketTick.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/profile/sections/personal-info-section.tsx::PersonalInfoSection",
+  "kind": "component",
+  "title": "PersonalInfoSection",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/profile/sections/personal-info-section.tsx",
+    "symbol": "PersonalInfoSection",
+    "line": 13
+  },
+  "signature": {
+    "name": "PersonalInfoSection",
+    "kind": "component"
+  },
+  "structural_hash": "cd940bad3aa4cb0f73bf17d7de71536fcb0240740eaab70c4e9dc769b7378280",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/components/profile/sections/use-inline-edit.tsx::useInlineEdit",
+      "via": "hook_call",
+      "where": "personal-info-section.tsx:21",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_profile_sections_personal_info_section_tsx__PersonalInfoSection.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

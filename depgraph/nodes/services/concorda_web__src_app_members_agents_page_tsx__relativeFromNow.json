@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/agents/page.tsx::relativeFromNow",
+  "kind": "service",
+  "title": "relativeFromNow",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/agents/page.tsx",
+    "symbol": "relativeFromNow",
+    "line": 49
+  },
+  "signature": {
+    "name": "relativeFromNow",
+    "kind": "service"
+  },
+  "structural_hash": "7038bb7bfa3c619a1c6883fe25a1e53a42260e8a03af5d8891b1dc7b95b76f97",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_app_members_agents_page_tsx__relativeFromNow.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

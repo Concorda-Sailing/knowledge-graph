@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/admin/delegates/page.tsx::AdminDelegatesPage",
+  "kind": "component",
+  "title": "AdminDelegatesPage",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/admin/delegates/page.tsx",
+    "symbol": "AdminDelegatesPage",
+    "line": 13
+  },
+  "signature": {
+    "name": "AdminDelegatesPage",
+    "kind": "component"
+  },
+  "structural_hash": "0232860a6df90f0ab1a5388e0ecf70310dd6271b1f90ac11e06c5fed53e3dc8c",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/api.ts::adminApi.delegates",
+      "via": "hook_call",
+      "where": "page.tsx:18",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/utils.ts::formatPhoneNumber",
+      "via": "hook_call",
+      "where": "page.tsx:114",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_admin_delegates_page_tsx__AdminDelegatesPage.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

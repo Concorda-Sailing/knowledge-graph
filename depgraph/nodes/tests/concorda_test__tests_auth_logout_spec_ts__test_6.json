@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/auth/logout.spec.ts::test@6",
+  "kind": "test",
+  "title": "logout clears auth and redirects to login",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/auth/logout.spec.ts",
+    "symbol": "test@6",
+    "line": 6
+  },
+  "signature": {
+    "name": "test@6",
+    "kind": "test"
+  },
+  "structural_hash": "73d17ddc8b22f14c0dd7088240e7c0cb8d54d3e58e04143ef8d2021235e4d86d",
+  "depends_on": [
+    {
+      "target": "concorda-test::pages/login.page.ts::LoginPage.goto",
+      "via": "hook_call",
+      "where": "logout.spec.ts:9",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::pages/login.page.ts::LoginPage.login",
+      "via": "hook_call",
+      "where": "logout.spec.ts:10",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_auth_logout_spec_ts__test_6.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

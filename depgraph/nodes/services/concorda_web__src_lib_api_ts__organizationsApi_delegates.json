@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::organizationsApi.delegates",
+  "kind": "service",
+  "title": "organizationsApi.delegates",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "organizationsApi.delegates",
+    "line": 658
+  },
+  "signature": {
+    "name": "organizationsApi.delegates",
+    "kind": "service"
+  },
+  "structural_hash": "3f905a21e7b466af701d0af2175148e032f59a44f6ce8ec0cfeef7b9e439d354",
+  "depends_on": [
+    {
+      "target": "GET::/api/organizations/delegates",
+      "via": "http_call",
+      "where": "api.ts:658",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__organizationsApi_delegates.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

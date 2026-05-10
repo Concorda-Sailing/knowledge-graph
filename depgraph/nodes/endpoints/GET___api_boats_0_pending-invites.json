@@ -1,0 +1,34 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/pending_crew_invite.py::PendingCrewInvite",
+      "via": "db_query",
+      "where": "routers/boats.py:208"
+    }
+  ],
+  "dossier": "dossiers/endpoints/GET___api_boats_0_pending-invites.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/boats/{0}/pending-invites",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "GET",
+    "path": "/api/boats/{boat_id}/pending-invites",
+    "request_schema_ref": null,
+    "response_schema_ref": "list"
+  },
+  "source": {
+    "line": 193,
+    "path": "routers/boats.py",
+    "repo": "concorda-api",
+    "symbol": "list_pending_invites"
+  },
+  "structural_hash": "195370a56e54d6793188b720238a8fcc711a1ec82f1083d3f426c50401239c75",
+  "tests": [],
+  "title": "GET /api/boats/{boat_id}/pending-invites",
+  "warnings": []
+}

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/boat/club-autocomplete-input.tsx::ClubAutocompleteInput",
+  "kind": "component",
+  "title": "ClubAutocompleteInput",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/boat/club-autocomplete-input.tsx",
+    "symbol": "ClubAutocompleteInput",
+    "line": 36
+  },
+  "signature": {
+    "name": "ClubAutocompleteInput",
+    "kind": "component"
+  },
+  "structural_hash": "d135cebd787720e118c5b242009309f4ac65f0f69adfaebeb10e22acd788f395",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_boat_club_autocomplete_input_tsx__ClubAutocompleteInput.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

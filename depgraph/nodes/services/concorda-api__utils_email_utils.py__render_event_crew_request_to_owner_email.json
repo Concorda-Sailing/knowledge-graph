@@ -1,0 +1,25 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/services/concorda-api__utils_email_utils.py__render_event_crew_request_to_owner_email.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::utils/email_utils.py::render_event_crew_request_to_owner_email",
+  "kind": "service",
+  "schema_version": 1,
+  "signature": {
+    "args": [],
+    "kind": "service",
+    "name": "render_event_crew_request_to_owner_email"
+  },
+  "source": {
+    "line": 769,
+    "path": "utils/email_utils.py",
+    "repo": "concorda-api",
+    "symbol": "render_event_crew_request_to_owner_email"
+  },
+  "structural_hash": "1936429d2cc47d9b5ab8a7d0eb0123fa7e263561cb86f8969c214600db5aa727",
+  "tests": [],
+  "title": "render_event_crew_request_to_owner_email",
+  "warnings": []
+}

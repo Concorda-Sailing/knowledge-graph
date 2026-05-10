@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/admin/accounting/page.tsx::AdminAccountingPage",
+  "kind": "component",
+  "title": "AdminAccountingPage",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/admin/accounting/page.tsx",
+    "symbol": "AdminAccountingPage",
+    "line": 22
+  },
+  "signature": {
+    "name": "AdminAccountingPage",
+    "kind": "component"
+  },
+  "structural_hash": "afa799d8b84e11cf6106218a1e22584d98ec0a773a62c0dd5e8942d9823f4fc1",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_admin_accounting_page_tsx__AdminAccountingPage.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

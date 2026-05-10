@@ -1,0 +1,40 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/activity_log.py::ActivityLog",
+      "via": "db_query",
+      "where": "routers/analytics.py:190"
+    }
+  ],
+  "dossier": "dossiers/endpoints/GET___api_analytics_online-now.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/analytics/online-now",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "GET",
+    "path": "/api/analytics/online-now",
+    "request_schema_ref": null,
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 173,
+    "path": "routers/analytics.py",
+    "repo": "concorda-api",
+    "symbol": "get_online_now"
+  },
+  "structural_hash": "5bf4cd50872b71ee5fc2cdcefa1cd9a5d37a19a7cc4f46680c4ebc7e00d7e365",
+  "tests": [],
+  "title": "GET /api/analytics/online-now",
+  "warnings": [
+    {
+      "code": "weakly_typed_response",
+      "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
+      "where": "routers/analytics.py:173"
+    }
+  ]
+}

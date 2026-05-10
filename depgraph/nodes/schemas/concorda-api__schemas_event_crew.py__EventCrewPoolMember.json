@@ -1,0 +1,29 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_event_crew.py__EventCrewPoolMember.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/event_crew.py::EventCrewPoolMember",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "person_uuid",
+      "priority",
+      "role"
+    ],
+    "kind": "schema",
+    "name": "EventCrewPoolMember"
+  },
+  "source": {
+    "line": 32,
+    "path": "schemas/event_crew.py",
+    "repo": "concorda-api",
+    "symbol": "EventCrewPoolMember"
+  },
+  "structural_hash": "8b8ea45f5bd4b429e83d990b811612ab6a7819ddccbbe575e6a7aba14a6a3c09",
+  "tests": [],
+  "title": "EventCrewPoolMember",
+  "warnings": []
+}

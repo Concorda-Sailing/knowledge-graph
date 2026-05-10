@@ -1,0 +1,34 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/media.py::MediaFolder",
+      "via": "db_query",
+      "where": "routers/media.py:194"
+    }
+  ],
+  "dossier": "dossiers/endpoints/POST___api_media_folders.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "POST::/api/media/folders",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "POST",
+    "path": "/api/media/folders",
+    "request_schema_ref": "FolderCreate",
+    "response_schema_ref": "FolderRead"
+  },
+  "source": {
+    "line": 184,
+    "path": "routers/media.py",
+    "repo": "concorda-api",
+    "symbol": "create_folder"
+  },
+  "structural_hash": "a1c31520eef939352f10c85f6b7885f3a0d7786e77de89eefe5954d1618aca88",
+  "tests": [],
+  "title": "POST /api/media/folders",
+  "warnings": []
+}

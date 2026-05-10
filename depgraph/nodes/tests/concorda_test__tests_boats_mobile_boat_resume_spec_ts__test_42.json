@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/boats/mobile-boat-resume.spec.ts::test@42",
+  "kind": "test",
+  "title": "(unnamed)",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/boats/mobile-boat-resume.spec.ts",
+    "symbol": "test@42",
+    "line": 42
+  },
+  "signature": {
+    "name": "test@42",
+    "kind": "test"
+  },
+  "structural_hash": "50a2789eff44ea03311d078cedab36a5b1404004def774701334c620ee301664",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_boats_mobile_boat_resume_spec_ts__test_42.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

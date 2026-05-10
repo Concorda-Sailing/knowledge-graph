@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/directory/page.tsx::DirectoryPage",
+  "kind": "component",
+  "title": "DirectoryPage",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/directory/page.tsx",
+    "symbol": "DirectoryPage",
+    "line": 34
+  },
+  "signature": {
+    "name": "DirectoryPage",
+    "kind": "component"
+  },
+  "structural_hash": "bbe4adbb5b2f578c570b8a66c0f3bd3ea4acf4b1e9e8f366e3e37cc31002ee1a",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/api.ts::directoryApi.list",
+      "via": "hook_call",
+      "where": "page.tsx:46",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::organizationsApi.list",
+      "via": "hook_call",
+      "where": "page.tsx:47",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/hooks/use-ws-freshness.ts::useWsFreshness",
+      "via": "hook_call",
+      "where": "page.tsx:62",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/utils.ts::formatPhoneNumber",
+      "via": "hook_call",
+      "where": "page.tsx:129",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/utils.ts::formatPhoneNumber",
+      "via": "hook_call",
+      "where": "page.tsx:263",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_directory_page_tsx__DirectoryPage.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

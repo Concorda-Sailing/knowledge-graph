@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/dashboard/event-plan-panel.tsx::EventPlanPanel",
+  "kind": "component",
+  "title": "EventPlanPanel",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/dashboard/event-plan-panel.tsx",
+    "symbol": "EventPlanPanel",
+    "line": 57
+  },
+  "signature": {
+    "name": "EventPlanPanel",
+    "kind": "component"
+  },
+  "structural_hash": "0d4b24b27967a56d6845c3df6a60fdc14febed2864e96c99eb85fbc0c7477fc4",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/hooks/use-toast.ts::useToast",
+      "via": "hook_call",
+      "where": "event-plan-panel.tsx:58",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/hooks/use-boats.ts::useBoats",
+      "via": "hook_call",
+      "where": "event-plan-panel.tsx:59",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/hooks/use-constants.ts::useConstants",
+      "via": "hook_call",
+      "where": "event-plan-panel.tsx:60",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
+      "via": "hook_call",
+      "where": "event-plan-panel.tsx:79",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::utcIsoToOrgDateInput",
+      "via": "hook_call",
+      "where": "event-plan-panel.tsx:84",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::orgInputToUtcIso",
+      "via": "hook_call",
+      "where": "event-plan-panel.tsx:86",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.listBoatConfigs",
+      "via": "hook_call",
+      "where": "event-plan-panel.tsx:121",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::boatApi.getCrew",
+      "via": "hook_call",
+      "where": "event-plan-panel.tsx:122",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.listCrewPools",
+      "via": "hook_call",
+      "where": "event-plan-panel.tsx:123",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.getEventCrew",
+      "via": "hook_call",
+      "where": "event-plan-panel.tsx:132",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.assignEventCrew",
+      "via": "hook_call",
+      "where": "event-plan-panel.tsx:214",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.sendCrewInvites",
+      "via": "hook_call",
+      "where": "event-plan-panel.tsx:224",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.confirmEventCrew",
+      "via": "hook_call",
+      "where": "event-plan-panel.tsx:237",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.upsertSailingEvent",
+      "via": "hook_call",
+      "where": "event-plan-panel.tsx:264",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
+      "via": "hook_call",
+      "where": "event-plan-panel.tsx:289",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_dashboard_event_plan_panel_tsx__EventPlanPanel.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

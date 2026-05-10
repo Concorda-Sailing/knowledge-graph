@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/boats/coowner-inbox.spec.ts::test@62",
+  "kind": "test",
+  "title": "receiver accepts an incoming co-owner invite from the Inbox",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/boats/coowner-inbox.spec.ts",
+    "symbol": "test@62",
+    "line": 62
+  },
+  "signature": {
+    "name": "test@62",
+    "kind": "test"
+  },
+  "structural_hash": "dc3a9cd9b1c9b3113f40fc7e075bf54f4a1354dd588c93c46c5e97b1d0586a14",
+  "depends_on": [
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.login",
+      "via": "hook_call",
+      "where": "coowner-inbox.spec.ts:64",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.acceptAllPendingPolicies",
+      "via": "hook_call",
+      "where": "coowner-inbox.spec.ts:65",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.login",
+      "via": "hook_call",
+      "where": "coowner-inbox.spec.ts:67",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.acceptAllPendingPolicies",
+      "via": "hook_call",
+      "where": "coowner-inbox.spec.ts:68",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.coownerInvite",
+      "via": "hook_call",
+      "where": "coowner-inbox.spec.ts:83",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/personas.ts::personas.dan",
+      "via": "hook_call",
+      "where": "coowner-inbox.spec.ts:91",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.listApprovalRequests",
+      "via": "hook_call",
+      "where": "coowner-inbox.spec.ts:122",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_boats_coowner_inbox_spec_ts__test_62.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

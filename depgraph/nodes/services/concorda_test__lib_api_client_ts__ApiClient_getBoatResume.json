@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::lib/api-client.ts::ApiClient.getBoatResume",
+  "kind": "service",
+  "title": "ApiClient.getBoatResume",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "lib/api-client.ts",
+    "symbol": "ApiClient.getBoatResume",
+    "line": 224
+  },
+  "signature": {
+    "name": "ApiClient.getBoatResume",
+    "kind": "service"
+  },
+  "structural_hash": "ddf75a5192e3a75ff7ebb63c848e32b88b3fbb0f07f8fc21fd0a37d365369ec8",
+  "depends_on": [
+    {
+      "target": "GET::/api/profile/boats/{0}/resume",
+      "via": "string_url",
+      "where": "api-client.ts:225",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__lib_api_client_ts__ApiClient_getBoatResume.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

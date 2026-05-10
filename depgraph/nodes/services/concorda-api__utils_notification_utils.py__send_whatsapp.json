@@ -1,0 +1,31 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/services/concorda-api__utils_notification_utils.py__send_whatsapp.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::utils/notification_utils.py::send_whatsapp",
+  "kind": "service",
+  "schema_version": 1,
+  "signature": {
+    "args": [
+      "to_phone",
+      "body",
+      "db",
+      "person_uuid",
+      "event_type"
+    ],
+    "kind": "service",
+    "name": "send_whatsapp"
+  },
+  "source": {
+    "line": 56,
+    "path": "utils/notification_utils.py",
+    "repo": "concorda-api",
+    "symbol": "send_whatsapp"
+  },
+  "structural_hash": "16e3cc2cfbac0550d63bbf17f2b401852c885de074fc0ec7dd98ff4b36cda235",
+  "tests": [],
+  "title": "send_whatsapp",
+  "warnings": []
+}

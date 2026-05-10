@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/finders/directory.spec.ts::test@16",
+  "kind": "test",
+  "title": "shows opted-in members",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/finders/directory.spec.ts",
+    "symbol": "test@16",
+    "line": 16
+  },
+  "signature": {
+    "name": "test@16",
+    "kind": "test"
+  },
+  "structural_hash": "0e94216352ee33ac79367d8dbba2ff45b7eecf12439f482b4bcfd39b0edd4039",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_finders_directory_spec_ts__test_16.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

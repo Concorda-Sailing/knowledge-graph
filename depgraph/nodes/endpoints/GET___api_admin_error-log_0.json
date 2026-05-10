@@ -1,0 +1,34 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/error_log.py::ErrorLog",
+      "via": "db_query",
+      "where": "routers/error_log.py:69"
+    }
+  ],
+  "dossier": "dossiers/endpoints/GET___api_admin_error-log_0.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/admin/error-log/{0}",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "GET",
+    "path": "/api/admin/error-log/{error_id}",
+    "request_schema_ref": null,
+    "response_schema_ref": "ErrorLogDetail"
+  },
+  "source": {
+    "line": 64,
+    "path": "routers/error_log.py",
+    "repo": "concorda-api",
+    "symbol": "get_error"
+  },
+  "structural_hash": "4c5b442644f95529b1c8c77fc26fe0413afb5166a8bd560486d29575b66b88f8",
+  "tests": [],
+  "title": "GET /api/admin/error-log/{error_id}",
+  "warnings": []
+}

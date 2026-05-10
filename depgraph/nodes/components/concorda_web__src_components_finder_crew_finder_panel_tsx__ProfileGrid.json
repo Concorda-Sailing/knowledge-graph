@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/finder/crew-finder-panel.tsx::ProfileGrid",
+  "kind": "component",
+  "title": "ProfileGrid",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/finder/crew-finder-panel.tsx",
+    "symbol": "ProfileGrid",
+    "line": 492
+  },
+  "signature": {
+    "name": "ProfileGrid",
+    "kind": "component"
+  },
+  "structural_hash": "3535e5bb138945aa87ddb600964199b5ec2bbb16814e471a516a0bda859de157",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_finder_crew_finder_panel_tsx__ProfileGrid.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

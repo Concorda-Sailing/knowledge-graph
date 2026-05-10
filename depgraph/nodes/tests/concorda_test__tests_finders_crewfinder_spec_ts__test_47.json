@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/finders/crewfinder.spec.ts::test@47",
+  "kind": "test",
+  "title": "can navigate to crew member profile from finder",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/finders/crewfinder.spec.ts",
+    "symbol": "test@47",
+    "line": 47
+  },
+  "signature": {
+    "name": "test@47",
+    "kind": "test"
+  },
+  "structural_hash": "ebdbf3dd5b0dea347875eb5e4618b42e535045997f0ef9fabc6e00b9ff5f21f6",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_finders_crewfinder_spec_ts__test_47.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

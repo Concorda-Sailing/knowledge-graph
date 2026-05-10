@@ -1,0 +1,51 @@
+{
+  "_archived_at": "2026-05-09T11:23:39.013494Z",
+  "_archived_reason": "domain_orphan_symbol_removed",
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_temporal_product.py__TemporalProductRead.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/temporal_product.py::TemporalProductRead",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "category",
+      "created",
+      "description",
+      "end_date",
+      "event_id",
+      "grants_boat_management",
+      "grants_crewfinder",
+      "grants_event_discount",
+      "grants_prize_eligibility",
+      "id",
+      "is_active",
+      "max_age",
+      "merchandise",
+      "min_age",
+      "modified",
+      "name",
+      "price",
+      "requires_boat",
+      "slug",
+      "sort_order",
+      "start_date",
+      "type",
+      "year"
+    ],
+    "kind": "schema",
+    "name": "TemporalProductRead"
+  },
+  "source": {
+    "line": 69,
+    "path": "schemas/temporal_product.py",
+    "repo": "concorda-api",
+    "symbol": "TemporalProductRead"
+  },
+  "structural_hash": "899b38c3481b06686754d2e5b8d3ec6a1865c60dffabf0d01a55348c00ffcccb",
+  "tests": [],
+  "title": "TemporalProductRead",
+  "warnings": []
+}

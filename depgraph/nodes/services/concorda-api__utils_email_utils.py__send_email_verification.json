@@ -1,0 +1,30 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/services/concorda-api__utils_email_utils.py__send_email_verification.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::utils/email_utils.py::send_email_verification",
+  "kind": "service",
+  "schema_version": 1,
+  "signature": {
+    "args": [
+      "to_email",
+      "first_name",
+      "token",
+      "db"
+    ],
+    "kind": "service",
+    "name": "send_email_verification"
+  },
+  "source": {
+    "line": 288,
+    "path": "utils/email_utils.py",
+    "repo": "concorda-api",
+    "symbol": "send_email_verification"
+  },
+  "structural_hash": "3fdc4d2037426d9d838e3b11bba2022bff6f09c34e04c0211e3b08e7f0ea6ee6",
+  "tests": [],
+  "title": "send_email_verification",
+  "warnings": []
+}

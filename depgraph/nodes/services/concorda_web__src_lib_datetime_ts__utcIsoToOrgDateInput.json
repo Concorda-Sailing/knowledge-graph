@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/datetime.ts::utcIsoToOrgDateInput",
+  "kind": "service",
+  "title": "utcIsoToOrgDateInput",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/datetime.ts",
+    "symbol": "utcIsoToOrgDateInput",
+    "line": 91
+  },
+  "signature": {
+    "name": "utcIsoToOrgDateInput",
+    "kind": "service"
+  },
+  "structural_hash": "2d8cd590f068b004eb443a381a1f412e201548909f7f8288e1387e1a0bba8d6a",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_datetime_ts__utcIsoToOrgDateInput.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/marks/marks-content.tsx::MarkTable",
+  "kind": "component",
+  "title": "MarkTable",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/marks/marks-content.tsx",
+    "symbol": "MarkTable",
+    "line": 26
+  },
+  "signature": {
+    "name": "MarkTable",
+    "kind": "component"
+  },
+  "structural_hash": "56792b817df3c975457b7e5564b58e61e3c5ca71162f24d1257b1e911a0c8351",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/content/marks-data.ts::formatCoord",
+      "via": "hook_call",
+      "where": "marks-content.tsx:53",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/content/marks-data.ts::formatCoord",
+      "via": "hook_call",
+      "where": "marks-content.tsx:56",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_marks_marks_content_tsx__MarkTable.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

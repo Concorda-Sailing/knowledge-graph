@@ -1,0 +1,82 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::routers/admin.py::get_email_config",
+      "via": "import",
+      "where": "routers/calendar.py:294"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::utils/ics_utils.py::FeedItem",
+      "via": "import",
+      "where": "routers/calendar.py:320"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::utils/ics_utils.py::build_schedule_feed_ics",
+      "via": "import",
+      "where": "routers/calendar.py:332"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/event.py::Event",
+      "via": "db_query",
+      "where": "routers/calendar.py:299"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/org_config.py::OrgConfig",
+      "via": "db_query",
+      "where": "routers/calendar.py:329"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/person.py::Person",
+      "via": "db_query",
+      "where": "routers/calendar.py:289"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/boat_crew.py::BoatCrew",
+      "via": "db_query",
+      "where": "routers/calendar.py:308"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/event_crew.py::EventCrew",
+      "via": "db_query",
+      "where": "routers/calendar.py:315"
+    }
+  ],
+  "dossier": "dossiers/endpoints/GET___api_schedule_feed_0.ics.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/schedule/feed/{0}.ics",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "GET",
+    "path": "/api/schedule/feed/{token}.ics",
+    "request_schema_ref": null,
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 278,
+    "path": "routers/calendar.py",
+    "repo": "concorda-api",
+    "symbol": "get_schedule_feed"
+  },
+  "structural_hash": "e023f3c9225cc0474db064fd29dd6bad1dda687c2767903c133ef98af63a4779",
+  "tests": [],
+  "title": "GET /api/schedule/feed/{token}.ics",
+  "warnings": [
+    {
+      "code": "weakly_typed_response",
+      "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
+      "where": "routers/calendar.py:278"
+    }
+  ]
+}

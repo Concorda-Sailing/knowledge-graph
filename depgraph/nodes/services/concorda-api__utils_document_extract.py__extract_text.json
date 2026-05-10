@@ -1,0 +1,28 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/services/concorda-api__utils_document_extract.py__extract_text.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::utils/document_extract.py::extract_text",
+  "kind": "service",
+  "schema_version": 1,
+  "signature": {
+    "args": [
+      "file_bytes",
+      "filename"
+    ],
+    "kind": "service",
+    "name": "extract_text"
+  },
+  "source": {
+    "line": 13,
+    "path": "utils/document_extract.py",
+    "repo": "concorda-api",
+    "symbol": "extract_text"
+  },
+  "structural_hash": "8c2a236f00c047e51e7e894c3f22e41a8f0c748c0584f610872bc741a529e602",
+  "tests": [],
+  "title": "extract_text",
+  "warnings": []
+}

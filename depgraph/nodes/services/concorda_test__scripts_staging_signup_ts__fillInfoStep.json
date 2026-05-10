@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::scripts/staging-signup.ts::fillInfoStep",
+  "kind": "service",
+  "title": "fillInfoStep",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "scripts/staging-signup.ts",
+    "symbol": "fillInfoStep",
+    "line": 93
+  },
+  "signature": {
+    "name": "fillInfoStep",
+    "kind": "service"
+  },
+  "structural_hash": "7f933d92762015aef5df35d74a47b8ffd82f01fdc58945168dd88b6a9927108a",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__scripts_staging_signup_ts__fillInfoStep.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

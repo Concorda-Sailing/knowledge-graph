@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/boats/boat-resume.spec.ts::test@40",
+  "kind": "test",
+  "title": "can edit boat resume about field",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/boats/boat-resume.spec.ts",
+    "symbol": "test@40",
+    "line": 40
+  },
+  "signature": {
+    "name": "test@40",
+    "kind": "test"
+  },
+  "structural_hash": "fde878b70cad169b32b9c4c8b101b03e1c8569de5f0d4eedafa1cc79f7c6c976",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_boats_boat_resume_spec_ts__test_40.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

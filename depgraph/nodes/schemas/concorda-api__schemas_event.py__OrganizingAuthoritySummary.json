@@ -1,0 +1,31 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_event.py__OrganizingAuthoritySummary.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/event.py::OrganizingAuthoritySummary",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "abbreviation",
+      "id",
+      "name",
+      "region",
+      "slug"
+    ],
+    "kind": "schema",
+    "name": "OrganizingAuthoritySummary"
+  },
+  "source": {
+    "line": 7,
+    "path": "schemas/event.py",
+    "repo": "concorda-api",
+    "symbol": "OrganizingAuthoritySummary"
+  },
+  "structural_hash": "1a22f7292a045de23ca070bd4e20be5c7fe0719011c0d5a236b66c07083b5fe2",
+  "tests": [],
+  "title": "OrganizingAuthoritySummary",
+  "warnings": []
+}

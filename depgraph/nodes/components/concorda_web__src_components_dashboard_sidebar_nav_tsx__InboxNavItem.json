@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/dashboard/sidebar-nav.tsx::InboxNavItem",
+  "kind": "component",
+  "title": "InboxNavItem",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/dashboard/sidebar-nav.tsx",
+    "symbol": "InboxNavItem",
+    "line": 246
+  },
+  "signature": {
+    "name": "InboxNavItem",
+    "kind": "component"
+  },
+  "structural_hash": "7bebd5262949c009ba48671321e35010c7ec7a76bd1c4d721d548dc7ec41f78d",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/hooks/use-pending-approvals.ts::usePendingApprovals",
+      "via": "hook_call",
+      "where": "sidebar-nav.tsx:253",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/hooks/use-inbox-crew-requests.ts::useInboxCrewRequests",
+      "via": "hook_call",
+      "where": "sidebar-nav.tsx:254",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_dashboard_sidebar_nav_tsx__InboxNavItem.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

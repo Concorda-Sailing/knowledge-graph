@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::lib/personas.ts::personas.anonymous",
+  "kind": "service",
+  "title": "personas.anonymous",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "lib/personas.ts",
+    "symbol": "personas.anonymous",
+    "line": 37
+  },
+  "signature": {
+    "name": "personas.anonymous",
+    "kind": "service"
+  },
+  "structural_hash": "ca0b6b9cbd091d8d5e4e1dac90c266ed01c3416dc5f45dbf61d6c0c2a8788ccd",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__lib_personas_ts__personas_anonymous.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

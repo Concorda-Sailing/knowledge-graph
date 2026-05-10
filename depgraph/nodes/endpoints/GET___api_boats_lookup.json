@@ -1,0 +1,52 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/boat.py::Boat",
+      "via": "db_query",
+      "where": "routers/boats.py:135"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/boat_crew.py::BoatCrew",
+      "via": "db_query",
+      "where": "routers/boats.py:138"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/person.py::Person",
+      "via": "db_query",
+      "where": "routers/boats.py:145"
+    }
+  ],
+  "dossier": "dossiers/endpoints/GET___api_boats_lookup.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/boats/lookup",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "GET",
+    "path": "/api/boats/lookup",
+    "request_schema_ref": null,
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 127,
+    "path": "routers/boats.py",
+    "repo": "concorda-api",
+    "symbol": "lookup_boat"
+  },
+  "structural_hash": "ea205cef96c706c5cd55225a7316b7f1b781878610c0737c152985a673677d00",
+  "tests": [],
+  "title": "GET /api/boats/lookup",
+  "warnings": [
+    {
+      "code": "weakly_typed_response",
+      "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
+      "where": "routers/boats.py:127"
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::utils/websocket_manager.py::broadcast_event",
+      "via": "websocket",
+      "where": "routers/profile.py:761"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/boat.py::Boat",
+      "via": "db_query",
+      "where": "routers/profile.py:734"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/boat_crew.py::BoatCrew",
+      "via": "db_query",
+      "where": "routers/profile.py:749"
+    }
+  ],
+  "dossier": "dossiers/endpoints/DELETE___api_profile_boats_0.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "DELETE::/api/profile/boats/{0}",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "DELETE",
+    "path": "/api/profile/boats/{boat_id}",
+    "request_schema_ref": null,
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 725,
+    "path": "routers/profile.py",
+    "repo": "concorda-api",
+    "symbol": "delete_boat"
+  },
+  "structural_hash": "9590d605dc1f424dfe16ef7672325301b3c8725ec40fe5828f9fff613c28bd20",
+  "tests": [],
+  "title": "DELETE /api/profile/boats/{boat_id}",
+  "warnings": []
+}

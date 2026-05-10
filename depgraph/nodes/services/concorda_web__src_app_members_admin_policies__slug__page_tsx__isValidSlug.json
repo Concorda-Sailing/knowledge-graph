@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/admin/policies/[slug]/page.tsx::isValidSlug",
+  "kind": "service",
+  "title": "isValidSlug",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/admin/policies/[slug]/page.tsx",
+    "symbol": "isValidSlug",
+    "line": 33
+  },
+  "signature": {
+    "name": "isValidSlug",
+    "kind": "service"
+  },
+  "structural_hash": "84635ca5055044102afbd4f399255d7a02fc0f7e9d92c1b1015ada5a0dea822a",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_app_members_admin_policies__slug__page_tsx__isValidSlug.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

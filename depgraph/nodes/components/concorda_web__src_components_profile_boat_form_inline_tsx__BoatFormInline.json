@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/profile/boat-form-inline.tsx::BoatFormInline",
+  "kind": "component",
+  "title": "BoatFormInline",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/profile/boat-form-inline.tsx",
+    "symbol": "BoatFormInline",
+    "line": 19
+  },
+  "signature": {
+    "name": "BoatFormInline",
+    "kind": "component"
+  },
+  "structural_hash": "1c6368ef98808c2e40ee30a16f300fd99f376ae6ae1d3b8ccf3e1274b30e7c9a",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.uploadBoatPicture",
+      "via": "hook_call",
+      "where": "boat-form-inline.tsx:45",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.deleteBoatPicture",
+      "via": "hook_call",
+      "where": "boat-form-inline.tsx:54",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::boatApi.requestCoowner",
+      "via": "hook_call",
+      "where": "boat-form-inline.tsx:79",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.updateBoat",
+      "via": "hook_call",
+      "where": "boat-form-inline.tsx:86",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.createBoat",
+      "via": "hook_call",
+      "where": "boat-form-inline.tsx:100",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_profile_boat_form_inline_tsx__BoatFormInline.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

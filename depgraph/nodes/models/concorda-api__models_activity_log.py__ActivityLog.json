@@ -1,0 +1,25 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/models/concorda-api__models_activity_log.py__ActivityLog.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::models/activity_log.py::ActivityLog",
+  "kind": "model",
+  "schema_version": 1,
+  "signature": {
+    "kind": "model",
+    "name": "ActivityLog",
+    "tablename": "activity_log"
+  },
+  "source": {
+    "line": 6,
+    "path": "models/activity_log.py",
+    "repo": "concorda-api",
+    "symbol": "ActivityLog"
+  },
+  "structural_hash": "36dc7ec70f8284267880cc7d6fc71a6d28be6070654063d253d04d57d9fda4ac",
+  "tests": [],
+  "title": "ActivityLog",
+  "warnings": []
+}

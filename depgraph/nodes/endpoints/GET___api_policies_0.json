@@ -1,0 +1,27 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/endpoints/GET___api_policies_0.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/policies/{0}",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "GET",
+    "path": "/api/policies/{slug}",
+    "request_schema_ref": null,
+    "response_schema_ref": "PolicyDetail"
+  },
+  "source": {
+    "line": 159,
+    "path": "routers/policies.py",
+    "repo": "concorda-api",
+    "symbol": "get_active_policy"
+  },
+  "structural_hash": "196d59f9f0abdf9ce795b0c6693d6f6c4965b618c55eb95a0d11b572d6938edb",
+  "tests": [],
+  "title": "GET /api/policies/{slug}",
+  "warnings": []
+}

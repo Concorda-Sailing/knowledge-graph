@@ -1,0 +1,58 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::schemas/profile.py::BoatCreate",
+      "via": "import",
+      "where": "routers/profile.py:659"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/boat.py::Boat",
+      "via": "db_query",
+      "where": "routers/profile.py:673"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::utils/websocket_manager.py::broadcast_event",
+      "via": "websocket",
+      "where": "routers/profile.py:679"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::schemas/profile.py::BoatRead",
+      "via": "import",
+      "where": "routers/profile.py:657"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/boat_crew.py::BoatCrew",
+      "via": "db_query",
+      "where": "routers/profile.py:676"
+    }
+  ],
+  "dossier": "dossiers/endpoints/POST___api_profile_boats.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "POST::/api/profile/boats",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "POST",
+    "path": "/api/profile/boats",
+    "request_schema_ref": "BoatCreate",
+    "response_schema_ref": "BoatRead"
+  },
+  "source": {
+    "line": 658,
+    "path": "routers/profile.py",
+    "repo": "concorda-api",
+    "symbol": "create_boat"
+  },
+  "structural_hash": "4e4b1bd98eff1c88fcae0d936f74c6fc355f78ab7758bb9855a4b5c925a36cee",
+  "tests": [],
+  "title": "POST /api/profile/boats",
+  "warnings": []
+}

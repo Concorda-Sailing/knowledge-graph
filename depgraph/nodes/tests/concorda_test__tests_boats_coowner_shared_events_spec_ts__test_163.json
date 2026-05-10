@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/boats/coowner-shared-events.spec.ts::test@163",
+  "kind": "test",
+  "title": "Co-owner Dan is invited (not auto-accepted) when Bob sends a crew invite",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/boats/coowner-shared-events.spec.ts",
+    "symbol": "test@163",
+    "line": 163
+  },
+  "signature": {
+    "name": "test@163",
+    "kind": "test"
+  },
+  "structural_hash": "a7e21b1e3782485da9e0b7e06e38a15d74267e5078f8f7848857c36e3abf9eed",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_boats_coowner_shared_events_spec_ts__test_163.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

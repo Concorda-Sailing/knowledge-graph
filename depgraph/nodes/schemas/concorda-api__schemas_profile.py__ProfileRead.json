@@ -1,0 +1,49 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_profile.py__ProfileRead.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/profile.py::ProfileRead",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "additional_email",
+      "additional_phone",
+      "club_affiliations",
+      "created",
+      "date_of_birth",
+      "email",
+      "email_verified",
+      "first_name",
+      "id",
+      "join_date",
+      "last_name",
+      "mailing_address",
+      "member_category",
+      "memberships",
+      "meta",
+      "modified",
+      "phone_number",
+      "picture_url",
+      "preferences",
+      "shirt_size",
+      "shorts_inseam",
+      "shorts_waist",
+      "type"
+    ],
+    "kind": "schema",
+    "name": "ProfileRead"
+  },
+  "source": {
+    "line": 28,
+    "path": "schemas/profile.py",
+    "repo": "concorda-api",
+    "symbol": "ProfileRead"
+  },
+  "structural_hash": "2164a8e32bdfef6c81eecab04a5144848372827addedd5e452c306fa9297e44d",
+  "tests": [],
+  "title": "ProfileRead",
+  "warnings": []
+}

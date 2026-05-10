@@ -1,0 +1,40 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::utils/websocket_manager.py::broadcast_event",
+      "via": "websocket",
+      "where": "routers/events.py:2326"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::schemas/event_crew.py::EventCrewRead",
+      "via": "import",
+      "where": "routers/events.py:2311"
+    }
+  ],
+  "dossier": "dossiers/endpoints/POST___api_events_0_sailing-event_crew-notify.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "POST::/api/events/{0}/sailing-event/crew-notify",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "POST",
+    "path": "/api/events/{event_id}/sailing-event/crew-notify",
+    "request_schema_ref": null,
+    "response_schema_ref": "list"
+  },
+  "source": {
+    "line": 2312,
+    "path": "routers/events.py",
+    "repo": "concorda-api",
+    "symbol": "notify_crew_endpoint"
+  },
+  "structural_hash": "7a6712a3d3ab2c7d95e96068bfba35460a1bb800701c38bc0b27854a30dd5001",
+  "tests": [],
+  "title": "POST /api/events/{event_id}/sailing-event/crew-notify",
+  "warnings": []
+}

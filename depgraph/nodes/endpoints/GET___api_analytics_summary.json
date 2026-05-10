@@ -1,0 +1,46 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/activity_log.py::ActivityLog",
+      "via": "db_query",
+      "where": "routers/analytics.py:46"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/auth_token.py::AuthToken",
+      "via": "db_query",
+      "where": "routers/analytics.py:63"
+    }
+  ],
+  "dossier": "dossiers/endpoints/GET___api_analytics_summary.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/analytics/summary",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "GET",
+    "path": "/api/analytics/summary",
+    "request_schema_ref": null,
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 36,
+    "path": "routers/analytics.py",
+    "repo": "concorda-api",
+    "symbol": "get_summary"
+  },
+  "structural_hash": "f5fcb8e3fa86b2609d58ab9f2522828c689685584fb9fc01689376e659f87852",
+  "tests": [],
+  "title": "GET /api/analytics/summary",
+  "warnings": [
+    {
+      "code": "weakly_typed_response",
+      "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
+      "where": "routers/analytics.py:36"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/dashboard/profile-completion.tsx::getResumeMissing",
+  "kind": "service",
+  "title": "getResumeMissing",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/dashboard/profile-completion.tsx",
+    "symbol": "getResumeMissing",
+    "line": 169
+  },
+  "signature": {
+    "name": "getResumeMissing",
+    "kind": "service"
+  },
+  "structural_hash": "6fbefe6647b2a079dc7b8a0767f1b1c4b4abc6c98c1ba26cfa80e2d2af5ded58",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_components_dashboard_profile_completion_tsx__getResumeMissing.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

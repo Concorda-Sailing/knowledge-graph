@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::eventsApi.removeEventCrew",
+  "kind": "service",
+  "title": "eventsApi.removeEventCrew",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "eventsApi.removeEventCrew",
+    "line": 514
+  },
+  "signature": {
+    "name": "eventsApi.removeEventCrew",
+    "kind": "service"
+  },
+  "structural_hash": "9b6e94a47e817825c3641b5a9bed4ec38a72e7e8ab601b28d778ec86d05354a4",
+  "depends_on": [
+    {
+      "target": "DELETE::/api/events/{0}/sailing-event/crew/{1}",
+      "via": "string_url",
+      "where": "api.ts:515",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__eventsApi_removeEventCrew.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

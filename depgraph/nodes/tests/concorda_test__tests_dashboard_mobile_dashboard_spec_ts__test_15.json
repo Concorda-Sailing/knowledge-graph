@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/dashboard/mobile-dashboard.spec.ts::test@15",
+  "kind": "test",
+  "title": "dashboard tab list does not wrap at 375px",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/dashboard/mobile-dashboard.spec.ts",
+    "symbol": "test@15",
+    "line": 15
+  },
+  "signature": {
+    "name": "test@15",
+    "kind": "test"
+  },
+  "structural_hash": "c9abaf2251133d2ec258f17a2c57308ea91b0c509029f3093a4d6dccf2aad5c2",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_dashboard_mobile_dashboard_spec_ts__test_15.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

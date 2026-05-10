@@ -1,0 +1,34 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/crew_pool.py::CrewPool",
+      "via": "db_query",
+      "where": "routers/profile.py:1319"
+    }
+  ],
+  "dossier": "dossiers/endpoints/DELETE___api_profile_boats_0_crew-pools_1.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "DELETE::/api/profile/boats/{0}/crew-pools/{1}",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "DELETE",
+    "path": "/api/profile/boats/{boat_id}/crew-pools/{pool_id}",
+    "request_schema_ref": null,
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 1311,
+    "path": "routers/profile.py",
+    "repo": "concorda-api",
+    "symbol": "delete_crew_pool"
+  },
+  "structural_hash": "fb535ded087068dc61526bb993c488d328686d29fd99db067c8b809a9ffb0155",
+  "tests": [],
+  "title": "DELETE /api/profile/boats/{boat_id}/crew-pools/{pool_id}",
+  "warnings": []
+}

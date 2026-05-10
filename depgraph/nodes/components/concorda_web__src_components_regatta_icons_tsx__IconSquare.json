@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/regatta-icons.tsx::IconSquare",
+  "kind": "component",
+  "title": "IconSquare",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/regatta-icons.tsx",
+    "symbol": "IconSquare",
+    "line": 48
+  },
+  "signature": {
+    "name": "IconSquare",
+    "kind": "component"
+  },
+  "structural_hash": "8cb15ed01611ccb64a2560d1f04f34a3e2724845602b5cb2689cb204b13b194b",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_regatta_icons_tsx__IconSquare.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

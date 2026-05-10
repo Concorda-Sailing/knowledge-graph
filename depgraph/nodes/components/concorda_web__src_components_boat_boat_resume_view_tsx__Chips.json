@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/boat/boat-resume-view.tsx::Chips",
+  "kind": "component",
+  "title": "Chips",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/boat/boat-resume-view.tsx",
+    "symbol": "Chips",
+    "line": 21
+  },
+  "signature": {
+    "name": "Chips",
+    "kind": "component"
+  },
+  "structural_hash": "8b6fa62fdff1f30f4230596353da304365db914f94d61f7e0f1e443204a7299d",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_boat_boat_resume_view_tsx__Chips.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

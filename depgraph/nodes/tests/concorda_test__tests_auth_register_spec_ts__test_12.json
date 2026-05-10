@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/auth/register.spec.ts::test@12",
+  "kind": "test",
+  "title": "registration page loads with membership options",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/auth/register.spec.ts",
+    "symbol": "test@12",
+    "line": 12
+  },
+  "signature": {
+    "name": "test@12",
+    "kind": "test"
+  },
+  "structural_hash": "53d4a9ebb12370c4b48aa905a9dddfcfdbdcce2705045beb8870a5652b0f8753",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_auth_register_spec_ts__test_12.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

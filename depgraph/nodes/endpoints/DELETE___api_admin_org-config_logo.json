@@ -1,0 +1,40 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::utils/image_utils.py::delete_upload",
+      "via": "import",
+      "where": "routers/admin.py:1038"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/org_config.py::OrgConfig",
+      "via": "db_query",
+      "where": "routers/admin.py:1034"
+    }
+  ],
+  "dossier": "dossiers/endpoints/DELETE___api_admin_org-config_logo.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "DELETE::/api/admin/org-config/logo",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "DELETE",
+    "path": "/api/admin/org-config/logo",
+    "request_schema_ref": null,
+    "response_schema_ref": "OrgConfigResponse"
+  },
+  "source": {
+    "line": 1028,
+    "path": "routers/admin.py",
+    "repo": "concorda-api",
+    "symbol": "delete_org_logo"
+  },
+  "structural_hash": "f24462e6e10b6f8674bc0a3a9912b2a68e7f314ae1662bd20bf02528fb94d7b0",
+  "tests": [],
+  "title": "DELETE /api/admin/org-config/logo",
+  "warnings": []
+}

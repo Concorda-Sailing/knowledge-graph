@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/boats/boat-resume.spec.ts::test@34",
+  "kind": "test",
+  "title": "boat resume shows correct data",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/boats/boat-resume.spec.ts",
+    "symbol": "test@34",
+    "line": 34
+  },
+  "signature": {
+    "name": "test@34",
+    "kind": "test"
+  },
+  "structural_hash": "becc4d3d2e97fe77cd73b52de0d6d0ac5ede1c29662add00343f8a43c8f4cfb1",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_boats_boat_resume_spec_ts__test_34.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

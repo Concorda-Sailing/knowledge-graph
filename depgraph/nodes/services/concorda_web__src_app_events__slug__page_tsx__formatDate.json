@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/events/[slug]/page.tsx::formatDate",
+  "kind": "service",
+  "title": "formatDate",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/events/[slug]/page.tsx",
+    "symbol": "formatDate",
+    "line": 45
+  },
+  "signature": {
+    "name": "formatDate",
+    "kind": "service"
+  },
+  "structural_hash": "e0ff07bbe48cb34872fa460d25b39ade58d35f711a78f112fe895bc2cb106492",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
+      "via": "hook_call",
+      "where": "page.tsx:46",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_app_events__slug__page_tsx__formatDate.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

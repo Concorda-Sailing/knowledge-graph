@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::adminMerchandiseApi.update",
+  "kind": "service",
+  "title": "adminMerchandiseApi.update",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "adminMerchandiseApi.update",
+    "line": 2665
+  },
+  "signature": {
+    "name": "adminMerchandiseApi.update",
+    "kind": "service"
+  },
+  "structural_hash": "934e7f5eeaf2468869e02340419591935e5647816a2f26ee3ba29b915aa6765a",
+  "depends_on": [
+    {
+      "target": "PUT::/api/merchandise/{0}",
+      "via": "string_url",
+      "where": "api.ts:2666",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__adminMerchandiseApi_update.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

@@ -1,0 +1,43 @@
+{
+  "_archived_at": "2026-05-09T11:23:39.009471Z",
+  "_archived_reason": "domain_orphan_symbol_removed",
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_event.py__EventUpdate.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/event.py::EventUpdate",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "category",
+      "comment",
+      "date",
+      "description",
+      "end_date",
+      "location",
+      "members_only",
+      "name",
+      "organizing_authority_uuids",
+      "organizing_club_id",
+      "owner_id",
+      "price",
+      "region",
+      "registration_deadline",
+      "slug"
+    ],
+    "kind": "schema",
+    "name": "EventUpdate"
+  },
+  "source": {
+    "line": 33,
+    "path": "schemas/event.py",
+    "repo": "concorda-api",
+    "symbol": "EventUpdate"
+  },
+  "structural_hash": "06ae02be79d591c77bcd2d4c7d7453a77f00c9ca81f93c703f8877ea3eb47e15",
+  "tests": [],
+  "title": "EventUpdate",
+  "warnings": []
+}

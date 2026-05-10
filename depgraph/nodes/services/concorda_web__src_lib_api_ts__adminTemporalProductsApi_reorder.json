@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::adminTemporalProductsApi.reorder",
+  "kind": "service",
+  "title": "adminTemporalProductsApi.reorder",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "adminTemporalProductsApi.reorder",
+    "line": 2602
+  },
+  "signature": {
+    "name": "adminTemporalProductsApi.reorder",
+    "kind": "service"
+  },
+  "structural_hash": "e9567054eee377a4d98c9f1681e3ca674fd314de2745e5519bf20063ca28cd6f",
+  "depends_on": [
+    {
+      "target": "PUT::/api/temporal-products/reorder",
+      "via": "http_call",
+      "where": "api.ts:2603",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__adminTemporalProductsApi_reorder.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

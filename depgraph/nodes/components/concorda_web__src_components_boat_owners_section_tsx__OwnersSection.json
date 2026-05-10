@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/boat/owners-section.tsx::OwnersSection",
+  "kind": "component",
+  "title": "OwnersSection",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/boat/owners-section.tsx",
+    "symbol": "OwnersSection",
+    "line": 39
+  },
+  "signature": {
+    "name": "OwnersSection",
+    "kind": "component"
+  },
+  "structural_hash": "7528ba4d998b980f6dae2843e3e1aaf2279698a0593a66c9dbf57813d16ea444",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/api.ts::boatApi.coownerRemove",
+      "via": "hook_call",
+      "where": "owners-section.tsx:48",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_boat_owners_section_tsx__OwnersSection.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::inviteApi.acceptInvite",
+  "kind": "service",
+  "title": "inviteApi.acceptInvite",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "inviteApi.acceptInvite",
+    "line": 208
+  },
+  "signature": {
+    "name": "inviteApi.acceptInvite",
+    "kind": "service"
+  },
+  "structural_hash": "c1fcbd027d2dc8f9fab9ce62767922f402649f0187bf2af7a6f009ff4498b48b",
+  "depends_on": [
+    {
+      "target": "POST::/api/invite/{0}/accept",
+      "via": "string_url",
+      "where": "api.ts:209",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__inviteApi_acceptInvite.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

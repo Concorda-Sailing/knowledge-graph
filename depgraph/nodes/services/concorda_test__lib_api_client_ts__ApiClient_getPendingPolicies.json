@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::lib/api-client.ts::ApiClient.getPendingPolicies",
+  "kind": "service",
+  "title": "ApiClient.getPendingPolicies",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "lib/api-client.ts",
+    "symbol": "ApiClient.getPendingPolicies",
+    "line": 322
+  },
+  "signature": {
+    "name": "ApiClient.getPendingPolicies",
+    "kind": "service"
+  },
+  "structural_hash": "d2fc0aaf823ebd1cce8d4cf44710da23a02611c6d5da83f1f174e81cf778cd83",
+  "depends_on": [
+    {
+      "target": "GET::/api/policies/me/pending",
+      "via": "http_call",
+      "where": "api-client.ts:323",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__lib_api_client_ts__ApiClient_getPendingPolicies.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

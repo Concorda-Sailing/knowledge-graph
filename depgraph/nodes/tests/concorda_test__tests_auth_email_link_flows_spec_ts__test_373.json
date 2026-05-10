@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/auth/email-link-flows.spec.ts::test@373",
+  "kind": "test",
+  "title": "crew-request endpoint rejects when accept_crew_requests=false",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/auth/email-link-flows.spec.ts",
+    "symbol": "test@373",
+    "line": 373
+  },
+  "signature": {
+    "name": "test@373",
+    "kind": "test"
+  },
+  "structural_hash": "998ad69db9d72d4d142af75a9543d6e239e40dfd2f58e336904cb792802d5411",
+  "depends_on": [
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.login",
+      "via": "hook_call",
+      "where": "email-link-flows.spec.ts:378",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.getBoats",
+      "via": "hook_call",
+      "where": "email-link-flows.spec.ts:379",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.createSailingEvent",
+      "via": "hook_call",
+      "where": "email-link-flows.spec.ts:384",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.login",
+      "via": "hook_call",
+      "where": "email-link-flows.spec.ts:392",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.requestToCrew",
+      "via": "hook_call",
+      "where": "email-link-flows.spec.ts:394",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.setToken",
+      "via": "hook_call",
+      "where": "email-link-flows.spec.ts:398",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.removeScheduleEvent",
+      "via": "hook_call",
+      "where": "email-link-flows.spec.ts:399",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_auth_email_link_flows_spec_ts__test_373.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

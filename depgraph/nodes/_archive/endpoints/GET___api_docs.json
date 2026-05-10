@@ -1,0 +1,35 @@
+{
+  "_archived_at": "2026-05-09T11:06:08.123324Z",
+  "_archived_reason": "domain_orphan_symbol_removed",
+  "depends_on": [],
+  "dossier": "dossiers/endpoints/GET___api_docs.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/docs",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "GET",
+    "path": "/api/docs",
+    "request_schema_ref": null,
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 1123,
+    "path": ".venv/lib/python3.13/site-packages/fastapi/applications.py",
+    "repo": "concorda-api",
+    "symbol": "swagger_ui_html"
+  },
+  "structural_hash": "eb2ee421a957d93f22b7d4aa37c7ae941d61b65e936601582722f48123a32a97",
+  "tests": [],
+  "title": "GET /api/docs",
+  "warnings": [
+    {
+      "code": "weakly_typed_response",
+      "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
+      "where": ".venv/lib/python3.13/site-packages/fastapi/applications.py:1123"
+    }
+  ]
+}

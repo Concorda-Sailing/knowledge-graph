@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::lib/personas.ts::personas.admin",
+  "kind": "service",
+  "title": "personas.admin",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "lib/personas.ts",
+    "symbol": "personas.admin",
+    "line": 36
+  },
+  "signature": {
+    "name": "personas.admin",
+    "kind": "service"
+  },
+  "structural_hash": "db2cdf4f3dd8e8c56ed6bb951ba82930d1ed0a5fa678e2a6c8211aa4af9989e7",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__lib_personas_ts__personas_admin.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

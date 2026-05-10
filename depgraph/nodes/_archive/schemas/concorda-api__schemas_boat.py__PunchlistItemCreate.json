@@ -1,0 +1,32 @@
+{
+  "_archived_at": "2026-05-09T11:23:39.009352Z",
+  "_archived_reason": "domain_orphan_symbol_removed",
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_boat.py__PunchlistItemCreate.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/boat.py::PunchlistItemCreate",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "assigned_to_uuid",
+      "description",
+      "importance",
+      "title"
+    ],
+    "kind": "schema",
+    "name": "PunchlistItemCreate"
+  },
+  "source": {
+    "line": 61,
+    "path": "schemas/boat.py",
+    "repo": "concorda-api",
+    "symbol": "PunchlistItemCreate"
+  },
+  "structural_hash": "501b7e2d000071c9d780aa67a8b3d8b933af320ebb361308002f2025c60e15d9",
+  "tests": [],
+  "title": "PunchlistItemCreate",
+  "warnings": []
+}

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/schedule/[id]/page.tsx::homePort",
+  "kind": "service",
+  "title": "homePort",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/schedule/[id]/page.tsx",
+    "symbol": "homePort",
+    "line": 47
+  },
+  "signature": {
+    "name": "homePort",
+    "kind": "service"
+  },
+  "structural_hash": "30362b3b9179116f1f16a64ba7cf38baaf114c89ef39e0ad86d42f66417d27b4",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_app_members_schedule__id__page_tsx__homePort.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

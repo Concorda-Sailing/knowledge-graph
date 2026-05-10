@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/dashboard/sidebar-nav.tsx::SidebarNav",
+  "kind": "component",
+  "title": "SidebarNav",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/dashboard/sidebar-nav.tsx",
+    "symbol": "SidebarNav",
+    "line": 82
+  },
+  "signature": {
+    "name": "SidebarNav",
+    "kind": "component"
+  },
+  "structural_hash": "3f50e51adc1e36b993f4626fc179dfa3320744a4ba778a818d7d2a4e9c882cb3",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/contexts/auth-context.tsx::useAuth",
+      "via": "hook_call",
+      "where": "sidebar-nav.tsx:84",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/components/ui/sidebar.tsx::useSidebar",
+      "via": "hook_call",
+      "where": "sidebar-nav.tsx:85",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.get",
+      "via": "hook_call",
+      "where": "sidebar-nav.tsx:96",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_dashboard_sidebar_nav_tsx__SidebarNav.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

@@ -1,0 +1,28 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_regatta.py__MatchRoster.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/regatta.py::MatchRoster",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "boats",
+      "crew"
+    ],
+    "kind": "schema",
+    "name": "MatchRoster"
+  },
+  "source": {
+    "line": 120,
+    "path": "schemas/regatta.py",
+    "repo": "concorda-api",
+    "symbol": "MatchRoster"
+  },
+  "structural_hash": "26a2e7cfcf64331f2aa76f19303f91a54dcb8a52a5dd676f8380be35ea6dd3f8",
+  "tests": [],
+  "title": "MatchRoster",
+  "warnings": []
+}

@@ -1,0 +1,32 @@
+{
+  "_archived_at": "2026-05-09T11:23:39.013207Z",
+  "_archived_reason": "domain_orphan_symbol_removed",
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_organization.py__Services.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/organization.py::Services",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "dockage_available",
+      "food",
+      "lodging",
+      "moorings_available"
+    ],
+    "kind": "schema",
+    "name": "Services"
+  },
+  "source": {
+    "line": 6,
+    "path": "schemas/organization.py",
+    "repo": "concorda-api",
+    "symbol": "Services"
+  },
+  "structural_hash": "71fede1365c70454fa0e02f2544b1b835fb28f06ac44d7282706a28f9038d984",
+  "tests": [],
+  "title": "Services",
+  "warnings": []
+}

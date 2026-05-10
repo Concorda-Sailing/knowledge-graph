@@ -1,0 +1,49 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_sailing_resume.py__SailingResumeCreate.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/sailing_resume.py::SailingResumeCreate",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "about_me",
+      "achievements",
+      "availability",
+      "boat_classes_sailed",
+      "boats_sailed_ids",
+      "certifications",
+      "cruises",
+      "excluded_boat_ids",
+      "experience_level",
+      "no_contact_boat_ids",
+      "notable_experience",
+      "notable_races",
+      "notes",
+      "person_id",
+      "picture_url",
+      "positions_preferred",
+      "preferred_oa_ids",
+      "race_areas",
+      "race_interests",
+      "us_sailing_number",
+      "world_sailing_group",
+      "world_sailing_id",
+      "years_sailing"
+    ],
+    "kind": "schema",
+    "name": "SailingResumeCreate"
+  },
+  "source": {
+    "line": 50,
+    "path": "schemas/sailing_resume.py",
+    "repo": "concorda-api",
+    "symbol": "SailingResumeCreate"
+  },
+  "structural_hash": "f1678833377fd6c62e33d2e1ab8311e23088ac1b7903836838fa39a7978d5c8e",
+  "tests": [],
+  "title": "SailingResumeCreate",
+  "warnings": []
+}

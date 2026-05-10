@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/admin/event-management.spec.ts::test@38",
+  "kind": "test",
+  "title": "add event button is present",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/admin/event-management.spec.ts",
+    "symbol": "test@38",
+    "line": 38
+  },
+  "signature": {
+    "name": "test@38",
+    "kind": "test"
+  },
+  "structural_hash": "6939c6706d4c37c0fe313df2b2ecef4da05b2662bf83a9108aaa8e89d1358b46",
+  "depends_on": [
+    {
+      "target": "concorda-test::pages/admin/events.page.ts::AdminEventsPage.gotoSocials",
+      "via": "hook_call",
+      "where": "event-management.spec.ts:40",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_admin_event_management_spec_ts__test_38.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

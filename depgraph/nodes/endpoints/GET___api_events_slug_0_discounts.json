@@ -1,0 +1,46 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::schemas/event_discount.py::EventDiscountPublic",
+      "via": "import",
+      "where": "routers/events.py:1298"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/event.py::Event",
+      "via": "db_query",
+      "where": "routers/events.py:1301"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/event_discount.py::EventDiscount",
+      "via": "db_query",
+      "where": "routers/events.py:1306"
+    }
+  ],
+  "dossier": "dossiers/endpoints/GET___api_events_slug_0_discounts.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/events/slug/{0}/discounts",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "GET",
+    "path": "/api/events/slug/{slug}/discounts",
+    "request_schema_ref": null,
+    "response_schema_ref": "list"
+  },
+  "source": {
+    "line": 1299,
+    "path": "routers/events.py",
+    "repo": "concorda-api",
+    "symbol": "list_public_discounts"
+  },
+  "structural_hash": "8a22f29354e95de36aa8a98c5e54497ee1a5e4292357b4ff5dab1d797ca969b5",
+  "tests": [],
+  "title": "GET /api/events/slug/{slug}/discounts",
+  "warnings": []
+}

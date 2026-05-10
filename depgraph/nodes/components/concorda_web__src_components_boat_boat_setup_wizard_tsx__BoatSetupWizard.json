@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/boat/boat-setup-wizard.tsx::BoatSetupWizard",
+  "kind": "component",
+  "title": "BoatSetupWizard",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/boat/boat-setup-wizard.tsx",
+    "symbol": "BoatSetupWizard",
+    "line": 50
+  },
+  "signature": {
+    "name": "BoatSetupWizard",
+    "kind": "component"
+  },
+  "structural_hash": "4fe70273c04210da0d8d9e5786b298e446c7e230c40a2efb75aa5e93083e77ff",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/hooks/use-toast.ts::useToast",
+      "via": "hook_call",
+      "where": "boat-setup-wizard.tsx:57",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.getBoatResume",
+      "via": "hook_call",
+      "where": "boat-setup-wizard.tsx:97",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.updateBoat",
+      "via": "hook_call",
+      "where": "boat-setup-wizard.tsx:108",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.updateBoat",
+      "via": "hook_call",
+      "where": "boat-setup-wizard.tsx:154",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.uploadBoatBanner",
+      "via": "hook_call",
+      "where": "boat-setup-wizard.tsx:198",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.deleteBoatBanner",
+      "via": "hook_call",
+      "where": "boat-setup-wizard.tsx:486",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_boat_boat_setup_wizard_tsx__BoatSetupWizard.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

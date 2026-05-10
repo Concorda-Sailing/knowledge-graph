@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::adminErrorLogApi.get",
+  "kind": "service",
+  "title": "adminErrorLogApi.get",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "adminErrorLogApi.get",
+    "line": 1080
+  },
+  "signature": {
+    "name": "adminErrorLogApi.get",
+    "kind": "service"
+  },
+  "structural_hash": "1b6ae34a8c90d45c54d18520d51bf8502f0da7e6a28d3c77d40c7cca81faee91",
+  "depends_on": [
+    {
+      "target": "GET::/api/admin/error-log/{0}",
+      "via": "string_url",
+      "where": "api.ts:1081",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__adminErrorLogApi_get.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

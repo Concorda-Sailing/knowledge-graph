@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/events/event-registration.spec.ts::test@41",
+  "kind": "test",
+  "title": "members-only event requires auth",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/events/event-registration.spec.ts",
+    "symbol": "test@41",
+    "line": 41
+  },
+  "signature": {
+    "name": "test@41",
+    "kind": "test"
+  },
+  "structural_hash": "633ea35e112950caeb00c3edc18ec88fbee888719ede232115bba88971c993c1",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_events_event_registration_spec_ts__test_41.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

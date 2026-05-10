@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/admin/admin-list-page.tsx::AdminListPageInner",
+  "kind": "component",
+  "title": "AdminListPageInner",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/admin/admin-list-page.tsx",
+    "symbol": "AdminListPageInner",
+    "line": 35
+  },
+  "signature": {
+    "name": "AdminListPageInner",
+    "kind": "component"
+  },
+  "structural_hash": "702fb336e8b5d2e50aab77552886add9eb1f2565a1417518b9fa7ccb11691de2",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_admin_admin_list_page_tsx__AdminListPageInner.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

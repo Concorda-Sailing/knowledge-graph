@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/admin/user-management.spec.ts::test@25",
+  "kind": "test",
+  "title": "search filters users",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/admin/user-management.spec.ts",
+    "symbol": "test@25",
+    "line": 25
+  },
+  "signature": {
+    "name": "test@25",
+    "kind": "test"
+  },
+  "structural_hash": "3e7afd60eaffbaa430e90f9f9a2a56635e6a85edafb9fce33b9cb0383d8c72f9",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_admin_user_management_spec_ts__test_25.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/socials/page.tsx::getPlanProgress",
+  "kind": "service",
+  "title": "getPlanProgress",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/socials/page.tsx",
+    "symbol": "getPlanProgress",
+    "line": 93
+  },
+  "signature": {
+    "name": "getPlanProgress",
+    "kind": "service"
+  },
+  "structural_hash": "871b69b7873feb2e88d176d970a2b4ffdd4b733df5071d9c3ea723653e76f0bf",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_app_members_socials_page_tsx__getPlanProgress.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

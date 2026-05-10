@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::adminApi.importUsers",
+  "kind": "service",
+  "title": "adminApi.importUsers",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "adminApi.importUsers",
+    "line": 849
+  },
+  "signature": {
+    "name": "adminApi.importUsers",
+    "kind": "service"
+  },
+  "structural_hash": "7b863d5a8b4c02b54c6dbce536aeba7a37eb30207e5396292b7076a727cd5754",
+  "depends_on": [
+    {
+      "target": "POST::/api/admin/users/import",
+      "via": "string_url",
+      "where": "api.ts:856",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__adminApi_importUsers.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

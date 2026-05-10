@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/dashboard/profile-completion.tsx::buildTasks",
+  "kind": "service",
+  "title": "buildTasks",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/dashboard/profile-completion.tsx",
+    "symbol": "buildTasks",
+    "line": 115
+  },
+  "signature": {
+    "name": "buildTasks",
+    "kind": "service"
+  },
+  "structural_hash": "e21e4762f1edfd109f46221e0c9b5f04daa227d07b4ea7c8ddcd2718a3b8ddf9",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_components_dashboard_profile_completion_tsx__buildTasks.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

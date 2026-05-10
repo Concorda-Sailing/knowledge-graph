@@ -1,0 +1,29 @@
+{
+  "_archived_at": "2026-05-09T11:23:39.010723Z",
+  "_archived_reason": "domain_orphan_symbol_removed",
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_event_crew.py__EventCrewInviteSend.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/event_crew.py::EventCrewInviteSend",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "person_uuids"
+    ],
+    "kind": "schema",
+    "name": "EventCrewInviteSend"
+  },
+  "source": {
+    "line": 43,
+    "path": "schemas/event_crew.py",
+    "repo": "concorda-api",
+    "symbol": "EventCrewInviteSend"
+  },
+  "structural_hash": "02274354bc05db35edfb42f9393d32ff2e0104f15b79faeb1df4dee27b3f6119",
+  "tests": [],
+  "title": "EventCrewInviteSend",
+  "warnings": []
+}

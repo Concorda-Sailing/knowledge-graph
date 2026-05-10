@@ -1,0 +1,33 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/endpoints/GET___api_constants_position-locations.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/constants/position-locations",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "GET",
+    "path": "/api/constants/position-locations",
+    "request_schema_ref": null,
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 191,
+    "path": "routers/constants.py",
+    "repo": "concorda-api",
+    "symbol": "get_position_locations"
+  },
+  "structural_hash": "055763e6f776fa8fe7bf385501a5830c71806401ef143fdf7089de9e6a0d0226",
+  "tests": [],
+  "title": "GET /api/constants/position-locations",
+  "warnings": [
+    {
+      "code": "weakly_typed_response",
+      "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
+      "where": "routers/constants.py:191"
+    }
+  ]
+}

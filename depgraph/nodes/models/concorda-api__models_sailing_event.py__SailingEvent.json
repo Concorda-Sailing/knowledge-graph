@@ -1,0 +1,25 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/models/concorda-api__models_sailing_event.py__SailingEvent.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::models/sailing_event.py::SailingEvent",
+  "kind": "model",
+  "schema_version": 1,
+  "signature": {
+    "kind": "model",
+    "name": "SailingEvent",
+    "tablename": "sailing_events"
+  },
+  "source": {
+    "line": 8,
+    "path": "models/sailing_event.py",
+    "repo": "concorda-api",
+    "symbol": "SailingEvent"
+  },
+  "structural_hash": "b8a9d77d2afb4e2b2673f38f3687364e638abdc383d0a8f28889de5089ed422e",
+  "tests": [],
+  "title": "SailingEvent",
+  "warnings": []
+}

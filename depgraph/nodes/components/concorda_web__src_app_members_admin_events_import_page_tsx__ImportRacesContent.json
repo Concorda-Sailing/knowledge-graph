@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/admin/events/import/page.tsx::ImportRacesContent",
+  "kind": "component",
+  "title": "ImportRacesContent",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/admin/events/import/page.tsx",
+    "symbol": "ImportRacesContent",
+    "line": 40
+  },
+  "signature": {
+    "name": "ImportRacesContent",
+    "kind": "component"
+  },
+  "structural_hash": "be6b3cbcd6825f010d06b76b4a2f73e3fe2e5e492efb8b2b4e70b7647e276cab",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/hooks/use-toast.ts::useToast",
+      "via": "hook_call",
+      "where": "page.tsx:41",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/hooks/use-constants.ts::useConstants",
+      "via": "hook_call",
+      "where": "page.tsx:42",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::norApi.uploadAndExtract",
+      "via": "hook_call",
+      "where": "page.tsx:56",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::regattaApi.checkDuplicates",
+      "via": "hook_call",
+      "where": "page.tsx:113",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::seriesApi.create",
+      "via": "hook_call",
+      "where": "page.tsx:175",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::seriesApi.generateRaces",
+      "via": "hook_call",
+      "where": "page.tsx:190",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::regattaApi.create",
+      "via": "hook_call",
+      "where": "page.tsx:194",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_admin_events_import_page_tsx__ImportRacesContent.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/directory/mobile-directory.spec.ts::test@27",
+  "kind": "test",
+  "title": "alphabet filter is hidden on mobile",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/directory/mobile-directory.spec.ts",
+    "symbol": "test@27",
+    "line": 27
+  },
+  "signature": {
+    "name": "test@27",
+    "kind": "test"
+  },
+  "structural_hash": "56e255063b7be433a28b49819a1702b901c2a6851eb0a0ab3b011939e41eb3ce",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_directory_mobile_directory_spec_ts__test_27.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

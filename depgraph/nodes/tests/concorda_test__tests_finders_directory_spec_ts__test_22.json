@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/finders/directory.spec.ts::test@22",
+  "kind": "test",
+  "title": "search by name works",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/finders/directory.spec.ts",
+    "symbol": "test@22",
+    "line": 22
+  },
+  "signature": {
+    "name": "test@22",
+    "kind": "test"
+  },
+  "structural_hash": "2e7c0a09a4767acaeccd5a64304ba34ecaa7c2a61f0c90e1c798f8eb20f173a9",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_finders_directory_spec_ts__test_22.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

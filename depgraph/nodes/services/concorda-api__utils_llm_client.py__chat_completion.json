@@ -1,0 +1,33 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/services/concorda-api__utils_llm_client.py__chat_completion.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::utils/llm_client.py::chat_completion",
+  "kind": "service",
+  "schema_version": 1,
+  "signature": {
+    "args": [
+      "messages",
+      "db",
+      "model",
+      "temperature",
+      "max_tokens",
+      "response_format",
+      "config"
+    ],
+    "kind": "service",
+    "name": "chat_completion"
+  },
+  "source": {
+    "line": 43,
+    "path": "utils/llm_client.py",
+    "repo": "concorda-api",
+    "symbol": "chat_completion"
+  },
+  "structural_hash": "4fa513326e62f507d422a253d03ee7b3ca5b1958f6799ee5d465739b118e58f0",
+  "tests": [],
+  "title": "chat_completion",
+  "warnings": []
+}

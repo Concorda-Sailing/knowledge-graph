@@ -1,0 +1,40 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::services/organizing_authorities.py::set_series_oas",
+      "via": "import",
+      "where": "routers/series.py:185"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/series.py::Series",
+      "via": "db_query",
+      "where": "routers/series.py:173"
+    }
+  ],
+  "dossier": "dossiers/endpoints/PUT___api_series_0.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "PUT::/api/series/{0}",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "PUT",
+    "path": "/api/series/{series_id}",
+    "request_schema_ref": "SeriesUpdate",
+    "response_schema_ref": "SeriesRead"
+  },
+  "source": {
+    "line": 167,
+    "path": "routers/series.py",
+    "repo": "concorda-api",
+    "symbol": "update_series"
+  },
+  "structural_hash": "819cc7915c38d8dec7f865e32aa116d96ad0c95516033650e56f6639b74a35a5",
+  "tests": [],
+  "title": "PUT /api/series/{series_id}",
+  "warnings": []
+}

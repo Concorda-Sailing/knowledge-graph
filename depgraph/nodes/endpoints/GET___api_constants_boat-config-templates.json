@@ -1,0 +1,33 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/endpoints/GET___api_constants_boat-config-templates.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/constants/boat-config-templates",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "GET",
+    "path": "/api/constants/boat-config-templates",
+    "request_schema_ref": null,
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 185,
+    "path": "routers/constants.py",
+    "repo": "concorda-api",
+    "symbol": "get_boat_config_templates"
+  },
+  "structural_hash": "c974bcb9a7fde3a947a3bc42bbcfc5d8e779d445a15cff6b6019015de04d0249",
+  "tests": [],
+  "title": "GET /api/constants/boat-config-templates",
+  "warnings": [
+    {
+      "code": "weakly_typed_response",
+      "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
+      "where": "routers/constants.py:185"
+    }
+  ]
+}

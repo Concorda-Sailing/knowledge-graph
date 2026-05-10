@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/dashboard/event-plan-panel.tsx::InlineConfigCreate",
+  "kind": "component",
+  "title": "InlineConfigCreate",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/dashboard/event-plan-panel.tsx",
+    "symbol": "InlineConfigCreate",
+    "line": 603
+  },
+  "signature": {
+    "name": "InlineConfigCreate",
+    "kind": "component"
+  },
+  "structural_hash": "fbddad365fc28ba9eedf81923a52a7143fb9d1477fe7af38560c768500806165",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/hooks/use-toast.ts::useToast",
+      "via": "hook_call",
+      "where": "event-plan-panel.tsx:612",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.createBoatConfig",
+      "via": "hook_call",
+      "where": "event-plan-panel.tsx:638",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_dashboard_event_plan_panel_tsx__InlineConfigCreate.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

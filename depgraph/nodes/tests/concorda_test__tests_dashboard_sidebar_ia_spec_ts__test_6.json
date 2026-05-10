@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/dashboard/sidebar-ia.spec.ts::test@6",
+  "kind": "test",
+  "title": "drawer contains Dashboard and Finder; excludes My Schedule and separate Finder entries",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/dashboard/sidebar-ia.spec.ts",
+    "symbol": "test@6",
+    "line": 6
+  },
+  "signature": {
+    "name": "test@6",
+    "kind": "test"
+  },
+  "structural_hash": "818c17f824a546d96e0081593fab93ba4d26a360086d460b0387df43a679303e",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_dashboard_sidebar_ia_spec_ts__test_6.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

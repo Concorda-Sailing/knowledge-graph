@@ -1,0 +1,52 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::schemas/profile.py::ProfileUpdate",
+      "via": "import",
+      "where": "routers/profile.py:86"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::utils/websocket_manager.py::broadcast_event",
+      "via": "websocket",
+      "where": "routers/profile.py:140"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::schemas/profile.py::ProfileRead",
+      "via": "import",
+      "where": "routers/profile.py:84"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/person.py::Person",
+      "via": "db_query",
+      "where": "routers/profile.py:91"
+    }
+  ],
+  "dossier": "dossiers/endpoints/PUT___api_profile.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "PUT::/api/profile",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "PUT",
+    "path": "/api/profile",
+    "request_schema_ref": "ProfileUpdate",
+    "response_schema_ref": "ProfileRead"
+  },
+  "source": {
+    "line": 85,
+    "path": "routers/profile.py",
+    "repo": "concorda-api",
+    "symbol": "update_profile"
+  },
+  "structural_hash": "b43792c02647675239384773b62a88bab201cbcf55e089ce714c948acf6e1fea",
+  "tests": [],
+  "title": "PUT /api/profile",
+  "warnings": []
+}

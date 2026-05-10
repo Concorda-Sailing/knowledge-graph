@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/payment-form.tsx::PaymentForm",
+  "kind": "component",
+  "title": "PaymentForm",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/payment-form.tsx",
+    "symbol": "PaymentForm",
+    "line": 28
+  },
+  "signature": {
+    "name": "PaymentForm",
+    "kind": "component"
+  },
+  "structural_hash": "11c3682f524ab45bf73f5f59b01eee9d12209c15ec01f45a7c217a45d6dc4479",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_payment_form_tsx__PaymentForm.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

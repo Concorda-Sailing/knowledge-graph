@@ -1,0 +1,28 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/services/concorda-api__services_organizing_authorities.py__get_regatta_oas.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::services/organizing_authorities.py::get_regatta_oas",
+  "kind": "service",
+  "schema_version": 1,
+  "signature": {
+    "args": [
+      "db",
+      "regatta_uuid"
+    ],
+    "kind": "service",
+    "name": "get_regatta_oas"
+  },
+  "source": {
+    "line": 100,
+    "path": "services/organizing_authorities.py",
+    "repo": "concorda-api",
+    "symbol": "get_regatta_oas"
+  },
+  "structural_hash": "437c7bb3bf8ae904c055d95b727350321fee8401acedec2a5bfb1d8f1048c2ee",
+  "tests": [],
+  "title": "get_regatta_oas",
+  "warnings": []
+}

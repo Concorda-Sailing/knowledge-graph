@@ -1,0 +1,29 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/services/concorda-api__utils_email_utils.py__render_email_template.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::utils/email_utils.py::render_email_template",
+  "kind": "service",
+  "schema_version": 1,
+  "signature": {
+    "args": [
+      "name",
+      "variables",
+      "db"
+    ],
+    "kind": "service",
+    "name": "render_email_template"
+  },
+  "source": {
+    "line": 589,
+    "path": "utils/email_utils.py",
+    "repo": "concorda-api",
+    "symbol": "render_email_template"
+  },
+  "structural_hash": "cb852036d55d6d8017c45469a4136e243757fbbbc2dbd64a8a7c3f59670e989a",
+  "tests": [],
+  "title": "render_email_template",
+  "warnings": []
+}

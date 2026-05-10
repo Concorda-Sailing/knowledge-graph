@@ -1,0 +1,25 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/models/concorda-api__models_approval_vote.py__ApprovalVote.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::models/approval_vote.py::ApprovalVote",
+  "kind": "model",
+  "schema_version": 1,
+  "signature": {
+    "kind": "model",
+    "name": "ApprovalVote",
+    "tablename": "approval_votes"
+  },
+  "source": {
+    "line": 7,
+    "path": "models/approval_vote.py",
+    "repo": "concorda-api",
+    "symbol": "ApprovalVote"
+  },
+  "structural_hash": "1d371791e29680b4c9d9c90305cec1770f6139badce61b0de0fca760a1982aa7",
+  "tests": [],
+  "title": "ApprovalVote",
+  "warnings": []
+}

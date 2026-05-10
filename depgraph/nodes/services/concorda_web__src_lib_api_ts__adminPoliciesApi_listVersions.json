@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::adminPoliciesApi.listVersions",
+  "kind": "service",
+  "title": "adminPoliciesApi.listVersions",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "adminPoliciesApi.listVersions",
+    "line": 309
+  },
+  "signature": {
+    "name": "adminPoliciesApi.listVersions",
+    "kind": "service"
+  },
+  "structural_hash": "97468321b960364cff683baf56d30de30dc2e140621dba2837e2a1da6acf4046",
+  "depends_on": [
+    {
+      "target": "GET::/api/policies/admin/{0}/versions",
+      "via": "string_url",
+      "where": "api.ts:310",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__adminPoliciesApi_listVersions.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

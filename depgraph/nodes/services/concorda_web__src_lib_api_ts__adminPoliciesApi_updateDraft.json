@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::adminPoliciesApi.updateDraft",
+  "kind": "service",
+  "title": "adminPoliciesApi.updateDraft",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "adminPoliciesApi.updateDraft",
+    "line": 325
+  },
+  "signature": {
+    "name": "adminPoliciesApi.updateDraft",
+    "kind": "service"
+  },
+  "structural_hash": "d823312d25648d07d3fdc3f75417576e1e420a1e77c0d65af4ad2cf911a37d1c",
+  "depends_on": [
+    {
+      "target": "PATCH::/api/policies/admin/versions/{0}",
+      "via": "string_url",
+      "where": "api.ts:335",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__adminPoliciesApi_updateDraft.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

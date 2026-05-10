@@ -1,0 +1,70 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/event.py::Event",
+      "via": "db_query",
+      "where": "routers/events.py:2876"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/boat_crew.py::BoatCrew",
+      "via": "db_query",
+      "where": "routers/events.py:2857"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/person.py::Person",
+      "via": "db_query",
+      "where": "routers/events.py:2870"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/event_crew.py::EventCrew",
+      "via": "db_query",
+      "where": "routers/events.py:2872"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/sailing_event.py::SailingEvent",
+      "via": "db_query",
+      "where": "routers/events.py:2873"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/boat.py::Boat",
+      "via": "db_query",
+      "where": "routers/events.py:2869"
+    }
+  ],
+  "dossier": "dossiers/endpoints/GET___api_events_crew-requests_inbox.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/events/crew-requests/inbox",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "GET",
+    "path": "/api/events/crew-requests/inbox",
+    "request_schema_ref": null,
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 2846,
+    "path": "routers/events.py",
+    "repo": "concorda-api",
+    "symbol": "list_inbox_crew_requests"
+  },
+  "structural_hash": "9b3a93c8280b6897135a2e4ed4c34324fa628dfc5589c28a8ef559751b478669",
+  "tests": [],
+  "title": "GET /api/events/crew-requests/inbox",
+  "warnings": [
+    {
+      "code": "weakly_typed_response",
+      "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
+      "where": "routers/events.py:2846"
+    }
+  ]
+}

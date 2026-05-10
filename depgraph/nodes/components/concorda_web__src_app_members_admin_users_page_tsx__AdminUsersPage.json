@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/admin/users/page.tsx::AdminUsersPage",
+  "kind": "component",
+  "title": "AdminUsersPage",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/admin/users/page.tsx",
+    "symbol": "AdminUsersPage",
+    "line": 41
+  },
+  "signature": {
+    "name": "AdminUsersPage",
+    "kind": "component"
+  },
+  "structural_hash": "264b9708942b8a9b7e58fb585ebdb99ef75505a5c9ac2e9aba6e1eb4c55b8220",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/api.ts::adminTemporalProductsApi.list",
+      "via": "hook_call",
+      "where": "page.tsx:63",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::adminApi.members",
+      "via": "hook_call",
+      "where": "page.tsx:69",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::adminApi.deleteUser",
+      "via": "hook_call",
+      "where": "page.tsx:100",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::adminApi.changePassword",
+      "via": "hook_call",
+      "where": "page.tsx:118",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::adminApi.updateUser",
+      "via": "hook_call",
+      "where": "page.tsx:129",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_admin_users_page_tsx__AdminUsersPage.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

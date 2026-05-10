@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/finder/pagination.tsx::Pagination",
+  "kind": "component",
+  "title": "Pagination",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/finder/pagination.tsx",
+    "symbol": "Pagination",
+    "line": 12
+  },
+  "signature": {
+    "name": "Pagination",
+    "kind": "component"
+  },
+  "structural_hash": "6adc8ee7ed07fec030a0c7a5f6313f50fe095a8ee36d30d362db3af00bd056a0",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_finder_pagination_tsx__Pagination.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

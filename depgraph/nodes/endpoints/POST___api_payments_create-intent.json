@@ -1,0 +1,58 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/transaction.py::Transaction",
+      "via": "db_query",
+      "where": "routers/payments.py:396"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/event_discount.py::EventDiscount",
+      "via": "db_query",
+      "where": "routers/payments.py:121"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/temporal_product.py::TemporalProduct",
+      "via": "db_query",
+      "where": "routers/payments.py:335"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/product.py::Product",
+      "via": "db_query",
+      "where": "routers/payments.py:281"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/person_product.py::PersonProduct",
+      "via": "db_query",
+      "where": "routers/payments.py:157"
+    }
+  ],
+  "dossier": "dossiers/endpoints/POST___api_payments_create-intent.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "POST::/api/payments/create-intent",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "POST",
+    "path": "/api/payments/create-intent",
+    "request_schema_ref": "CreateIntentRequest",
+    "response_schema_ref": "CreateIntentResponse"
+  },
+  "source": {
+    "line": 61,
+    "path": "routers/payments.py",
+    "repo": "concorda-api",
+    "symbol": "create_intent"
+  },
+  "structural_hash": "7799129de4846deb4a174e933206c4f88503941b5c88f5fc39124c4c6b354151",
+  "tests": [],
+  "title": "POST /api/payments/create-intent",
+  "warnings": []
+}

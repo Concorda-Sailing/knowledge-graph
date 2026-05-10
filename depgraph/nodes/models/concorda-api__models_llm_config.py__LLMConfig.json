@@ -1,0 +1,25 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/models/concorda-api__models_llm_config.py__LLMConfig.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::models/llm_config.py::LLMConfig",
+  "kind": "model",
+  "schema_version": 1,
+  "signature": {
+    "kind": "model",
+    "name": "LLMConfig",
+    "tablename": "llm_config"
+  },
+  "source": {
+    "line": 6,
+    "path": "models/llm_config.py",
+    "repo": "concorda-api",
+    "symbol": "LLMConfig"
+  },
+  "structural_hash": "8d99c301de9b30fb4c44442f9d086b8db62cde93990820a7d932f3b6c587e41c",
+  "tests": [],
+  "title": "LLMConfig",
+  "warnings": []
+}

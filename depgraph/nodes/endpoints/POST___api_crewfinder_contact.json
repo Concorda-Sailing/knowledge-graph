@@ -1,0 +1,70 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::routers/admin.py::get_email_config",
+      "via": "import",
+      "where": "routers/crewfinder.py:67"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::utils/email_utils.py::send_crewfinder_contact_email",
+      "via": "import",
+      "where": "routers/crewfinder.py:90"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/person.py::Person",
+      "via": "db_query",
+      "where": "routers/crewfinder.py:50"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/boat_resume.py::BoatResume",
+      "via": "db_query",
+      "where": "routers/crewfinder.py:80"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/boat_crew.py::BoatCrew",
+      "via": "db_query",
+      "where": "routers/crewfinder.py:74"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/boat.py::Boat",
+      "via": "db_query",
+      "where": "routers/crewfinder.py:85"
+    }
+  ],
+  "dossier": "dossiers/endpoints/POST___api_crewfinder_contact.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "POST::/api/crewfinder/contact",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "POST",
+    "path": "/api/crewfinder/contact",
+    "request_schema_ref": "CrewfinderContactRequest",
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 42,
+    "path": "routers/crewfinder.py",
+    "repo": "concorda-api",
+    "symbol": "contact_crew"
+  },
+  "structural_hash": "47afe7d6bceec9a63f5c8bb26d69476d156f483a6abc33c2c654cb819f8a35c9",
+  "tests": [],
+  "title": "POST /api/crewfinder/contact",
+  "warnings": [
+    {
+      "code": "weakly_typed_response",
+      "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
+      "where": "routers/crewfinder.py:42"
+    }
+  ]
+}

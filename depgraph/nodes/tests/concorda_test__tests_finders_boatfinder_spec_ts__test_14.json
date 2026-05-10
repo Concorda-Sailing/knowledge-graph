@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/finders/boatfinder.spec.ts::test@14",
+  "kind": "test",
+  "title": "shows published boats accepting crew",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/finders/boatfinder.spec.ts",
+    "symbol": "test@14",
+    "line": 14
+  },
+  "signature": {
+    "name": "test@14",
+    "kind": "test"
+  },
+  "structural_hash": "4b37526075fd52e2185ea9d41223d25608acab8426496a67fa92d0bd48836fc0",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_finders_boatfinder_spec_ts__test_14.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

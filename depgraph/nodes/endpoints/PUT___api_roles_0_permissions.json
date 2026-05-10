@@ -1,0 +1,40 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/role.py::Role",
+      "via": "db_query",
+      "where": "routers/roles.py:100"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/role.py::Permission",
+      "via": "db_query",
+      "where": "routers/roles.py:118"
+    }
+  ],
+  "dossier": "dossiers/endpoints/PUT___api_roles_0_permissions.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "PUT::/api/roles/{0}/permissions",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "PUT",
+    "path": "/api/roles/{role_name}/permissions",
+    "request_schema_ref": "UpdateRolePermissionsRequest",
+    "response_schema_ref": "RoleWithPermissionsResponse"
+  },
+  "source": {
+    "line": 93,
+    "path": "routers/roles.py",
+    "repo": "concorda-api",
+    "symbol": "update_role_permissions"
+  },
+  "structural_hash": "c1b4287c0c7299f72c5c43e140003c62a67cfa7ab460014e857c456fa702d425",
+  "tests": [],
+  "title": "PUT /api/roles/{role_name}/permissions",
+  "warnings": []
+}

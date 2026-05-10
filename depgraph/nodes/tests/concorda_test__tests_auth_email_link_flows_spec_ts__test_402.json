@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/auth/email-link-flows.spec.ts::test@402",
+  "kind": "test",
+  "title": "accept link flips EventCrew status to accepted and promotes to BoatCrew",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/auth/email-link-flows.spec.ts",
+    "symbol": "test@402",
+    "line": 402
+  },
+  "signature": {
+    "name": "test@402",
+    "kind": "test"
+  },
+  "structural_hash": "2d4a58232245bb1ae17faae3f17b803e1e656c8761381b54332352e283218788",
+  "depends_on": [
+    {
+      "target": "concorda-test::lib/mail-capture.ts::mailCapture.snapshot",
+      "via": "hook_call",
+      "where": "email-link-flows.spec.ts:404",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.setToken",
+      "via": "hook_call",
+      "where": "email-link-flows.spec.ts:421",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.getEventCrew",
+      "via": "hook_call",
+      "where": "email-link-flows.spec.ts:422",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.getBoatCrew",
+      "via": "hook_call",
+      "where": "email-link-flows.spec.ts:429",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.removeCrewMember",
+      "via": "hook_call",
+      "where": "email-link-flows.spec.ts:438",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.removeScheduleEvent",
+      "via": "hook_call",
+      "where": "email-link-flows.spec.ts:440",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_auth_email_link_flows_spec_ts__test_402.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

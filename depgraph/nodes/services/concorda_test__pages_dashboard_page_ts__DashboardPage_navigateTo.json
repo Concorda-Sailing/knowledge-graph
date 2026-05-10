@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::pages/dashboard.page.ts::DashboardPage.navigateTo",
+  "kind": "service",
+  "title": "DashboardPage.navigateTo",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "pages/dashboard.page.ts",
+    "symbol": "DashboardPage.navigateTo",
+    "line": 50
+  },
+  "signature": {
+    "name": "DashboardPage.navigateTo",
+    "kind": "service"
+  },
+  "structural_hash": "b1fc23dad4a0ff98fefbf69218101f4bf8c63b7ff8ab804de0e12eda398a68ee",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__pages_dashboard_page_ts__DashboardPage_navigateTo.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/boat/boat-positions-config.tsx::totalCrew",
+  "kind": "service",
+  "title": "totalCrew",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/boat/boat-positions-config.tsx",
+    "symbol": "totalCrew",
+    "line": 61
+  },
+  "signature": {
+    "name": "totalCrew",
+    "kind": "service"
+  },
+  "structural_hash": "3ec0b2c8600b91b319bf6c487cf85bf96bb086bc211d167613678a9163e9d73e",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_components_boat_boat_positions_config_tsx__totalCrew.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

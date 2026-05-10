@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/boat/boat-profile-card.tsx::BoatProfileCard",
+  "kind": "component",
+  "title": "BoatProfileCard",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/boat/boat-profile-card.tsx",
+    "symbol": "BoatProfileCard",
+    "line": 21
+  },
+  "signature": {
+    "name": "BoatProfileCard",
+    "kind": "component"
+  },
+  "structural_hash": "23f8696d22dd9d3749408fc34bb7d5842f31454114acb62adb5d2e7d03c96889",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_boat_boat_profile_card_tsx__BoatProfileCard.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

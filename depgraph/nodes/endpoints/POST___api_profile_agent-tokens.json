@@ -1,0 +1,34 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/agent_token.py::AgentToken",
+      "via": "db_query",
+      "where": "routers/agent_tokens.py:113"
+    }
+  ],
+  "dossier": "dossiers/endpoints/POST___api_profile_agent-tokens.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "POST::/api/profile/agent-tokens",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "POST",
+    "path": "/api/profile/agent-tokens",
+    "request_schema_ref": "AgentTokenCreate",
+    "response_schema_ref": "AgentTokenWithSecret"
+  },
+  "source": {
+    "line": 100,
+    "path": "routers/agent_tokens.py",
+    "repo": "concorda-api",
+    "symbol": "create_token"
+  },
+  "structural_hash": "8b9f4eaf1d566f2068c1602bd143ee3e49cf3d9195336e4a9aab7c0d251564ac",
+  "tests": [],
+  "title": "POST /api/profile/agent-tokens",
+  "warnings": []
+}

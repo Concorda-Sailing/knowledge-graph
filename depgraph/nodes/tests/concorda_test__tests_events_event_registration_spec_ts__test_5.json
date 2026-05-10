@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/events/event-registration.spec.ts::test@5",
+  "kind": "test",
+  "title": "event detail page shows registration options",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/events/event-registration.spec.ts",
+    "symbol": "test@5",
+    "line": 5
+  },
+  "signature": {
+    "name": "test@5",
+    "kind": "test"
+  },
+  "structural_hash": "517a0ae2b4edfa4ce584ea9e1a8f9eb5ee545604138669af8cc6ba6b91a94bda",
+  "depends_on": [
+    {
+      "target": "concorda-test::pages/events.page.ts::EventsPage.gotoEvent",
+      "via": "hook_call",
+      "where": "event-registration.spec.ts:7",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_events_event_registration_spec_ts__test_5.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

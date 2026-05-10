@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::boatApi.getResume",
+  "kind": "service",
+  "title": "boatApi.getResume",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "boatApi.getResume",
+    "line": 3131
+  },
+  "signature": {
+    "name": "boatApi.getResume",
+    "kind": "service"
+  },
+  "structural_hash": "eca735267c04fa1f0f24a9a840dfaccec3e405076bb325897c962f114454b19b",
+  "depends_on": [
+    {
+      "target": "GET::/api/boats/{0}/resume",
+      "via": "string_url",
+      "where": "api.ts:3132",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__boatApi_getResume.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

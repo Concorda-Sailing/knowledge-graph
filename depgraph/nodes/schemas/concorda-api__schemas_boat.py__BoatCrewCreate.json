@@ -1,0 +1,31 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_boat.py__BoatCrewCreate.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/boat.py::BoatCrewCreate",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "config_uuid",
+      "notes",
+      "person_uuid",
+      "position",
+      "role"
+    ],
+    "kind": "schema",
+    "name": "BoatCrewCreate"
+  },
+  "source": {
+    "line": 8,
+    "path": "schemas/boat.py",
+    "repo": "concorda-api",
+    "symbol": "BoatCrewCreate"
+  },
+  "structural_hash": "248567b413ccf4776e5ee616d61218625384e67b09e2b0f645f58874a33ccf26",
+  "tests": [],
+  "title": "BoatCrewCreate",
+  "warnings": []
+}

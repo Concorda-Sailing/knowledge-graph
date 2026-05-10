@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/socials/page.tsx::SocialsPage",
+  "kind": "component",
+  "title": "SocialsPage",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/socials/page.tsx",
+    "symbol": "SocialsPage",
+    "line": 227
+  },
+  "signature": {
+    "name": "SocialsPage",
+    "kind": "component"
+  },
+  "structural_hash": "95cf987a4e15f33ce7a7e2f3db0d47430b1bdfae21b560da214306929bedfcd5",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/hooks/use-toast.ts::useToast",
+      "via": "hook_call",
+      "where": "page.tsx:228",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/hooks/use-constants.ts::useConstants",
+      "via": "hook_call",
+      "where": "page.tsx:229",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::ymdInOrgTz",
+      "via": "hook_call",
+      "where": "page.tsx:241",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::constantsApi.getAll",
+      "via": "hook_call",
+      "where": "page.tsx:247",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::socialsApi.list",
+      "via": "hook_call",
+      "where": "page.tsx:260",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.mySchedule",
+      "via": "hook_call",
+      "where": "page.tsx:261",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::ymdInOrgTz",
+      "via": "hook_call",
+      "where": "page.tsx:336",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::ymdInOrgTz",
+      "via": "hook_call",
+      "where": "page.tsx:375",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::ymdInOrgTz",
+      "via": "hook_call",
+      "where": "page.tsx:377",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::ymdInOrgTz",
+      "via": "hook_call",
+      "where": "page.tsx:383",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/utils.ts::cn",
+      "via": "hook_call",
+      "where": "page.tsx:423",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/utils.ts::cn",
+      "via": "hook_call",
+      "where": "page.tsx:425",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/utils.ts::cn",
+      "via": "hook_call",
+      "where": "page.tsx:438",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_socials_page_tsx__SocialsPage.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

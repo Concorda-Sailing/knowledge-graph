@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/dashboard/boats-tab.tsx::BoatsList",
+  "kind": "component",
+  "title": "BoatsList",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/dashboard/boats-tab.tsx",
+    "symbol": "BoatsList",
+    "line": 48
+  },
+  "signature": {
+    "name": "BoatsList",
+    "kind": "component"
+  },
+  "structural_hash": "6b90ecf44f2467aa653dca1de62bf80fd0ebc4f96f45f6dd00eb91bec5f2ed11",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.getMyCrew",
+      "via": "hook_call",
+      "where": "boats-tab.tsx:55",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/hooks/use-ws-freshness.ts::useWsFreshness",
+      "via": "hook_call",
+      "where": "boats-tab.tsx:70",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_dashboard_boats_tab_tsx__BoatsList.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

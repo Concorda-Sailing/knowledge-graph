@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/boat/owners-section.tsx::PersonRow",
+  "kind": "component",
+  "title": "PersonRow",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/boat/owners-section.tsx",
+    "symbol": "PersonRow",
+    "line": 258
+  },
+  "signature": {
+    "name": "PersonRow",
+    "kind": "component"
+  },
+  "structural_hash": "4ac8767633c646b4cda9d5b236fbda111a06f2b798a8bcff2aa0d68255d9a9e6",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_boat_owners_section_tsx__PersonRow.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

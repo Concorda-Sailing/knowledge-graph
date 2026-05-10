@@ -1,0 +1,29 @@
+{
+  "_archived_at": "2026-05-09T11:23:39.010906Z",
+  "_archived_reason": "domain_orphan_symbol_removed",
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_boat.py__BoatCrewRespond.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/boat.py::BoatCrewRespond",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "action"
+    ],
+    "kind": "schema",
+    "name": "BoatCrewRespond"
+  },
+  "source": {
+    "line": 55,
+    "path": "schemas/boat.py",
+    "repo": "concorda-api",
+    "symbol": "BoatCrewRespond"
+  },
+  "structural_hash": "fad649deeb02542abdb3935509b288bbe4f462bff2e0c2e078ae415506d07e22",
+  "tests": [],
+  "title": "BoatCrewRespond",
+  "warnings": []
+}

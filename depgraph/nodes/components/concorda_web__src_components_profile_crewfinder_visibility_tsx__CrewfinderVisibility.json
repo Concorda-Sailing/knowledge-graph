@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/profile/crewfinder-visibility.tsx::CrewfinderVisibility",
+  "kind": "component",
+  "title": "CrewfinderVisibility",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/profile/crewfinder-visibility.tsx",
+    "symbol": "CrewfinderVisibility",
+    "line": 13
+  },
+  "signature": {
+    "name": "CrewfinderVisibility",
+    "kind": "component"
+  },
+  "structural_hash": "ea06dd0619714b546708e12f426ec6778ba95ab62204e2a0795f1c4374dcbbe1",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.update",
+      "via": "hook_call",
+      "where": "crewfinder-visibility.tsx:21",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_profile_crewfinder_visibility_tsx__CrewfinderVisibility.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

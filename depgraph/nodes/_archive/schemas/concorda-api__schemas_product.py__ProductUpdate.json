@@ -1,0 +1,39 @@
+{
+  "_archived_at": "2026-05-09T11:23:39.011374Z",
+  "_archived_reason": "domain_orphan_symbol_removed",
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_product.py__ProductUpdate.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/product.py::ProductUpdate",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "description",
+      "effective_date",
+      "end_date",
+      "event_id",
+      "is_active",
+      "name",
+      "price",
+      "publish_date",
+      "quantity",
+      "slug",
+      "sort_order"
+    ],
+    "kind": "schema",
+    "name": "ProductUpdate"
+  },
+  "source": {
+    "line": 22,
+    "path": "schemas/product.py",
+    "repo": "concorda-api",
+    "symbol": "ProductUpdate"
+  },
+  "structural_hash": "d27f6227c57c58674b9300c7fedffe8571f60efeac46b5c6629ff227dd5a12fa",
+  "tests": [],
+  "title": "ProductUpdate",
+  "warnings": []
+}

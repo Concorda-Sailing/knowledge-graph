@@ -1,0 +1,39 @@
+{
+  "_archived_at": "2026-05-09T11:23:39.011809Z",
+  "_archived_reason": "domain_orphan_symbol_removed",
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_boat.py__BoatEventRead.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/boat.py::BoatEventRead",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "event_date",
+      "event_name",
+      "event_uuid",
+      "intent",
+      "intent_id",
+      "notes",
+      "positions_needed",
+      "positions_offered",
+      "regatta_name",
+      "regatta_uuid",
+      "status"
+    ],
+    "kind": "schema",
+    "name": "BoatEventRead"
+  },
+  "source": {
+    "line": 97,
+    "path": "schemas/boat.py",
+    "repo": "concorda-api",
+    "symbol": "BoatEventRead"
+  },
+  "structural_hash": "1323241e8896b9d9b8f52c99b9df2205510f4e9d6bfadd9b850cd363195811e8",
+  "tests": [],
+  "title": "BoatEventRead",
+  "warnings": []
+}

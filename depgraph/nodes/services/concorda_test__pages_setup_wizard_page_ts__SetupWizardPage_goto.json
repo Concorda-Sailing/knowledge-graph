@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::pages/setup-wizard.page.ts::SetupWizardPage.goto",
+  "kind": "service",
+  "title": "SetupWizardPage.goto",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "pages/setup-wizard.page.ts",
+    "symbol": "SetupWizardPage.goto",
+    "line": 29
+  },
+  "signature": {
+    "name": "SetupWizardPage.goto",
+    "kind": "service"
+  },
+  "structural_hash": "7210ac1f968a66967d77a3ec9ed2924182d4dc13e0b6218974aa26fcfc68ff97",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__pages_setup_wizard_page_ts__SetupWizardPage_goto.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

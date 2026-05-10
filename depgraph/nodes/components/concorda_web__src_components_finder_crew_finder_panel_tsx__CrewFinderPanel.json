@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/finder/crew-finder-panel.tsx::CrewFinderPanel",
+  "kind": "component",
+  "title": "CrewFinderPanel",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/finder/crew-finder-panel.tsx",
+    "symbol": "CrewFinderPanel",
+    "line": 301
+  },
+  "signature": {
+    "name": "CrewFinderPanel",
+    "kind": "component"
+  },
+  "structural_hash": "70f12bcb19706fd29f83853c0e29684eda46e08dcfd6192a4e6d8b713abb482e",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/hooks/use-boats.ts::useBoats",
+      "via": "hook_call",
+      "where": "crew-finder-panel.tsx:308",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/contexts/auth-context.tsx::useAuth",
+      "via": "hook_call",
+      "where": "crew-finder-panel.tsx:309",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::boatApi.getCrew",
+      "via": "hook_call",
+      "where": "crew-finder-panel.tsx:329",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::crewfinderApi.search",
+      "via": "hook_call",
+      "where": "crew-finder-panel.tsx:341",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::constantsApi.getAll",
+      "via": "hook_call",
+      "where": "crew-finder-panel.tsx:346",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/hooks/use-ws-freshness.ts::useWsFreshness",
+      "via": "hook_call",
+      "where": "crew-finder-panel.tsx:367",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_finder_crew_finder_panel_tsx__CrewFinderPanel.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

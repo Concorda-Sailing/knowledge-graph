@@ -1,0 +1,40 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/person_contract_acceptance.py::PersonContractAcceptance",
+      "via": "db_query",
+      "where": "routers/policies.py:291"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/contract.py::Contract",
+      "via": "db_query",
+      "where": "routers/policies.py:279"
+    }
+  ],
+  "dossier": "dossiers/endpoints/GET___api_policies_admin_0_versions.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/policies/admin/{0}/versions",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "GET",
+    "path": "/api/policies/admin/{slug}/versions",
+    "request_schema_ref": null,
+    "response_schema_ref": "list"
+  },
+  "source": {
+    "line": 270,
+    "path": "routers/policies.py",
+    "repo": "concorda-api",
+    "symbol": "list_versions"
+  },
+  "structural_hash": "890201f1c34fc966bc3dd6e9c48f93e55f4eef50306a045462084819f312f624",
+  "tests": [],
+  "title": "GET /api/policies/admin/{slug}/versions",
+  "warnings": []
+}

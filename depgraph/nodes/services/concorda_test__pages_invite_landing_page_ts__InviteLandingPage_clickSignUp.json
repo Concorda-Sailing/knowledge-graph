@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::pages/invite-landing.page.ts::InviteLandingPage.clickSignUp",
+  "kind": "service",
+  "title": "InviteLandingPage.clickSignUp",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "pages/invite-landing.page.ts",
+    "symbol": "InviteLandingPage.clickSignUp",
+    "line": 59
+  },
+  "signature": {
+    "name": "InviteLandingPage.clickSignUp",
+    "kind": "service"
+  },
+  "structural_hash": "7ab510930774dbc1ce386e4a8b58474918bd16f377366917cd9589cce80095f7",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__pages_invite_landing_page_ts__InviteLandingPage_clickSignUp.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/dashboard/crew-card/invited-section.tsx::InvitedSection",
+  "kind": "component",
+  "title": "InvitedSection",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/dashboard/crew-card/invited-section.tsx",
+    "symbol": "InvitedSection",
+    "line": 33
+  },
+  "signature": {
+    "name": "InvitedSection",
+    "kind": "component"
+  },
+  "structural_hash": "0fe83258de6453569a595364c06f538b8bba15dcd8655c559b9ea89f45c1288d",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/utils.ts::cn",
+      "via": "hook_call",
+      "where": "invited-section.tsx:94",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_dashboard_crew_card_invited_section_tsx__InvitedSection.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/dashboard/crew-requests-card.tsx::CrewRequestsCard",
+  "kind": "component",
+  "title": "CrewRequestsCard",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/dashboard/crew-requests-card.tsx",
+    "symbol": "CrewRequestsCard",
+    "line": 16
+  },
+  "signature": {
+    "name": "CrewRequestsCard",
+    "kind": "component"
+  },
+  "structural_hash": "1fe81327e62b132876f7c81aa89d852ffcb814a0afe4a80ed0db69a1880e4372",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_dashboard_crew_requests_card_tsx__CrewRequestsCard.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

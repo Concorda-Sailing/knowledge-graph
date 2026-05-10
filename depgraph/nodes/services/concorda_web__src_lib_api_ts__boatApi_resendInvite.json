@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::boatApi.resendInvite",
+  "kind": "service",
+  "title": "boatApi.resendInvite",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "boatApi.resendInvite",
+    "line": 3125
+  },
+  "signature": {
+    "name": "boatApi.resendInvite",
+    "kind": "service"
+  },
+  "structural_hash": "75567aa44bffaa700d24a666dc40ca0764e770d418c69251d8e439b87983b07d",
+  "depends_on": [
+    {
+      "target": "POST::/api/boats/{0}/crew/{1}/resend-invite",
+      "via": "string_url",
+      "where": "api.ts:3126",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__boatApi_resendInvite.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

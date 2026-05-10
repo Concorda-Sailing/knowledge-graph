@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/admin/user-management.spec.ts::test@41",
+  "kind": "test",
+  "title": "can create a new user",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/admin/user-management.spec.ts",
+    "symbol": "test@41",
+    "line": 41
+  },
+  "signature": {
+    "name": "test@41",
+    "kind": "test"
+  },
+  "structural_hash": "7a811b52bfe90bbb9674b520e65c518ef933e2fe7cc2938c0447373c1e933f09",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_admin_user_management_spec_ts__test_41.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

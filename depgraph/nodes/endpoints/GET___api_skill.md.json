@@ -1,0 +1,33 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/endpoints/GET___api_skill.md.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/skill.md",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "GET",
+    "path": "/api/skill.md",
+    "request_schema_ref": null,
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 21,
+    "path": "routers/agents.py",
+    "repo": "concorda-api",
+    "symbol": "get_skill"
+  },
+  "structural_hash": "2371b5bee60c9457c36bf15f90c6ffe8e309fdae254c72b3a57ae6871399862d",
+  "tests": [],
+  "title": "GET /api/skill.md",
+  "warnings": [
+    {
+      "code": "weakly_typed_response",
+      "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
+      "where": "routers/agents.py:21"
+    }
+  ]
+}

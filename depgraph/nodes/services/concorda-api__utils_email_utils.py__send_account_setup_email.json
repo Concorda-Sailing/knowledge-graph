@@ -1,0 +1,30 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/services/concorda-api__utils_email_utils.py__send_account_setup_email.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::utils/email_utils.py::send_account_setup_email",
+  "kind": "service",
+  "schema_version": 1,
+  "signature": {
+    "args": [
+      "to_email",
+      "first_name",
+      "token",
+      "db"
+    ],
+    "kind": "service",
+    "name": "send_account_setup_email"
+  },
+  "source": {
+    "line": 272,
+    "path": "utils/email_utils.py",
+    "repo": "concorda-api",
+    "symbol": "send_account_setup_email"
+  },
+  "structural_hash": "f4d3eba3645b0b7dcdfa6ee902ae9de7f94f6aa4ffef35c28a63a9e2addb10f0",
+  "tests": [],
+  "title": "send_account_setup_email",
+  "warnings": []
+}

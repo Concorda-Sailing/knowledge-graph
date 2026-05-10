@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/admin/club-management.spec.ts::test@36",
+  "kind": "test",
+  "title": "can create a new club",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/admin/club-management.spec.ts",
+    "symbol": "test@36",
+    "line": 36
+  },
+  "signature": {
+    "name": "test@36",
+    "kind": "test"
+  },
+  "structural_hash": "5e0859741348b9364b1acc74ab5e6c214fca2de61eee652cb03b9c8202af24bf",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_admin_club_management_spec_ts__test_36.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

@@ -1,0 +1,35 @@
+{
+  "_archived_at": "2026-05-09T11:06:08.123198Z",
+  "_archived_reason": "domain_orphan_symbol_removed",
+  "depends_on": [],
+  "dossier": "dossiers/endpoints/GET___docs_oauth2-redirect.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/docs/oauth2-redirect",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "GET",
+    "path": "/docs/oauth2-redirect",
+    "request_schema_ref": null,
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 1141,
+    "path": ".venv/lib/python3.13/site-packages/fastapi/applications.py",
+    "repo": "concorda-api",
+    "symbol": "swagger_ui_redirect"
+  },
+  "structural_hash": "d4d0fb235c54c93ba8e22461dcd5105195290163eb40094c50d71d94f2247a38",
+  "tests": [],
+  "title": "GET /docs/oauth2-redirect",
+  "warnings": [
+    {
+      "code": "weakly_typed_response",
+      "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
+      "where": ".venv/lib/python3.13/site-packages/fastapi/applications.py:1141"
+    }
+  ]
+}

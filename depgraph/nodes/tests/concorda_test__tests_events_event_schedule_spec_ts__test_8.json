@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/events/event-schedule.spec.ts::test@8",
+  "kind": "test",
+  "title": "schedule page loads",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/events/event-schedule.spec.ts",
+    "symbol": "test@8",
+    "line": 8
+  },
+  "signature": {
+    "name": "test@8",
+    "kind": "test"
+  },
+  "structural_hash": "0aee96878d77186408e42d69825bc17356fe218f668afdd76c493c2f71edd03a",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_events_event_schedule_spec_ts__test_8.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

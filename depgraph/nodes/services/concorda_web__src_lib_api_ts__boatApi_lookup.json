@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::boatApi.lookup",
+  "kind": "service",
+  "title": "boatApi.lookup",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "boatApi.lookup",
+    "line": 3135
+  },
+  "signature": {
+    "name": "boatApi.lookup",
+    "kind": "service"
+  },
+  "structural_hash": "c498c4e00c9074ffd97105b5cf55352c190298c9cca0a46b657ffa45bee27149",
+  "depends_on": [
+    {
+      "target": "GET::/api/boats/lookup",
+      "via": "string_url",
+      "where": "api.ts:3137",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__boatApi_lookup.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

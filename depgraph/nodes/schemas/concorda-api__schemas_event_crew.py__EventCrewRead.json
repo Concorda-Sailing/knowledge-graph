@@ -1,0 +1,45 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_event_crew.py__EventCrewRead.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/event_crew.py::EventCrewRead",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "boat_uuid",
+      "created",
+      "id",
+      "invited_by_uuid",
+      "modified",
+      "notes",
+      "person_email",
+      "person_first_name",
+      "person_last_name",
+      "person_picture_url",
+      "person_uuid",
+      "position_name",
+      "priority",
+      "responded_by_uuid",
+      "resume_published",
+      "role",
+      "sailing_event_uuid",
+      "self_selected",
+      "status"
+    ],
+    "kind": "schema",
+    "name": "EventCrewRead"
+  },
+  "source": {
+    "line": 6,
+    "path": "schemas/event_crew.py",
+    "repo": "concorda-api",
+    "symbol": "EventCrewRead"
+  },
+  "structural_hash": "1f2e7580d4351bf2db95c23d28162a4296aa32c560c9557c71b010c7f8e076a9",
+  "tests": [],
+  "title": "EventCrewRead",
+  "warnings": []
+}

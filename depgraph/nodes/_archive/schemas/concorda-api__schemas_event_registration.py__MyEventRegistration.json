@@ -1,0 +1,40 @@
+{
+  "_archived_at": "2026-05-09T11:23:39.011137Z",
+  "_archived_reason": "domain_orphan_symbol_removed",
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_event_registration.py__MyEventRegistration.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/event_registration.py::MyEventRegistration",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "comment",
+      "created",
+      "event_date",
+      "event_end_date",
+      "event_location",
+      "event_name",
+      "event_slug",
+      "id",
+      "status",
+      "ticket_name",
+      "ticket_price",
+      "transaction_id"
+    ],
+    "kind": "schema",
+    "name": "MyEventRegistration"
+  },
+  "source": {
+    "line": 62,
+    "path": "schemas/event_registration.py",
+    "repo": "concorda-api",
+    "symbol": "MyEventRegistration"
+  },
+  "structural_hash": "db66a10967cd22f1347f5401767422cb2098eb1aaf0df28d96d34c0c2514a3c3",
+  "tests": [],
+  "title": "MyEventRegistration",
+  "warnings": []
+}

@@ -1,0 +1,40 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/activity_log.py::ActivityLog",
+      "via": "db_query",
+      "where": "routers/analytics.py:156"
+    }
+  ],
+  "dossier": "dossiers/endpoints/GET___api_analytics_daily-activity.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/analytics/daily-activity",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "GET",
+    "path": "/api/analytics/daily-activity",
+    "request_schema_ref": null,
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 138,
+    "path": "routers/analytics.py",
+    "repo": "concorda-api",
+    "symbol": "get_daily_activity"
+  },
+  "structural_hash": "ca35a4deef7f9b8cb571cdcd99c9d81d244adc0dc563d5f6a91675e811f711dd",
+  "tests": [],
+  "title": "GET /api/analytics/daily-activity",
+  "warnings": [
+    {
+      "code": "weakly_typed_response",
+      "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
+      "where": "routers/analytics.py:138"
+    }
+  ]
+}

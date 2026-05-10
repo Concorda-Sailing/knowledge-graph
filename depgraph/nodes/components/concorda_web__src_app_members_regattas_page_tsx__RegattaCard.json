@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/regattas/page.tsx::RegattaCard",
+  "kind": "component",
+  "title": "RegattaCard",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/regattas/page.tsx",
+    "symbol": "RegattaCard",
+    "line": 140
+  },
+  "signature": {
+    "name": "RegattaCard",
+    "kind": "component"
+  },
+  "structural_hash": "e16df73080765e50fa4d60e5d25859d4862f6aedb85a8b8a3470c102ef93854e",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/api.ts::authedUrl",
+      "via": "hook_call",
+      "where": "page.tsx:320",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::authedUrl",
+      "via": "hook_call",
+      "where": "page.tsx:332",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_regattas_page_tsx__RegattaCard.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/profile/mobile-profile-inline.spec.ts::test@24",
+  "kind": "test",
+  "title": "personal info edit toggle works; save row stacks",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/profile/mobile-profile-inline.spec.ts",
+    "symbol": "test@24",
+    "line": 24
+  },
+  "signature": {
+    "name": "test@24",
+    "kind": "test"
+  },
+  "structural_hash": "a434c196879e2f99662bb29bf3844e98873a9f4495a321ed916ecae781113440",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_profile_mobile_profile_inline_spec_ts__test_24.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

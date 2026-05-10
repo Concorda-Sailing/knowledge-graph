@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/admin/organizing-authorities-selector.tsx::OrganizingAuthoritiesSelector",
+  "kind": "component",
+  "title": "OrganizingAuthoritiesSelector",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/admin/organizing-authorities-selector.tsx",
+    "symbol": "OrganizingAuthoritiesSelector",
+    "line": 17
+  },
+  "signature": {
+    "name": "OrganizingAuthoritiesSelector",
+    "kind": "component"
+  },
+  "structural_hash": "a23b672639ab2c975d4d523cc10c0d07ca114d21a312c89b0ad113efd9405bfa",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/api.ts::organizationsApi.list",
+      "via": "hook_call",
+      "where": "organizing-authorities-selector.tsx:29",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_admin_organizing_authorities_selector_tsx__OrganizingAuthoritiesSelector.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

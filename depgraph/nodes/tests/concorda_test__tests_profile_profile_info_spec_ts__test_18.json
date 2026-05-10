@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/profile/profile-info.spec.ts::test@18",
+  "kind": "test",
+  "title": "can edit name fields",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/profile/profile-info.spec.ts",
+    "symbol": "test@18",
+    "line": 18
+  },
+  "signature": {
+    "name": "test@18",
+    "kind": "test"
+  },
+  "structural_hash": "c8e5faa9719175037c4019fa7ae4d0d41238c7e01bdc6318fc02f94bb16dddaa",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_profile_profile_info_spec_ts__test_18.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

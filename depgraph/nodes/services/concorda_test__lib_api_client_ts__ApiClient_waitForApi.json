@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::lib/api-client.ts::ApiClient.waitForApi",
+  "kind": "service",
+  "title": "ApiClient.waitForApi",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "lib/api-client.ts",
+    "symbol": "ApiClient.waitForApi",
+    "line": 73
+  },
+  "signature": {
+    "name": "ApiClient.waitForApi",
+    "kind": "service"
+  },
+  "structural_hash": "9fdc0d9e9ec919c7573829563826b3d66f552d73bdc9b85745332c4221d9cd1d",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__lib_api_client_ts__ApiClient_waitForApi.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

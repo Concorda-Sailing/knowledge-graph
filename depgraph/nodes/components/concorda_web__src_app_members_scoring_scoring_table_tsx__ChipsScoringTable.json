@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/scoring/scoring-table.tsx::ChipsScoringTable",
+  "kind": "component",
+  "title": "ChipsScoringTable",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/scoring/scoring-table.tsx",
+    "symbol": "ChipsScoringTable",
+    "line": 16
+  },
+  "signature": {
+    "name": "ChipsScoringTable",
+    "kind": "component"
+  },
+  "structural_hash": "5148859f22104696738afeb6f6661bef16ddfd60d41c724dd6f194651a6d87ca",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/content/scoring-data.ts::CHIPS_RACER_COLUMNS.map",
+      "via": "hook_call",
+      "where": "scoring-table.tsx:42",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/content/scoring-data.ts::CHIPS_TABLE.map",
+      "via": "hook_call",
+      "where": "scoring-table.tsx:50",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/content/scoring-data.ts::CHIPS_NPLUS_1.map",
+      "via": "hook_call",
+      "where": "scoring-table.tsx:73",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/content/scoring-data.ts::CHIPS_NPLUS_2.map",
+      "via": "hook_call",
+      "where": "scoring-table.tsx:83",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/content/scoring-data.ts::CHIPS_STATUS_CODES.map",
+      "via": "hook_call",
+      "where": "scoring-table.tsx:108",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_scoring_scoring_table_tsx__ChipsScoringTable.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

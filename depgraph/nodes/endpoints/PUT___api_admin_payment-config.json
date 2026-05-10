@@ -1,0 +1,34 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/payment_config.py::PaymentConfig",
+      "via": "db_query",
+      "where": "routers/admin.py:901"
+    }
+  ],
+  "dossier": "dossiers/endpoints/PUT___api_admin_payment-config.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "PUT::/api/admin/payment-config",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "PUT",
+    "path": "/api/admin/payment-config",
+    "request_schema_ref": "PaymentConfigUpdate",
+    "response_schema_ref": "PaymentConfigResponse"
+  },
+  "source": {
+    "line": 892,
+    "path": "routers/admin.py",
+    "repo": "concorda-api",
+    "symbol": "update_payment_config"
+  },
+  "structural_hash": "611d23e045752fbdae685b1622be2acbf968f81891f28bfc17d670732975912e",
+  "tests": [],
+  "title": "PUT /api/admin/payment-config",
+  "warnings": []
+}

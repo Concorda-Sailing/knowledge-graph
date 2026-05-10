@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::adminEventsApi.getRegistrations",
+  "kind": "service",
+  "title": "adminEventsApi.getRegistrations",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "adminEventsApi.getRegistrations",
+    "line": 612
+  },
+  "signature": {
+    "name": "adminEventsApi.getRegistrations",
+    "kind": "service"
+  },
+  "structural_hash": "673262a138bd49b660c54b9977f2788df761ac83401355ceaa74e00a3c7db73a",
+  "depends_on": [
+    {
+      "target": "GET::/api/events/{0}/registrations",
+      "via": "string_url",
+      "where": "api.ts:613",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__adminEventsApi_getRegistrations.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

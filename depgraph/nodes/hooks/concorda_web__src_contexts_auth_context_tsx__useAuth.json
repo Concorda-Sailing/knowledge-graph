@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/contexts/auth-context.tsx::useAuth",
+  "kind": "hook",
+  "title": "useAuth",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/contexts/auth-context.tsx",
+    "symbol": "useAuth",
+    "line": 237
+  },
+  "signature": {
+    "name": "useAuth",
+    "kind": "hook"
+  },
+  "structural_hash": "b3dfb2d0a7ed05282a89922baaefa25e2eba9f6dc5e739f1c2f02ddf2b36e5b5",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/hooks/concorda_web__src_contexts_auth_context_tsx__useAuth.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

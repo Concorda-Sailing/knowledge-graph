@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/auth/permission-gates.spec.ts::test@28",
+  "kind": "test",
+  "title": "unauthenticated visit to a deep member route redirects to /login",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/auth/permission-gates.spec.ts",
+    "symbol": "test@28",
+    "line": 28
+  },
+  "signature": {
+    "name": "test@28",
+    "kind": "test"
+  },
+  "structural_hash": "8ddb02e96bf9501372dcf43f372cfe211c4abe8a360f5cdce6430f9af925baa8",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_auth_permission_gates_spec_ts__test_28.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

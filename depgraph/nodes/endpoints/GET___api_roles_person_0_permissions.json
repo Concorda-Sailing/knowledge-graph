@@ -1,0 +1,40 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/person.py::Person",
+      "via": "db_query",
+      "where": "routers/roles.py:176"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/role.py::UserRole",
+      "via": "db_query",
+      "where": "routers/roles.py:180"
+    }
+  ],
+  "dossier": "dossiers/endpoints/GET___api_roles_person_0_permissions.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/roles/person/{0}/permissions",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "GET",
+    "path": "/api/roles/person/{person_id}/permissions",
+    "request_schema_ref": null,
+    "response_schema_ref": "UserPermissionsResponse"
+  },
+  "source": {
+    "line": 170,
+    "path": "routers/roles.py",
+    "repo": "concorda-api",
+    "symbol": "get_user_permissions"
+  },
+  "structural_hash": "7ec91b57a79241b68677db09e9db7f181dd3166af6f25d8307ec8378ca923613",
+  "tests": [],
+  "title": "GET /api/roles/person/{person_id}/permissions",
+  "warnings": []
+}

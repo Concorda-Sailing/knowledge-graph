@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::profileApi.updateBoat",
+  "kind": "service",
+  "title": "profileApi.updateBoat",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "profileApi.updateBoat",
+    "line": 1317
+  },
+  "signature": {
+    "name": "profileApi.updateBoat",
+    "kind": "service"
+  },
+  "structural_hash": "212f0ad034d74a1db4b3c80344ded92674fff9ff5e031001ec97d4b344a7a046",
+  "depends_on": [
+    {
+      "target": "PUT::/api/profile/boats/{0}",
+      "via": "string_url",
+      "where": "api.ts:1318",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__profileApi_updateBoat.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

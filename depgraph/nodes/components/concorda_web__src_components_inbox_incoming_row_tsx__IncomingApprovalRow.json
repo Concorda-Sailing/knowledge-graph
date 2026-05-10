@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/inbox/incoming-row.tsx::IncomingApprovalRow",
+  "kind": "component",
+  "title": "IncomingApprovalRow",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/inbox/incoming-row.tsx",
+    "symbol": "IncomingApprovalRow",
+    "line": 26
+  },
+  "signature": {
+    "name": "IncomingApprovalRow",
+    "kind": "component"
+  },
+  "structural_hash": "b67e334262236fee8eb520e6d442628d338df58b0b03008502b216b046bf62ac",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/hooks/use-constants.ts::useConstants",
+      "via": "hook_call",
+      "where": "incoming-row.tsx:35",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::approvalsApi.vote",
+      "via": "hook_call",
+      "where": "incoming-row.tsx:48",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::approvalsApi.vote",
+      "via": "hook_call",
+      "where": "incoming-row.tsx:60",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
+      "via": "hook_call",
+      "where": "incoming-row.tsx:80",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_inbox_incoming_row_tsx__IncomingApprovalRow.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::adminProductsApi.list",
+  "kind": "service",
+  "title": "adminProductsApi.list",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "adminProductsApi.list",
+    "line": 2448
+  },
+  "signature": {
+    "name": "adminProductsApi.list",
+    "kind": "service"
+  },
+  "structural_hash": "d9548702ee02ad6b3065143f52487d34fb8efd8e58f9df63d821b1fe9f93ec04",
+  "depends_on": [
+    {
+      "target": "GET::/api/products{0}",
+      "via": "string_url",
+      "where": "api.ts:2453",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__adminProductsApi_list.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

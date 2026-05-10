@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/finders/crewfinder.spec.ts::test@14",
+  "kind": "test",
+  "title": "non-boat-owner sees crew finder (no gate)",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/finders/crewfinder.spec.ts",
+    "symbol": "test@14",
+    "line": 14
+  },
+  "signature": {
+    "name": "test@14",
+    "kind": "test"
+  },
+  "structural_hash": "aa48d388540146fdf0cfbdb872949f413e8c3af0c90ee56981dc9cbaab3a10b5",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_finders_crewfinder_spec_ts__test_14.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

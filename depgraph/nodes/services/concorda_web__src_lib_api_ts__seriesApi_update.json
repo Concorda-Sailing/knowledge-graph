@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::seriesApi.update",
+  "kind": "service",
+  "title": "seriesApi.update",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "seriesApi.update",
+    "line": 1533
+  },
+  "signature": {
+    "name": "seriesApi.update",
+    "kind": "service"
+  },
+  "structural_hash": "5d3928c5162716f0275c1ba9fe07b83498178337fb4447765ab57bbddbb6a1ba",
+  "depends_on": [
+    {
+      "target": "PUT::/api/series/{0}",
+      "via": "string_url",
+      "where": "api.ts:1534",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__seriesApi_update.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

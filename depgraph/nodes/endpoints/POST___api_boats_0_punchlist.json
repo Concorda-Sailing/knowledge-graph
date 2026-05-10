@@ -1,0 +1,52 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::schemas/boat.py::PunchlistItemCreate",
+      "via": "import",
+      "where": "routers/boats.py:956"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/boat_punchlist.py::BoatPunchlistItem",
+      "via": "db_query",
+      "where": "routers/boats.py:964"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::utils/websocket_manager.py::broadcast_event",
+      "via": "websocket",
+      "where": "routers/boats.py:975"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::schemas/boat.py::PunchlistItemRead",
+      "via": "import",
+      "where": "routers/boats.py:953"
+    }
+  ],
+  "dossier": "dossiers/endpoints/POST___api_boats_0_punchlist.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "POST::/api/boats/{0}/punchlist",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "POST",
+    "path": "/api/boats/{boat_id}/punchlist",
+    "request_schema_ref": "PunchlistItemCreate",
+    "response_schema_ref": "PunchlistItemRead"
+  },
+  "source": {
+    "line": 954,
+    "path": "routers/boats.py",
+    "repo": "concorda-api",
+    "symbol": "create_punchlist_item"
+  },
+  "structural_hash": "620e647e986a36b474a55324679fa2b6c358f820ccfca18c19d7ae8149b0ee16",
+  "tests": [],
+  "title": "POST /api/boats/{boat_id}/punchlist",
+  "warnings": []
+}

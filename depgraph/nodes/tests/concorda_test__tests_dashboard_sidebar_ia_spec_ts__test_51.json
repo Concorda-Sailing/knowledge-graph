@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/dashboard/sidebar-ia.spec.ts::test@51",
+  "kind": "test",
+  "title": "/members/boatfinder redirects to /members/finder?tab=boats",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/dashboard/sidebar-ia.spec.ts",
+    "symbol": "test@51",
+    "line": 51
+  },
+  "signature": {
+    "name": "test@51",
+    "kind": "test"
+  },
+  "structural_hash": "7bfd8468a3a7b29cccff297f44792a7f9181723781520002add354a43b180b6a",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_dashboard_sidebar_ia_spec_ts__test_51.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

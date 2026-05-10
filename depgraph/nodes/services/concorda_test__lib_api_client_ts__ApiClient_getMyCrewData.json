@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::lib/api-client.ts::ApiClient.getMyCrewData",
+  "kind": "service",
+  "title": "ApiClient.getMyCrewData",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "lib/api-client.ts",
+    "symbol": "ApiClient.getMyCrewData",
+    "line": 167
+  },
+  "signature": {
+    "name": "ApiClient.getMyCrewData",
+    "kind": "service"
+  },
+  "structural_hash": "e92a6828dacb913172aaf2504e2a4123ce78bfbf0a76139e1de4c2529dc6294e",
+  "depends_on": [
+    {
+      "target": "GET::/api/profile/crew",
+      "via": "http_call",
+      "where": "api-client.ts:171",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__lib_api_client_ts__ApiClient_getMyCrewData.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

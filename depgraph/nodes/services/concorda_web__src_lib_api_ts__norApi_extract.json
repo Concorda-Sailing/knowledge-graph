@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::norApi.extract",
+  "kind": "service",
+  "title": "norApi.extract",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "norApi.extract",
+    "line": 3212
+  },
+  "signature": {
+    "name": "norApi.extract",
+    "kind": "service"
+  },
+  "structural_hash": "33f6d4654db79d12e434986bf06d1601830c095cd1ed18aa5be2031c48eb3b28",
+  "depends_on": [
+    {
+      "target": "POST::/api/nor/extract/{0}",
+      "via": "string_url",
+      "where": "api.ts:3213",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__norApi_extract.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

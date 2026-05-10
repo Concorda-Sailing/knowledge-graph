@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/admin/products/[category]/page.tsx::formatPrice",
+  "kind": "service",
+  "title": "formatPrice",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/admin/products/[category]/page.tsx",
+    "symbol": "formatPrice",
+    "line": 51
+  },
+  "signature": {
+    "name": "formatPrice",
+    "kind": "service"
+  },
+  "structural_hash": "d834e6647ccccc752c6dfbc43a64cbcda22d4ca48ec29eb0de14470f1c243c5c",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_app_members_admin_products__category__page_tsx__formatPrice.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

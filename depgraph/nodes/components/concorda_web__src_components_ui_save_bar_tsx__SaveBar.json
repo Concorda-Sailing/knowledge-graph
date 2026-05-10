@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/ui/save-bar.tsx::SaveBar",
+  "kind": "component",
+  "title": "SaveBar",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/ui/save-bar.tsx",
+    "symbol": "SaveBar",
+    "line": 17
+  },
+  "signature": {
+    "name": "SaveBar",
+    "kind": "component"
+  },
+  "structural_hash": "b5d69b4d0623acd5f277aff9c0b3b11267906b6f9b9d3bd490230d7a585e0d27",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/components/ui/sidebar.tsx::useSidebar",
+      "via": "hook_call",
+      "where": "save-bar.tsx:26",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_ui_save_bar_tsx__SaveBar.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

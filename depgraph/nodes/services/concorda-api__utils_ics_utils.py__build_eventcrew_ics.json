@@ -1,0 +1,27 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/services/concorda-api__utils_ics_utils.py__build_eventcrew_ics.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::utils/ics_utils.py::build_eventcrew_ics",
+  "kind": "service",
+  "schema_version": 1,
+  "signature": {
+    "args": [
+      "ctx"
+    ],
+    "kind": "service",
+    "name": "build_eventcrew_ics"
+  },
+  "source": {
+    "line": 358,
+    "path": "utils/ics_utils.py",
+    "repo": "concorda-api",
+    "symbol": "build_eventcrew_ics"
+  },
+  "structural_hash": "ceeeb30a19d99d8d25a0512769ced8fa30b10c4912f3f43dfed2aaa05fa441ab",
+  "tests": [],
+  "title": "build_eventcrew_ics",
+  "warnings": []
+}

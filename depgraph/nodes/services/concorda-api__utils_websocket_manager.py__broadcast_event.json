@@ -1,0 +1,28 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/services/concorda-api__utils_websocket_manager.py__broadcast_event.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::utils/websocket_manager.py::broadcast_event",
+  "kind": "service",
+  "schema_version": 1,
+  "signature": {
+    "args": [
+      "event_type",
+      "entity_id"
+    ],
+    "kind": "service",
+    "name": "broadcast_event"
+  },
+  "source": {
+    "line": 52,
+    "path": "utils/websocket_manager.py",
+    "repo": "concorda-api",
+    "symbol": "broadcast_event"
+  },
+  "structural_hash": "8e4ed183802c905413b75f5f1a7ef2870f8d2d5b417a6188a7201b8f11526324",
+  "tests": [],
+  "title": "broadcast_event",
+  "warnings": []
+}

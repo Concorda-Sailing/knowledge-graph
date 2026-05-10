@@ -1,0 +1,36 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_regatta.py__RosterBoat.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/regatta.py::RosterBoat",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "accept_crew_requests",
+      "accepted_count",
+      "boat_id",
+      "boat_name",
+      "event_id",
+      "owner_name",
+      "picture_url",
+      "positions_open",
+      "sail_number",
+      "slots"
+    ],
+    "kind": "schema",
+    "name": "RosterBoat"
+  },
+  "source": {
+    "line": 94,
+    "path": "schemas/regatta.py",
+    "repo": "concorda-api",
+    "symbol": "RosterBoat"
+  },
+  "structural_hash": "62fb829117d2548ab87128fe0414cbeb8a6f2fe47ffbe28f539bd06dd387faee",
+  "tests": [],
+  "title": "RosterBoat",
+  "warnings": []
+}

@@ -1,0 +1,193 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/dashboard/schedule-tab.tsx::ScheduleTab",
+  "kind": "component",
+  "title": "ScheduleTab",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/dashboard/schedule-tab.tsx",
+    "symbol": "ScheduleTab",
+    "line": 353
+  },
+  "signature": {
+    "name": "ScheduleTab",
+    "kind": "component"
+  },
+  "structural_hash": "cc194387aecb39bf32f352218aeb1fa9ae7d9fece7cc7bde147e73d23ac1b7de",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/hooks/use-boats.ts::useBoats",
+      "via": "hook_call",
+      "where": "schedule-tab.tsx:354",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/contexts/auth-context.tsx::useAuth",
+      "via": "hook_call",
+      "where": "schedule-tab.tsx:355",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/hooks/use-toast.ts::useToast",
+      "via": "hook_call",
+      "where": "schedule-tab.tsx:356",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/hooks/use-constants.ts::useConstants",
+      "via": "hook_call",
+      "where": "schedule-tab.tsx:375",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::ymdInOrgTz",
+      "via": "hook_call",
+      "where": "schedule-tab.tsx:387",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/hooks/use-mobile.tsx::useIsMobile",
+      "via": "hook_call",
+      "where": "schedule-tab.tsx:428",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.mySchedule",
+      "via": "hook_call",
+      "where": "schedule-tab.tsx:447",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.getMyCrew",
+      "via": "hook_call",
+      "where": "schedule-tab.tsx:458",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.get",
+      "via": "hook_call",
+      "where": "schedule-tab.tsx:482",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.update",
+      "via": "hook_call",
+      "where": "schedule-tab.tsx:498",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/hooks/use-ws-freshness.ts::useWsFreshness",
+      "via": "hook_call",
+      "where": "schedule-tab.tsx:512",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.removeScheduleEvent",
+      "via": "hook_call",
+      "where": "schedule-tab.tsx:531",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.removeScheduleSeries",
+      "via": "hook_call",
+      "where": "schedule-tab.tsx:546",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::boatApi.respondToInvite",
+      "via": "hook_call",
+      "where": "schedule-tab.tsx:563",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.respondToEventCrew",
+      "via": "hook_call",
+      "where": "schedule-tab.tsx:584",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.getEventCrew",
+      "via": "hook_call",
+      "where": "schedule-tab.tsx:615",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::ymdInOrgTz",
+      "via": "hook_call",
+      "where": "schedule-tab.tsx:679",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::ymdInOrgTz",
+      "via": "hook_call",
+      "where": "schedule-tab.tsx:693",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
+      "via": "hook_call",
+      "where": "schedule-tab.tsx:702",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
+      "via": "hook_call",
+      "where": "schedule-tab.tsx:703",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::ymdInOrgTz",
+      "via": "hook_call",
+      "where": "schedule-tab.tsx:735",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::ymdInOrgTz",
+      "via": "hook_call",
+      "where": "schedule-tab.tsx:737",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::ymdInOrgTz",
+      "via": "hook_call",
+      "where": "schedule-tab.tsx:743",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/utils.ts::cn",
+      "via": "hook_call",
+      "where": "schedule-tab.tsx:822",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/utils.ts::cn",
+      "via": "hook_call",
+      "where": "schedule-tab.tsx:828",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/utils.ts::cn",
+      "via": "hook_call",
+      "where": "schedule-tab.tsx:844",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/utils.ts::cn",
+      "via": "hook_call",
+      "where": "schedule-tab.tsx:887",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/utils.ts::cn",
+      "via": "hook_call",
+      "where": "schedule-tab.tsx:1176",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_dashboard_schedule_tab_tsx__ScheduleTab.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

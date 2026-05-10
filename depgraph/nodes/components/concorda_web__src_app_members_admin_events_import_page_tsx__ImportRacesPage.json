@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/admin/events/import/page.tsx::ImportRacesPage",
+  "kind": "component",
+  "title": "ImportRacesPage",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/admin/events/import/page.tsx",
+    "symbol": "ImportRacesPage",
+    "line": 36
+  },
+  "signature": {
+    "name": "ImportRacesPage",
+    "kind": "component"
+  },
+  "structural_hash": "05a022324f53119d169e6b1a586abc9b8579817389855a9d0c5ad79320c0642b",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_admin_events_import_page_tsx__ImportRacesPage.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

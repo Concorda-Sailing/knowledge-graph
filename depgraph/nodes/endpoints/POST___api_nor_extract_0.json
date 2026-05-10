@@ -1,0 +1,52 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::services/nor_extract.py::NORExtractError",
+      "via": "import",
+      "where": "routers/nor.py:98"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::services/nor_extract.py::load_extract_prereqs",
+      "via": "import",
+      "where": "routers/nor.py:97"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::services/nor_extract.py::extract_nor_from_bytes_pure",
+      "via": "import",
+      "where": "routers/nor.py:106"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/media.py::MediaFile",
+      "via": "db_query",
+      "where": "routers/nor.py:67"
+    }
+  ],
+  "dossier": "dossiers/endpoints/POST___api_nor_extract_0.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "POST::/api/nor/extract/{0}",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "POST",
+    "path": "/api/nor/extract/{file_id}",
+    "request_schema_ref": null,
+    "response_schema_ref": "NORExtractResponse"
+  },
+  "source": {
+    "line": 58,
+    "path": "routers/nor.py",
+    "repo": "concorda-api",
+    "symbol": "extract_nor"
+  },
+  "structural_hash": "bf1fcb9c53b4286d9983d103018b9fa8ab4c7057991a97db99be81327ede46b6",
+  "tests": [],
+  "title": "POST /api/nor/extract/{file_id}",
+  "warnings": []
+}

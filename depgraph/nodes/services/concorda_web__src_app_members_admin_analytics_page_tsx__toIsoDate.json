@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/admin/analytics/page.tsx::toIsoDate",
+  "kind": "service",
+  "title": "toIsoDate",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/admin/analytics/page.tsx",
+    "symbol": "toIsoDate",
+    "line": 37
+  },
+  "signature": {
+    "name": "toIsoDate",
+    "kind": "service"
+  },
+  "structural_hash": "8344dca869d834353814f9b3089d075af82a6736046b893b5adf2f28fc15c581",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_app_members_admin_analytics_page_tsx__toIsoDate.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

@@ -1,0 +1,25 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/models/concorda-api__models_boat_config.py__BoatConfig.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::models/boat_config.py::BoatConfig",
+  "kind": "model",
+  "schema_version": 1,
+  "signature": {
+    "kind": "model",
+    "name": "BoatConfig",
+    "tablename": "boat_configs"
+  },
+  "source": {
+    "line": 6,
+    "path": "models/boat_config.py",
+    "repo": "concorda-api",
+    "symbol": "BoatConfig"
+  },
+  "structural_hash": "4be81f2479bd7accb2e239c310bd7c5714e027ee9918032da1da68682b0aab08",
+  "tests": [],
+  "title": "BoatConfig",
+  "warnings": []
+}

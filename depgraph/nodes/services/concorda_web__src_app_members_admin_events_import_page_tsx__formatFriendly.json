@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/admin/events/import/page.tsx::formatFriendly",
+  "kind": "service",
+  "title": "formatFriendly",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/admin/events/import/page.tsx",
+    "symbol": "formatFriendly",
+    "line": 491
+  },
+  "signature": {
+    "name": "formatFriendly",
+    "kind": "service"
+  },
+  "structural_hash": "7126a739df991a251b55c51d9e5d0783eff3a0825e8708e2328b2f9d6b69031e",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_app_members_admin_events_import_page_tsx__formatFriendly.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/admin/system-settings.spec.ts::test@56",
+  "kind": "test",
+  "title": "payment config has mode selector",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/admin/system-settings.spec.ts",
+    "symbol": "test@56",
+    "line": 56
+  },
+  "signature": {
+    "name": "test@56",
+    "kind": "test"
+  },
+  "structural_hash": "81219251839f914ec8ada557edd2b431af42eb96e38f6c9bc5a943f347f1c7ac",
+  "depends_on": [
+    {
+      "target": "concorda-test::pages/admin/system.page.ts::AdminSystemPage.gotoPaymentConfig",
+      "via": "hook_call",
+      "where": "system-settings.spec.ts:58",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_admin_system_settings_spec_ts__test_56.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/boats/coowner-shared-events.spec.ts::test@113",
+  "kind": "test",
+  "title": "custom event Bob creates on Test Breeze appears on Dan's schedule",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/boats/coowner-shared-events.spec.ts",
+    "symbol": "test@113",
+    "line": 113
+  },
+  "signature": {
+    "name": "test@113",
+    "kind": "test"
+  },
+  "structural_hash": "416d256481d18cceb44b8f306e8945b31800cc24092ccf02a6ecd3966679ef61",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_boats_coowner_shared_events_spec_ts__test_113.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/hooks/use-inbox-crew-requests.ts::fetchNow",
+  "kind": "service",
+  "title": "fetchNow",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/hooks/use-inbox-crew-requests.ts",
+    "symbol": "fetchNow",
+    "line": 19
+  },
+  "signature": {
+    "name": "fetchNow",
+    "kind": "service"
+  },
+  "structural_hash": "ce01c1b46bdba4492b0a0ede1b15abdee23f9ab1fa79133d5179a89d3e3d542f",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.listInboxCrewRequests",
+      "via": "hook_call",
+      "where": "use-inbox-crew-requests.ts:26",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_hooks_use_inbox_crew_requests_ts__fetchNow.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::pages/notifications.page.ts::NotificationsPage.itemFor",
+  "kind": "service",
+  "title": "NotificationsPage.itemFor",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "pages/notifications.page.ts",
+    "symbol": "NotificationsPage.itemFor",
+    "line": 91
+  },
+  "signature": {
+    "name": "NotificationsPage.itemFor",
+    "kind": "service"
+  },
+  "structural_hash": "ed46bb982de20de1f57f11a2f6556bf96020da62cad328f65971371307d55407",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__pages_notifications_page_ts__NotificationsPage_itemFor.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

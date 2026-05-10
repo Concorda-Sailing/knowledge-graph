@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::lib/api-client.ts::ApiClient.updateProfile",
+  "kind": "service",
+  "title": "ApiClient.updateProfile",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "lib/api-client.ts",
+    "symbol": "ApiClient.updateProfile",
+    "line": 196
+  },
+  "signature": {
+    "name": "ApiClient.updateProfile",
+    "kind": "service"
+  },
+  "structural_hash": "388766abd0344d1c8a531e16e13202a286299bd7c43c93ca5dc567a365c53af3",
+  "depends_on": [
+    {
+      "target": "PUT::/api/profile",
+      "via": "http_call",
+      "where": "api-client.ts:197",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__lib_api_client_ts__ApiClient_updateProfile.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

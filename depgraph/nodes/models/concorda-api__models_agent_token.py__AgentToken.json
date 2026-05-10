@@ -1,0 +1,25 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/models/concorda-api__models_agent_token.py__AgentToken.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::models/agent_token.py::AgentToken",
+  "kind": "model",
+  "schema_version": 1,
+  "signature": {
+    "kind": "model",
+    "name": "AgentToken",
+    "tablename": "agent_tokens"
+  },
+  "source": {
+    "line": 8,
+    "path": "models/agent_token.py",
+    "repo": "concorda-api",
+    "symbol": "AgentToken"
+  },
+  "structural_hash": "20078574cd0eee9d56132c70fddad8b59d7c5da057777960d63847864a0cfddd",
+  "tests": [],
+  "title": "AgentToken",
+  "warnings": []
+}

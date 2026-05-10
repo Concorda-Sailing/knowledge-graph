@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::approvalsApi.cancel",
+  "kind": "service",
+  "title": "approvalsApi.cancel",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "approvalsApi.cancel",
+    "line": 3302
+  },
+  "signature": {
+    "name": "approvalsApi.cancel",
+    "kind": "service"
+  },
+  "structural_hash": "3bc2b3965a0e2ff0f04e1557cbb59ceb32a4f032d1c7d3df18dbe3eb66397918",
+  "depends_on": [
+    {
+      "target": "POST::/api/approval-requests/{0}/cancel",
+      "via": "string_url",
+      "where": "api.ts:3303",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__approvalsApi_cancel.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

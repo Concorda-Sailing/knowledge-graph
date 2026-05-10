@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/profile/sections/racing-preferences-section.tsx::RacingPreferencesSection",
+  "kind": "component",
+  "title": "RacingPreferencesSection",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/profile/sections/racing-preferences-section.tsx",
+    "symbol": "RacingPreferencesSection",
+    "line": 15
+  },
+  "signature": {
+    "name": "RacingPreferencesSection",
+    "kind": "component"
+  },
+  "structural_hash": "c22a75f33c5e151e975d8a5e7a777df14bd437721b2845e889f9c5d8c446cbb7",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/components/profile/sections/use-inline-edit.tsx::useInlineEdit",
+      "via": "hook_call",
+      "where": "racing-preferences-section.tsx:23",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::organizationsApi.list",
+      "via": "hook_call",
+      "where": "racing-preferences-section.tsx:27",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_profile_sections_racing_preferences_section_tsx__RacingPreferencesSection.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

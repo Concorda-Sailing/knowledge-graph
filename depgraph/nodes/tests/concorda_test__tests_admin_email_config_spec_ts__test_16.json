@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/admin/email-config.spec.ts::test@16",
+  "kind": "test",
+  "title": "email settings section is accessible",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/admin/email-config.spec.ts",
+    "symbol": "test@16",
+    "line": 16
+  },
+  "signature": {
+    "name": "test@16",
+    "kind": "test"
+  },
+  "structural_hash": "45f38d0390f592fd96c7f8b5b30e995720e78b85bbec57c7e9de99115340399e",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_admin_email_config_spec_ts__test_16.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

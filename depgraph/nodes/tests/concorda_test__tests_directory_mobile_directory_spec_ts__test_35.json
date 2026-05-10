@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/directory/mobile-directory.spec.ts::test@35",
+  "kind": "test",
+  "title": "mobile card grid renders real member cards (not empty state)",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/directory/mobile-directory.spec.ts",
+    "symbol": "test@35",
+    "line": 35
+  },
+  "signature": {
+    "name": "test@35",
+    "kind": "test"
+  },
+  "structural_hash": "c8e91527aa9a36c2927629cf119a2837c7aa4fd60b0634e4175e1d6518dd64e1",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_directory_mobile_directory_spec_ts__test_35.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

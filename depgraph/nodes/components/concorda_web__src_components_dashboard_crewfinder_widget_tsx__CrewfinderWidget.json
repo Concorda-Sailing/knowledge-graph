@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/dashboard/crewfinder-widget.tsx::CrewfinderWidget",
+  "kind": "component",
+  "title": "CrewfinderWidget",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/dashboard/crewfinder-widget.tsx",
+    "symbol": "CrewfinderWidget",
+    "line": 10
+  },
+  "signature": {
+    "name": "CrewfinderWidget",
+    "kind": "component"
+  },
+  "structural_hash": "95123e019c3c3a6b5861653953e1746522b42279ba9016a84739b6a4a3cb4d33",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.getBoats",
+      "via": "hook_call",
+      "where": "crewfinder-widget.tsx:14",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_dashboard_crewfinder_widget_tsx__CrewfinderWidget.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

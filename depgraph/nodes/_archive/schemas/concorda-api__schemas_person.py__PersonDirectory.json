@@ -1,0 +1,38 @@
+{
+  "_archived_at": "2026-05-09T11:23:39.010145Z",
+  "_archived_reason": "domain_orphan_symbol_removed",
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_person.py__PersonDirectory.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/person.py::PersonDirectory",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "banner_url",
+      "email",
+      "first_name",
+      "has_boat_management",
+      "id",
+      "last_name",
+      "membership_name",
+      "organization_ids",
+      "phone_number",
+      "picture_url"
+    ],
+    "kind": "schema",
+    "name": "PersonDirectory"
+  },
+  "source": {
+    "line": 126,
+    "path": "schemas/person.py",
+    "repo": "concorda-api",
+    "symbol": "PersonDirectory"
+  },
+  "structural_hash": "4e5dfaf7acc1601c0066dc2c2f7b7e834be9e058ec506109b842cb91beee0682",
+  "tests": [],
+  "title": "PersonDirectory",
+  "warnings": []
+}

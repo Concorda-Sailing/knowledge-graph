@@ -1,0 +1,46 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::schemas/sailing_resume.py::SailingResumeCreate",
+      "via": "import",
+      "where": "routers/crewfinder.py:433"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/sailing_resume.py::SailingResume",
+      "via": "db_query",
+      "where": "routers/crewfinder.py:442"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::schemas/sailing_resume.py::SailingResumeRead",
+      "via": "import",
+      "where": "routers/crewfinder.py:431"
+    }
+  ],
+  "dossier": "dossiers/endpoints/POST___api_crewfinder.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "POST::/api/crewfinder",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "POST",
+    "path": "/api/crewfinder",
+    "request_schema_ref": "SailingResumeCreate",
+    "response_schema_ref": "SailingResumeRead"
+  },
+  "source": {
+    "line": 432,
+    "path": "routers/crewfinder.py",
+    "repo": "concorda-api",
+    "symbol": "create_sailing_resume"
+  },
+  "structural_hash": "b9b6f3673d01feae9c4342bdbc4450f3dbbdcc5035d140c055a37dd6f77f374a",
+  "tests": [],
+  "title": "POST /api/crewfinder",
+  "warnings": []
+}

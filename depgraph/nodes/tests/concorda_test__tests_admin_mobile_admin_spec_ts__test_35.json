@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/admin/mobile-admin.spec.ts::test@35",
+  "kind": "test",
+  "title": "no horizontal overflow on admin users page",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/admin/mobile-admin.spec.ts",
+    "symbol": "test@35",
+    "line": 35
+  },
+  "signature": {
+    "name": "test@35",
+    "kind": "test"
+  },
+  "structural_hash": "248716b8518a2b2a6bdaa55db656e453ef3de333f7aca14c9a5a955bf9b17ad8",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_admin_mobile_admin_spec_ts__test_35.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

@@ -1,0 +1,41 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_product.py__ProductRead.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/product.py::ProductRead",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "created",
+      "description",
+      "effective_date",
+      "end_date",
+      "event_id",
+      "id",
+      "is_active",
+      "modified",
+      "name",
+      "price",
+      "publish_date",
+      "quantity",
+      "slug",
+      "sort_order",
+      "type"
+    ],
+    "kind": "schema",
+    "name": "ProductRead"
+  },
+  "source": {
+    "line": 37,
+    "path": "schemas/product.py",
+    "repo": "concorda-api",
+    "symbol": "ProductRead"
+  },
+  "structural_hash": "82339f7de0689b282a4f78112e233699ad080a872f09413750e7ac9f6d4555bf",
+  "tests": [],
+  "title": "ProductRead",
+  "warnings": []
+}

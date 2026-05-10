@@ -1,0 +1,25 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/services/concorda-api__services_error_alerts.py__record_email_failure.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::services/error_alerts.py::record_email_failure",
+  "kind": "service",
+  "schema_version": 1,
+  "signature": {
+    "args": [],
+    "kind": "service",
+    "name": "record_email_failure"
+  },
+  "source": {
+    "line": 282,
+    "path": "services/error_alerts.py",
+    "repo": "concorda-api",
+    "symbol": "record_email_failure"
+  },
+  "structural_hash": "baad0840b7427e720e79bdd7db4c73e8678f777d8985706dabefe8fe9e2e60d5",
+  "tests": [],
+  "title": "record_email_failure",
+  "warnings": []
+}

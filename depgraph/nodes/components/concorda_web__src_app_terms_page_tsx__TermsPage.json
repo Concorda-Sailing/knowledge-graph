@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/terms/page.tsx::TermsPage",
+  "kind": "component",
+  "title": "TermsPage",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/terms/page.tsx",
+    "symbol": "TermsPage",
+    "line": 3
+  },
+  "signature": {
+    "name": "TermsPage",
+    "kind": "component"
+  },
+  "structural_hash": "0aad4133c81e077529fbc8cb3bb2dfb4f91cef67b414717f03a33c0484a29314",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_terms_page_tsx__TermsPage.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

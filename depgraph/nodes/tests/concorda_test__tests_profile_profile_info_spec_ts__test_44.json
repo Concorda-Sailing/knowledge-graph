@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/profile/profile-info.spec.ts::test@44",
+  "kind": "test",
+  "title": "can edit phone number",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/profile/profile-info.spec.ts",
+    "symbol": "test@44",
+    "line": 44
+  },
+  "signature": {
+    "name": "test@44",
+    "kind": "test"
+  },
+  "structural_hash": "b5ee1393d829992bd2e601a4abaea1ff51fa07276fbe24f7a8f1bcc8b7bbbee2",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_profile_profile_info_spec_ts__test_44.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

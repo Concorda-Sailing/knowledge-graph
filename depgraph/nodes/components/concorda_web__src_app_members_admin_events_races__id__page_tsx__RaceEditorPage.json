@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/admin/events/races/[id]/page.tsx::RaceEditorPage",
+  "kind": "component",
+  "title": "RaceEditorPage",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/admin/events/races/[id]/page.tsx",
+    "symbol": "RaceEditorPage",
+    "line": 31
+  },
+  "signature": {
+    "name": "RaceEditorPage",
+    "kind": "component"
+  },
+  "structural_hash": "7566351a28c78ab30a9187a537186cb565e500d27895cc35b086c6dcb4fb5ed4",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_admin_events_races__id__page_tsx__RaceEditorPage.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

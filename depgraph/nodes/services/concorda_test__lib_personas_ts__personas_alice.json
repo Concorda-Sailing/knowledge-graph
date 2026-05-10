@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::lib/personas.ts::personas.alice",
+  "kind": "service",
+  "title": "personas.alice",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "lib/personas.ts",
+    "symbol": "personas.alice",
+    "line": 33
+  },
+  "signature": {
+    "name": "personas.alice",
+    "kind": "service"
+  },
+  "structural_hash": "73ee8f07506b2aa7ea69a2feb77a3202c21af99d9394a8efb5c98c8a08e2de68",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__lib_personas_ts__personas_alice.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

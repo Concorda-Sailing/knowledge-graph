@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/agents/page.tsx::AgentsPage",
+  "kind": "component",
+  "title": "AgentsPage",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/agents/page.tsx",
+    "symbol": "AgentsPage",
+    "line": 61
+  },
+  "signature": {
+    "name": "AgentsPage",
+    "kind": "component"
+  },
+  "structural_hash": "b180582715408c570cfe6e0d95ce5227f4cea11e9f5fa1870692132d08fccda5",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/hooks/use-constants.ts::useConstants",
+      "via": "hook_call",
+      "where": "page.tsx:62",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::agentTokensApi.list",
+      "via": "hook_call",
+      "where": "page.tsx:75",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::agentTokensApi.create",
+      "via": "hook_call",
+      "where": "page.tsx:98",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::agentTokensApi.rotate",
+      "via": "hook_call",
+      "where": "page.tsx:113",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::agentTokensApi.revoke",
+      "via": "hook_call",
+      "where": "page.tsx:126",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
+      "via": "hook_call",
+      "where": "page.tsx:397",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_agents_page_tsx__AgentsPage.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

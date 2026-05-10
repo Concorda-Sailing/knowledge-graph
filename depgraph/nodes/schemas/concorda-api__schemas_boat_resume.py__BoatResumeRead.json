@@ -1,0 +1,41 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_boat_resume.py__BoatResumeRead.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/boat_resume.py::BoatResumeRead",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "about",
+      "accepting_crew",
+      "availability",
+      "boat_id",
+      "created",
+      "drinking",
+      "ethos",
+      "id",
+      "looking_for_junior_crew",
+      "modified",
+      "positions",
+      "published",
+      "race_areas",
+      "type",
+      "typical_crew_complement"
+    ],
+    "kind": "schema",
+    "name": "BoatResumeRead"
+  },
+  "source": {
+    "line": 35,
+    "path": "schemas/boat_resume.py",
+    "repo": "concorda-api",
+    "symbol": "BoatResumeRead"
+  },
+  "structural_hash": "a2819d0cce90021bc1836072aaef62d87f39bb8ce48141f1bf49888311dac861",
+  "tests": [],
+  "title": "BoatResumeRead",
+  "warnings": []
+}

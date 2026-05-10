@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/admin/users/page.tsx::formatJoinDate",
+  "kind": "service",
+  "title": "formatJoinDate",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/admin/users/page.tsx",
+    "symbol": "formatJoinDate",
+    "line": 34
+  },
+  "signature": {
+    "name": "formatJoinDate",
+    "kind": "service"
+  },
+  "structural_hash": "5738c95113b9d8e67aef666218c09885d8dc5acaf5ec3b9a4777b8b7d5a16453",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_app_members_admin_users_page_tsx__formatJoinDate.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

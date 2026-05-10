@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::paymentsApi.createIntent",
+  "kind": "service",
+  "title": "paymentsApi.createIntent",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "paymentsApi.createIntent",
+    "line": 2752
+  },
+  "signature": {
+    "name": "paymentsApi.createIntent",
+    "kind": "service"
+  },
+  "structural_hash": "b2ce8890b08ab69055fc21e82fe48b62b204c14b6b6bdd13de5d06d4eed16bfd",
+  "depends_on": [
+    {
+      "target": "POST::/api/payments/create-intent",
+      "via": "http_call",
+      "where": "api.ts:2753",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__paymentsApi_createIntent.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

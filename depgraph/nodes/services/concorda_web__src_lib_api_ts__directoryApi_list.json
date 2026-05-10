@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::directoryApi.list",
+  "kind": "service",
+  "title": "directoryApi.list",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "directoryApi.list",
+    "line": 734
+  },
+  "signature": {
+    "name": "directoryApi.list",
+    "kind": "service"
+  },
+  "structural_hash": "8ad799a9e22b0afd2da5f7fb8498a304e919a5b0fb57d754949d68963fc16456",
+  "depends_on": [
+    {
+      "target": "GET::/api/persons/directory",
+      "via": "http_call",
+      "where": "api.ts:734",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__directoryApi_list.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

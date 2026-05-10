@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/boat/boat-crew-view.tsx::BoatCrewView",
+  "kind": "component",
+  "title": "BoatCrewView",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/boat/boat-crew-view.tsx",
+    "symbol": "BoatCrewView",
+    "line": 29
+  },
+  "signature": {
+    "name": "BoatCrewView",
+    "kind": "component"
+  },
+  "structural_hash": "8cb5e9186b3e69e9d095879e57afb3041de2d5594955496023e2d51fffedea0e",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/api.ts::boatApi.getDetail",
+      "via": "hook_call",
+      "where": "boat-crew-view.tsx:36",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::boatApi.getResume",
+      "via": "hook_call",
+      "where": "boat-crew-view.tsx:37",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/hooks/use-ws-freshness.ts::useWsFreshness",
+      "via": "hook_call",
+      "where": "boat-crew-view.tsx:48",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_boat_boat_crew_view_tsx__BoatCrewView.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

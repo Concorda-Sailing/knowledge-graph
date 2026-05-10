@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::pages/login.page.ts::LoginPage.goto",
+  "kind": "service",
+  "title": "LoginPage.goto",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "pages/login.page.ts",
+    "symbol": "LoginPage.goto",
+    "line": 26
+  },
+  "signature": {
+    "name": "LoginPage.goto",
+    "kind": "service"
+  },
+  "structural_hash": "1b94eef6579b64a1b5cc0408b7142e471a18ecbc5690e9114ea422408c5b5cac",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__pages_login_page_ts__LoginPage_goto.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

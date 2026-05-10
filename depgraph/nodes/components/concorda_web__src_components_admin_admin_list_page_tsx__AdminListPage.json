@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/admin/admin-list-page.tsx::AdminListPage",
+  "kind": "component",
+  "title": "AdminListPage",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/admin/admin-list-page.tsx",
+    "symbol": "AdminListPage",
+    "line": 94
+  },
+  "signature": {
+    "name": "AdminListPage",
+    "kind": "component"
+  },
+  "structural_hash": "bba44fd171d05f840e9d4703194f1a6df88bc573e653ec969d002d204422234e",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_admin_admin_list_page_tsx__AdminListPage.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

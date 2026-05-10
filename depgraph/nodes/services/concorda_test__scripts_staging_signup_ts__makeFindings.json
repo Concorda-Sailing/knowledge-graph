@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::scripts/staging-signup.ts::makeFindings",
+  "kind": "service",
+  "title": "makeFindings",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "scripts/staging-signup.ts",
+    "symbol": "makeFindings",
+    "line": 29
+  },
+  "signature": {
+    "name": "makeFindings",
+    "kind": "service"
+  },
+  "structural_hash": "87f3a0280055553c74958436e6534aaee3fc3e92b72ac690ffbaabf32ce61aed",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__scripts_staging_signup_ts__makeFindings.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

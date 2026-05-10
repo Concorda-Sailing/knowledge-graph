@@ -1,0 +1,64 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/person.py::Person",
+      "via": "db_query",
+      "where": "routers/admin.py:254"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::routers/auth.py::hash_password",
+      "via": "import",
+      "where": "routers/admin.py:256"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/role.py::UserRole",
+      "via": "db_query",
+      "where": "routers/admin.py:284"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/person_product.py::PersonProduct",
+      "via": "db_query",
+      "where": "routers/admin.py:268"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/role.py::Role",
+      "via": "db_query",
+      "where": "routers/admin.py:290"
+    }
+  ],
+  "dossier": "dossiers/endpoints/POST___api_admin_users.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "POST::/api/admin/users",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "POST",
+    "path": "/api/admin/users",
+    "request_schema_ref": "UserCreate",
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 239,
+    "path": "routers/admin.py",
+    "repo": "concorda-api",
+    "symbol": "create_user"
+  },
+  "structural_hash": "728265442fa121228f4473ca9f0134cb445b2e1b7820a9c28293205b36f396e7",
+  "tests": [],
+  "title": "POST /api/admin/users",
+  "warnings": [
+    {
+      "code": "weakly_typed_response",
+      "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
+      "where": "routers/admin.py:239"
+    }
+  ]
+}

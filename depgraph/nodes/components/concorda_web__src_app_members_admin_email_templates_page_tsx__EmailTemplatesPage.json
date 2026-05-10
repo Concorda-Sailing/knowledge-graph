@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/admin/email/templates/page.tsx::EmailTemplatesPage",
+  "kind": "component",
+  "title": "EmailTemplatesPage",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/admin/email/templates/page.tsx",
+    "symbol": "EmailTemplatesPage",
+    "line": 50
+  },
+  "signature": {
+    "name": "EmailTemplatesPage",
+    "kind": "component"
+  },
+  "structural_hash": "f7e53a1425fdb9f2905347556e7341b70451877b8ec060621f48f6086befa55d",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/api.ts::adminEmailTemplatesApi.list",
+      "via": "hook_call",
+      "where": "page.tsx:66",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::adminEmailTemplatesApi.variables",
+      "via": "hook_call",
+      "where": "page.tsx:67",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::adminEmailTemplatesApi.update",
+      "via": "hook_call",
+      "where": "page.tsx:111",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::adminEmailTemplatesApi.create",
+      "via": "hook_call",
+      "where": "page.tsx:119",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::adminEmailTemplatesApi.delete",
+      "via": "hook_call",
+      "where": "page.tsx:138",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::adminEmailTemplatesApi.preview",
+      "via": "hook_call",
+      "where": "page.tsx:148",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_admin_email_templates_page_tsx__EmailTemplatesPage.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

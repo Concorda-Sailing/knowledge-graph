@@ -1,0 +1,43 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_profile.py__BoatUpdate.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/profile.py::BoatUpdate",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "boat_class",
+      "draft",
+      "fleet_assignment",
+      "hard_cap",
+      "length",
+      "location_city",
+      "location_club",
+      "location_state",
+      "manufacturer",
+      "meta",
+      "mooring_slip",
+      "name",
+      "needs_handicap_help",
+      "positions",
+      "registration_number",
+      "sail_number",
+      "soft_cap"
+    ],
+    "kind": "schema",
+    "name": "BoatUpdate"
+  },
+  "source": {
+    "line": 143,
+    "path": "schemas/profile.py",
+    "repo": "concorda-api",
+    "symbol": "BoatUpdate"
+  },
+  "structural_hash": "c58e1f2aa21b64fb93cd5d3bfa1f44b27122c9b6f11524f2e3da0926c043bf87",
+  "tests": [],
+  "title": "BoatUpdate",
+  "warnings": []
+}

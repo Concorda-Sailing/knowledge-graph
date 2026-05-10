@@ -1,0 +1,33 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_regatta.py__RosterCrew.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/regatta.py::RosterCrew",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "experience_level",
+      "first_name",
+      "last_name",
+      "person_id",
+      "picture_url",
+      "positions_preferred",
+      "years_sailing"
+    ],
+    "kind": "schema",
+    "name": "RosterCrew"
+  },
+  "source": {
+    "line": 110,
+    "path": "schemas/regatta.py",
+    "repo": "concorda-api",
+    "symbol": "RosterCrew"
+  },
+  "structural_hash": "439ec41cb69a2032b98fbfaf49cf2144c1ce7cf00ad5e5e51476b6ca6048ce9f",
+  "tests": [],
+  "title": "RosterCrew",
+  "warnings": []
+}

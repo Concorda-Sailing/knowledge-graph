@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::lib/api-client.ts::ApiClient.respondToEventCrewInvite",
+  "kind": "service",
+  "title": "ApiClient.respondToEventCrewInvite",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "lib/api-client.ts",
+    "symbol": "ApiClient.respondToEventCrewInvite",
+    "line": 507
+  },
+  "signature": {
+    "name": "ApiClient.respondToEventCrewInvite",
+    "kind": "service"
+  },
+  "structural_hash": "c512e63b54d42858ebae3eee2550da64372a2e776ff50428f235d57aa8c10c1f",
+  "depends_on": [
+    {
+      "target": "PUT::/api/events/{0}/sailing-event/crew-respond",
+      "via": "string_url",
+      "where": "api-client.ts:512",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__lib_api_client_ts__ApiClient_respondToEventCrewInvite.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

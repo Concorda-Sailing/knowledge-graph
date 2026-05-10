@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/dashboard/sidebar-ia.spec.ts::test@19",
+  "kind": "test",
+  "title": "Finder navigates to /members/finder with crew tab selected",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/dashboard/sidebar-ia.spec.ts",
+    "symbol": "test@19",
+    "line": 19
+  },
+  "signature": {
+    "name": "test@19",
+    "kind": "test"
+  },
+  "structural_hash": "eacbd812c87c3cf1b0b8406861dc07176106528bd24a77ddc2fd46b97b7f2d93",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_dashboard_sidebar_ia_spec_ts__test_19.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

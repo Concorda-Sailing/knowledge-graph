@@ -1,0 +1,307 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
+  "kind": "component",
+  "title": "ScheduleEventDetail",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/schedule/[id]/page.tsx",
+    "symbol": "ScheduleEventDetail",
+    "line": 74
+  },
+  "signature": {
+    "name": "ScheduleEventDetail",
+    "kind": "component"
+  },
+  "structural_hash": "bef5f6b19283c52139f707fbb0b69bb7cbb84229830b63b8f7bba5f8e5d65639",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/hooks/use-toast.ts::useToast",
+      "via": "hook_call",
+      "where": "page.tsx:81",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/hooks/use-boats.ts::useBoats",
+      "via": "hook_call",
+      "where": "page.tsx:82",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/contexts/auth-context.tsx::useAuth",
+      "via": "hook_call",
+      "where": "page.tsx:83",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/hooks/use-constants.ts::useConstants",
+      "via": "hook_call",
+      "where": "page.tsx:84",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
+      "via": "hook_call",
+      "where": "page.tsx:134",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.getDetail",
+      "via": "hook_call",
+      "where": "page.tsx:162",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::regattaApi.get",
+      "via": "hook_call",
+      "where": "page.tsx:181",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.getEventCrew",
+      "via": "hook_call",
+      "where": "page.tsx:188",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.getMyRegistration",
+      "via": "hook_call",
+      "where": "page.tsx:194",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::utcIsoToOrgDateInput",
+      "via": "hook_call",
+      "where": "page.tsx:204",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.upsertSailingEvent",
+      "via": "hook_call",
+      "where": "page.tsx:239",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.getDetail",
+      "via": "hook_call",
+      "where": "page.tsx:241",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.listBoatConfigs",
+      "via": "hook_call",
+      "where": "page.tsx:265",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::boatApi.getCrew",
+      "via": "hook_call",
+      "where": "page.tsx:266",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.getEventCrew",
+      "via": "hook_call",
+      "where": "page.tsx:273",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.getEventCrew",
+      "via": "hook_call",
+      "where": "page.tsx:321",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/hooks/use-ws-freshness.ts::useWsFreshness",
+      "via": "hook_call",
+      "where": "page.tsx:326",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.assignEventCrew",
+      "via": "hook_call",
+      "where": "page.tsx:356",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.assignEventCrew",
+      "via": "hook_call",
+      "where": "page.tsx:389",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.updateMyPosition",
+      "via": "hook_call",
+      "where": "page.tsx:402",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.upsertSailingEvent",
+      "via": "hook_call",
+      "where": "page.tsx:412",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.getDetail",
+      "via": "hook_call",
+      "where": "page.tsx:413",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.getEventCrew",
+      "via": "hook_call",
+      "where": "page.tsx:416",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::utcIsoToOrgDateInput",
+      "via": "hook_call",
+      "where": "page.tsx:428",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.update",
+      "via": "hook_call",
+      "where": "page.tsx:433",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::orgInputToUtcIso",
+      "via": "hook_call",
+      "where": "page.tsx:440",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::utcIsoToOrgDateInput",
+      "via": "hook_call",
+      "where": "page.tsx:470",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.removeScheduleEvent",
+      "via": "hook_call",
+      "where": "page.tsx:485",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
+      "via": "hook_call",
+      "where": "page.tsx:592",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.respondToEventCrew",
+      "via": "hook_call",
+      "where": "page.tsx:650",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.getEventCrew",
+      "via": "hook_call",
+      "where": "page.tsx:656",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.getDetail",
+      "via": "hook_call",
+      "where": "page.tsx:658",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.respondToEventCrew",
+      "via": "hook_call",
+      "where": "page.tsx:682",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.getEventCrew",
+      "via": "hook_call",
+      "where": "page.tsx:684",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.getDetail",
+      "via": "hook_call",
+      "where": "page.tsx:686",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.requestToCrew",
+      "via": "hook_call",
+      "where": "page.tsx:744",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.getDetail",
+      "via": "hook_call",
+      "where": "page.tsx:747",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.getEventCrew",
+      "via": "hook_call",
+      "where": "page.tsx:749",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
+      "via": "hook_call",
+      "where": "page.tsx:781",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
+      "via": "hook_call",
+      "where": "page.tsx:784",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
+      "via": "hook_call",
+      "where": "page.tsx:807",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
+      "via": "hook_call",
+      "where": "page.tsx:1007",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
+      "via": "hook_call",
+      "where": "page.tsx:1058",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
+      "via": "hook_call",
+      "where": "page.tsx:1065",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
+      "via": "hook_call",
+      "where": "page.tsx:1128",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
+      "via": "hook_call",
+      "where": "page.tsx:1233",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.respondToCrewRequest",
+      "via": "hook_call",
+      "where": "page.tsx:1451",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_schedule__id__page_tsx__ScheduleEventDetail.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

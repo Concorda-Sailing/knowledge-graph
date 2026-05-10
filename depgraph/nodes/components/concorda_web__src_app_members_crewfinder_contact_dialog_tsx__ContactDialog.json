@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/crewfinder/contact-dialog.tsx::ContactDialog",
+  "kind": "component",
+  "title": "ContactDialog",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/crewfinder/contact-dialog.tsx",
+    "symbol": "ContactDialog",
+    "line": 34
+  },
+  "signature": {
+    "name": "ContactDialog",
+    "kind": "component"
+  },
+  "structural_hash": "8114bb7e98502724eebcd2510f5adf7d146d71be0ebd60ced221a363297b1c9e",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/hooks/use-toast.ts::useToast",
+      "via": "hook_call",
+      "where": "contact-dialog.tsx:44",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::crewfinderApi.contact",
+      "via": "hook_call",
+      "where": "contact-dialog.tsx:58",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_crewfinder_contact_dialog_tsx__ContactDialog.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

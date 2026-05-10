@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::getAuthToken",
+  "kind": "service",
+  "title": "getAuthToken",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "getAuthToken",
+    "line": 75
+  },
+  "signature": {
+    "name": "getAuthToken",
+    "kind": "service"
+  },
+  "structural_hash": "f1a85c5697dfd27de47095bdbccdbdd2d205bb12b224bd4977db180be1856ebe",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__getAuthToken.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

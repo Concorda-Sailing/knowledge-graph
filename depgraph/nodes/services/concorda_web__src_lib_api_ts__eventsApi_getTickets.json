@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::eventsApi.getTickets",
+  "kind": "service",
+  "title": "eventsApi.getTickets",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "eventsApi.getTickets",
+    "line": 365
+  },
+  "signature": {
+    "name": "eventsApi.getTickets",
+    "kind": "service"
+  },
+  "structural_hash": "d305895ed0e679d1f15a3d9d3c60f4bda0a0d04ddd3177a78afdd1632107365b",
+  "depends_on": [
+    {
+      "target": "GET::/api/events/slug/{0}/tickets",
+      "via": "string_url",
+      "where": "api.ts:365",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__eventsApi_getTickets.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

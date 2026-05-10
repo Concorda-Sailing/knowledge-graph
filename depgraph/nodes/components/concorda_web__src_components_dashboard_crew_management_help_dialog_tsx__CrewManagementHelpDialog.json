@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/dashboard/crew-management-help-dialog.tsx::CrewManagementHelpDialog",
+  "kind": "component",
+  "title": "CrewManagementHelpDialog",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/dashboard/crew-management-help-dialog.tsx",
+    "symbol": "CrewManagementHelpDialog",
+    "line": 33
+  },
+  "signature": {
+    "name": "CrewManagementHelpDialog",
+    "kind": "component"
+  },
+  "structural_hash": "527cfb2e4d906137fedfffd05b255b06f47987f73700c4985612c30b74676007",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_dashboard_crew_management_help_dialog_tsx__CrewManagementHelpDialog.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

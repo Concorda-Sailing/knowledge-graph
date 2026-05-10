@@ -1,0 +1,64 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::routers/admin.py::get_email_config",
+      "via": "import",
+      "where": "routers/boatfinder.py:245"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::utils/email_utils.py::send_crewfinder_contact_email",
+      "via": "import",
+      "where": "routers/boatfinder.py:257"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/boat.py::Boat",
+      "via": "db_query",
+      "where": "routers/boatfinder.py:223"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/boat_resume.py::BoatResume",
+      "via": "db_query",
+      "where": "routers/boatfinder.py:227"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/sailing_resume.py::SailingResume",
+      "via": "db_query",
+      "where": "routers/boatfinder.py:250"
+    }
+  ],
+  "dossier": "dossiers/endpoints/POST___api_boatfinder_contact.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "POST::/api/boatfinder/contact",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "POST",
+    "path": "/api/boatfinder/contact",
+    "request_schema_ref": "BoatFinderContactRequest",
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 215,
+    "path": "routers/boatfinder.py",
+    "repo": "concorda-api",
+    "symbol": "contact_boat_owner"
+  },
+  "structural_hash": "ab9ad63d6ba6eaabd1cb793ebe260e7b959a61a5282b84b60c710a2e234af367",
+  "tests": [],
+  "title": "POST /api/boatfinder/contact",
+  "warnings": [
+    {
+      "code": "weakly_typed_response",
+      "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
+      "where": "routers/boatfinder.py:215"
+    }
+  ]
+}

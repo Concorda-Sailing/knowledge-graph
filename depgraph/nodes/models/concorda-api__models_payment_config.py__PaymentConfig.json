@@ -1,0 +1,25 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/models/concorda-api__models_payment_config.py__PaymentConfig.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::models/payment_config.py::PaymentConfig",
+  "kind": "model",
+  "schema_version": 1,
+  "signature": {
+    "kind": "model",
+    "name": "PaymentConfig",
+    "tablename": "payment_config"
+  },
+  "source": {
+    "line": 8,
+    "path": "models/payment_config.py",
+    "repo": "concorda-api",
+    "symbol": "PaymentConfig"
+  },
+  "structural_hash": "979ce7d72c9930ee29ad5dae50aec282aa9d122e99ffdc6d877c184e0901d04b",
+  "tests": [],
+  "title": "PaymentConfig",
+  "warnings": []
+}

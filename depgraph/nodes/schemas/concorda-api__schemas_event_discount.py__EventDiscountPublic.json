@@ -1,0 +1,32 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_event_discount.py__EventDiscountPublic.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/event_discount.py::EventDiscountPublic",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "amount",
+      "amount_type",
+      "discount_type",
+      "has_code",
+      "name",
+      "ticket_ids"
+    ],
+    "kind": "schema",
+    "name": "EventDiscountPublic"
+  },
+  "source": {
+    "line": 87,
+    "path": "schemas/event_discount.py",
+    "repo": "concorda-api",
+    "symbol": "EventDiscountPublic"
+  },
+  "structural_hash": "6a114210649026feca38b4388c762af8fec7e68ba1bdf5a38ab5601843c3b1d4",
+  "tests": [],
+  "title": "EventDiscountPublic",
+  "warnings": []
+}

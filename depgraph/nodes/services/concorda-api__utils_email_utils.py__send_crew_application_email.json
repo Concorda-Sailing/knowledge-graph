@@ -1,0 +1,40 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/services/concorda-api__utils_email_utils.py__send_crew_application_email.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::utils/email_utils.py::send_crew_application_email",
+  "kind": "service",
+  "schema_version": 1,
+  "signature": {
+    "args": [
+      "applicant_name",
+      "applicant_email",
+      "recipient_email",
+      "boat_name",
+      "message",
+      "db",
+      "applicant_phone",
+      "experience_level",
+      "positions",
+      "years_sailing",
+      "about_me",
+      "profile_url",
+      "shares_contact",
+      "reply_url"
+    ],
+    "kind": "service",
+    "name": "send_crew_application_email"
+  },
+  "source": {
+    "line": 354,
+    "path": "utils/email_utils.py",
+    "repo": "concorda-api",
+    "symbol": "send_crew_application_email"
+  },
+  "structural_hash": "87ca6e1cd4cadac296569ca9f1f9103f0aae879d1c8e8074049bd2970a1b4823",
+  "tests": [],
+  "title": "send_crew_application_email",
+  "warnings": []
+}

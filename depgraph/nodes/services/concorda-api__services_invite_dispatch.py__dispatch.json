@@ -1,0 +1,30 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/services/concorda-api__services_invite_dispatch.py__dispatch.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::services/invite_dispatch.py::dispatch",
+  "kind": "service",
+  "schema_version": 1,
+  "signature": {
+    "args": [
+      "db",
+      "invite_id",
+      "decision",
+      "user_id"
+    ],
+    "kind": "service",
+    "name": "dispatch"
+  },
+  "source": {
+    "line": 70,
+    "path": "services/invite_dispatch.py",
+    "repo": "concorda-api",
+    "symbol": "dispatch"
+  },
+  "structural_hash": "668e6a17624c91b1a3556b8b2601a3c0aeb1aa07b9e39c4fd37891c23f0df185",
+  "tests": [],
+  "title": "dispatch",
+  "warnings": []
+}

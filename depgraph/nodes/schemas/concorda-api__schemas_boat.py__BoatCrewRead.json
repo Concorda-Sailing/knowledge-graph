@@ -1,0 +1,42 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_boat.py__BoatCrewRead.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/boat.py::BoatCrewRead",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "boat_uuid",
+      "config_uuid",
+      "created",
+      "id",
+      "invited_by_uuid",
+      "modified",
+      "notes",
+      "person_email",
+      "person_first_name",
+      "person_last_name",
+      "person_picture_url",
+      "person_uuid",
+      "position",
+      "priority",
+      "role",
+      "status"
+    ],
+    "kind": "schema",
+    "name": "BoatCrewRead"
+  },
+  "source": {
+    "line": 32,
+    "path": "schemas/boat.py",
+    "repo": "concorda-api",
+    "symbol": "BoatCrewRead"
+  },
+  "structural_hash": "2f39f5602107a759029d9a2867de33230fafd8d3554e1d0de3ec574a99a203d9",
+  "tests": [],
+  "title": "BoatCrewRead",
+  "warnings": []
+}

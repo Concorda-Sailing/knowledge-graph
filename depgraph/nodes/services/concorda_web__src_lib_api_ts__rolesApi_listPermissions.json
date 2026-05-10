@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::rolesApi.listPermissions",
+  "kind": "service",
+  "title": "rolesApi.listPermissions",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "rolesApi.listPermissions",
+    "line": 1213
+  },
+  "signature": {
+    "name": "rolesApi.listPermissions",
+    "kind": "service"
+  },
+  "structural_hash": "ae599e65f2c194ef97d5eea0f4016c46ff7c771258da5d9a9ca67c3380a82fe0",
+  "depends_on": [
+    {
+      "target": "GET::/api/roles/permissions/all",
+      "via": "http_call",
+      "where": "api.ts:1214",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__rolesApi_listPermissions.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/dashboard/membership-card.tsx::MembershipCard",
+  "kind": "component",
+  "title": "MembershipCard",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/dashboard/membership-card.tsx",
+    "symbol": "MembershipCard",
+    "line": 14
+  },
+  "signature": {
+    "name": "MembershipCard",
+    "kind": "component"
+  },
+  "structural_hash": "63ccbc918b7a0b1c31ca7cd99da46b08220de11c908df3de53cbf33312c54c4e",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_dashboard_membership_card_tsx__MembershipCard.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

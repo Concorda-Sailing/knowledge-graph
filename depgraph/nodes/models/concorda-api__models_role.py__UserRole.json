@@ -1,0 +1,25 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/models/concorda-api__models_role.py__UserRole.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::models/role.py::UserRole",
+  "kind": "model",
+  "schema_version": 1,
+  "signature": {
+    "kind": "model",
+    "name": "UserRole",
+    "tablename": "user_roles"
+  },
+  "source": {
+    "line": 54,
+    "path": "models/role.py",
+    "repo": "concorda-api",
+    "symbol": "UserRole"
+  },
+  "structural_hash": "b50eeeab1b8339ffd17cc74be1515f7607f9efedd44f41933c3dda2f88f7b6c4",
+  "tests": [],
+  "title": "UserRole",
+  "warnings": []
+}

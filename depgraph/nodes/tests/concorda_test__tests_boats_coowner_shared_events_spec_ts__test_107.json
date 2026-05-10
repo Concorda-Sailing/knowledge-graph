@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/boats/coowner-shared-events.spec.ts::test@107",
+  "kind": "test",
+  "title": "Dan is confirmed as co-owner of Test Breeze",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/boats/coowner-shared-events.spec.ts",
+    "symbol": "test@107",
+    "line": 107
+  },
+  "signature": {
+    "name": "test@107",
+    "kind": "test"
+  },
+  "structural_hash": "ab4cda0bb3009eca0c32e891fec74aa40a77ac865b507e6c70bdae5889cee3e7",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_boats_coowner_shared_events_spec_ts__test_107.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

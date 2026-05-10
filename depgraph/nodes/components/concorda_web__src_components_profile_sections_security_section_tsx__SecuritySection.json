@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/profile/sections/security-section.tsx::SecuritySection",
+  "kind": "component",
+  "title": "SecuritySection",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/profile/sections/security-section.tsx",
+    "symbol": "SecuritySection",
+    "line": 9
+  },
+  "signature": {
+    "name": "SecuritySection",
+    "kind": "component"
+  },
+  "structural_hash": "82cd1bdb758e2b6ccb3f857f34692d097df8448da96b87d62905ef1f6da81791",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/components/profile/sections/use-inline-edit.tsx::useInlineEdit",
+      "via": "hook_call",
+      "where": "security-section.tsx:11",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_profile_sections_security_section_tsx__SecuritySection.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

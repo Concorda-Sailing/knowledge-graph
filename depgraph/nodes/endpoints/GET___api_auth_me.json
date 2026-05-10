@@ -1,0 +1,40 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/person.py::Person",
+      "via": "db_query",
+      "where": "routers/auth.py:1233"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/role.py::UserRole",
+      "via": "db_query",
+      "where": "routers/auth.py:1240"
+    }
+  ],
+  "dossier": "dossiers/endpoints/GET___api_auth_me.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/auth/me",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "GET",
+    "path": "/api/auth/me",
+    "request_schema_ref": null,
+    "response_schema_ref": "UserResponse"
+  },
+  "source": {
+    "line": 1210,
+    "path": "routers/auth.py",
+    "repo": "concorda-api",
+    "symbol": "get_me"
+  },
+  "structural_hash": "85fd3a990ec8ebe8f4b573b27e207810bea363ee439f377dd61286fb590c023b",
+  "tests": [],
+  "title": "GET /api/auth/me",
+  "warnings": []
+}

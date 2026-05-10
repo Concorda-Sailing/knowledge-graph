@@ -1,0 +1,46 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/person.py::Person",
+      "via": "db_query",
+      "where": "routers/admin.py:423"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/role.py::UserRole",
+      "via": "db_query",
+      "where": "routers/admin.py:429"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/person_product.py::PersonProduct",
+      "via": "db_query",
+      "where": "routers/admin.py:430"
+    }
+  ],
+  "dossier": "dossiers/endpoints/DELETE___api_admin_users_0.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "DELETE::/api/admin/users/{0}",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "DELETE",
+    "path": "/api/admin/users/{user_id}",
+    "request_schema_ref": null,
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 417,
+    "path": "routers/admin.py",
+    "repo": "concorda-api",
+    "symbol": "delete_user"
+  },
+  "structural_hash": "92ce181bc372a3ae98d416f955f61338df6d38071b54f18a99b994bfee0be5de",
+  "tests": [],
+  "title": "DELETE /api/admin/users/{user_id}",
+  "warnings": []
+}

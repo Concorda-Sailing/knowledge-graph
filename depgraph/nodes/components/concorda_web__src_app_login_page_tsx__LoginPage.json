@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/login/page.tsx::LoginPage",
+  "kind": "component",
+  "title": "LoginPage",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/login/page.tsx",
+    "symbol": "LoginPage",
+    "line": 50
+  },
+  "signature": {
+    "name": "LoginPage",
+    "kind": "component"
+  },
+  "structural_hash": "a063900bb29120aa7b0d31fd0c705844039a530e439fca33e3f17e08821201a3",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/contexts/auth-context.tsx::useAuth",
+      "via": "hook_call",
+      "where": "page.tsx:51",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/hooks/use-constants.ts::useConstants",
+      "via": "hook_call",
+      "where": "page.tsx:52",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_login_page_tsx__LoginPage.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

@@ -1,0 +1,28 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/services/concorda-api__services_organizing_authorities.py__get_series_oas.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::services/organizing_authorities.py::get_series_oas",
+  "kind": "service",
+  "schema_version": 1,
+  "signature": {
+    "args": [
+      "db",
+      "series_uuid"
+    ],
+    "kind": "service",
+    "name": "get_series_oas"
+  },
+  "source": {
+    "line": 110,
+    "path": "services/organizing_authorities.py",
+    "repo": "concorda-api",
+    "symbol": "get_series_oas"
+  },
+  "structural_hash": "93e16476d601e6410493f0a8b9f60359308513c2436ee729aef6d68dacb2c5e9",
+  "tests": [],
+  "title": "get_series_oas",
+  "warnings": []
+}

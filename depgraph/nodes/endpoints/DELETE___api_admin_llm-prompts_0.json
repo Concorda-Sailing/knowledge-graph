@@ -1,0 +1,34 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/llm_prompt.py::LLMPrompt",
+      "via": "db_query",
+      "where": "routers/admin.py:1300"
+    }
+  ],
+  "dossier": "dossiers/endpoints/DELETE___api_admin_llm-prompts_0.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "DELETE::/api/admin/llm-prompts/{0}",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "DELETE",
+    "path": "/api/admin/llm-prompts/{prompt_id}",
+    "request_schema_ref": null,
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 1298,
+    "path": "routers/admin.py",
+    "repo": "concorda-api",
+    "symbol": "delete_llm_prompt"
+  },
+  "structural_hash": "19b3eba4f6d27a621e966c3e49c84cfdc1ec4084a38d86af51d712f81eec0488",
+  "tests": [],
+  "title": "DELETE /api/admin/llm-prompts/{prompt_id}",
+  "warnings": []
+}

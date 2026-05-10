@@ -1,0 +1,52 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::utils/image_utils.py::save_upload",
+      "via": "import",
+      "where": "routers/profile.py:215"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::utils/websocket_manager.py::broadcast_event",
+      "via": "websocket",
+      "where": "routers/profile.py:219"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::schemas/profile.py::ProfileRead",
+      "via": "import",
+      "where": "routers/profile.py:204"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/person.py::Person",
+      "via": "db_query",
+      "where": "routers/profile.py:211"
+    }
+  ],
+  "dossier": "dossiers/endpoints/POST___api_profile_picture.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "POST::/api/profile/picture",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "POST",
+    "path": "/api/profile/picture",
+    "request_schema_ref": "UploadFile",
+    "response_schema_ref": "ProfileRead"
+  },
+  "source": {
+    "line": 205,
+    "path": "routers/profile.py",
+    "repo": "concorda-api",
+    "symbol": "upload_profile_picture"
+  },
+  "structural_hash": "4c6fff5dc8a987ae6ad17ae1caeea2f83dcdca77c7ac2dff6dd5a6fd6d662162",
+  "tests": [],
+  "title": "POST /api/profile/picture",
+  "warnings": []
+}

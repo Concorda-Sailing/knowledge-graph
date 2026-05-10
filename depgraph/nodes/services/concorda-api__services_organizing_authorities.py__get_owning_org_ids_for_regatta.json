@@ -1,0 +1,28 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/services/concorda-api__services_organizing_authorities.py__get_owning_org_ids_for_regatta.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::services/organizing_authorities.py::get_owning_org_ids_for_regatta",
+  "kind": "service",
+  "schema_version": 1,
+  "signature": {
+    "args": [
+      "db",
+      "regatta_uuid"
+    ],
+    "kind": "service",
+    "name": "get_owning_org_ids_for_regatta"
+  },
+  "source": {
+    "line": 144,
+    "path": "services/organizing_authorities.py",
+    "repo": "concorda-api",
+    "symbol": "get_owning_org_ids_for_regatta"
+  },
+  "structural_hash": "b292a1772b442a63446886bd5f3ec68ccedcda45d115236d343aed3a85d63d0d",
+  "tests": [],
+  "title": "get_owning_org_ids_for_regatta",
+  "warnings": []
+}

@@ -1,0 +1,25 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/models/concorda-api__models_sailing_resume.py__SailingResume.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::models/sailing_resume.py::SailingResume",
+  "kind": "model",
+  "schema_version": 1,
+  "signature": {
+    "kind": "model",
+    "name": "SailingResume",
+    "tablename": "sailing_resumes"
+  },
+  "source": {
+    "line": 10,
+    "path": "models/sailing_resume.py",
+    "repo": "concorda-api",
+    "symbol": "SailingResume"
+  },
+  "structural_hash": "d0983df0e2995d5a6cbd8091710272a8cd33b4f20783d01cb6757739326ef613",
+  "tests": [],
+  "title": "SailingResume",
+  "warnings": []
+}

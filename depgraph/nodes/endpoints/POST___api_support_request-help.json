@@ -1,0 +1,40 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::utils/email_utils.py::send_support_request_email",
+      "via": "import",
+      "where": "routers/support.py:46"
+    }
+  ],
+  "dossier": "dossiers/endpoints/POST___api_support_request-help.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "POST::/api/support/request-help",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "POST",
+    "path": "/api/support/request-help",
+    "request_schema_ref": "RequestHelpRequest",
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 36,
+    "path": "routers/support.py",
+    "repo": "concorda-api",
+    "symbol": "request_help"
+  },
+  "structural_hash": "7b3599230dddad9c3b3371886614007c3dce784ec2a313eb1feac32d073d7302",
+  "tests": [],
+  "title": "POST /api/support/request-help",
+  "warnings": [
+    {
+      "code": "weakly_typed_response",
+      "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
+      "where": "routers/support.py:36"
+    }
+  ]
+}

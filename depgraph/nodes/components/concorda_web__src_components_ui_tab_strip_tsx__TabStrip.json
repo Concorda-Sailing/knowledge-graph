@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/ui/tab-strip.tsx::TabStrip",
+  "kind": "component",
+  "title": "TabStrip",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/ui/tab-strip.tsx",
+    "symbol": "TabStrip",
+    "line": 20
+  },
+  "signature": {
+    "name": "TabStrip",
+    "kind": "component"
+  },
+  "structural_hash": "003cb77280592509f9bd55f32918dda895edf956516fd568bf4f08789a415d5b",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/utils.ts::cn",
+      "via": "hook_call",
+      "where": "tab-strip.tsx:50",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/utils.ts::cn",
+      "via": "hook_call",
+      "where": "tab-strip.tsx:70",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_ui_tab_strip_tsx__TabStrip.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

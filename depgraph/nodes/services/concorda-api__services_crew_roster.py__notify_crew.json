@@ -1,0 +1,29 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/services/concorda-api__services_crew_roster.py__notify_crew.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::services/crew_roster.py::notify_crew",
+  "kind": "service",
+  "schema_version": 1,
+  "signature": {
+    "args": [
+      "db",
+      "sailing_event_id",
+      "inviter_id"
+    ],
+    "kind": "service",
+    "name": "notify_crew"
+  },
+  "source": {
+    "line": 33,
+    "path": "services/crew_roster.py",
+    "repo": "concorda-api",
+    "symbol": "notify_crew"
+  },
+  "structural_hash": "77caceaff83ec3c2e43bddfbbbcf67c4a914eceb3304831e35063697e117ddb5",
+  "tests": [],
+  "title": "notify_crew",
+  "warnings": []
+}

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/admin/settings-page.tsx::SettingsPageInner",
+  "kind": "component",
+  "title": "SettingsPageInner",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/admin/settings-page.tsx",
+    "symbol": "SettingsPageInner",
+    "line": 22
+  },
+  "signature": {
+    "name": "SettingsPageInner",
+    "kind": "component"
+  },
+  "structural_hash": "ba103e7d333cae8a01883df0f0ced268afb6ff8fbaeb4d181945d1be373c288b",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_admin_settings_page_tsx__SettingsPageInner.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

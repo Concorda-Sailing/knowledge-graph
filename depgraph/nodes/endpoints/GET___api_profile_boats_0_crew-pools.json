@@ -1,0 +1,34 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/crew_pool.py::CrewPool",
+      "via": "db_query",
+      "where": "routers/profile.py:1262"
+    }
+  ],
+  "dossier": "dossiers/endpoints/GET___api_profile_boats_0_crew-pools.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/profile/boats/{0}/crew-pools",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "GET",
+    "path": "/api/profile/boats/{boat_id}/crew-pools",
+    "request_schema_ref": null,
+    "response_schema_ref": "list"
+  },
+  "source": {
+    "line": 1252,
+    "path": "routers/profile.py",
+    "repo": "concorda-api",
+    "symbol": "list_crew_pools"
+  },
+  "structural_hash": "074be389324419235e10728940f7cff57238acb81cc158e46689661d8b36946f",
+  "tests": [],
+  "title": "GET /api/profile/boats/{boat_id}/crew-pools",
+  "warnings": []
+}

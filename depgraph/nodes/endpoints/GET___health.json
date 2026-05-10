@@ -1,0 +1,33 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/endpoints/GET___health.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/health",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "GET",
+    "path": "/health",
+    "request_schema_ref": null,
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 199,
+    "path": "main.py",
+    "repo": "concorda-api",
+    "symbol": "health"
+  },
+  "structural_hash": "ed4f27ccf73a68afa5c65f9f1a73106781448c8b205c6a39abbfc3019d53eed4",
+  "tests": [],
+  "title": "GET /health",
+  "warnings": [
+    {
+      "code": "weakly_typed_response",
+      "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
+      "where": "main.py:199"
+    }
+  ]
+}

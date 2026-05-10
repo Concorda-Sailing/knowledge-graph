@@ -1,0 +1,35 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_event_discount.py__EventDiscountCreate.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/event_discount.py::EventDiscountCreate",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "amount",
+      "amount_type",
+      "code",
+      "discount_type",
+      "is_active",
+      "max_uses",
+      "membership_id",
+      "name",
+      "ticket_ids"
+    ],
+    "kind": "schema",
+    "name": "EventDiscountCreate"
+  },
+  "source": {
+    "line": 8,
+    "path": "schemas/event_discount.py",
+    "repo": "concorda-api",
+    "symbol": "EventDiscountCreate"
+  },
+  "structural_hash": "ef996d3c52eba9b6c7ace706e18f655c229a9e5855fd7b2924f0051f110a855e",
+  "tests": [],
+  "title": "EventDiscountCreate",
+  "warnings": []
+}

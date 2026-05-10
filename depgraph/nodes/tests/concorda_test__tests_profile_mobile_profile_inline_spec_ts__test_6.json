@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/profile/mobile-profile-inline.spec.ts::test@6",
+  "kind": "test",
+  "title": "overview tab renders all five sections",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/profile/mobile-profile-inline.spec.ts",
+    "symbol": "test@6",
+    "line": 6
+  },
+  "signature": {
+    "name": "test@6",
+    "kind": "test"
+  },
+  "structural_hash": "6b87efc6210a5d1b3de372ff318a5994f937e19aef6e50d141066c6ab3d7f6be",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_profile_mobile_profile_inline_spec_ts__test_6.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

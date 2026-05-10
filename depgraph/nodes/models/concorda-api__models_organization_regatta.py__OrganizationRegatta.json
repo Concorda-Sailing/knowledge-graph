@@ -1,0 +1,25 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/models/concorda-api__models_organization_regatta.py__OrganizationRegatta.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::models/organization_regatta.py::OrganizationRegatta",
+  "kind": "model",
+  "schema_version": 1,
+  "signature": {
+    "kind": "model",
+    "name": "OrganizationRegatta",
+    "tablename": "organization_regattas"
+  },
+  "source": {
+    "line": 6,
+    "path": "models/organization_regatta.py",
+    "repo": "concorda-api",
+    "symbol": "OrganizationRegatta"
+  },
+  "structural_hash": "ab3222e6675dd0b70834b434b93c1e3e0ad5fc51f9745b843daac547b7a4bc5b",
+  "tests": [],
+  "title": "OrganizationRegatta",
+  "warnings": []
+}

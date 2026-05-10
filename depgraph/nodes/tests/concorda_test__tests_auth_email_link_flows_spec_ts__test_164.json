@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/auth/email-link-flows.spec.ts::test@164",
+  "kind": "test",
+  "title": "accept link flips EventCrew status to accepted",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/auth/email-link-flows.spec.ts",
+    "symbol": "test@164",
+    "line": 164
+  },
+  "signature": {
+    "name": "test@164",
+    "kind": "test"
+  },
+  "structural_hash": "126b982e9bae81d43fde9e85b0ee292a42fb855adc242566a8e3fc81bf99b795",
+  "depends_on": [
+    {
+      "target": "concorda-test::lib/mail-capture.ts::mailCapture.snapshot",
+      "via": "hook_call",
+      "where": "email-link-flows.spec.ts:166",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.setToken",
+      "via": "hook_call",
+      "where": "email-link-flows.spec.ts:177",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.getEventCrew",
+      "via": "hook_call",
+      "where": "email-link-flows.spec.ts:178",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.removeScheduleEvent",
+      "via": "hook_call",
+      "where": "email-link-flows.spec.ts:182",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_auth_email_link_flows_spec_ts__test_164.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

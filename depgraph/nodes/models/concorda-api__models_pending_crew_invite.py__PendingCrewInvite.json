@@ -1,0 +1,25 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/models/concorda-api__models_pending_crew_invite.py__PendingCrewInvite.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::models/pending_crew_invite.py::PendingCrewInvite",
+  "kind": "model",
+  "schema_version": 1,
+  "signature": {
+    "kind": "model",
+    "name": "PendingCrewInvite",
+    "tablename": "pending_crew_invite"
+  },
+  "source": {
+    "line": 7,
+    "path": "models/pending_crew_invite.py",
+    "repo": "concorda-api",
+    "symbol": "PendingCrewInvite"
+  },
+  "structural_hash": "52005eb7ae0ff12282fbfd88368419e9f250bbaf7d3ca4e70f0aa57258667904",
+  "tests": [],
+  "title": "PendingCrewInvite",
+  "warnings": []
+}

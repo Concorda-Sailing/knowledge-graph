@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/join/page.tsx::formatAge",
+  "kind": "service",
+  "title": "formatAge",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/join/page.tsx",
+    "symbol": "formatAge",
+    "line": 44
+  },
+  "signature": {
+    "name": "formatAge",
+    "kind": "service"
+  },
+  "structural_hash": "4d29378b3114778c806f03f04a4a229a344086b800a8d6e8407b79de1b67abed",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_app_join_page_tsx__formatAge.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

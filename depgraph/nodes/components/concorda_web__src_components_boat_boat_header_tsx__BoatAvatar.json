@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/boat/boat-header.tsx::BoatAvatar",
+  "kind": "component",
+  "title": "BoatAvatar",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/boat/boat-header.tsx",
+    "symbol": "BoatAvatar",
+    "line": 34
+  },
+  "signature": {
+    "name": "BoatAvatar",
+    "kind": "component"
+  },
+  "structural_hash": "f351cd7ce3eace8d7cb0724c68b578a06471c69ccaed82f47e15548b423d17d5",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_boat_boat_header_tsx__BoatAvatar.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

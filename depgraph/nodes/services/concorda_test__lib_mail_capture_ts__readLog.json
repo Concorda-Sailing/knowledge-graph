@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::lib/mail-capture.ts::readLog",
+  "kind": "service",
+  "title": "readLog",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "lib/mail-capture.ts",
+    "symbol": "readLog",
+    "line": 29
+  },
+  "signature": {
+    "name": "readLog",
+    "kind": "service"
+  },
+  "structural_hash": "cd91f1939be71dece8c6e97901b69597df43cdb1e75db617206320230bdd2d2f",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__lib_mail_capture_ts__readLog.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

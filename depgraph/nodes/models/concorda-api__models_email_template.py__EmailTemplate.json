@@ -1,0 +1,25 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/models/concorda-api__models_email_template.py__EmailTemplate.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::models/email_template.py::EmailTemplate",
+  "kind": "model",
+  "schema_version": 1,
+  "signature": {
+    "kind": "model",
+    "name": "EmailTemplate",
+    "tablename": "email_templates"
+  },
+  "source": {
+    "line": 6,
+    "path": "models/email_template.py",
+    "repo": "concorda-api",
+    "symbol": "EmailTemplate"
+  },
+  "structural_hash": "6cce72a82fd0b757e005e5c71c7896f8c2435c9a209358bfd343b3920494c500",
+  "tests": [],
+  "title": "EmailTemplate",
+  "warnings": []
+}

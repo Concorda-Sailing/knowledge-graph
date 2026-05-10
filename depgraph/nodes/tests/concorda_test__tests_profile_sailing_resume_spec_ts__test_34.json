@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/profile/sailing-resume.spec.ts::test@34",
+  "kind": "test",
+  "title": "can view preferred positions",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/profile/sailing-resume.spec.ts",
+    "symbol": "test@34",
+    "line": 34
+  },
+  "signature": {
+    "name": "test@34",
+    "kind": "test"
+  },
+  "structural_hash": "5fa6b663680e8da19fe9a6e77f0ddb94eb1bd1172148159cc94ae7b474aa7ec7",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_profile_sailing_resume_spec_ts__test_34.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

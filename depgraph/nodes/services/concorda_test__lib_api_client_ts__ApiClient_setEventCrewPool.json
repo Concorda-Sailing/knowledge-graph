@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::lib/api-client.ts::ApiClient.setEventCrewPool",
+  "kind": "service",
+  "title": "ApiClient.setEventCrewPool",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "lib/api-client.ts",
+    "symbol": "ApiClient.setEventCrewPool",
+    "line": 489
+  },
+  "signature": {
+    "name": "ApiClient.setEventCrewPool",
+    "kind": "service"
+  },
+  "structural_hash": "a4102315e57b853502a96df2adf4c021117dad939353d8c41401c9758600113d",
+  "depends_on": [
+    {
+      "target": "PUT::/api/events/{0}/sailing-event/crew-pool",
+      "via": "string_url",
+      "where": "api-client.ts:493",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__lib_api_client_ts__ApiClient_setEventCrewPool.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

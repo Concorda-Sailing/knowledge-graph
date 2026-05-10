@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/boat/club-autocomplete-input.tsx::loadClubs",
+  "kind": "service",
+  "title": "loadClubs",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/boat/club-autocomplete-input.tsx",
+    "symbol": "loadClubs",
+    "line": 10
+  },
+  "signature": {
+    "name": "loadClubs",
+    "kind": "service"
+  },
+  "structural_hash": "33c2fbabeb1f9be605b39c09767baed56d81cc462e3835261a0cc2dd5f7c76b7",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/api.ts::organizationsApi.list",
+      "via": "hook_call",
+      "where": "club-autocomplete-input.tsx:13",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_components_boat_club_autocomplete_input_tsx__loadClubs.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

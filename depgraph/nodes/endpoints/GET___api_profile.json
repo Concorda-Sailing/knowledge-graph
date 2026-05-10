@@ -1,0 +1,34 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::schemas/profile.py::ProfileRead",
+      "via": "import",
+      "where": "routers/profile.py:75"
+    }
+  ],
+  "dossier": "dossiers/endpoints/GET___api_profile.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/profile",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "GET",
+    "path": "/api/profile",
+    "request_schema_ref": null,
+    "response_schema_ref": "ProfileRead"
+  },
+  "source": {
+    "line": 76,
+    "path": "routers/profile.py",
+    "repo": "concorda-api",
+    "symbol": "get_profile"
+  },
+  "structural_hash": "c8e3efa566b678bef5c99a8951c895dc0f322c815c0047f952bb66d23277907c",
+  "tests": [],
+  "title": "GET /api/profile",
+  "warnings": []
+}

@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/profile/profile-inline.tsx::ProfileInline",
+  "kind": "component",
+  "title": "ProfileInline",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/profile/profile-inline.tsx",
+    "symbol": "ProfileInline",
+    "line": 29
+  },
+  "signature": {
+    "name": "ProfileInline",
+    "kind": "component"
+  },
+  "structural_hash": "ff40c2b167641f0d9ae7a91efa3edf676e9d218462b8a8da2b936f5adadef87e",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/hooks/use-toast.ts::useToast",
+      "via": "hook_call",
+      "where": "profile-inline.tsx:30",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/contexts/auth-context.tsx::useAuth",
+      "via": "hook_call",
+      "where": "profile-inline.tsx:31",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.get",
+      "via": "hook_call",
+      "where": "profile-inline.tsx:47",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.getSailingResume",
+      "via": "hook_call",
+      "where": "profile-inline.tsx:50",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/hooks/use-ws-freshness.ts::useWsFreshness",
+      "via": "hook_call",
+      "where": "profile-inline.tsx:66",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.getSailingResume",
+      "via": "hook_call",
+      "where": "profile-inline.tsx:100",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.getSailingResume",
+      "via": "hook_call",
+      "where": "profile-inline.tsx:119",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_profile_profile_inline_tsx__ProfileInline.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

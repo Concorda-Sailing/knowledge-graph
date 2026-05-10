@@ -1,0 +1,25 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/models/concorda-api__models_approval_request.py__ApprovalRequest.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::models/approval_request.py::ApprovalRequest",
+  "kind": "model",
+  "schema_version": 1,
+  "signature": {
+    "kind": "model",
+    "name": "ApprovalRequest",
+    "tablename": "approval_requests"
+  },
+  "source": {
+    "line": 7,
+    "path": "models/approval_request.py",
+    "repo": "concorda-api",
+    "symbol": "ApprovalRequest"
+  },
+  "structural_hash": "8f14a1e5ce64e064c63d536da1e7a7eb981311fb40b1fe2a5e816098003ee884",
+  "tests": [],
+  "title": "ApprovalRequest",
+  "warnings": []
+}

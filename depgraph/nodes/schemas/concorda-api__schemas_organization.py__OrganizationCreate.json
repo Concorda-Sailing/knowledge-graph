@@ -1,0 +1,43 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_organization.py__OrganizationCreate.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/organization.py::OrganizationCreate",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "abbreviation",
+      "address",
+      "billing_contact_id",
+      "burgee_url",
+      "contact_email",
+      "fleet_captain_id",
+      "name",
+      "org_type",
+      "parent_org_id",
+      "phone_number",
+      "reciprocity_with",
+      "region",
+      "services",
+      "social_media",
+      "steward_id",
+      "vhf_channel",
+      "website"
+    ],
+    "kind": "schema",
+    "name": "OrganizationCreate"
+  },
+  "source": {
+    "line": 26,
+    "path": "schemas/organization.py",
+    "repo": "concorda-api",
+    "symbol": "OrganizationCreate"
+  },
+  "structural_hash": "fb5d6547ba1ecc515c757b34a5adab3d519593d48799a8222d461bc40ef51638",
+  "tests": [],
+  "title": "OrganizationCreate",
+  "warnings": []
+}

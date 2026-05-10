@@ -1,0 +1,51 @@
+{
+  "_archived_at": "2026-05-09T11:23:39.008150Z",
+  "_archived_reason": "domain_orphan_symbol_removed",
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_person.py__PersonRead.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/person.py::PersonRead",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "additional_email",
+      "additional_phone",
+      "club_affiliations",
+      "created",
+      "email",
+      "email_verified",
+      "first_name",
+      "id",
+      "join_date",
+      "last_name",
+      "leave_date",
+      "mailing_address",
+      "member_category",
+      "memberships",
+      "modified",
+      "organization_ids",
+      "phone_number",
+      "picture_url",
+      "preferences",
+      "shirt_size",
+      "shorts_inseam",
+      "shorts_waist",
+      "type"
+    ],
+    "kind": "schema",
+    "name": "PersonRead"
+  },
+  "source": {
+    "line": 76,
+    "path": "schemas/person.py",
+    "repo": "concorda-api",
+    "symbol": "PersonRead"
+  },
+  "structural_hash": "17b12c1e376df91414bd95554d12429f257416af3eb173213d20beb3ff410edb",
+  "tests": [],
+  "title": "PersonRead",
+  "warnings": []
+}

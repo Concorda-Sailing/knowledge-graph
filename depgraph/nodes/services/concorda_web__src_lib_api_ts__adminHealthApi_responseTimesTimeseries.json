@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::adminHealthApi.responseTimesTimeseries",
+  "kind": "service",
+  "title": "adminHealthApi.responseTimesTimeseries",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "adminHealthApi.responseTimesTimeseries",
+    "line": 1135
+  },
+  "signature": {
+    "name": "adminHealthApi.responseTimesTimeseries",
+    "kind": "service"
+  },
+  "structural_hash": "69a01ce64662bb78485b480a6122d58075632c4ca9ae1186ab2deabffef53711",
+  "depends_on": [
+    {
+      "target": "GET::/api/admin/response-times/timeseries",
+      "via": "string_url",
+      "where": "api.ts:1146",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__adminHealthApi_responseTimesTimeseries.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

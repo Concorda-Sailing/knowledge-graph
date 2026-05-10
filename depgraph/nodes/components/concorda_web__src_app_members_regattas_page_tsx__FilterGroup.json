@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/regattas/page.tsx::FilterGroup",
+  "kind": "component",
+  "title": "FilterGroup",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/regattas/page.tsx",
+    "symbol": "FilterGroup",
+    "line": 640
+  },
+  "signature": {
+    "name": "FilterGroup",
+    "kind": "component"
+  },
+  "structural_hash": "9572d8836e9ca88fb97751b1be46d007e8e49255ed0e32fa58d46e7027f5d128",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/utils.ts::cn",
+      "via": "hook_call",
+      "where": "page.tsx:660",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_regattas_page_tsx__FilterGroup.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

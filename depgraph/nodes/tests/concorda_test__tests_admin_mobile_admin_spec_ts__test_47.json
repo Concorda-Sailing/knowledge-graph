@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/admin/mobile-admin.spec.ts::test@47",
+  "kind": "test",
+  "title": "users page still shows desktop table",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/admin/mobile-admin.spec.ts",
+    "symbol": "test@47",
+    "line": 47
+  },
+  "signature": {
+    "name": "test@47",
+    "kind": "test"
+  },
+  "structural_hash": "80b38657f00b5edd6e6eab93b270159ca1b2a9a933911cfe3656a885b6a5d8ff",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_admin_mobile_admin_spec_ts__test_47.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

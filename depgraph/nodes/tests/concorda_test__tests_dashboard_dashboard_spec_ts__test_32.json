@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/dashboard/dashboard.spec.ts::test@32",
+  "kind": "test",
+  "title": "member directory link navigates correctly",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/dashboard/dashboard.spec.ts",
+    "symbol": "test@32",
+    "line": 32
+  },
+  "signature": {
+    "name": "test@32",
+    "kind": "test"
+  },
+  "structural_hash": "322338dcd7a0017f9fe075f39ab62a65c436c56fa5ff942f299db64b2bf0e8cb",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_dashboard_dashboard_spec_ts__test_32.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

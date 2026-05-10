@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::approvalsApi.vote",
+  "kind": "service",
+  "title": "approvalsApi.vote",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "approvalsApi.vote",
+    "line": 3297
+  },
+  "signature": {
+    "name": "approvalsApi.vote",
+    "kind": "service"
+  },
+  "structural_hash": "5dbc153c1dc29d3098373c6c85dc6efcf406b568f9fd871da6edda820ee4e12b",
+  "depends_on": [
+    {
+      "target": "POST::/api/approval-requests/{0}/vote",
+      "via": "string_url",
+      "where": "api.ts:3298",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__approvalsApi_vote.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

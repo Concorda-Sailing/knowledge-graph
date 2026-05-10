@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/ui/toaster.tsx::Toaster",
+  "kind": "component",
+  "title": "Toaster",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/ui/toaster.tsx",
+    "symbol": "Toaster",
+    "line": 13
+  },
+  "signature": {
+    "name": "Toaster",
+    "kind": "component"
+  },
+  "structural_hash": "0b93b2b60da3f24233700ded66c1e5efe695ab5a6964e51e7b502a8da2664901",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/hooks/use-toast.ts::useToast",
+      "via": "hook_call",
+      "where": "toaster.tsx:14",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_ui_toaster_tsx__Toaster.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

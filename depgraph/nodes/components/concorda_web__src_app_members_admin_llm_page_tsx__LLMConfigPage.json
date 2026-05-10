@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/admin/llm/page.tsx::LLMConfigPage",
+  "kind": "component",
+  "title": "LLMConfigPage",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/admin/llm/page.tsx",
+    "symbol": "LLMConfigPage",
+    "line": 36
+  },
+  "signature": {
+    "name": "LLMConfigPage",
+    "kind": "component"
+  },
+  "structural_hash": "bb01bdaf34aaf474ed72b422ceba0d7aed18213f39dc955124e7dc792a019f0c",
+  "depends_on": [
+    {
+      "target": "GET::/api/admin/llm-config",
+      "via": "http_call",
+      "where": "page.tsx:58",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::llmApi.listPrompts",
+      "via": "hook_call",
+      "where": "page.tsx:59",
+      "confidence": "exact"
+    },
+    {
+      "target": "PUT::/api/admin/llm-config",
+      "via": "http_call",
+      "where": "page.tsx:82",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::llmApi.listPrompts",
+      "via": "hook_call",
+      "where": "page.tsx:97",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::llmApi.deletePrompt",
+      "via": "hook_call",
+      "where": "page.tsx:102",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_admin_llm_page_tsx__LLMConfigPage.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

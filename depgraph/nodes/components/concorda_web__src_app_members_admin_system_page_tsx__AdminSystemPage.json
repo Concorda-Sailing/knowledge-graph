@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/admin/system/page.tsx::AdminSystemPage",
+  "kind": "component",
+  "title": "AdminSystemPage",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/admin/system/page.tsx",
+    "symbol": "AdminSystemPage",
+    "line": 21
+  },
+  "signature": {
+    "name": "AdminSystemPage",
+    "kind": "component"
+  },
+  "structural_hash": "f6592db7c2f778298b7b77458fee031256ba070aa2861e8a3902be8bb848bf15",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/api.ts::adminOrgConfigApi.get",
+      "via": "hook_call",
+      "where": "page.tsx:55",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::adminStorageApi.get",
+      "via": "hook_call",
+      "where": "page.tsx:62",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::temporalProductsApi.getAvailable",
+      "via": "hook_call",
+      "where": "page.tsx:63",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::adminOrgConfigApi.update",
+      "via": "hook_call",
+      "where": "page.tsx:78",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/constants-manager.ts::constantsManager.refresh",
+      "via": "hook_call",
+      "where": "page.tsx:87",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::adminOrgConfigApi.update",
+      "via": "hook_call",
+      "where": "page.tsx:106",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::adminOrgConfigApi.update",
+      "via": "hook_call",
+      "where": "page.tsx:132",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::adminOrgConfigApi.uploadLogo",
+      "via": "hook_call",
+      "where": "page.tsx:158",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/constants-manager.ts::constantsManager.refresh",
+      "via": "hook_call",
+      "where": "page.tsx:160",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::adminOrgConfigApi.deleteLogo",
+      "via": "hook_call",
+      "where": "page.tsx:174",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/constants-manager.ts::constantsManager.refresh",
+      "via": "hook_call",
+      "where": "page.tsx:176",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_admin_system_page_tsx__AdminSystemPage.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

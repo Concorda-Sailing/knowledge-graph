@@ -1,0 +1,28 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_approval.py__ApprovalVoteCreate.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/approval.py::ApprovalVoteCreate",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "decision",
+      "reason"
+    ],
+    "kind": "schema",
+    "name": "ApprovalVoteCreate"
+  },
+  "source": {
+    "line": 46,
+    "path": "schemas/approval.py",
+    "repo": "concorda-api",
+    "symbol": "ApprovalVoteCreate"
+  },
+  "structural_hash": "7cbbcd132e10be31544baf85819a89ecbb6485e935773c5782c0d831ffec25a7",
+  "tests": [],
+  "title": "ApprovalVoteCreate",
+  "warnings": []
+}

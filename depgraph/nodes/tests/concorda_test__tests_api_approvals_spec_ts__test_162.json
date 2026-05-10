@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/api/approvals.spec.ts::test@162",
+  "kind": "test",
+  "title": "unauthenticated GET returns 401",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/api/approvals.spec.ts",
+    "symbol": "test@162",
+    "line": 162
+  },
+  "signature": {
+    "name": "test@162",
+    "kind": "test"
+  },
+  "structural_hash": "20e6a48dc6503b5db90b1aa54f1985f4ff1938f4e5843786ce1d60d63981a5fb",
+  "depends_on": [
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.rawRequest",
+      "via": "hook_call",
+      "where": "approvals.spec.ts:164",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_api_approvals_spec_ts__test_162.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/dashboard/cross-context-crew.spec.ts::test@8",
+  "kind": "test",
+  "title": "crew member sees the boat owner's boat in Boats tab",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/dashboard/cross-context-crew.spec.ts",
+    "symbol": "test@8",
+    "line": 8
+  },
+  "signature": {
+    "name": "test@8",
+    "kind": "test"
+  },
+  "structural_hash": "23d29fbe44ce6fd8bcd218d99debf993da17408b23d7c2b5b08ebaea302807b8",
+  "depends_on": [
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.login",
+      "via": "hook_call",
+      "where": "cross-context-crew.spec.ts:12",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.setToken",
+      "via": "hook_call",
+      "where": "cross-context-crew.spec.ts:13",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.getMyCrewData",
+      "via": "hook_call",
+      "where": "cross-context-crew.spec.ts:14",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.inviteCrewByEmail",
+      "via": "hook_call",
+      "where": "cross-context-crew.spec.ts:21",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.login",
+      "via": "hook_call",
+      "where": "cross-context-crew.spec.ts:27",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.setToken",
+      "via": "hook_call",
+      "where": "cross-context-crew.spec.ts:28",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.respondToBoatCrewInvite",
+      "via": "hook_call",
+      "where": "cross-context-crew.spec.ts:30",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_dashboard_cross_context_crew_spec_ts__test_8.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

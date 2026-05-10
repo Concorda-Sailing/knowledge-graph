@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/boat/boat-positions-config.tsx::PresetButton",
+  "kind": "component",
+  "title": "PresetButton",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/boat/boat-positions-config.tsx",
+    "symbol": "PresetButton",
+    "line": 509
+  },
+  "signature": {
+    "name": "PresetButton",
+    "kind": "component"
+  },
+  "structural_hash": "2d3e57670e4efd84b159bb8997b9e07b2685af857a9b6d60873f0552353ea643",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/hooks/use-toast.ts::useToast",
+      "via": "hook_call",
+      "where": "boat-positions-config.tsx:518",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.createBoatConfig",
+      "via": "hook_call",
+      "where": "boat-positions-config.tsx:524",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_boat_boat_positions_config_tsx__PresetButton.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

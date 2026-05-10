@@ -1,0 +1,45 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_temporal_product.py__TemporalProductUpdate.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/temporal_product.py::TemporalProductUpdate",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "category",
+      "description",
+      "end_date",
+      "event_id",
+      "grants_boat_management",
+      "grants_crewfinder",
+      "grants_event_discount",
+      "grants_prize_eligibility",
+      "is_active",
+      "max_age",
+      "merchandise_ids",
+      "min_age",
+      "name",
+      "price",
+      "requires_boat",
+      "slug",
+      "sort_order",
+      "start_date",
+      "year"
+    ],
+    "kind": "schema",
+    "name": "TemporalProductUpdate"
+  },
+  "source": {
+    "line": 46,
+    "path": "schemas/temporal_product.py",
+    "repo": "concorda-api",
+    "symbol": "TemporalProductUpdate"
+  },
+  "structural_hash": "ceb13403eca734607654d01ba1d54506e86a085c77e2ae841413610fa9c7c84a",
+  "tests": [],
+  "title": "TemporalProductUpdate",
+  "warnings": []
+}

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/events/[id]/page.tsx::LegacyEventRedirect",
+  "kind": "component",
+  "title": "LegacyEventRedirect",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/events/[id]/page.tsx",
+    "symbol": "LegacyEventRedirect",
+    "line": 5
+  },
+  "signature": {
+    "name": "LegacyEventRedirect",
+    "kind": "component"
+  },
+  "structural_hash": "a3577c05345bdbaf2bb524dfa7ca623f493089a24ffcf629aeff844fcab3f73a",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_events__id__page_tsx__LegacyEventRedirect.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

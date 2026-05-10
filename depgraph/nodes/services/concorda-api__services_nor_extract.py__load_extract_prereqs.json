@@ -1,0 +1,28 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/services/concorda-api__services_nor_extract.py__load_extract_prereqs.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::services/nor_extract.py::load_extract_prereqs",
+  "kind": "service",
+  "schema_version": 1,
+  "signature": {
+    "args": [
+      "db",
+      "document_type"
+    ],
+    "kind": "service",
+    "name": "load_extract_prereqs"
+  },
+  "source": {
+    "line": 36,
+    "path": "services/nor_extract.py",
+    "repo": "concorda-api",
+    "symbol": "load_extract_prereqs"
+  },
+  "structural_hash": "560b565de5d16baaf392e85a52ab81492b80420fe6cf442120b52aa9d969679f",
+  "tests": [],
+  "title": "load_extract_prereqs",
+  "warnings": []
+}

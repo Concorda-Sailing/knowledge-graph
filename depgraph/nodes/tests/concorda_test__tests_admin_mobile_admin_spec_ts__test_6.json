@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/admin/mobile-admin.spec.ts::test@6",
+  "kind": "test",
+  "title": "users page renders mobile card list, no visible table",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/admin/mobile-admin.spec.ts",
+    "symbol": "test@6",
+    "line": 6
+  },
+  "signature": {
+    "name": "test@6",
+    "kind": "test"
+  },
+  "structural_hash": "4a13328e8cf2b318df17c49525770404ee0416ea5ae1497027350a782ce82059",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_admin_mobile_admin_spec_ts__test_6.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

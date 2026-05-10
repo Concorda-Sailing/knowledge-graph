@@ -1,0 +1,40 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/person.py::Person",
+      "via": "db_query",
+      "where": "routers/invite.py:87"
+    }
+  ],
+  "dossier": "dossiers/endpoints/GET___api_invite_0.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/invite/{0}",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "GET",
+    "path": "/api/invite/{invite_code}",
+    "request_schema_ref": null,
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 69,
+    "path": "routers/invite.py",
+    "repo": "concorda-api",
+    "symbol": "get_invite"
+  },
+  "structural_hash": "27c9dc2a821a5d7fd13d31bb587a4327dffb09c6523b91150a05a1059ed7f49a",
+  "tests": [],
+  "title": "GET /api/invite/{invite_code}",
+  "warnings": [
+    {
+      "code": "weakly_typed_response",
+      "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
+      "where": "routers/invite.py:69"
+    }
+  ]
+}

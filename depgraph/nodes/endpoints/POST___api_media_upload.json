@@ -1,0 +1,34 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/media.py::MediaFile",
+      "via": "db_query",
+      "where": "routers/media.py:358"
+    }
+  ],
+  "dossier": "dossiers/endpoints/POST___api_media_upload.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "POST::/api/media/upload",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "POST",
+    "path": "/api/media/upload",
+    "request_schema_ref": "UploadFile",
+    "response_schema_ref": "FileRead"
+  },
+  "source": {
+    "line": 301,
+    "path": "routers/media.py",
+    "repo": "concorda-api",
+    "symbol": "upload_file"
+  },
+  "structural_hash": "8f40766e6c53fed9b82262076344f3e25f7e7274c697b17918f9a78f40a8092e",
+  "tests": [],
+  "title": "POST /api/media/upload",
+  "warnings": []
+}

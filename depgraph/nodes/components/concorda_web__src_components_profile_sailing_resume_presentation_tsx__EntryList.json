@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/profile/sailing-resume-presentation.tsx::EntryList",
+  "kind": "component",
+  "title": "EntryList",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/profile/sailing-resume-presentation.tsx",
+    "symbol": "EntryList",
+    "line": 51
+  },
+  "signature": {
+    "name": "EntryList",
+    "kind": "component"
+  },
+  "structural_hash": "cec835f284decb0848cf9ec12c20e14bdccb9706113d24dd21aa913d86d6d664",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_profile_sailing_resume_presentation_tsx__EntryList.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

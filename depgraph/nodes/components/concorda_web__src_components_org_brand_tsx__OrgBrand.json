@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/org-brand.tsx::OrgBrand",
+  "kind": "component",
+  "title": "OrgBrand",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/org-brand.tsx",
+    "symbol": "OrgBrand",
+    "line": 16
+  },
+  "signature": {
+    "name": "OrgBrand",
+    "kind": "component"
+  },
+  "structural_hash": "e4c9ec204f8367c755b49056d09e190d35571697ad3ea62bb80c5433b705895c",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/hooks/use-constants.ts::useConstants",
+      "via": "hook_call",
+      "where": "org-brand.tsx:17",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_org_brand_tsx__OrgBrand.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

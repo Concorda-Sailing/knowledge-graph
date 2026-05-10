@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/admin/club-dialog.tsx::ClubDialog",
+  "kind": "component",
+  "title": "ClubDialog",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/admin/club-dialog.tsx",
+    "symbol": "ClubDialog",
+    "line": 34
+  },
+  "signature": {
+    "name": "ClubDialog",
+    "kind": "component"
+  },
+  "structural_hash": "e422f32acacfe39bcb749a4119a6ff3e04a6f07e71ddb1f2f2a6d2a5b73004a0",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/api.ts::adminApi.members",
+      "via": "hook_call",
+      "where": "club-dialog.tsx:68",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::constantsApi.getAll",
+      "via": "hook_call",
+      "where": "club-dialog.tsx:72",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::organizationsApi.get",
+      "via": "hook_call",
+      "where": "club-dialog.tsx:83",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::organizationsApi.update",
+      "via": "hook_call",
+      "where": "club-dialog.tsx:156",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::organizationsApi.create",
+      "via": "hook_call",
+      "where": "club-dialog.tsx:158",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_admin_club_dialog_tsx__ClubDialog.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

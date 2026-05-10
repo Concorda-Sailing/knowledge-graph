@@ -1,0 +1,25 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/models/concorda-api__models_account_setup_token.py__AccountSetupToken.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::models/account_setup_token.py::AccountSetupToken",
+  "kind": "model",
+  "schema_version": 1,
+  "signature": {
+    "kind": "model",
+    "name": "AccountSetupToken",
+    "tablename": "account_setup_tokens"
+  },
+  "source": {
+    "line": 8,
+    "path": "models/account_setup_token.py",
+    "repo": "concorda-api",
+    "symbol": "AccountSetupToken"
+  },
+  "structural_hash": "ffb3adef2bc6a3423c51e35cfa069d3fec41f5614e3bb0e798031d31d175235a",
+  "tests": [],
+  "title": "AccountSetupToken",
+  "warnings": []
+}

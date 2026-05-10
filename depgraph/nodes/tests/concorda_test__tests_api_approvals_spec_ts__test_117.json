@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/api/approvals.spec.ts::test@117",
+  "kind": "test",
+  "title": "vote reject path finalizes as rejected",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/api/approvals.spec.ts",
+    "symbol": "test@117",
+    "line": 117
+  },
+  "signature": {
+    "name": "test@117",
+    "kind": "test"
+  },
+  "structural_hash": "0d61c94c8626f3a1b157dca3d159d18853d0957bf281c2715cf16c31fd718580",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_api_approvals_spec_ts__test_117.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

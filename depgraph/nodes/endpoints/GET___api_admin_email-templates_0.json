@@ -1,0 +1,34 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/email_template.py::EmailTemplate",
+      "via": "db_query",
+      "where": "routers/admin.py:1382"
+    }
+  ],
+  "dossier": "dossiers/endpoints/GET___api_admin_email-templates_0.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/admin/email-templates/{0}",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "GET",
+    "path": "/api/admin/email-templates/{template_id}",
+    "request_schema_ref": null,
+    "response_schema_ref": "EmailTemplateRead"
+  },
+  "source": {
+    "line": 1380,
+    "path": "routers/admin.py",
+    "repo": "concorda-api",
+    "symbol": "get_email_template"
+  },
+  "structural_hash": "c2d97756e93b47e6fef9fbe71f24b2f5f89ef9fb8053d8f8e4f842f432a23e01",
+  "tests": [],
+  "title": "GET /api/admin/email-templates/{template_id}",
+  "warnings": []
+}

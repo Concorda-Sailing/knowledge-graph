@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/auth/email-link-flows.spec.ts::test@116",
+  "kind": "test",
+  "title": "decline link finalizes the request as rejected",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/auth/email-link-flows.spec.ts",
+    "symbol": "test@116",
+    "line": 116
+  },
+  "signature": {
+    "name": "test@116",
+    "kind": "test"
+  },
+  "structural_hash": "bdd040a0f2f240f8472df8398b875b480a36bb7b27ef2adb8f787b0c3a466288",
+  "depends_on": [
+    {
+      "target": "concorda-test::lib/mail-capture.ts::mailCapture.snapshot",
+      "via": "hook_call",
+      "where": "email-link-flows.spec.ts:118",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.setToken",
+      "via": "hook_call",
+      "where": "email-link-flows.spec.ts:130",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.listApprovalRequests",
+      "via": "hook_call",
+      "where": "email-link-flows.spec.ts:133",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_auth_email_link_flows_spec_ts__test_116.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

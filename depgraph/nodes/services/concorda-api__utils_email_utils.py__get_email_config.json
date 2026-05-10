@@ -1,0 +1,27 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/services/concorda-api__utils_email_utils.py__get_email_config.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::utils/email_utils.py::get_email_config",
+  "kind": "service",
+  "schema_version": 1,
+  "signature": {
+    "args": [
+      "db"
+    ],
+    "kind": "service",
+    "name": "get_email_config"
+  },
+  "source": {
+    "line": 48,
+    "path": "utils/email_utils.py",
+    "repo": "concorda-api",
+    "symbol": "get_email_config"
+  },
+  "structural_hash": "1ddb7ad2711c02cd6b884d373b6b38abe3d8090e0229f6d28d569e51feb63a92",
+  "tests": [],
+  "title": "get_email_config",
+  "warnings": []
+}

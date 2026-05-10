@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::lib/api-client.ts::ApiClient.upsertSailingEvent",
+  "kind": "service",
+  "title": "ApiClient.upsertSailingEvent",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "lib/api-client.ts",
+    "symbol": "ApiClient.upsertSailingEvent",
+    "line": 453
+  },
+  "signature": {
+    "name": "ApiClient.upsertSailingEvent",
+    "kind": "service"
+  },
+  "structural_hash": "23fb4cf536e3f0e82456df424d2b4d0afd27454060cf0b2fcacafeab6b22f1d3",
+  "depends_on": [
+    {
+      "target": "PUT::/api/events/{0}/sailing-event",
+      "via": "string_url",
+      "where": "api-client.ts:467",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__lib_api_client_ts__ApiClient_upsertSailingEvent.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

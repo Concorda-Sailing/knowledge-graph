@@ -1,0 +1,34 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/boat_config.py::BoatConfig",
+      "via": "db_query",
+      "where": "routers/profile.py:1187"
+    }
+  ],
+  "dossier": "dossiers/endpoints/PUT___api_profile_boats_0_configs_1.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "PUT::/api/profile/boats/{0}/configs/{1}",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "PUT",
+    "path": "/api/profile/boats/{boat_id}/configs/{config_id}",
+    "request_schema_ref": "BoatConfigUpdate",
+    "response_schema_ref": "BoatConfigRead"
+  },
+  "source": {
+    "line": 1178,
+    "path": "routers/profile.py",
+    "repo": "concorda-api",
+    "symbol": "update_boat_config"
+  },
+  "structural_hash": "28e3d6bb527fbb177385d0e000a5493b9c7cd7f90dd1ace2477b1e00d831d52c",
+  "tests": [],
+  "title": "PUT /api/profile/boats/{boat_id}/configs/{config_id}",
+  "warnings": []
+}

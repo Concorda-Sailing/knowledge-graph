@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/admin/events/series/page.tsx::SeriesDialog",
+  "kind": "component",
+  "title": "SeriesDialog",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/admin/events/series/page.tsx",
+    "symbol": "SeriesDialog",
+    "line": 274
+  },
+  "signature": {
+    "name": "SeriesDialog",
+    "kind": "component"
+  },
+  "structural_hash": "dccafd1e31523af0c188722adc3b40fe7db43e8de260a33e0f375e8f4292475e",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/hooks/use-toast.ts::useToast",
+      "via": "hook_call",
+      "where": "page.tsx:277",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/hooks/use-constants.ts::useConstants",
+      "via": "hook_call",
+      "where": "page.tsx:278",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::utcIsoToOrgDateInput",
+      "via": "hook_call",
+      "where": "page.tsx:290",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::utcIsoToOrgDateInput",
+      "via": "hook_call",
+      "where": "page.tsx:291",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::orgDateInputToUtcIso",
+      "via": "hook_call",
+      "where": "page.tsx:309",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::orgDateInputToUtcIso",
+      "via": "hook_call",
+      "where": "page.tsx:310",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::seriesApi.update",
+      "via": "hook_call",
+      "where": "page.tsx:316",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::seriesApi.create",
+      "via": "hook_call",
+      "where": "page.tsx:317",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_admin_events_series_page_tsx__SeriesDialog.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

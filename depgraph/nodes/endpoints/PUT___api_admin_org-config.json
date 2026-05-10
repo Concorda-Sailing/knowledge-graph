@@ -1,0 +1,34 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/org_config.py::OrgConfig",
+      "via": "db_query",
+      "where": "routers/admin.py:973"
+    }
+  ],
+  "dossier": "dossiers/endpoints/PUT___api_admin_org-config.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "PUT::/api/admin/org-config",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "PUT",
+    "path": "/api/admin/org-config",
+    "request_schema_ref": "OrgConfigUpdate",
+    "response_schema_ref": "OrgConfigResponse"
+  },
+  "source": {
+    "line": 964,
+    "path": "routers/admin.py",
+    "repo": "concorda-api",
+    "symbol": "update_org_config"
+  },
+  "structural_hash": "950ea3519a2c670625b57dc4ee053c47469c3767ddcc7fffdf92c09defa1ee46",
+  "tests": [],
+  "title": "PUT /api/admin/org-config",
+  "warnings": []
+}

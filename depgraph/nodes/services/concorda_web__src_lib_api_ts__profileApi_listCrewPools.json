@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::profileApi.listCrewPools",
+  "kind": "service",
+  "title": "profileApi.listCrewPools",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "profileApi.listCrewPools",
+    "line": 1373
+  },
+  "signature": {
+    "name": "profileApi.listCrewPools",
+    "kind": "service"
+  },
+  "structural_hash": "5a106bf10605d29a73e4fdfc8239bda06a4d1ce08b4f4bf951a7f6a8c57c18b6",
+  "depends_on": [
+    {
+      "target": "GET::/api/profile/boats/{0}/crew-pools",
+      "via": "string_url",
+      "where": "api.ts:1374",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__profileApi_listCrewPools.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

@@ -1,0 +1,40 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::utils/notification_utils.py::send_whatsapp",
+      "via": "import",
+      "where": "routers/notifications.py:139"
+    }
+  ],
+  "dossier": "dossiers/endpoints/POST___api_admin_notifications_test-whatsapp.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "POST::/api/admin/notifications/test-whatsapp",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "POST",
+    "path": "/api/admin/notifications/test-whatsapp",
+    "request_schema_ref": "TestWhatsAppRequest",
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 133,
+    "path": "routers/notifications.py",
+    "repo": "concorda-api",
+    "symbol": "test_whatsapp"
+  },
+  "structural_hash": "3d4005e0ab7b24d6a49ffe691799bfe3a095138346bce48b899d50711fa48281",
+  "tests": [],
+  "title": "POST /api/admin/notifications/test-whatsapp",
+  "warnings": [
+    {
+      "code": "weakly_typed_response",
+      "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
+      "where": "routers/notifications.py:133"
+    }
+  ]
+}

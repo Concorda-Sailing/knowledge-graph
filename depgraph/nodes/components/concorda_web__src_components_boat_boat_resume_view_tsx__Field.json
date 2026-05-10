@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/boat/boat-resume-view.tsx::Field",
+  "kind": "component",
+  "title": "Field",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/boat/boat-resume-view.tsx",
+    "symbol": "Field",
+    "line": 12
+  },
+  "signature": {
+    "name": "Field",
+    "kind": "component"
+  },
+  "structural_hash": "8c952ebe4d37870e3e89a1fcc117a7dc329c1418fdb760636c8b6b6df3c47056",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_boat_boat_resume_view_tsx__Field.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

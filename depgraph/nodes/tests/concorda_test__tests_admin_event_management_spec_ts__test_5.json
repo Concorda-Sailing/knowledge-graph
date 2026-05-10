@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/admin/event-management.spec.ts::test@5",
+  "kind": "test",
+  "title": "races page loads",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/admin/event-management.spec.ts",
+    "symbol": "test@5",
+    "line": 5
+  },
+  "signature": {
+    "name": "test@5",
+    "kind": "test"
+  },
+  "structural_hash": "55b01cd771b20ed550b125f38a55125d7965b20e4be6af15ce5e033e036e8347",
+  "depends_on": [
+    {
+      "target": "concorda-test::pages/admin/events.page.ts::AdminEventsPage.gotoRaces",
+      "via": "hook_call",
+      "where": "event-management.spec.ts:7",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_admin_event_management_spec_ts__test_5.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

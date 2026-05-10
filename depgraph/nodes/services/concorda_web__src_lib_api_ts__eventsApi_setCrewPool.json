@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::eventsApi.setCrewPool",
+  "kind": "service",
+  "title": "eventsApi.setCrewPool",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "eventsApi.setCrewPool",
+    "line": 481
+  },
+  "signature": {
+    "name": "eventsApi.setCrewPool",
+    "kind": "service"
+  },
+  "structural_hash": "6458ea33385e81cfe01d4def9e2b7b06c47c40c432dee485c09fd137e50b0eb6",
+  "depends_on": [
+    {
+      "target": "PUT::/api/events/{0}/sailing-event/crew-pool",
+      "via": "string_url",
+      "where": "api.ts:482",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__eventsApi_setCrewPool.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

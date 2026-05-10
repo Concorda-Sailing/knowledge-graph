@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/policies/accept/page.tsx::AcceptPoliciesPage",
+  "kind": "component",
+  "title": "AcceptPoliciesPage",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/policies/accept/page.tsx",
+    "symbol": "AcceptPoliciesPage",
+    "line": 15
+  },
+  "signature": {
+    "name": "AcceptPoliciesPage",
+    "kind": "component"
+  },
+  "structural_hash": "d0f3687e40ab7d9ca0af4c6472e27a9f13cf8511d58259e4e5c3c6907d39712e",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/contexts/auth-context.tsx::useAuth",
+      "via": "hook_call",
+      "where": "page.tsx:19",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::policiesApi.getPending",
+      "via": "hook_call",
+      "where": "page.tsx:32",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::policiesApi.accept",
+      "via": "hook_call",
+      "where": "page.tsx:53",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_policies_accept_page_tsx__AcceptPoliciesPage.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

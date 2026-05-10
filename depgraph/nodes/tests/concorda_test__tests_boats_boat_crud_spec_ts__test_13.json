@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/boats/boat-crud.spec.ts::test@13",
+  "kind": "test",
+  "title": "can navigate to boat detail page",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/boats/boat-crud.spec.ts",
+    "symbol": "test@13",
+    "line": 13
+  },
+  "signature": {
+    "name": "test@13",
+    "kind": "test"
+  },
+  "structural_hash": "2380555d568797fc810ec027da9e0c70456a86c1f5d4a4daace41462ee4c8623",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_boats_boat_crud_spec_ts__test_13.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

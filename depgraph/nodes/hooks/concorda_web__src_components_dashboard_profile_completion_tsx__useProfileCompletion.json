@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/dashboard/profile-completion.tsx::useProfileCompletion",
+  "kind": "hook",
+  "title": "useProfileCompletion",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/dashboard/profile-completion.tsx",
+    "symbol": "useProfileCompletion",
+    "line": 24
+  },
+  "signature": {
+    "name": "useProfileCompletion",
+    "kind": "hook"
+  },
+  "structural_hash": "17495ddec568fd2ea2368fd7ee1e157e3531aaad4227aa2fe8f6c09bd512f1b2",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.get",
+      "via": "hook_call",
+      "where": "profile-completion.tsx:31",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.getSailingResume",
+      "via": "hook_call",
+      "where": "profile-completion.tsx:32",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.getBoats",
+      "via": "hook_call",
+      "where": "profile-completion.tsx:33",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/hooks/concorda_web__src_components_dashboard_profile_completion_tsx__useProfileCompletion.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

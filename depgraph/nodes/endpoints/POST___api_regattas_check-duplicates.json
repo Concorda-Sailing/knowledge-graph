@@ -1,0 +1,34 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/regatta.py::Regatta",
+      "via": "db_query",
+      "where": "routers/regattas.py:139"
+    }
+  ],
+  "dossier": "dossiers/endpoints/POST___api_regattas_check-duplicates.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "POST::/api/regattas/check-duplicates",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "POST",
+    "path": "/api/regattas/check-duplicates",
+    "request_schema_ref": "DuplicateCheckRequest",
+    "response_schema_ref": "list"
+  },
+  "source": {
+    "line": 137,
+    "path": "routers/regattas.py",
+    "repo": "concorda-api",
+    "symbol": "check_duplicates"
+  },
+  "structural_hash": "334e36c2508979efa17ea84f9f363cf3153b30e70f8fdef1792bfc28776da227",
+  "tests": [],
+  "title": "POST /api/regattas/check-duplicates",
+  "warnings": []
+}

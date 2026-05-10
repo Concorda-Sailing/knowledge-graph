@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::lib/api-client.ts::ApiClient.respondToInvite",
+  "kind": "service",
+  "title": "ApiClient.respondToInvite",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "lib/api-client.ts",
+    "symbol": "ApiClient.respondToInvite",
+    "line": 313
+  },
+  "signature": {
+    "name": "ApiClient.respondToInvite",
+    "kind": "service"
+  },
+  "structural_hash": "1bfd1fe8d8e307ea3f220f7fec6b9a8a6cf59c2e315f17e95ef5f67264a06430",
+  "depends_on": [
+    {
+      "target": "POST::/api/invite/respond",
+      "via": "http_call",
+      "where": "api-client.ts:317",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__lib_api_client_ts__ApiClient_respondToInvite.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

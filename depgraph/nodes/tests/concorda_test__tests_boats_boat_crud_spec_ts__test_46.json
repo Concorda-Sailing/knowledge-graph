@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/boats/boat-crud.spec.ts::test@46",
+  "kind": "test",
+  "title": "add boat dialog opens",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/boats/boat-crud.spec.ts",
+    "symbol": "test@46",
+    "line": 46
+  },
+  "signature": {
+    "name": "test@46",
+    "kind": "test"
+  },
+  "structural_hash": "12455fdfa505dfbd0e6b299ec3a3d1f11aa05b3907b6993a8c70c290d2932254",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_boats_boat_crud_spec_ts__test_46.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

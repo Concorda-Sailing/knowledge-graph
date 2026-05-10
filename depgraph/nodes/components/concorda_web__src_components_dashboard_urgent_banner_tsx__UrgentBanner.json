@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/dashboard/urgent-banner.tsx::UrgentBanner",
+  "kind": "component",
+  "title": "UrgentBanner",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/dashboard/urgent-banner.tsx",
+    "symbol": "UrgentBanner",
+    "line": 7
+  },
+  "signature": {
+    "name": "UrgentBanner",
+    "kind": "component"
+  },
+  "structural_hash": "3bc717095f9171d471ad7123b9039a6170556b513b5a27ef0a0ff8e8b111b74d",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/hooks/use-pending-approvals.ts::usePendingApprovals",
+      "via": "hook_call",
+      "where": "urgent-banner.tsx:8",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_dashboard_urgent_banner_tsx__UrgentBanner.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

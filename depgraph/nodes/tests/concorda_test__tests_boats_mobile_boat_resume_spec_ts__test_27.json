@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/boats/mobile-boat-resume.spec.ts::test@27",
+  "kind": "test",
+  "title": "hero action buttons visible on mobile (no hover required)",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/boats/mobile-boat-resume.spec.ts",
+    "symbol": "test@27",
+    "line": 27
+  },
+  "signature": {
+    "name": "test@27",
+    "kind": "test"
+  },
+  "structural_hash": "a3cee596c86ade7f395cce52711c384ba4eb376ef0a8e628d921df5815803c2e",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_boats_mobile_boat_resume_spec_ts__test_27.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

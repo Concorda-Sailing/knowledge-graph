@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/boat/boat-crew-invite.tsx::BoatCrewInvite",
+  "kind": "component",
+  "title": "BoatCrewInvite",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/boat/boat-crew-invite.tsx",
+    "symbol": "BoatCrewInvite",
+    "line": 40
+  },
+  "signature": {
+    "name": "BoatCrewInvite",
+    "kind": "component"
+  },
+  "structural_hash": "c3878976076ba995b8d9a78b13a258215feb16ab72c87234dda9374fdce4dae4",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/hooks/use-toast.ts::useToast",
+      "via": "hook_call",
+      "where": "boat-crew-invite.tsx:41",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/hooks/use-constants.ts::useConstants",
+      "via": "hook_call",
+      "where": "boat-crew-invite.tsx:42",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::boatApi.createShareInvite",
+      "via": "hook_call",
+      "where": "boat-crew-invite.tsx:71",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::boatApi.getShareInviteStatus",
+      "via": "hook_call",
+      "where": "boat-crew-invite.tsx:104",
+      "confidence": "exact"
+    },
+    {
+      "target": "GET::/api/persons/directory",
+      "via": "string_url",
+      "where": "boat-crew-invite.tsx:147",
+      "confidence": "fuzzy"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::boatApi.inviteCrew",
+      "via": "hook_call",
+      "where": "boat-crew-invite.tsx:188",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::boatApi.inviteCrewBatch",
+      "via": "hook_call",
+      "where": "boat-crew-invite.tsx:217",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_boat_boat_crew_invite_tsx__BoatCrewInvite.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

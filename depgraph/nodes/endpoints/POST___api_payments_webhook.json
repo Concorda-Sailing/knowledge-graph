@@ -1,0 +1,40 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/transaction.py::Transaction",
+      "via": "db_query",
+      "where": "routers/payments.py:476"
+    }
+  ],
+  "dossier": "dossiers/endpoints/POST___api_payments_webhook.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "POST::/api/payments/webhook",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "POST",
+    "path": "/api/payments/webhook",
+    "request_schema_ref": null,
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 461,
+    "path": "routers/payments.py",
+    "repo": "concorda-api",
+    "symbol": "stripe_webhook"
+  },
+  "structural_hash": "2fa90658d01596ca80e1f50a1884729f55d60797da2ac756c57bfedfeda20ccb",
+  "tests": [],
+  "title": "POST /api/payments/webhook",
+  "warnings": [
+    {
+      "code": "weakly_typed_response",
+      "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
+      "where": "routers/payments.py:461"
+    }
+  ]
+}

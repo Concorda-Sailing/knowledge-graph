@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/hooks/use-toast.ts::reducer",
+  "kind": "service",
+  "title": "reducer",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/hooks/use-toast.ts",
+    "symbol": "reducer",
+    "line": 73
+  },
+  "signature": {
+    "name": "reducer",
+    "kind": "service"
+  },
+  "structural_hash": "d4b10dbaa1b029d2a959aaa38a1de358a671ddb18f860afbf1e86a9ecff9dae6",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_hooks_use_toast_ts__reducer.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

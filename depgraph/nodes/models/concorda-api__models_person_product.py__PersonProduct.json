@@ -1,0 +1,25 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/models/concorda-api__models_person_product.py__PersonProduct.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::models/person_product.py::PersonProduct",
+  "kind": "model",
+  "schema_version": 1,
+  "signature": {
+    "kind": "model",
+    "name": "PersonProduct",
+    "tablename": "person_products"
+  },
+  "source": {
+    "line": 6,
+    "path": "models/person_product.py",
+    "repo": "concorda-api",
+    "symbol": "PersonProduct"
+  },
+  "structural_hash": "58f5a5aa153b0333d24628081dc2ff257e556b663afb3fead0f893a64203e21d",
+  "tests": [],
+  "title": "PersonProduct",
+  "warnings": []
+}

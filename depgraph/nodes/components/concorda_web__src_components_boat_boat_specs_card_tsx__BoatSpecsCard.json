@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/boat/boat-specs-card.tsx::BoatSpecsCard",
+  "kind": "component",
+  "title": "BoatSpecsCard",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/boat/boat-specs-card.tsx",
+    "symbol": "BoatSpecsCard",
+    "line": 18
+  },
+  "signature": {
+    "name": "BoatSpecsCard",
+    "kind": "component"
+  },
+  "structural_hash": "4c01df3e2b35e783615111ef132eccc7d1201ce1a5ffb732ce6b3d781588cb87",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_boat_boat_specs_card_tsx__BoatSpecsCard.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

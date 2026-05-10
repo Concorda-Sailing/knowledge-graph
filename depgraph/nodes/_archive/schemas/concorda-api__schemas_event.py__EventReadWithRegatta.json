@@ -1,0 +1,32 @@
+{
+  "_archived_at": "2026-05-09T11:23:39.012801Z",
+  "_archived_reason": "domain_orphan_symbol_removed",
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_event.py__EventReadWithRegatta.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/event.py::EventReadWithRegatta",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "notice_of_race_url",
+      "regatta_id",
+      "regatta_type",
+      "sailing_instructions_url"
+    ],
+    "kind": "schema",
+    "name": "EventReadWithRegatta"
+  },
+  "source": {
+    "line": 79,
+    "path": "schemas/event.py",
+    "repo": "concorda-api",
+    "symbol": "EventReadWithRegatta"
+  },
+  "structural_hash": "0c8274a0b410bb7cf4035087186739c4627abac2c1e3fac8d6e4ae1ad77cd513",
+  "tests": [],
+  "title": "EventReadWithRegatta",
+  "warnings": []
+}

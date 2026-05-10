@@ -1,0 +1,25 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/models/concorda-api__models_organization_contact.py__OrganizationContact.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::models/organization_contact.py::OrganizationContact",
+  "kind": "model",
+  "schema_version": 1,
+  "signature": {
+    "kind": "model",
+    "name": "OrganizationContact",
+    "tablename": "organization_contacts"
+  },
+  "source": {
+    "line": 6,
+    "path": "models/organization_contact.py",
+    "repo": "concorda-api",
+    "symbol": "OrganizationContact"
+  },
+  "structural_hash": "1d81be85b6c2e899f5cce4351c0527a0b92030d0be6e5f8e1d94940606398e6c",
+  "tests": [],
+  "title": "OrganizationContact",
+  "warnings": []
+}

@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/contexts/websocket-context.tsx::WebSocketProvider",
+  "kind": "component",
+  "title": "WebSocketProvider",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/contexts/websocket-context.tsx",
+    "symbol": "WebSocketProvider",
+    "line": 29
+  },
+  "signature": {
+    "name": "WebSocketProvider",
+    "kind": "component"
+  },
+  "structural_hash": "1763035a59541f4fc38f8a32388d3097f8b020015020974175e153903485af41",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/contexts/auth-context.tsx::useAuth",
+      "via": "hook_call",
+      "where": "websocket-context.tsx:30",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_contexts_websocket_context_tsx__WebSocketProvider.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

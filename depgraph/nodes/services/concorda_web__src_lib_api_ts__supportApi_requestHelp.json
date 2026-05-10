@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::supportApi.requestHelp",
+  "kind": "service",
+  "title": "supportApi.requestHelp",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "supportApi.requestHelp",
+    "line": 215
+  },
+  "signature": {
+    "name": "supportApi.requestHelp",
+    "kind": "service"
+  },
+  "structural_hash": "653788645677d25726f9ce34ccaf5300a9c7c428ec688519ef9f78f3688aa2d2",
+  "depends_on": [
+    {
+      "target": "POST::/api/support/request-help",
+      "via": "http_call",
+      "where": "api.ts:216",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__supportApi_requestHelp.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

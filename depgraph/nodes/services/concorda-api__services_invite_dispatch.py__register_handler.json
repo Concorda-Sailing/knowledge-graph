@@ -1,0 +1,27 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/services/concorda-api__services_invite_dispatch.py__register_handler.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::services/invite_dispatch.py::register_handler",
+  "kind": "service",
+  "schema_version": 1,
+  "signature": {
+    "args": [
+      "handler"
+    ],
+    "kind": "service",
+    "name": "register_handler"
+  },
+  "source": {
+    "line": 64,
+    "path": "services/invite_dispatch.py",
+    "repo": "concorda-api",
+    "symbol": "register_handler"
+  },
+  "structural_hash": "5e666b9e30d7a51b99b2a3e67fe5531f58c059b1ffb2ad6d9fb841edc8b5cd43",
+  "tests": [],
+  "title": "register_handler",
+  "warnings": []
+}

@@ -1,0 +1,52 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::schemas/profile.py::SailingResumeUpsert",
+      "via": "import",
+      "where": "routers/profile.py:386"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::utils/websocket_manager.py::broadcast_event",
+      "via": "websocket",
+      "where": "routers/profile.py:426"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::schemas/sailing_resume.py::SailingResumeRead",
+      "via": "import",
+      "where": "routers/profile.py:384"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/sailing_resume.py::SailingResume",
+      "via": "db_query",
+      "where": "routers/profile.py:418"
+    }
+  ],
+  "dossier": "dossiers/endpoints/PUT___api_profile_sailing-resume.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "PUT::/api/profile/sailing-resume",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "PUT",
+    "path": "/api/profile/sailing-resume",
+    "request_schema_ref": "SailingResumeUpsert",
+    "response_schema_ref": "SailingResumeRead"
+  },
+  "source": {
+    "line": 385,
+    "path": "routers/profile.py",
+    "repo": "concorda-api",
+    "symbol": "upsert_sailing_resume"
+  },
+  "structural_hash": "4c52fcdee787aa6d9d0d484a1b4fedf3602f6df328bc628f634a6eb09904d32c",
+  "tests": [],
+  "title": "PUT /api/profile/sailing-resume",
+  "warnings": []
+}

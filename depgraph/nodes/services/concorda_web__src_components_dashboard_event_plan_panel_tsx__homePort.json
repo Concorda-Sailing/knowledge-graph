@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/dashboard/event-plan-panel.tsx::homePort",
+  "kind": "service",
+  "title": "homePort",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/dashboard/event-plan-panel.tsx",
+    "symbol": "homePort",
+    "line": 31
+  },
+  "signature": {
+    "name": "homePort",
+    "kind": "service"
+  },
+  "structural_hash": "eda63882071333a8bfe0bc5f7e657b280396ffb51f918f4b23a371e19dcf4665",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_components_dashboard_event_plan_panel_tsx__homePort.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

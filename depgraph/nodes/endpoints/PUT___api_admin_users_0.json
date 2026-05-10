@@ -1,0 +1,58 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/person_product.py::PersonProduct",
+      "via": "db_query",
+      "where": "routers/admin.py:342"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/role.py::UserRole",
+      "via": "db_query",
+      "where": "routers/admin.py:378"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/person.py::Person",
+      "via": "db_query",
+      "where": "routers/admin.py:316"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/role.py::Role",
+      "via": "db_query",
+      "where": "routers/admin.py:365"
+    }
+  ],
+  "dossier": "dossiers/endpoints/PUT___api_admin_users_0.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "PUT::/api/admin/users/{0}",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "PUT",
+    "path": "/api/admin/users/{user_id}",
+    "request_schema_ref": "UserUpdate",
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 309,
+    "path": "routers/admin.py",
+    "repo": "concorda-api",
+    "symbol": "update_user"
+  },
+  "structural_hash": "f8534fae158efd1889464e23eebe9138302af754ca578b08176720e4940d1724",
+  "tests": [],
+  "title": "PUT /api/admin/users/{user_id}",
+  "warnings": [
+    {
+      "code": "weakly_typed_response",
+      "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
+      "where": "routers/admin.py:309"
+    }
+  ]
+}

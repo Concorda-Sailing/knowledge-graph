@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/join/page.tsx::JoinPage",
+  "kind": "component",
+  "title": "JoinPage",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/join/page.tsx",
+    "symbol": "JoinPage",
+    "line": 72
+  },
+  "signature": {
+    "name": "JoinPage",
+    "kind": "component"
+  },
+  "structural_hash": "78e78317f885a7e20e031923236d27e8d1109454b38689a44ed8b0c4a4204f85",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/hooks/use-constants.ts::useConstants",
+      "via": "hook_call",
+      "where": "page.tsx:73",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::temporalProductsApi.getAvailable",
+      "via": "hook_call",
+      "where": "page.tsx:78",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_join_page_tsx__JoinPage.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

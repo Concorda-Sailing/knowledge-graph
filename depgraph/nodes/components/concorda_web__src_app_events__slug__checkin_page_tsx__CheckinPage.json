@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/events/[slug]/checkin/page.tsx::CheckinPage",
+  "kind": "component",
+  "title": "CheckinPage",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/events/[slug]/checkin/page.tsx",
+    "symbol": "CheckinPage",
+    "line": 25
+  },
+  "signature": {
+    "name": "CheckinPage",
+    "kind": "component"
+  },
+  "structural_hash": "8543bd46d780027f50aa5f0094867249f423955a6b5cf2af32865ccb4297597f",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/hooks/use-constants.ts::useConstants",
+      "via": "hook_call",
+      "where": "page.tsx:33",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.getBySlug",
+      "via": "hook_call",
+      "where": "page.tsx:50",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.checkin",
+      "via": "hook_call",
+      "where": "page.tsx:70",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
+      "via": "hook_call",
+      "where": "page.tsx:113",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
+      "via": "hook_call",
+      "where": "page.tsx:140",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
+      "via": "hook_call",
+      "where": "page.tsx:187",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_events__slug__checkin_page_tsx__CheckinPage.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

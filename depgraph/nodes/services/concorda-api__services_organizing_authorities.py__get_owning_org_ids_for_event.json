@@ -1,0 +1,28 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/services/concorda-api__services_organizing_authorities.py__get_owning_org_ids_for_event.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::services/organizing_authorities.py::get_owning_org_ids_for_event",
+  "kind": "service",
+  "schema_version": 1,
+  "signature": {
+    "args": [
+      "db",
+      "event_uuid"
+    ],
+    "kind": "service",
+    "name": "get_owning_org_ids_for_event"
+  },
+  "source": {
+    "line": 120,
+    "path": "services/organizing_authorities.py",
+    "repo": "concorda-api",
+    "symbol": "get_owning_org_ids_for_event"
+  },
+  "structural_hash": "499752acdafd769add04f0aa26c9ed5e3fb3ab25f9cebe11ff049e53f97e15f2",
+  "tests": [],
+  "title": "get_owning_org_ids_for_event",
+  "warnings": []
+}

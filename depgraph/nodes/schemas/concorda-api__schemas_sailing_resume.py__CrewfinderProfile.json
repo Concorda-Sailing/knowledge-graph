@@ -1,0 +1,41 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_sailing_resume.py__CrewfinderProfile.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/sailing_resume.py::CrewfinderProfile",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "availability",
+      "banner_url",
+      "boat_classes_sailed",
+      "email",
+      "experience_level",
+      "first_name",
+      "id",
+      "last_name",
+      "notes",
+      "person_id",
+      "phone_number",
+      "picture_url",
+      "positions_preferred",
+      "race_areas",
+      "years_sailing"
+    ],
+    "kind": "schema",
+    "name": "CrewfinderProfile"
+  },
+  "source": {
+    "line": 119,
+    "path": "schemas/sailing_resume.py",
+    "repo": "concorda-api",
+    "symbol": "CrewfinderProfile"
+  },
+  "structural_hash": "0354eca66423743a682854d4dbec822d9514cdd3d5d3fbe66afddaab628a6534",
+  "tests": [],
+  "title": "CrewfinderProfile",
+  "warnings": []
+}

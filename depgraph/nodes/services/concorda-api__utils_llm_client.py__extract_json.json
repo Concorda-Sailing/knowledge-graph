@@ -1,0 +1,27 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/services/concorda-api__utils_llm_client.py__extract_json.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::utils/llm_client.py::extract_json",
+  "kind": "service",
+  "schema_version": 1,
+  "signature": {
+    "args": [
+      "text"
+    ],
+    "kind": "service",
+    "name": "extract_json"
+  },
+  "source": {
+    "line": 136,
+    "path": "utils/llm_client.py",
+    "repo": "concorda-api",
+    "symbol": "extract_json"
+  },
+  "structural_hash": "5a0fdcca33910aed66c039782d954f3b885d3ffe8830e2635248a741d5a055e3",
+  "tests": [],
+  "title": "extract_json",
+  "warnings": []
+}

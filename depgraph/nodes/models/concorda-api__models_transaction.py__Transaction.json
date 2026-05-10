@@ -1,0 +1,25 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/models/concorda-api__models_transaction.py__Transaction.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::models/transaction.py::Transaction",
+  "kind": "model",
+  "schema_version": 1,
+  "signature": {
+    "kind": "model",
+    "name": "Transaction",
+    "tablename": "transactions"
+  },
+  "source": {
+    "line": 8,
+    "path": "models/transaction.py",
+    "repo": "concorda-api",
+    "symbol": "Transaction"
+  },
+  "structural_hash": "603091be806ee851e7907e06789e7af160cf6f14c0056068d1ee2c20aa0bd860",
+  "tests": [],
+  "title": "Transaction",
+  "warnings": []
+}

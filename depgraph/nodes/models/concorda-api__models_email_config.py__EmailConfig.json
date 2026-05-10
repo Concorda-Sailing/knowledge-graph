@@ -1,0 +1,25 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/models/concorda-api__models_email_config.py__EmailConfig.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::models/email_config.py::EmailConfig",
+  "kind": "model",
+  "schema_version": 1,
+  "signature": {
+    "kind": "model",
+    "name": "EmailConfig",
+    "tablename": "email_config"
+  },
+  "source": {
+    "line": 8,
+    "path": "models/email_config.py",
+    "repo": "concorda-api",
+    "symbol": "EmailConfig"
+  },
+  "structural_hash": "e078e693f75b6802bcab1f118c7ae9d5e2993570246c77a6f363cedb48681523",
+  "tests": [],
+  "title": "EmailConfig",
+  "warnings": []
+}

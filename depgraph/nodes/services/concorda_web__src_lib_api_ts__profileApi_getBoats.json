@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::profileApi.getBoats",
+  "kind": "service",
+  "title": "profileApi.getBoats",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "profileApi.getBoats",
+    "line": 1311
+  },
+  "signature": {
+    "name": "profileApi.getBoats",
+    "kind": "service"
+  },
+  "structural_hash": "666f44d2335945e2ba8e02b7d9ab035adb4872dc18155110b439a50f0c52debf",
+  "depends_on": [
+    {
+      "target": "GET::/api/profile/boats",
+      "via": "http_call",
+      "where": "api.ts:1311",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__profileApi_getBoats.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

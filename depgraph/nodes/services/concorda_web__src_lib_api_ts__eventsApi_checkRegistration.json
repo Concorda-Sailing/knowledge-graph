@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::eventsApi.checkRegistration",
+  "kind": "service",
+  "title": "eventsApi.checkRegistration",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "eventsApi.checkRegistration",
+    "line": 378
+  },
+  "signature": {
+    "name": "eventsApi.checkRegistration",
+    "kind": "service"
+  },
+  "structural_hash": "344df2b2668472589981b3ac5952576537cce4aa42a972267b30fbbc65e6a6f9",
+  "depends_on": [
+    {
+      "target": "POST::/api/events/slug/{0}/check-registration",
+      "via": "string_url",
+      "where": "api.ts:379",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__eventsApi_checkRegistration.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

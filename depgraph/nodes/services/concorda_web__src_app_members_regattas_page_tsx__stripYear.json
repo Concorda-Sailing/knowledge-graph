@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/regattas/page.tsx::stripYear",
+  "kind": "service",
+  "title": "stripYear",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/regattas/page.tsx",
+    "symbol": "stripYear",
+    "line": 65
+  },
+  "signature": {
+    "name": "stripYear",
+    "kind": "service"
+  },
+  "structural_hash": "30515b02d95de97788c13023d8adb826c6f19c841a6efb158b69496446895687",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_app_members_regattas_page_tsx__stripYear.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

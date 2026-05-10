@@ -1,0 +1,35 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_merchandise.py__MerchandiseCreate.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/merchandise.py::MerchandiseCreate",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "description",
+      "image_url",
+      "is_active",
+      "name",
+      "price",
+      "quantity",
+      "slug",
+      "sort_order",
+      "stock_number"
+    ],
+    "kind": "schema",
+    "name": "MerchandiseCreate"
+  },
+  "source": {
+    "line": 7,
+    "path": "schemas/merchandise.py",
+    "repo": "concorda-api",
+    "symbol": "MerchandiseCreate"
+  },
+  "structural_hash": "d9f2ff106937061c68bcee048c89af72902d3ec5595b73284a35966f58a63768",
+  "tests": [],
+  "title": "MerchandiseCreate",
+  "warnings": []
+}

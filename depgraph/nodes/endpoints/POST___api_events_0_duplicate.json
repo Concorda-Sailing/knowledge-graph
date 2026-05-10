@@ -1,0 +1,58 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/event.py::Event",
+      "via": "db_query",
+      "where": "routers/events.py:1173"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::schemas/event.py::EventReadWithRegatta",
+      "via": "import",
+      "where": "routers/events.py:1160"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/product.py::Product",
+      "via": "db_query",
+      "where": "routers/events.py:1198"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::services/organizing_authorities.py::set_event_oas",
+      "via": "import",
+      "where": "routers/events.py:1212"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::services/organizing_authorities.py::get_event_oas",
+      "via": "import",
+      "where": "routers/events.py:1210"
+    }
+  ],
+  "dossier": "dossiers/endpoints/POST___api_events_0_duplicate.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "POST::/api/events/{0}/duplicate",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "POST",
+    "path": "/api/events/{event_id}/duplicate",
+    "request_schema_ref": null,
+    "response_schema_ref": "EventReadWithRegatta"
+  },
+  "source": {
+    "line": 1161,
+    "path": "routers/events.py",
+    "repo": "concorda-api",
+    "symbol": "duplicate_event"
+  },
+  "structural_hash": "4a0668a00d5ec383d2af3e63ee1c918014b07a1f1c1a3763fc22ede63feea432",
+  "tests": [],
+  "title": "POST /api/events/{event_id}/duplicate",
+  "warnings": []
+}

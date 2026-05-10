@@ -1,0 +1,34 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/org_config.py::OrgConfig",
+      "via": "db_query",
+      "where": "routers/admin.py:957"
+    }
+  ],
+  "dossier": "dossiers/endpoints/GET___api_admin_org-config.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/admin/org-config",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "GET",
+    "path": "/api/admin/org-config",
+    "request_schema_ref": null,
+    "response_schema_ref": "OrgConfigResponse"
+  },
+  "source": {
+    "line": 955,
+    "path": "routers/admin.py",
+    "repo": "concorda-api",
+    "symbol": "get_org_config"
+  },
+  "structural_hash": "3d0fe0bbd3c0af1ad41ad3045bfdb5b6267a649a3f62930be8b55793ee1f4ca8",
+  "tests": [],
+  "title": "GET /api/admin/org-config",
+  "warnings": []
+}

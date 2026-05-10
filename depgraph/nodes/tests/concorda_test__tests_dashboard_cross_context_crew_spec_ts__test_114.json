@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/dashboard/cross-context-crew.spec.ts::test@114",
+  "kind": "test",
+  "title": "crew member sees one schedule card with logistics, and detail page shows Sailing with",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/dashboard/cross-context-crew.spec.ts",
+    "symbol": "test@114",
+    "line": 114
+  },
+  "signature": {
+    "name": "test@114",
+    "kind": "test"
+  },
+  "structural_hash": "233f5c435859715875402b73b6c3a4537c5c12e985259bc3837fb1e5aeb7dc78",
+  "depends_on": [
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.login",
+      "via": "hook_call",
+      "where": "cross-context-crew.spec.ts:120",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.setToken",
+      "via": "hook_call",
+      "where": "cross-context-crew.spec.ts:121",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.getMyCrewData",
+      "via": "hook_call",
+      "where": "cross-context-crew.spec.ts:122",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.rawRequest",
+      "via": "hook_call",
+      "where": "cross-context-crew.spec.ts:134",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.createSailingEvent",
+      "via": "hook_call",
+      "where": "cross-context-crew.spec.ts:141",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.login",
+      "via": "hook_call",
+      "where": "cross-context-crew.spec.ts:150",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.setToken",
+      "via": "hook_call",
+      "where": "cross-context-crew.spec.ts:151",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.me",
+      "via": "hook_call",
+      "where": "cross-context-crew.spec.ts:152",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.setToken",
+      "via": "hook_call",
+      "where": "cross-context-crew.spec.ts:156",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.setEventCrewPool",
+      "via": "hook_call",
+      "where": "cross-context-crew.spec.ts:157",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.sendEventCrewInvites",
+      "via": "hook_call",
+      "where": "cross-context-crew.spec.ts:158",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.upsertSailingEvent",
+      "via": "hook_call",
+      "where": "cross-context-crew.spec.ts:164",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.setToken",
+      "via": "hook_call",
+      "where": "cross-context-crew.spec.ts:173",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.respondToEventCrewInvite",
+      "via": "hook_call",
+      "where": "cross-context-crew.spec.ts:174",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_dashboard_cross_context_crew_spec_ts__test_114.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

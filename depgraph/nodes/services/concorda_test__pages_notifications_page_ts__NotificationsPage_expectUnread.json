@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::pages/notifications.page.ts::NotificationsPage.expectUnread",
+  "kind": "service",
+  "title": "NotificationsPage.expectUnread",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "pages/notifications.page.ts",
+    "symbol": "NotificationsPage.expectUnread",
+    "line": 76
+  },
+  "signature": {
+    "name": "NotificationsPage.expectUnread",
+    "kind": "service"
+  },
+  "structural_hash": "393bb596ed7f547b295459cd56cf5bcd3f767ba2a53ef9fbc3de9730598a1ae1",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__pages_notifications_page_ts__NotificationsPage_expectUnread.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

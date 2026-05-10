@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/auth/email-link-flows.spec.ts::test@443",
+  "kind": "test",
+  "title": "decline link flips EventCrew status to declined and does not touch BoatCrew",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/auth/email-link-flows.spec.ts",
+    "symbol": "test@443",
+    "line": 443
+  },
+  "signature": {
+    "name": "test@443",
+    "kind": "test"
+  },
+  "structural_hash": "85deb7d808a1f6b33c8ee4d8ded2d81a2c00ae118f38440f6c101f868e063aff",
+  "depends_on": [
+    {
+      "target": "concorda-test::lib/mail-capture.ts::mailCapture.snapshot",
+      "via": "hook_call",
+      "where": "email-link-flows.spec.ts:445",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.setToken",
+      "via": "hook_call",
+      "where": "email-link-flows.spec.ts:449",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.getBoatCrew",
+      "via": "hook_call",
+      "where": "email-link-flows.spec.ts:450",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.setToken",
+      "via": "hook_call",
+      "where": "email-link-flows.spec.ts:468",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.getEventCrew",
+      "via": "hook_call",
+      "where": "email-link-flows.spec.ts:469",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.getBoatCrew",
+      "via": "hook_call",
+      "where": "email-link-flows.spec.ts:474",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.removeScheduleEvent",
+      "via": "hook_call",
+      "where": "email-link-flows.spec.ts:480",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_auth_email_link_flows_spec_ts__test_443.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

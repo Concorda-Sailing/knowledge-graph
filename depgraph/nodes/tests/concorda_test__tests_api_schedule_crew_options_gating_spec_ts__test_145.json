@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/api/schedule-crew-options-gating.spec.ts::test@145",
+  "kind": "test",
+  "title": "captain with peer-boat EventCrew row keeps Crew badge off",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/api/schedule-crew-options-gating.spec.ts",
+    "symbol": "test@145",
+    "line": 145
+  },
+  "signature": {
+    "name": "test@145",
+    "kind": "test"
+  },
+  "structural_hash": "bec270d0d8c89b450867dcc59601a0b00e4a6312b902e2be79a4cd37ed1c145b",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_api_schedule_crew_options_gating_spec_ts__test_145.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

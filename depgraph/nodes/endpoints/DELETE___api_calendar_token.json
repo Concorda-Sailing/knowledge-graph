@@ -1,0 +1,34 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/person.py::Person",
+      "via": "db_query",
+      "where": "routers/calendar.py:114"
+    }
+  ],
+  "dossier": "dossiers/endpoints/DELETE___api_calendar_token.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "DELETE::/api/calendar/token",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "DELETE",
+    "path": "/api/calendar/token",
+    "request_schema_ref": null,
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 109,
+    "path": "routers/calendar.py",
+    "repo": "concorda-api",
+    "symbol": "delete_token"
+  },
+  "structural_hash": "fff85fd6c6495b3df5f1f882cfbdca7faeea0a9a9bafd876e68284f17d8d5977",
+  "tests": [],
+  "title": "DELETE /api/calendar/token",
+  "warnings": []
+}

@@ -1,0 +1,25 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/models/concorda-api__models_person_regatta.py__PersonRegatta.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::models/person_regatta.py::PersonRegatta",
+  "kind": "model",
+  "schema_version": 1,
+  "signature": {
+    "kind": "model",
+    "name": "PersonRegatta",
+    "tablename": "person_regattas"
+  },
+  "source": {
+    "line": 6,
+    "path": "models/person_regatta.py",
+    "repo": "concorda-api",
+    "symbol": "PersonRegatta"
+  },
+  "structural_hash": "3a031c275959efa63b4c450f5330cfdc09838f3775eda64587df07c59e497cd7",
+  "tests": [],
+  "title": "PersonRegatta",
+  "warnings": []
+}

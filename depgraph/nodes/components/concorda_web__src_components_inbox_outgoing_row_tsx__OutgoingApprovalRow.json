@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/inbox/outgoing-row.tsx::OutgoingApprovalRow",
+  "kind": "component",
+  "title": "OutgoingApprovalRow",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/inbox/outgoing-row.tsx",
+    "symbol": "OutgoingApprovalRow",
+    "line": 22
+  },
+  "signature": {
+    "name": "OutgoingApprovalRow",
+    "kind": "component"
+  },
+  "structural_hash": "ad71b1aadd7a754125a01351ac8646c7d3e692de95ca9bd0a92a9dee8c794653",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/hooks/use-constants.ts::useConstants",
+      "via": "hook_call",
+      "where": "outgoing-row.tsx:29",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::approvalsApi.cancel",
+      "via": "hook_call",
+      "where": "outgoing-row.tsx:34",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
+      "via": "hook_call",
+      "where": "outgoing-row.tsx:47",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_inbox_outgoing_row_tsx__OutgoingApprovalRow.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

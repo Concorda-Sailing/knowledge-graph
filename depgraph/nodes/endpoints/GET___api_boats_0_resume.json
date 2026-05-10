@@ -1,0 +1,33 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/endpoints/GET___api_boats_0_resume.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/boats/{0}/resume",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "GET",
+    "path": "/api/boats/{boat_id}/resume",
+    "request_schema_ref": null,
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 914,
+    "path": "routers/boats.py",
+    "repo": "concorda-api",
+    "symbol": "get_boat_resume"
+  },
+  "structural_hash": "1298d4ecd319304f411fe1abaae1b19aff73d917bce6318eaf2bd2311cc3890d",
+  "tests": [],
+  "title": "GET /api/boats/{boat_id}/resume",
+  "warnings": [
+    {
+      "code": "weakly_typed_response",
+      "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
+      "where": "routers/boats.py:914"
+    }
+  ]
+}

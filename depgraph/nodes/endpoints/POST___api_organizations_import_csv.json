@@ -1,0 +1,40 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/organization.py::Organization",
+      "via": "db_query",
+      "where": "routers/organizations.py:154"
+    }
+  ],
+  "dossier": "dossiers/endpoints/POST___api_organizations_import_csv.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "POST::/api/organizations/import/csv",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "POST",
+    "path": "/api/organizations/import/csv",
+    "request_schema_ref": "UploadFile",
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 117,
+    "path": "routers/organizations.py",
+    "repo": "concorda-api",
+    "symbol": "import_organizations_csv"
+  },
+  "structural_hash": "b3169c0f1c1a4dc92d69dc734910c8d0817e79edb1b96e43bfb5d3bc28df06cb",
+  "tests": [],
+  "title": "POST /api/organizations/import/csv",
+  "warnings": [
+    {
+      "code": "weakly_typed_response",
+      "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
+      "where": "routers/organizations.py:117"
+    }
+  ]
+}

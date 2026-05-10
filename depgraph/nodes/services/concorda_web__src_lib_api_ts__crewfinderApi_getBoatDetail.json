@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::crewfinderApi.getBoatDetail",
+  "kind": "service",
+  "title": "crewfinderApi.getBoatDetail",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "crewfinderApi.getBoatDetail",
+    "line": 782
+  },
+  "signature": {
+    "name": "crewfinderApi.getBoatDetail",
+    "kind": "service"
+  },
+  "structural_hash": "ea9a4481a39a9ed6616b9e7f50c65e7a68ed940c44ec35106306e604b500939c",
+  "depends_on": [
+    {
+      "target": "GET::/api/crewfinder/detail/boat/{0}",
+      "via": "string_url",
+      "where": "api.ts:783",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__crewfinderApi_getBoatDetail.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

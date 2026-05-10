@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/admin/system-settings.spec.ts::test@26",
+  "kind": "test",
+  "title": "can edit and save org name",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/admin/system-settings.spec.ts",
+    "symbol": "test@26",
+    "line": 26
+  },
+  "signature": {
+    "name": "test@26",
+    "kind": "test"
+  },
+  "structural_hash": "b2c1d5443653ec08efa62f93f6b246b8fee1f9e1b431f8c41f00964ca42e0589",
+  "depends_on": [
+    {
+      "target": "concorda-test::pages/admin/system.page.ts::AdminSystemPage.gotoSystem",
+      "via": "hook_call",
+      "where": "system-settings.spec.ts:28",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_admin_system_settings_spec_ts__test_26.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/profile/page.tsx::ProfileRedirect",
+  "kind": "component",
+  "title": "ProfileRedirect",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/profile/page.tsx",
+    "symbol": "ProfileRedirect",
+    "line": 7
+  },
+  "signature": {
+    "name": "ProfileRedirect",
+    "kind": "component"
+  },
+  "structural_hash": "f0e44fd3fb499c6a7e11f4a71593c5dda47a1aedc33003b56bf4ef8b70b010eb",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_profile_page_tsx__ProfileRedirect.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

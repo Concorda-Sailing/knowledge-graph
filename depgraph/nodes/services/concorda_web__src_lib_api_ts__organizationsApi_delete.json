@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::organizationsApi.delete",
+  "kind": "service",
+  "title": "organizationsApi.delete",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "organizationsApi.delete",
+    "line": 670
+  },
+  "signature": {
+    "name": "organizationsApi.delete",
+    "kind": "service"
+  },
+  "structural_hash": "dc768661570e3f800019554509c72ca6211568c27c955846d427056cb71dfa56",
+  "depends_on": [
+    {
+      "target": "DELETE::/api/organizations/{0}",
+      "via": "string_url",
+      "where": "api.ts:671",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__organizationsApi_delete.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

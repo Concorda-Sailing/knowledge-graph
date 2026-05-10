@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::lib/api-client.ts::ApiClient.me",
+  "kind": "service",
+  "title": "ApiClient.me",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "lib/api-client.ts",
+    "symbol": "ApiClient.me",
+    "line": 159
+  },
+  "signature": {
+    "name": "ApiClient.me",
+    "kind": "service"
+  },
+  "structural_hash": "a44abe44cd91ebc177f1fdc16e1cf2abad680b438f234a7e73a1c96a4d4de393",
+  "depends_on": [
+    {
+      "target": "GET::/api/auth/me",
+      "via": "http_call",
+      "where": "api-client.ts:160",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__lib_api_client_ts__ApiClient_me.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

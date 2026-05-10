@@ -1,0 +1,46 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::schemas/boat.py::BoatCrewRead",
+      "via": "import",
+      "where": "routers/boats.py:376"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/boat_crew.py::BoatCrew",
+      "via": "db_query",
+      "where": "routers/boats.py:396"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/person.py::Person",
+      "via": "db_query",
+      "where": "routers/boats.py:397"
+    }
+  ],
+  "dossier": "dossiers/endpoints/PUT___api_boats_0_crew_reorder.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "PUT::/api/boats/{0}/crew/reorder",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "PUT",
+    "path": "/api/boats/{boat_id}/crew/reorder",
+    "request_schema_ref": "CrewReorderRequest",
+    "response_schema_ref": "list"
+  },
+  "source": {
+    "line": 377,
+    "path": "routers/boats.py",
+    "repo": "concorda-api",
+    "symbol": "reorder_crew"
+  },
+  "structural_hash": "094f06f988522a3305473b7b60011494c7201644fc22efc7995b965ad5f3423e",
+  "tests": [],
+  "title": "PUT /api/boats/{boat_id}/crew/reorder",
+  "warnings": []
+}

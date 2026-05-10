@@ -1,0 +1,34 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/event_discount.py::EventDiscount",
+      "via": "db_query",
+      "where": "routers/event_discounts.py:140"
+    }
+  ],
+  "dossier": "dossiers/endpoints/DELETE___api_events_0_discounts_1.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "DELETE::/api/events/{0}/discounts/{1}",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "DELETE",
+    "path": "/api/events/{event_id}/discounts/{discount_id}",
+    "request_schema_ref": null,
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 134,
+    "path": "routers/event_discounts.py",
+    "repo": "concorda-api",
+    "symbol": "delete_event_discount"
+  },
+  "structural_hash": "9b7ce6004499ecbece4397593f2ec81b1e1995420bb269b3ec6444d719fd2952",
+  "tests": [],
+  "title": "DELETE /api/events/{event_id}/discounts/{discount_id}",
+  "warnings": []
+}

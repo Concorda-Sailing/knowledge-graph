@@ -1,0 +1,25 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/services/concorda-api__utils_email_utils.py__render_event_crew_marked_response_email.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::utils/email_utils.py::render_event_crew_marked_response_email",
+  "kind": "service",
+  "schema_version": 1,
+  "signature": {
+    "args": [],
+    "kind": "service",
+    "name": "render_event_crew_marked_response_email"
+  },
+  "source": {
+    "line": 706,
+    "path": "utils/email_utils.py",
+    "repo": "concorda-api",
+    "symbol": "render_event_crew_marked_response_email"
+  },
+  "structural_hash": "a3583c2c0d82cd4eb9dba377416011cf4f1a61bfb2b907b4ddc1c1c0a0dd389e",
+  "tests": [],
+  "title": "render_event_crew_marked_response_email",
+  "warnings": []
+}

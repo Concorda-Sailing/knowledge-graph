@@ -1,0 +1,32 @@
+{
+  "_archived_at": "2026-05-09T11:23:39.011931Z",
+  "_archived_reason": "domain_orphan_symbol_removed",
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_person.py__DirectoryPrefs.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/person.py::DirectoryPrefs",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "opt_in",
+      "show_email",
+      "show_name",
+      "show_phone"
+    ],
+    "kind": "schema",
+    "name": "DirectoryPrefs"
+  },
+  "source": {
+    "line": 13,
+    "path": "schemas/person.py",
+    "repo": "concorda-api",
+    "symbol": "DirectoryPrefs"
+  },
+  "structural_hash": "32353720da54e7e0db2546f9330b235719ab7c41d9acf99e58e0b9300f4853de",
+  "tests": [],
+  "title": "DirectoryPrefs",
+  "warnings": []
+}

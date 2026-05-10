@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/admin/errors/page.tsx::ErrorLogPage",
+  "kind": "component",
+  "title": "ErrorLogPage",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/admin/errors/page.tsx",
+    "symbol": "ErrorLogPage",
+    "line": 38
+  },
+  "signature": {
+    "name": "ErrorLogPage",
+    "kind": "component"
+  },
+  "structural_hash": "2adc14a3a22262d0e0ceb341c1d70396ff10b0e24ea5bb2e709bb7d45d1bf703",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/api.ts::adminErrorLogApi.list",
+      "via": "hook_call",
+      "where": "page.tsx:49",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::adminErrorLogApi.get",
+      "via": "hook_call",
+      "where": "page.tsx:65",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_admin_errors_page_tsx__ErrorLogPage.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

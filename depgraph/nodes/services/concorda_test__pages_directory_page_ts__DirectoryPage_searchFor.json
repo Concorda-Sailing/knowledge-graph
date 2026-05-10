@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::pages/directory.page.ts::DirectoryPage.searchFor",
+  "kind": "service",
+  "title": "DirectoryPage.searchFor",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "pages/directory.page.ts",
+    "symbol": "DirectoryPage.searchFor",
+    "line": 49
+  },
+  "signature": {
+    "name": "DirectoryPage.searchFor",
+    "kind": "service"
+  },
+  "structural_hash": "a2f66769b36e72e978709b4bf5b7e49c8c6ff15e3c16465f3b5e77842ba3d84a",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__pages_directory_page_ts__DirectoryPage_searchFor.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::pages/admin/system.page.ts::AdminSystemPage.gotoSystem",
+  "kind": "service",
+  "title": "AdminSystemPage.gotoSystem",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "pages/admin/system.page.ts",
+    "symbol": "AdminSystemPage.gotoSystem",
+    "line": 46
+  },
+  "signature": {
+    "name": "AdminSystemPage.gotoSystem",
+    "kind": "service"
+  },
+  "structural_hash": "6280f4435899029296067e6143789943c3c487f2307c49570af78eff6c46aea0",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__pages_admin_system_page_ts__AdminSystemPage_gotoSystem.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

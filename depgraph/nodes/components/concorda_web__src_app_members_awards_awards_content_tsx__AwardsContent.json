@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/awards/awards-content.tsx::AwardsContent",
+  "kind": "component",
+  "title": "AwardsContent",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/awards/awards-content.tsx",
+    "symbol": "AwardsContent",
+    "line": 159
+  },
+  "signature": {
+    "name": "AwardsContent",
+    "kind": "component"
+  },
+  "structural_hash": "d507cc402d01b1ba7c605736aff82d2a160c67c31dca4d2653a1d938b9d46993",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/api.ts::regattaApi.list",
+      "via": "hook_call",
+      "where": "awards-content.tsx:165",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::seriesApi.list",
+      "via": "hook_call",
+      "where": "awards-content.tsx:166",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/content/awards-data.ts::CHAMPIONSHIPS.map",
+      "via": "hook_call",
+      "where": "awards-content.tsx:191",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_awards_awards_content_tsx__AwardsContent.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

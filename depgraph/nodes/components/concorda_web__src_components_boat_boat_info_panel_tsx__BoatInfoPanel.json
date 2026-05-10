@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/boat/boat-info-panel.tsx::BoatInfoPanel",
+  "kind": "component",
+  "title": "BoatInfoPanel",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/boat/boat-info-panel.tsx",
+    "symbol": "BoatInfoPanel",
+    "line": 19
+  },
+  "signature": {
+    "name": "BoatInfoPanel",
+    "kind": "component"
+  },
+  "structural_hash": "a1f0724aeb219ea2d603ea1a9ec8d184544a51d2f167fc7a4ac8358131346e9f",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/hooks/use-toast.ts::useToast",
+      "via": "hook_call",
+      "where": "boat-info-panel.tsx:20",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.updateBoat",
+      "via": "hook_call",
+      "where": "boat-info-panel.tsx:41",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_boat_boat_info_panel_tsx__BoatInfoPanel.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

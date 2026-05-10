@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/dashboard/boats-panel.spec.ts::test@35",
+  "kind": "test",
+  "title": "My Crew tab is visible to boat owner",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/dashboard/boats-panel.spec.ts",
+    "symbol": "test@35",
+    "line": 35
+  },
+  "signature": {
+    "name": "test@35",
+    "kind": "test"
+  },
+  "structural_hash": "752a8b72b0aa8259beb953f89d40d705820ea256d7eb805adb5eed1685e1b259",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_dashboard_boats_panel_spec_ts__test_35.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

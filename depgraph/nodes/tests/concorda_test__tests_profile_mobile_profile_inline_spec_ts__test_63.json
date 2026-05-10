@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/profile/mobile-profile-inline.spec.ts::test@63",
+  "kind": "test",
+  "title": "personal info save row is side-by-side on desktop",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/profile/mobile-profile-inline.spec.ts",
+    "symbol": "test@63",
+    "line": 63
+  },
+  "signature": {
+    "name": "test@63",
+    "kind": "test"
+  },
+  "structural_hash": "e3b70dc490292074b2740cd726ac1c66841ded195d7e5269a6de46a415116505",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_profile_mobile_profile_inline_spec_ts__test_63.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

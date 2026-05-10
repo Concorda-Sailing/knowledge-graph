@@ -1,0 +1,46 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::schemas/profile.py::BoatRead",
+      "via": "import",
+      "where": "routers/profile.py:457"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/boat_crew.py::BoatCrew",
+      "via": "db_query",
+      "where": "routers/profile.py:465"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/boat.py::Boat",
+      "via": "db_query",
+      "where": "routers/profile.py:464"
+    }
+  ],
+  "dossier": "dossiers/endpoints/GET___api_profile_boats.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/profile/boats",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "GET",
+    "path": "/api/profile/boats",
+    "request_schema_ref": null,
+    "response_schema_ref": "list"
+  },
+  "source": {
+    "line": 458,
+    "path": "routers/profile.py",
+    "repo": "concorda-api",
+    "symbol": "list_my_boats"
+  },
+  "structural_hash": "771e443a15de0706398187f0f0d7a06c34131f82aebbb32889573e73c1271150",
+  "tests": [],
+  "title": "GET /api/profile/boats",
+  "warnings": []
+}

@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/dashboard/crew-card/declined-section.tsx::DeclinedSection",
+  "kind": "component",
+  "title": "DeclinedSection",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/dashboard/crew-card/declined-section.tsx",
+    "symbol": "DeclinedSection",
+    "line": 13
+  },
+  "signature": {
+    "name": "DeclinedSection",
+    "kind": "component"
+  },
+  "structural_hash": "9390b6443eb59147eb4745990e797ae8700f741dfd4b1b0c831432bb9d461022",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/utils.ts::cn",
+      "via": "hook_call",
+      "where": "declined-section.tsx:28",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_dashboard_crew_card_declined_section_tsx__DeclinedSection.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

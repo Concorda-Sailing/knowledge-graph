@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/dashboard/profile-completion.tsx::getBoatMissing",
+  "kind": "service",
+  "title": "getBoatMissing",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/dashboard/profile-completion.tsx",
+    "symbol": "getBoatMissing",
+    "line": 192
+  },
+  "signature": {
+    "name": "getBoatMissing",
+    "kind": "service"
+  },
+  "structural_hash": "ae66ff79a68a2b3dc7bbac90f3e04d49409a299eca7ca97dc51f9df90252a2ac",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_components_dashboard_profile_completion_tsx__getBoatMissing.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

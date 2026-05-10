@@ -1,0 +1,52 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/event.py::Event",
+      "via": "db_query",
+      "where": "routers/events.py:2962"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/event_crew.py::EventCrew",
+      "via": "db_query",
+      "where": "routers/events.py:2998"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/event_relationship.py::EventRelationship",
+      "via": "db_query",
+      "where": "routers/events.py:2967"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/sailing_event.py::SailingEvent",
+      "via": "db_query",
+      "where": "routers/events.py:2979"
+    }
+  ],
+  "dossier": "dossiers/endpoints/GET___api_events_0_sailing-event_crew-suggest.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/events/{0}/sailing-event/crew-suggest",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "GET",
+    "path": "/api/events/{event_id}/sailing-event/crew-suggest",
+    "request_schema_ref": null,
+    "response_schema_ref": "list"
+  },
+  "source": {
+    "line": 2954,
+    "path": "routers/events.py",
+    "repo": "concorda-api",
+    "symbol": "suggest_crew_pool"
+  },
+  "structural_hash": "52b98920b2108dfd1c4d5b1173271a6b92c40c45ea9de126a97a053702e24f70",
+  "tests": [],
+  "title": "GET /api/events/{event_id}/sailing-event/crew-suggest",
+  "warnings": []
+}

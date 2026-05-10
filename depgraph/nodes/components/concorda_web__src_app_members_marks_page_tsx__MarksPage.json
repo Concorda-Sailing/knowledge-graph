@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/marks/page.tsx::MarksPage",
+  "kind": "component",
+  "title": "MarksPage",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/marks/page.tsx",
+    "symbol": "MarksPage",
+    "line": 6
+  },
+  "signature": {
+    "name": "MarksPage",
+    "kind": "component"
+  },
+  "structural_hash": "aea5329ce8e169d2766d49c32ddb16832e52a5690e6ea9ded12cd7fb5801a0f1",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/content.ts::stripLeadingH1",
+      "via": "hook_call",
+      "where": "page.tsx:14",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/content.ts::readContent",
+      "via": "hook_call",
+      "where": "page.tsx:14",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_marks_page_tsx__MarksPage.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

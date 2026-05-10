@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/boats/mobile-boat-resume.spec.ts::goToFirstOwnedBoat",
+  "kind": "service",
+  "title": "goToFirstOwnedBoat",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/boats/mobile-boat-resume.spec.ts",
+    "symbol": "goToFirstOwnedBoat",
+    "line": 3
+  },
+  "signature": {
+    "name": "goToFirstOwnedBoat",
+    "kind": "service"
+  },
+  "structural_hash": "5862447b98e549b63f554533a35eba6b1bea4d01e0c6297c47095b1ea5dfd36c",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__tests_boats_mobile_boat_resume_spec_ts__goToFirstOwnedBoat.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

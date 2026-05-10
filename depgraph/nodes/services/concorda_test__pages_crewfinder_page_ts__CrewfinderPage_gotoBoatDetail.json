@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::pages/crewfinder.page.ts::CrewfinderPage.gotoBoatDetail",
+  "kind": "service",
+  "title": "CrewfinderPage.gotoBoatDetail",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "pages/crewfinder.page.ts",
+    "symbol": "CrewfinderPage.gotoBoatDetail",
+    "line": 56
+  },
+  "signature": {
+    "name": "CrewfinderPage.gotoBoatDetail",
+    "kind": "service"
+  },
+  "structural_hash": "3ef67807f0f4c1f39525fe9c329c7f19909ab979a7cf96f1dfc85e570a63d5ed",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__pages_crewfinder_page_ts__CrewfinderPage_gotoBoatDetail.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

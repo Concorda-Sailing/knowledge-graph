@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/events/browse-events.spec.ts::test@50",
+  "kind": "test",
+  "title": "can navigate to event detail page",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/events/browse-events.spec.ts",
+    "symbol": "test@50",
+    "line": 50
+  },
+  "signature": {
+    "name": "test@50",
+    "kind": "test"
+  },
+  "structural_hash": "3f8d5afdc84590d907331ef56749ed3313b9a8c08395aecd13029f755dfb0b84",
+  "depends_on": [
+    {
+      "target": "concorda-test::pages/events.page.ts::EventsPage.gotoEvent",
+      "via": "hook_call",
+      "where": "browse-events.spec.ts:52",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_events_browse_events_spec_ts__test_50.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

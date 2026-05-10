@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::adminProductsApi.delete",
+  "kind": "service",
+  "title": "adminProductsApi.delete",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "adminProductsApi.delete",
+    "line": 2467
+  },
+  "signature": {
+    "name": "adminProductsApi.delete",
+    "kind": "service"
+  },
+  "structural_hash": "23ffaa0380d33d0b1477178582b655fef172218d9b2cd6d3d7338ce16981dbe0",
+  "depends_on": [
+    {
+      "target": "DELETE::/api/products/{0}",
+      "via": "string_url",
+      "where": "api.ts:2468",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__adminProductsApi_delete.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

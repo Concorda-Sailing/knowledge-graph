@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/dashboard/mobile-dashboard.spec.ts::test@25",
+  "kind": "test",
+  "title": "pending invite banner renders above first upcoming event",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/dashboard/mobile-dashboard.spec.ts",
+    "symbol": "test@25",
+    "line": 25
+  },
+  "signature": {
+    "name": "test@25",
+    "kind": "test"
+  },
+  "structural_hash": "281cde5643f449421639a4b6d9c61ff94836b4580739ded437973c3b0e91c5c5",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_dashboard_mobile_dashboard_spec_ts__test_25.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/admin/payment/page.tsx::AdminPaymentPage",
+  "kind": "component",
+  "title": "AdminPaymentPage",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/admin/payment/page.tsx",
+    "symbol": "AdminPaymentPage",
+    "line": 14
+  },
+  "signature": {
+    "name": "AdminPaymentPage",
+    "kind": "component"
+  },
+  "structural_hash": "3d7e6148a0357dea63ec9179669bf5e99caa47d49e3a45ea03ed1ed7c6538ec8",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/api.ts::adminPaymentConfigApi.get",
+      "via": "hook_call",
+      "where": "page.tsx:27",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::adminPaymentConfigApi.update",
+      "via": "hook_call",
+      "where": "page.tsx:40",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_admin_payment_page_tsx__AdminPaymentPage.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

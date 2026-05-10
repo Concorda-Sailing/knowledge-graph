@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/boats/coowner-inbox.spec.ts::ensureNotCoowner",
+  "kind": "service",
+  "title": "ensureNotCoowner",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/boats/coowner-inbox.spec.ts",
+    "symbol": "ensureNotCoowner",
+    "line": 27
+  },
+  "signature": {
+    "name": "ensureNotCoowner",
+    "kind": "service"
+  },
+  "structural_hash": "968fd15cc220e836a430ad0317be82de6c98b7af9c46a40a4e7106153ab7a582",
+  "depends_on": [
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.me",
+      "via": "hook_call",
+      "where": "coowner-inbox.spec.ts:28",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.getBoatCrew",
+      "via": "hook_call",
+      "where": "coowner-inbox.spec.ts:29",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.removeCrewMember",
+      "via": "hook_call",
+      "where": "coowner-inbox.spec.ts:32",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__tests_boats_coowner_inbox_spec_ts__ensureNotCoowner.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

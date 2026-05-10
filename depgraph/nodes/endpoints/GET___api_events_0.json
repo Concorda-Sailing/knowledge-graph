@@ -1,0 +1,40 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::schemas/event.py::EventReadWithRegatta",
+      "via": "import",
+      "where": "routers/events.py:972"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/event.py::Event",
+      "via": "db_query",
+      "where": "routers/events.py:974"
+    }
+  ],
+  "dossier": "dossiers/endpoints/GET___api_events_0.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/events/{0}",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "GET",
+    "path": "/api/events/{event_id}",
+    "request_schema_ref": null,
+    "response_schema_ref": "EventReadWithRegatta"
+  },
+  "source": {
+    "line": 973,
+    "path": "routers/events.py",
+    "repo": "concorda-api",
+    "symbol": "get_event"
+  },
+  "structural_hash": "ae139b2c618a16cc66ab28b34c9f52cbf744ceb2a024fa1b253b8a37b8268836",
+  "tests": [],
+  "title": "GET /api/events/{event_id}",
+  "warnings": []
+}

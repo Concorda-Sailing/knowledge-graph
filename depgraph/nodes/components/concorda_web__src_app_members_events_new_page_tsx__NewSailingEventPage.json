@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/events/new/page.tsx::NewSailingEventPage",
+  "kind": "component",
+  "title": "NewSailingEventPage",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/events/new/page.tsx",
+    "symbol": "NewSailingEventPage",
+    "line": 32
+  },
+  "signature": {
+    "name": "NewSailingEventPage",
+    "kind": "component"
+  },
+  "structural_hash": "811b925f174c890323b4d5846be4aef2207fddce1297bc26b24fc485f903e47d",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/hooks/use-toast.ts::useToast",
+      "via": "hook_call",
+      "where": "page.tsx:34",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/hooks/use-constants.ts::useConstants",
+      "via": "hook_call",
+      "where": "page.tsx:35",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.getBoats",
+      "via": "hook_call",
+      "where": "page.tsx:51",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::orgInputToUtcIso",
+      "via": "hook_call",
+      "where": "page.tsx:61",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::orgInputToUtcIso",
+      "via": "hook_call",
+      "where": "page.tsx:63",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.createCustom",
+      "via": "hook_call",
+      "where": "page.tsx:65",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_events_new_page_tsx__NewSailingEventPage.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

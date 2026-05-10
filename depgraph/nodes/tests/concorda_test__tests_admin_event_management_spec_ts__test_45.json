@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/admin/event-management.spec.ts::test@45",
+  "kind": "test",
+  "title": "add event button navigates to form",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/admin/event-management.spec.ts",
+    "symbol": "test@45",
+    "line": 45
+  },
+  "signature": {
+    "name": "test@45",
+    "kind": "test"
+  },
+  "structural_hash": "8dbf551fcb400eb6a83a4b8daed49710602e395eeb3d71151da1a805d139d0bb",
+  "depends_on": [
+    {
+      "target": "concorda-test::pages/admin/events.page.ts::AdminEventsPage.gotoSocials",
+      "via": "hook_call",
+      "where": "event-management.spec.ts:47",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_admin_event_management_spec_ts__test_45.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

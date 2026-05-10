@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::profileApi.updateBoatResume",
+  "kind": "service",
+  "title": "profileApi.updateBoatResume",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "profileApi.updateBoatResume",
+    "line": 1344
+  },
+  "signature": {
+    "name": "profileApi.updateBoatResume",
+    "kind": "service"
+  },
+  "structural_hash": "85d617e42b91eb4cbe00af291f44814fec3ac728697f97a951cfcbf38ff19b24",
+  "depends_on": [
+    {
+      "target": "PUT::/api/profile/boats/{0}/resume",
+      "via": "string_url",
+      "where": "api.ts:1345",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__profileApi_updateBoatResume.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

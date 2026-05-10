@@ -1,0 +1,30 @@
+{
+  "_archived_at": "2026-05-09T11:23:39.012104Z",
+  "_archived_reason": "domain_orphan_symbol_removed",
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_event_crew.py__EventCrewMarkResponse.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/event_crew.py::EventCrewMarkResponse",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "action",
+      "person_uuid"
+    ],
+    "kind": "schema",
+    "name": "EventCrewMarkResponse"
+  },
+  "source": {
+    "line": 57,
+    "path": "schemas/event_crew.py",
+    "repo": "concorda-api",
+    "symbol": "EventCrewMarkResponse"
+  },
+  "structural_hash": "e3c3b903d376ede1f9c527da476cc50b9728eb075f63f81a691518e2a98f0bc4",
+  "tests": [],
+  "title": "EventCrewMarkResponse",
+  "warnings": []
+}

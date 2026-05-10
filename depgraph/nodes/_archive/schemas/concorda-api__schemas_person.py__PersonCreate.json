@@ -1,0 +1,42 @@
+{
+  "_archived_at": "2026-05-09T11:23:39.013095Z",
+  "_archived_reason": "domain_orphan_symbol_removed",
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_person.py__PersonCreate.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/person.py::PersonCreate",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "additional_email",
+      "additional_phone",
+      "email",
+      "first_name",
+      "last_name",
+      "mailing_address",
+      "member_category",
+      "organization_ids",
+      "phone_number",
+      "picture_url",
+      "preferences",
+      "shirt_size",
+      "shorts_inseam",
+      "shorts_waist"
+    ],
+    "kind": "schema",
+    "name": "PersonCreate"
+  },
+  "source": {
+    "line": 59,
+    "path": "schemas/person.py",
+    "repo": "concorda-api",
+    "symbol": "PersonCreate"
+  },
+  "structural_hash": "06a4385d0a2b0bdfa2872e38df9b9c4741a692edc5c0fdfb8b55dba4c39af6fd",
+  "tests": [],
+  "title": "PersonCreate",
+  "warnings": []
+}

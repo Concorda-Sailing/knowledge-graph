@@ -1,0 +1,34 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/event.py::Event",
+      "via": "db_query",
+      "where": "routers/events.py:1147"
+    }
+  ],
+  "dossier": "dossiers/endpoints/DELETE___api_events_0.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "DELETE::/api/events/{0}",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "DELETE",
+    "path": "/api/events/{event_id}",
+    "request_schema_ref": null,
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 1142,
+    "path": "routers/events.py",
+    "repo": "concorda-api",
+    "symbol": "delete_event"
+  },
+  "structural_hash": "274a95513ec4101a35118dcc9be9d3c557f9c4fde3a36260fa76732cd3feb98b",
+  "tests": [],
+  "title": "DELETE /api/events/{event_id}",
+  "warnings": []
+}

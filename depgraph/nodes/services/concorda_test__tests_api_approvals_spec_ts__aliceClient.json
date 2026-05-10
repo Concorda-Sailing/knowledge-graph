@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/api/approvals.spec.ts::aliceClient",
+  "kind": "service",
+  "title": "aliceClient",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/api/approvals.spec.ts",
+    "symbol": "aliceClient",
+    "line": 26
+  },
+  "signature": {
+    "name": "aliceClient",
+    "kind": "service"
+  },
+  "structural_hash": "4ee129b3233dc915bf0175fd644862347db0d6f7402127b63a66267d64a942ec",
+  "depends_on": [
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.login",
+      "via": "hook_call",
+      "where": "approvals.spec.ts:28",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__tests_api_approvals_spec_ts__aliceClient.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

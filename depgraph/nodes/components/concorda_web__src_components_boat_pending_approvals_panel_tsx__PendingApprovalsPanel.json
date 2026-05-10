@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/boat/pending-approvals-panel.tsx::PendingApprovalsPanel",
+  "kind": "component",
+  "title": "PendingApprovalsPanel",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/boat/pending-approvals-panel.tsx",
+    "symbol": "PendingApprovalsPanel",
+    "line": 8
+  },
+  "signature": {
+    "name": "PendingApprovalsPanel",
+    "kind": "component"
+  },
+  "structural_hash": "17691910b59012e2bd2f33d6c1c120c2974ddb8126b59d937b506fe89f908c64",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/api.ts::approvalsApi.list",
+      "via": "hook_call",
+      "where": "pending-approvals-panel.tsx:13",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_boat_pending_approvals_panel_tsx__PendingApprovalsPanel.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

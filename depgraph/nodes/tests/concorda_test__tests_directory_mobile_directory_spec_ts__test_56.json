@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/directory/mobile-directory.spec.ts::test@56",
+  "kind": "test",
+  "title": "view toggle visible on desktop",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/directory/mobile-directory.spec.ts",
+    "symbol": "test@56",
+    "line": 56
+  },
+  "signature": {
+    "name": "test@56",
+    "kind": "test"
+  },
+  "structural_hash": "ef6390eddeba537b0ba49875c4ce4dada99ba63c612d277c14cb1f662f413737",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_directory_mobile_directory_spec_ts__test_56.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::pages/invite-landing.page.ts::InviteLandingPage.expectErrorView",
+  "kind": "service",
+  "title": "InviteLandingPage.expectErrorView",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "pages/invite-landing.page.ts",
+    "symbol": "InviteLandingPage.expectErrorView",
+    "line": 50
+  },
+  "signature": {
+    "name": "InviteLandingPage.expectErrorView",
+    "kind": "service"
+  },
+  "structural_hash": "46215fc099effbd91491cc32af4310ed52fd7805ed79953bb87dec7a19139610",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__pages_invite_landing_page_ts__InviteLandingPage_expectErrorView.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

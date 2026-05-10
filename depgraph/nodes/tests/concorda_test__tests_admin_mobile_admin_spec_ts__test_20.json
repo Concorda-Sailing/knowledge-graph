@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/admin/mobile-admin.spec.ts::test@20",
+  "kind": "test",
+  "title": "admin dialog fits within viewport when opened",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/admin/mobile-admin.spec.ts",
+    "symbol": "test@20",
+    "line": 20
+  },
+  "signature": {
+    "name": "test@20",
+    "kind": "test"
+  },
+  "structural_hash": "0e3660fb9984812775fc09071ce826a224b9a214b7377629538b63f068e3c092",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_admin_mobile_admin_spec_ts__test_20.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

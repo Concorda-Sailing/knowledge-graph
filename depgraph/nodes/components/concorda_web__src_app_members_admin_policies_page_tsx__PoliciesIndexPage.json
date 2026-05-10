@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/admin/policies/page.tsx::PoliciesIndexPage",
+  "kind": "component",
+  "title": "PoliciesIndexPage",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/admin/policies/page.tsx",
+    "symbol": "PoliciesIndexPage",
+    "line": 29
+  },
+  "signature": {
+    "name": "PoliciesIndexPage",
+    "kind": "component"
+  },
+  "structural_hash": "08f5cd929445286c9b8b3be5023ecf275a0d1af8d624c854425efeaa26cb2379",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/api.ts::adminPoliciesApi.listVersions",
+      "via": "hook_call",
+      "where": "page.tsx:39",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_admin_policies_page_tsx__PoliciesIndexPage.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

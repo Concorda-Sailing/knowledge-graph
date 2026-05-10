@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::eventsApi.registerAuthenticated",
+  "kind": "service",
+  "title": "eventsApi.registerAuthenticated",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "eventsApi.registerAuthenticated",
+    "line": 412
+  },
+  "signature": {
+    "name": "eventsApi.registerAuthenticated",
+    "kind": "service"
+  },
+  "structural_hash": "d1bfb052f315f28d356ed89bf5a11bd316901beedf033ba9500b5cb9513bebe0",
+  "depends_on": [
+    {
+      "target": "POST::/api/events/slug/{0}/register",
+      "via": "string_url",
+      "where": "api.ts:413",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__eventsApi_registerAuthenticated.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

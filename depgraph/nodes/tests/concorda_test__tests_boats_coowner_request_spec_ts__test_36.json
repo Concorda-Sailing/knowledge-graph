@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/boats/coowner-request.spec.ts::test@36",
+  "kind": "test",
+  "title": "authenticated user can request co-owner status from profile add-boat",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/boats/coowner-request.spec.ts",
+    "symbol": "test@36",
+    "line": 36
+  },
+  "signature": {
+    "name": "test@36",
+    "kind": "test"
+  },
+  "structural_hash": "3925994b616c4c84fe25f05d3ec4e9a7bb0a7f7566c162883de7c612d504780c",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_boats_coowner_request_spec_ts__test_36.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

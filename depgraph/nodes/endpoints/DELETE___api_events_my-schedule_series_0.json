@@ -1,0 +1,40 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/person_event.py::PersonEvent",
+      "via": "db_query",
+      "where": "routers/events.py:895"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/event.py::Event",
+      "via": "db_query",
+      "where": "routers/events.py:885"
+    }
+  ],
+  "dossier": "dossiers/endpoints/DELETE___api_events_my-schedule_series_0.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "DELETE::/api/events/my-schedule/series/{0}",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "DELETE",
+    "path": "/api/events/my-schedule/series/{series_uuid}",
+    "request_schema_ref": null,
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 871,
+    "path": "routers/events.py",
+    "repo": "concorda-api",
+    "symbol": "remove_series_from_schedule"
+  },
+  "structural_hash": "1a2fb1e4288ee309eab686da8b7f68207aaa78697bbfb3ce8b08f9e0869f0d36",
+  "tests": [],
+  "title": "DELETE /api/events/my-schedule/series/{series_uuid}",
+  "warnings": []
+}

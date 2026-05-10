@@ -1,0 +1,34 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/payment_config.py::PaymentConfig",
+      "via": "db_query",
+      "where": "routers/admin.py:875"
+    }
+  ],
+  "dossier": "dossiers/endpoints/GET___api_admin_payment-config.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/admin/payment-config",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "GET",
+    "path": "/api/admin/payment-config",
+    "request_schema_ref": null,
+    "response_schema_ref": "PaymentConfigResponse"
+  },
+  "source": {
+    "line": 869,
+    "path": "routers/admin.py",
+    "repo": "concorda-api",
+    "symbol": "get_payment_config"
+  },
+  "structural_hash": "2141c04db8a0ca62afbf75f81245b810b06a2cd1ea9accc8d79368b693d6f49e",
+  "tests": [],
+  "title": "GET /api/admin/payment-config",
+  "warnings": []
+}

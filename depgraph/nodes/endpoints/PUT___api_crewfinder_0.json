@@ -1,0 +1,46 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::schemas/sailing_resume.py::SailingResumeCreate",
+      "via": "import",
+      "where": "routers/crewfinder.py:452"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::schemas/sailing_resume.py::SailingResumeRead",
+      "via": "import",
+      "where": "routers/crewfinder.py:449"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/sailing_resume.py::SailingResume",
+      "via": "db_query",
+      "where": "routers/crewfinder.py:456"
+    }
+  ],
+  "dossier": "dossiers/endpoints/PUT___api_crewfinder_0.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "PUT::/api/crewfinder/{0}",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "PUT",
+    "path": "/api/crewfinder/{resume_id}",
+    "request_schema_ref": "SailingResumeCreate",
+    "response_schema_ref": "SailingResumeRead"
+  },
+  "source": {
+    "line": 450,
+    "path": "routers/crewfinder.py",
+    "repo": "concorda-api",
+    "symbol": "update_sailing_resume"
+  },
+  "structural_hash": "daa0d3ec6b48a49af750174c78e3b726e0400e3434a36aeddc95cc2a15f76de4",
+  "tests": [],
+  "title": "PUT /api/crewfinder/{resume_id}",
+  "warnings": []
+}

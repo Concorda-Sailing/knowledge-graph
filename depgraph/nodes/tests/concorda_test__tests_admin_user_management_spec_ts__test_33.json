@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/admin/user-management.spec.ts::test@33",
+  "kind": "test",
+  "title": "add user button opens dialog",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/admin/user-management.spec.ts",
+    "symbol": "test@33",
+    "line": 33
+  },
+  "signature": {
+    "name": "test@33",
+    "kind": "test"
+  },
+  "structural_hash": "f47a06beefd3e8df186d6ae47b7b3c85dfe444713f91a58e054cd427969d6bc8",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_admin_user_management_spec_ts__test_33.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

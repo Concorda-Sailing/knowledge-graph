@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::lib/api-client.ts::ApiClient.getBoatCrew",
+  "kind": "service",
+  "title": "ApiClient.getBoatCrew",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "lib/api-client.ts",
+    "symbol": "ApiClient.getBoatCrew",
+    "line": 402
+  },
+  "signature": {
+    "name": "ApiClient.getBoatCrew",
+    "kind": "service"
+  },
+  "structural_hash": "ef20e1dc0d844691fe51cfe5985f63baa24c17e84cb06df4c75b7695cc1e1be8",
+  "depends_on": [
+    {
+      "target": "GET::/api/boats/{0}/crew",
+      "via": "string_url",
+      "where": "api-client.ts:405",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__lib_api_client_ts__ApiClient_getBoatCrew.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

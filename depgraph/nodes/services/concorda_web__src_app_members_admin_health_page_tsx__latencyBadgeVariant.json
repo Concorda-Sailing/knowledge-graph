@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/admin/health/page.tsx::latencyBadgeVariant",
+  "kind": "service",
+  "title": "latencyBadgeVariant",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/admin/health/page.tsx",
+    "symbol": "latencyBadgeVariant",
+    "line": 41
+  },
+  "signature": {
+    "name": "latencyBadgeVariant",
+    "kind": "service"
+  },
+  "structural_hash": "7c79f42c8500ea92e2382aa176c4320f427d52cf8f89e6b74de42fcdcb14ab8b",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_app_members_admin_health_page_tsx__latencyBadgeVariant.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

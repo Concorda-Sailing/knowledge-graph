@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/profile/sailing-resume-presentation.tsx::SailingResumePresentation",
+  "kind": "component",
+  "title": "SailingResumePresentation",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/profile/sailing-resume-presentation.tsx",
+    "symbol": "SailingResumePresentation",
+    "line": 83
+  },
+  "signature": {
+    "name": "SailingResumePresentation",
+    "kind": "component"
+  },
+  "structural_hash": "2fc1cfd605862f76e1037862ee155d92c5c762e2d50277d7faa448c83180b26d",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/hooks/use-constants.ts::useConstants",
+      "via": "hook_call",
+      "where": "sailing-resume-presentation.tsx:84",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_profile_sailing_resume_presentation_tsx__SailingResumePresentation.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

@@ -1,0 +1,34 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/series.py::Series",
+      "via": "db_query",
+      "where": "routers/series.py:304"
+    }
+  ],
+  "dossier": "dossiers/endpoints/DELETE___api_series_0.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "DELETE::/api/series/{0}",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "DELETE",
+    "path": "/api/series/{series_id}",
+    "request_schema_ref": null,
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 299,
+    "path": "routers/series.py",
+    "repo": "concorda-api",
+    "symbol": "delete_series"
+  },
+  "structural_hash": "c18208253fa19676bed6f29116344a461eb21e743e26a9fdbd0b5c2c92b64efe",
+  "tests": [],
+  "title": "DELETE /api/series/{series_id}",
+  "warnings": []
+}

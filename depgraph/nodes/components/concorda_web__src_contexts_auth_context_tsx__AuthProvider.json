@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/contexts/auth-context.tsx::AuthProvider",
+  "kind": "component",
+  "title": "AuthProvider",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/contexts/auth-context.tsx",
+    "symbol": "AuthProvider",
+    "line": 45
+  },
+  "signature": {
+    "name": "AuthProvider",
+    "kind": "component"
+  },
+  "structural_hash": "badb8f3bdee0965975cc75f3218a74178d0641ecc0a4c63d2a6a028e7c3eb072",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/api.ts::getAuthToken",
+      "via": "hook_call",
+      "where": "auth-context.tsx:60",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::authApi.me",
+      "via": "hook_call",
+      "where": "auth-context.tsx:68",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::checkApiHealth",
+      "via": "hook_call",
+      "where": "auth-context.tsx:102",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::checkApiHealth",
+      "via": "hook_call",
+      "where": "auth-context.tsx:119",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::authApi.login",
+      "via": "hook_call",
+      "where": "auth-context.tsx:164",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::authApi.logout",
+      "via": "hook_call",
+      "where": "auth-context.tsx:173",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_contexts_auth_context_tsx__AuthProvider.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/hooks/use-mobile.tsx::useIsMobile",
+  "kind": "hook",
+  "title": "useIsMobile",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/hooks/use-mobile.tsx",
+    "symbol": "useIsMobile",
+    "line": 5
+  },
+  "signature": {
+    "name": "useIsMobile",
+    "kind": "hook"
+  },
+  "structural_hash": "8ae1bd66b21ef7b7a2ebba21233eb8c420f0f9e1bdde424ce668fcabde0be1c8",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/hooks/concorda_web__src_hooks_use_mobile_tsx__useIsMobile.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

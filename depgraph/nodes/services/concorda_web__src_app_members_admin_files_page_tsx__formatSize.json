@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/admin/files/page.tsx::formatSize",
+  "kind": "service",
+  "title": "formatSize",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/admin/files/page.tsx",
+    "symbol": "formatSize",
+    "line": 50
+  },
+  "signature": {
+    "name": "formatSize",
+    "kind": "service"
+  },
+  "structural_hash": "c1e0964dc89f77e74efb7d3423c5c8ec6ad60d3a0f4930eda1d83ac0b4579ecc",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_app_members_admin_files_page_tsx__formatSize.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

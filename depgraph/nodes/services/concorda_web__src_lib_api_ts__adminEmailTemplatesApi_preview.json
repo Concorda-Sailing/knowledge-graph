@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::adminEmailTemplatesApi.preview",
+  "kind": "service",
+  "title": "adminEmailTemplatesApi.preview",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "adminEmailTemplatesApi.preview",
+    "line": 981
+  },
+  "signature": {
+    "name": "adminEmailTemplatesApi.preview",
+    "kind": "service"
+  },
+  "structural_hash": "873e9628530870dc6165468a6d8a37a23f1505497fcdb15e47b0e2f7bb1ac9fb",
+  "depends_on": [
+    {
+      "target": "POST::/api/admin/email-templates/{0}/preview",
+      "via": "string_url",
+      "where": "api.ts:982",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__adminEmailTemplatesApi_preview.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

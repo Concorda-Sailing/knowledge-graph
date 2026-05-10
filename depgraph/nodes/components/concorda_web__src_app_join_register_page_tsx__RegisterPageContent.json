@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/join/register/page.tsx::RegisterPageContent",
+  "kind": "component",
+  "title": "RegisterPageContent",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/join/register/page.tsx",
+    "symbol": "RegisterPageContent",
+    "line": 63
+  },
+  "signature": {
+    "name": "RegisterPageContent",
+    "kind": "component"
+  },
+  "structural_hash": "6ca582108b699cb66eb95728f2ee24aa56ea073190345ea3fd3e38642588fab6",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/hooks/use-constants.ts::useConstants",
+      "via": "hook_call",
+      "where": "page.tsx:68",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::paymentsApi.getConfig",
+      "via": "hook_call",
+      "where": "page.tsx:122",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::temporalProductsApi.getAvailable",
+      "via": "hook_call",
+      "where": "page.tsx:141",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::policiesApi.listActive",
+      "via": "hook_call",
+      "where": "page.tsx:152",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::inviteApi.getInvite",
+      "via": "hook_call",
+      "where": "page.tsx:174",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::paymentsApi.createIntent",
+      "via": "hook_call",
+      "where": "page.tsx:214",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::authApi.checkEmail",
+      "via": "hook_call",
+      "where": "page.tsx:292",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::authApi.register",
+      "via": "hook_call",
+      "where": "page.tsx:347",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/utils.ts::formatPhoneInput",
+      "via": "hook_call",
+      "where": "page.tsx:597",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_join_register_page_tsx__RegisterPageContent.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

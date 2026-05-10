@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/dashboard/schedule-tab.tsx::InvitationsBanner",
+  "kind": "component",
+  "title": "InvitationsBanner",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/dashboard/schedule-tab.tsx",
+    "symbol": "InvitationsBanner",
+    "line": 128
+  },
+  "signature": {
+    "name": "InvitationsBanner",
+    "kind": "component"
+  },
+  "structural_hash": "32388c8e3a527030622a6fb720f844bc03bd47fb9fcccec78cdc1bc326e1644b",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
+      "via": "hook_call",
+      "where": "schedule-tab.tsx:147",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_dashboard_schedule_tab_tsx__InvitationsBanner.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

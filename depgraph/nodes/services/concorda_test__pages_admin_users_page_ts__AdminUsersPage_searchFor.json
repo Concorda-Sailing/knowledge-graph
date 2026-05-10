@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::pages/admin/users.page.ts::AdminUsersPage.searchFor",
+  "kind": "service",
+  "title": "AdminUsersPage.searchFor",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "pages/admin/users.page.ts",
+    "symbol": "AdminUsersPage.searchFor",
+    "line": 68
+  },
+  "signature": {
+    "name": "AdminUsersPage.searchFor",
+    "kind": "service"
+  },
+  "structural_hash": "26e3915ec56edbddd6f9a955b9f7c6db11f587d469d315faa542a9fb2940b076",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__pages_admin_users_page_ts__AdminUsersPage_searchFor.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

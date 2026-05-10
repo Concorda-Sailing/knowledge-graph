@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/boat/boat-diagram.tsx::BoatDiagram",
+  "kind": "component",
+  "title": "BoatDiagram",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/boat/boat-diagram.tsx",
+    "symbol": "BoatDiagram",
+    "line": 40
+  },
+  "signature": {
+    "name": "BoatDiagram",
+    "kind": "component"
+  },
+  "structural_hash": "a6f9c3943a1ba57cb6b6c18b0f22ff897e2bd9c83d23c7e062bf218e036d0fd1",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_boat_boat_diagram_tsx__BoatDiagram.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

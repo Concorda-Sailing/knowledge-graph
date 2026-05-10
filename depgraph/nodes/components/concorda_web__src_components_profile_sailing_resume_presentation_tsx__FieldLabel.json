@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/profile/sailing-resume-presentation.tsx::FieldLabel",
+  "kind": "component",
+  "title": "FieldLabel",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/profile/sailing-resume-presentation.tsx",
+    "symbol": "FieldLabel",
+    "line": 43
+  },
+  "signature": {
+    "name": "FieldLabel",
+    "kind": "component"
+  },
+  "structural_hash": "1ba508c1277b02618c06a2a1575de3660a3d3a585b650f7ca1190193f89f8113",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_profile_sailing_resume_presentation_tsx__FieldLabel.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

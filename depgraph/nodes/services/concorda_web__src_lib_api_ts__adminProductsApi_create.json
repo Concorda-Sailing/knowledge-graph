@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::adminProductsApi.create",
+  "kind": "service",
+  "title": "adminProductsApi.create",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "adminProductsApi.create",
+    "line": 2457
+  },
+  "signature": {
+    "name": "adminProductsApi.create",
+    "kind": "service"
+  },
+  "structural_hash": "87fb731ec6efa911db21e9bfc19da83e261948ec78cbcca400b72d2b19f255a0",
+  "depends_on": [
+    {
+      "target": "POST::/api/products",
+      "via": "http_call",
+      "where": "api.ts:2458",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__adminProductsApi_create.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

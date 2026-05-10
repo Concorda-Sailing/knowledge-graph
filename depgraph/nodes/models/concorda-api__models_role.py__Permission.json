@@ -1,0 +1,25 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/models/concorda-api__models_role.py__Permission.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::models/role.py::Permission",
+  "kind": "model",
+  "schema_version": 1,
+  "signature": {
+    "kind": "model",
+    "name": "Permission",
+    "tablename": "permissions"
+  },
+  "source": {
+    "line": 36,
+    "path": "models/role.py",
+    "repo": "concorda-api",
+    "symbol": "Permission"
+  },
+  "structural_hash": "b3b7de812d6383704f4a6c51fd11d44c6173aceb0b5a407558dc065e9c15c8ea",
+  "tests": [],
+  "title": "Permission",
+  "warnings": []
+}

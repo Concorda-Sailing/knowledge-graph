@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/admin/deactivate-reactivate.spec.ts::test@14",
+  "kind": "test",
+  "title": "admin can deactivate and reactivate a member; login follows",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/admin/deactivate-reactivate.spec.ts",
+    "symbol": "test@14",
+    "line": 14
+  },
+  "signature": {
+    "name": "test@14",
+    "kind": "test"
+  },
+  "structural_hash": "5116e73d60dcb1ff78c76a885caf8d0a4809f432f300f1b95c30d894eb0a4206",
+  "depends_on": [
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.login",
+      "via": "hook_call",
+      "where": "deactivate-reactivate.spec.ts:19",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.acceptTos",
+      "via": "hook_call",
+      "where": "deactivate-reactivate.spec.ts:20",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.login",
+      "via": "hook_call",
+      "where": "deactivate-reactivate.spec.ts:42",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.login",
+      "via": "hook_call",
+      "where": "deactivate-reactivate.spec.ts:51",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_admin_deactivate_reactivate_spec_ts__test_14.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::pages/boatfinder.page.ts::BoatfinderPage.goto",
+  "kind": "service",
+  "title": "BoatfinderPage.goto",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "pages/boatfinder.page.ts",
+    "symbol": "BoatfinderPage.goto",
+    "line": 35
+  },
+  "signature": {
+    "name": "BoatfinderPage.goto",
+    "kind": "service"
+  },
+  "structural_hash": "5df89e37a8164018deed4381d851cb4e5e55b814af5c4cd4bad72a605a21cadd",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__pages_boatfinder_page_ts__BoatfinderPage_goto.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

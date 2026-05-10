@@ -1,0 +1,40 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/org_config.py::OrgConfig",
+      "via": "db_query",
+      "where": "routers/constants.py:132"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/temporal_product.py::TemporalProduct",
+      "via": "db_query",
+      "where": "routers/constants.py:140"
+    }
+  ],
+  "dossier": "dossiers/endpoints/GET___api_constants.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/constants",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "GET",
+    "path": "/api/constants",
+    "request_schema_ref": null,
+    "response_schema_ref": "ConstantsResponse"
+  },
+  "source": {
+    "line": 129,
+    "path": "routers/constants.py",
+    "repo": "concorda-api",
+    "symbol": "get_constants"
+  },
+  "structural_hash": "8178b13a1ad3e38dc8fbf82a87c2093543399a4822d5b7d271e06e9f8320da05",
+  "tests": [],
+  "title": "GET /api/constants",
+  "warnings": []
+}

@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/events/page.tsx::PublicEventsPage",
+  "kind": "component",
+  "title": "PublicEventsPage",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/events/page.tsx",
+    "symbol": "PublicEventsPage",
+    "line": 18
+  },
+  "signature": {
+    "name": "PublicEventsPage",
+    "kind": "component"
+  },
+  "structural_hash": "f50b05ec15602b478b8ed066e922d933d22c0778d62704ac50dbae2720c3c272",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/api.ts::organizationsApi.list",
+      "via": "hook_call",
+      "where": "page.tsx:26",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::eventsApi.list",
+      "via": "hook_call",
+      "where": "page.tsx:44",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_events_page_tsx__PublicEventsPage.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

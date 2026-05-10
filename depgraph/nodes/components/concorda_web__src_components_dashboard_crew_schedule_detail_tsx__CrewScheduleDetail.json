@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/dashboard/crew-schedule-detail.tsx::CrewScheduleDetail",
+  "kind": "component",
+  "title": "CrewScheduleDetail",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/dashboard/crew-schedule-detail.tsx",
+    "symbol": "CrewScheduleDetail",
+    "line": 37
+  },
+  "signature": {
+    "name": "CrewScheduleDetail",
+    "kind": "component"
+  },
+  "structural_hash": "e4b30773e7e80f19a7eb387f492e43059494a049ae41b368c08e6210050157f3",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/hooks/use-constants.ts::useConstants",
+      "via": "hook_call",
+      "where": "crew-schedule-detail.tsx:41",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
+      "via": "hook_call",
+      "where": "crew-schedule-detail.tsx:64",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_dashboard_crew_schedule_detail_tsx__CrewScheduleDetail.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

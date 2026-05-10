@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/admin/email-config.spec.ts::test@5",
+  "kind": "test",
+  "title": "email config page loads",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/admin/email-config.spec.ts",
+    "symbol": "test@5",
+    "line": 5
+  },
+  "signature": {
+    "name": "test@5",
+    "kind": "test"
+  },
+  "structural_hash": "ffb6edcd654f7b92d313275dcf6750c2779a4c04fa2954d76884af24cac3c994",
+  "depends_on": [
+    {
+      "target": "concorda-test::pages/admin/system.page.ts::AdminSystemPage.gotoEmailConfig",
+      "via": "hook_call",
+      "where": "email-config.spec.ts:7",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_admin_email_config_spec_ts__test_5.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

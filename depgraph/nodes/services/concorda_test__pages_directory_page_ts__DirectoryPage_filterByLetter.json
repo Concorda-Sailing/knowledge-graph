@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::pages/directory.page.ts::DirectoryPage.filterByLetter",
+  "kind": "service",
+  "title": "DirectoryPage.filterByLetter",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "pages/directory.page.ts",
+    "symbol": "DirectoryPage.filterByLetter",
+    "line": 54
+  },
+  "signature": {
+    "name": "DirectoryPage.filterByLetter",
+    "kind": "service"
+  },
+  "structural_hash": "f31b982dbc21ac6245a303761f49a537731955b9c3531e2f245270c905e2e28e",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__pages_directory_page_ts__DirectoryPage_filterByLetter.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

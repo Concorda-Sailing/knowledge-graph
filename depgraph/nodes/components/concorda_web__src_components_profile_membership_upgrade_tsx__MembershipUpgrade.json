@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/profile/membership-upgrade.tsx::MembershipUpgrade",
+  "kind": "component",
+  "title": "MembershipUpgrade",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/profile/membership-upgrade.tsx",
+    "symbol": "MembershipUpgrade",
+    "line": 49
+  },
+  "signature": {
+    "name": "MembershipUpgrade",
+    "kind": "component"
+  },
+  "structural_hash": "7b11e2b545bdd46158adec73e40d23c130068dbab07a2a3934388df65e65729d",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/api.ts::temporalProductsApi.getAvailable",
+      "via": "hook_call",
+      "where": "membership-upgrade.tsx:66",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::paymentsApi.getConfig",
+      "via": "hook_call",
+      "where": "membership-upgrade.tsx:67",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::paymentsApi.createIntent",
+      "via": "hook_call",
+      "where": "membership-upgrade.tsx:95",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.upgradeMembership",
+      "via": "hook_call",
+      "where": "membership-upgrade.tsx:118",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.upgradeMembership",
+      "via": "hook_call",
+      "where": "membership-upgrade.tsx:136",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.upgradeMembership",
+      "via": "hook_call",
+      "where": "membership-upgrade.tsx:152",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_profile_membership_upgrade_tsx__MembershipUpgrade.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

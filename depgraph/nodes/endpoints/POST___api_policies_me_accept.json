@@ -1,0 +1,52 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/person_contract_acceptance.py::PersonContractAcceptance",
+      "via": "db_query",
+      "where": "routers/policies.py:237"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/contract.py::Contract",
+      "via": "db_query",
+      "where": "routers/policies.py:216"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/person.py::Person",
+      "via": "db_query",
+      "where": "routers/policies.py:254"
+    }
+  ],
+  "dossier": "dossiers/endpoints/POST___api_policies_me_accept.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "POST::/api/policies/me/accept",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "POST",
+    "path": "/api/policies/me/accept",
+    "request_schema_ref": "AcceptRequest",
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 205,
+    "path": "routers/policies.py",
+    "repo": "concorda-api",
+    "symbol": "accept_policies"
+  },
+  "structural_hash": "a6a31ea5ddd53c2adfb2197353b52fc3ae9e753a4076ac52b20ee460ab819d64",
+  "tests": [],
+  "title": "POST /api/policies/me/accept",
+  "warnings": [
+    {
+      "code": "weakly_typed_response",
+      "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
+      "where": "routers/policies.py:205"
+    }
+  ]
+}

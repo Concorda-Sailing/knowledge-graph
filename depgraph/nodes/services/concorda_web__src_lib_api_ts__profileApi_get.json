@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::profileApi.get",
+  "kind": "service",
+  "title": "profileApi.get",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "profileApi.get",
+    "line": 1263
+  },
+  "signature": {
+    "name": "profileApi.get",
+    "kind": "service"
+  },
+  "structural_hash": "65a838a7f06ab34d808e5e3672b45670d509bdeb2f353d5c08e9138e2b6b0d52",
+  "depends_on": [
+    {
+      "target": "GET::/api/profile",
+      "via": "http_call",
+      "where": "api.ts:1263",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__profileApi_get.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

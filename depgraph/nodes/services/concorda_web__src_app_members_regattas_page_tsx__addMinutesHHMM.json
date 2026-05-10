@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/regattas/page.tsx::addMinutesHHMM",
+  "kind": "service",
+  "title": "addMinutesHHMM",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/regattas/page.tsx",
+    "symbol": "addMinutesHHMM",
+    "line": 56
+  },
+  "signature": {
+    "name": "addMinutesHHMM",
+    "kind": "service"
+  },
+  "structural_hash": "f7fea8d80ce2ffb750908078b0490d7f13d05e8f6b5cde380ed0063e341777bd",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_app_members_regattas_page_tsx__addMinutesHHMM.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

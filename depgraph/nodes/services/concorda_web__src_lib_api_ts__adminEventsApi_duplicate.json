@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::adminEventsApi.duplicate",
+  "kind": "service",
+  "title": "adminEventsApi.duplicate",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "adminEventsApi.duplicate",
+    "line": 614
+  },
+  "signature": {
+    "name": "adminEventsApi.duplicate",
+    "kind": "service"
+  },
+  "structural_hash": "0abc97b73ac355a348bca469d9395cc937570c66dfb34c55c164bed15648df96",
+  "depends_on": [
+    {
+      "target": "POST::/api/events/{0}/duplicate",
+      "via": "string_url",
+      "where": "api.ts:615",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__adminEventsApi_duplicate.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

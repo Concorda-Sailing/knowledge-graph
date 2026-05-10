@@ -1,0 +1,40 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/auth_token.py::AuthToken",
+      "via": "db_query",
+      "where": "routers/auth.py:1288"
+    }
+  ],
+  "dossier": "dossiers/endpoints/POST___api_auth_logout.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "POST::/api/auth/logout",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "POST",
+    "path": "/api/auth/logout",
+    "request_schema_ref": null,
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 1275,
+    "path": "routers/auth.py",
+    "repo": "concorda-api",
+    "symbol": "logout"
+  },
+  "structural_hash": "6e57876dd646cd2302d2baf56f9bd2e63f727d499e3793e91f313601606252b4",
+  "tests": [],
+  "title": "POST /api/auth/logout",
+  "warnings": [
+    {
+      "code": "weakly_typed_response",
+      "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
+      "where": "routers/auth.py:1275"
+    }
+  ]
+}

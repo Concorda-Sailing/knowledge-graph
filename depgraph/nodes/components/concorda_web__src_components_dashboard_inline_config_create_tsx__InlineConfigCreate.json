@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/dashboard/inline-config-create.tsx::InlineConfigCreate",
+  "kind": "component",
+  "title": "InlineConfigCreate",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/dashboard/inline-config-create.tsx",
+    "symbol": "InlineConfigCreate",
+    "line": 28
+  },
+  "signature": {
+    "name": "InlineConfigCreate",
+    "kind": "component"
+  },
+  "structural_hash": "b5190a55fdb5f965a59cde4e0c374d1b3a9147504786faaad595fe2e9b8a6b1c",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/hooks/use-toast.ts::useToast",
+      "via": "hook_call",
+      "where": "inline-config-create.tsx:37",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.createBoatConfig",
+      "via": "hook_call",
+      "where": "inline-config-create.tsx:63",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_dashboard_inline_config_create_tsx__InlineConfigCreate.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

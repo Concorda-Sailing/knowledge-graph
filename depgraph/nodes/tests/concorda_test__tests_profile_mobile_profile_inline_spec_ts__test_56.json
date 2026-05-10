@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/profile/mobile-profile-inline.spec.ts::test@56",
+  "kind": "test",
+  "title": "all three tabs still render at desktop width",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/profile/mobile-profile-inline.spec.ts",
+    "symbol": "test@56",
+    "line": 56
+  },
+  "signature": {
+    "name": "test@56",
+    "kind": "test"
+  },
+  "structural_hash": "e7be5bdd380a263d2a8d4cd961cc3e451dcf3e7cf323b3e48591626bc1975158",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_profile_mobile_profile_inline_spec_ts__test_56.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

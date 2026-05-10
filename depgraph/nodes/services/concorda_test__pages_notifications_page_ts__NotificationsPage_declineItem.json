@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::pages/notifications.page.ts::NotificationsPage.declineItem",
+  "kind": "service",
+  "title": "NotificationsPage.declineItem",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "pages/notifications.page.ts",
+    "symbol": "NotificationsPage.declineItem",
+    "line": 120
+  },
+  "signature": {
+    "name": "NotificationsPage.declineItem",
+    "kind": "service"
+  },
+  "structural_hash": "659ec22fd1d9f1c7f1b4f04d92553141879d60c9e5cd30a554d87d3361462026",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__pages_notifications_page_ts__NotificationsPage_declineItem.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

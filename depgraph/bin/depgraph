@@ -1,0 +1,561 @@
+#!/usr/bin/env python3
+"""
+depgraph — CLI entrypoint for regen, lookup, validation.
+
+Subcommands:
+  regen [--all|--since REF]    Run extractors and reconcile.
+  context <file-or-id>         Print the same block PreToolUse would inject.
+  dependents <id> [--depth N]  Walk the reverse graph from <id>.
+  orphans [--purge]            List/archive nodes whose source no longer exists.
+  validate [--strict]          JSON-Schema validate every node file.
+  self-check                   Smoke-test the hook/extractor pipeline.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+DEPGRAPH = Path(os.environ.get("CONCORDA_DEPGRAPH_PATH", Path.home() / "concorda" / "depgraph")).resolve()
+NODES = DEPGRAPH / "nodes"
+DEPENDENTS_INDEX = NODES / "_index" / "dependents.json"
+CORPUS_META = NODES / "_meta.json"
+
+
+def mark_regen_in_progress() -> None:
+    """Defect #2: write a regen marker so the hook can surface 'graph being
+    rebuilt' when an edit happens mid-regen, and so a crashed extractor leaves
+    a visible signal rather than a silently-torn graph. Reconcile rewrites
+    _meta.json with regen_status='complete' on success — if anything fails
+    between mark_regen_in_progress and reconcile finishing, the file stays at
+    'in_progress'."""
+    import datetime as _dt
+
+    NODES.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "schema_version": 1,
+        "regen_status": "in_progress",
+        "started_at": _dt.datetime.now(_dt.timezone.utc).isoformat(),
+    }
+    # Don't clobber the prior `complete` payload if it has more info — preserve
+    # what's there and override only the status fields.
+    if CORPUS_META.exists():
+        try:
+            existing = json.loads(CORPUS_META.read_text())
+            payload = {**existing, **payload}
+        except (OSError, json.JSONDecodeError):
+            pass
+    tmp = CORPUS_META.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(payload, indent=2, sort_keys=False) + "\n")
+    tmp.replace(CORPUS_META)
+
+
+def load_dependents_index() -> dict[str, list[dict]]:
+    """Read the reverse-edge index. Empty dict if not yet built."""
+    if not DEPENDENTS_INDEX.exists():
+        return {}
+    try:
+        idx = json.loads(DEPENDENTS_INDEX.read_text())
+    except (OSError, json.JSONDecodeError):
+        return {}
+    if idx.get("schema_version") != 1:
+        print(f"WARN: dependents index schema_version mismatch", file=sys.stderr)
+        return {}
+    return idx.get("by_target") or {}
+
+
+def cmd_regen(args: argparse.Namespace) -> int:
+    mark_regen_in_progress()
+    # Defect #8: extract_api.py no longer imports the FastAPI app, so it
+    # doesn't need the project's venv. System python3 is fine.
+    tsx_local = DEPGRAPH / "node_modules" / ".bin" / "tsx"
+    tsx_cmd = [str(tsx_local)] if tsx_local.exists() else ["npx", "tsx"]
+    extractors = [
+        ("api", ["python3", str(DEPGRAPH / "extractors" / "extract_api.py")]),
+        ("web", tsx_cmd + [str(DEPGRAPH / "extractors" / "extract_web.ts")]),
+        ("expo", tsx_cmd + [str(DEPGRAPH / "extractors" / "extract_expo.ts")]),
+        ("tests", tsx_cmd + [str(DEPGRAPH / "extractors" / "extract_tests.ts")]),
+    ]
+    failed = []
+    for label, cmd in extractors:
+        print(f"--- {label}")
+        rc = subprocess.call(cmd)
+        if rc != 0:
+            failed.append(label)
+    print("--- reconcile")
+    rc = subprocess.call(["python3", str(DEPGRAPH / "extractors" / "reconcile.py")])
+    if rc != 0:
+        failed.append("reconcile")
+    if failed:
+        print(f"\nFAILED stages: {', '.join(failed)}", file=sys.stderr)
+        return 1
+    return 0
+
+
+def find_nodes_for_target(target: str) -> list[Path]:
+    """If `target` is a file path, return nodes whose source.path matches.
+    Otherwise treat it as a node id."""
+    out: list[Path] = []
+    abs_path = Path(target).expanduser().resolve() if "/" in target else None
+    for node_file in NODES.rglob("*.json"):
+        if node_file.name.startswith("_") or any(p.startswith("_") for p in node_file.parts):
+            continue
+        try:
+            data = json.loads(node_file.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        if abs_path:
+            src_repo = data.get("source", {}).get("repo", "")
+            src_rel = data.get("source", {}).get("path", "") or ""
+            cand = Path.home() / src_repo / src_rel
+            if cand.resolve() == abs_path:
+                out.append(node_file)
+        else:
+            if data.get("id") == target:
+                out.append(node_file)
+    return out
+
+
+def cmd_context(args: argparse.Namespace) -> int:
+    matches = find_nodes_for_target(args.target)
+    if not matches:
+        print(f"no nodes match: {args.target}", file=sys.stderr)
+        return 1
+    dependents_index = load_dependents_index()
+    for path in matches:
+        data = json.loads(path.read_text())
+        print(f"# {data.get('title', data['id'])}")
+        print(f"id: {data['id']}  ·  kind: {data['kind']}  ·  hash: {data['structural_hash'][:12]}")
+        print(f"source: {data['source']['repo']}/{data['source']['path']}:{data['source'].get('line')}")
+        print()
+        print("## Direct dependents")
+        for d in dependents_index.get(data["id"]) or []:
+            print(f"  - {d['source']} (via {d.get('via','?')}, {d.get('confidence', 'exact')}, {d.get('where', '?')})")
+        if not dependents_index.get(data["id"]):
+            print("  _none_")
+        print()
+        dossier_rel = data.get("dossier")
+        if dossier_rel and (DEPGRAPH / dossier_rel).exists():
+            print("## Dossier")
+            print((DEPGRAPH / dossier_rel).read_text())
+        else:
+            print("## Dossier\n_missing_")
+        print()
+        warns = data.get("warnings") or []
+        if warns:
+            print("## Warnings")
+            for w in warns:
+                print(f"  - [{w['code']}] {w['message']}")
+            print()
+    return 0
+
+
+def cmd_dependents(args: argparse.Namespace) -> int:
+    dependents_index = load_dependents_index()
+    if not dependents_index:
+        print("dependents index not built — run `bin/depgraph regen`", file=sys.stderr)
+        return 1
+    seen: set[str] = set()
+    frontier = [(args.id, 0)]
+    while frontier:
+        nid, depth = frontier.pop(0)
+        if nid in seen or depth > args.depth:
+            continue
+        seen.add(nid)
+        prefix = "  " * depth + ("→ " if depth else "")
+        print(f"{prefix}{nid}")
+        for d in dependents_index.get(nid) or []:
+            frontier.append((d["source"], depth + 1))
+    return 0
+
+
+def cmd_orphans(args: argparse.Namespace) -> int:
+    orphans = []
+    for node_file in NODES.rglob("*.json"):
+        if node_file.name.startswith("_") or any(p.startswith("_") for p in node_file.parts):
+            continue
+        try:
+            data = json.loads(node_file.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        src = data.get("source") or {}
+        repo, rel = src.get("repo"), src.get("path")
+        # No source path at all → not an orphan, just an abstract node (rare).
+        if not repo or not rel:
+            continue
+        if not (Path.home() / repo / rel).exists():
+            orphans.append((node_file, data["id"]))
+    if not orphans:
+        print("no orphans")
+        return 0
+    for path, nid in orphans:
+        print(f"orphan: {nid}  ({path.relative_to(DEPGRAPH)})")
+    if args.purge:
+        archive = NODES / "_archive"
+        archive.mkdir(exist_ok=True)
+        for path, _ in orphans:
+            target = archive / path.name
+            path.rename(target)
+            print(f"  archived → {target.relative_to(DEPGRAPH)}")
+    return 0
+
+
+def cmd_validate(args: argparse.Namespace) -> int:
+    try:
+        import jsonschema  # type: ignore[import-untyped]
+    except ImportError:
+        print("jsonschema not installed; install with: pip install jsonschema", file=sys.stderr)
+        return 1
+    schema = json.loads((DEPGRAPH / "schema" / "node.schema.json").read_text())
+    bad = 0
+    for node_file in NODES.rglob("*.json"):
+        if node_file.name.startswith("_") or any(p.startswith("_") for p in node_file.parts):
+            continue
+        try:
+            data = json.loads(node_file.read_text())
+            jsonschema.validate(data, schema)
+        except (json.JSONDecodeError, jsonschema.ValidationError) as e:
+            print(f"INVALID {node_file}: {e}", file=sys.stderr)
+            bad += 1
+    if bad:
+        return 1
+    print("all nodes valid")
+    return 0
+
+
+def cmd_commit_summary(args: argparse.Namespace) -> int:
+    """Output a compact summary of touched tracked nodes for a commit body
+    trailer. Format is intentionally machine-greppable so blind spots can be
+    found later: any bug in a node that doesn't appear in any commit's
+    `Depgraph:` trailer is by definition unsurfaced.
+
+    No args → reads `git diff --name-only` (staged + unstaged).
+    With args → uses the given paths.
+    """
+    files: list[str] = list(args.files or [])
+    if not files:
+        try:
+            staged = subprocess.run(
+                ["git", "diff", "--cached", "--name-only"],
+                capture_output=True, text=True, check=False,
+            ).stdout.splitlines()
+            unstaged = subprocess.run(
+                ["git", "diff", "--name-only"],
+                capture_output=True, text=True, check=False,
+            ).stdout.splitlines()
+            files = sorted(set(staged + unstaged))
+        except FileNotFoundError:
+            print("git not available", file=sys.stderr)
+            return 1
+    if not files:
+        print("Depgraph: no files in diff (or none changed).")
+        return 0
+
+    # Resolve paths to absolute, then to (repo, rel) per concorda convention.
+    home = Path.home()
+    by_id: dict[str, dict] = {}
+    by_source: dict[tuple[str, str], list[str]] = {}
+    for nf in NODES.rglob("*.json"):
+        if nf.name.startswith("_") or any(p.startswith("_") for p in nf.parts):
+            continue
+        try:
+            data = json.loads(nf.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        nid = data.get("id")
+        if not nid:
+            continue
+        by_id[nid] = data
+        src = data.get("source") or {}
+        repo, p = src.get("repo"), src.get("path")
+        if repo and p:
+            by_source.setdefault((repo, p), []).append(nid)
+
+    deps_index = load_dependents_index()
+
+    def _repo_relative(p: str) -> tuple[str, str] | None:
+        ap = Path(p).expanduser().resolve()
+        parts = ap.parts
+        home_parts = home.parts
+        if len(parts) <= len(home_parts) or parts[: len(home_parts)] != home_parts:
+            # Likely already a repo-relative path
+            for repo_name in ("concorda-api", "concorda-web", "concorda-test", "concorda-expo"):
+                cand = home / repo_name / p
+                if cand.exists():
+                    return repo_name, p
+            return None
+        seg = parts[len(home_parts)]
+        if not seg.startswith("concorda"):
+            return None
+        return seg, "/".join(parts[len(home_parts) + 1 :])
+
+    # Group nodes by source file so a 274-method api.ts shows once, not 274 times.
+    by_file: dict[str, list[str]] = {}
+    untracked_files: list[str] = []
+    for f in files:
+        rr = _repo_relative(f)
+        if not rr:
+            untracked_files.append(f)
+            continue
+        ids = by_source.get(rr) or []
+        if not ids:
+            untracked_files.append(f)
+            continue
+        by_file[f"{rr[0]}/{rr[1]}"] = ids
+
+    def _check_dossier(node: dict) -> str | None:
+        rel = node.get("dossier")
+        if not rel:
+            return None
+        dpath = DEPGRAPH / rel
+        if not dpath.exists():
+            return "missing-dossier"
+        text = dpath.read_text()
+        pinned = None
+        status = "current"
+        for line in text.splitlines():
+            s = line.strip()
+            if s.startswith("last_reviewed_against_hash:"):
+                pinned = s.split(":", 1)[1].strip().strip('"').strip("'")
+            if s.startswith("status:"):
+                status = s.split(":", 1)[1].strip()
+            if s == "---" and pinned is not None:
+                break
+        if pinned and pinned != node.get("structural_hash"):
+            return "stale-dossier"
+        if status == "unreviewed":
+            return "unreviewed-dossier"
+        return None
+
+    total_node_ids = sum(len(v) for v in by_file.values())
+    lines = ["Depgraph:"]
+    lines.append(
+        f"  changed: {len(files)} file(s), {total_node_ids} tracked node(s)"
+        + (f", {len(untracked_files)} untracked" if untracked_files else "")
+    )
+
+    high_impact: list[tuple[str, dict]] = []  # (id, node) for direct >= 5
+    all_warnings: set[str] = set()
+    grand_total_direct = 0
+    grand_total_fuzzy = 0
+
+    for fpath, ids in sorted(by_file.items()):
+        per_file_direct = 0
+        per_file_fuzzy = 0
+        per_file_warnings: set[str] = set()
+        for nid in ids:
+            node = by_id.get(nid, {})
+            direct = deps_index.get(nid) or []
+            fuzzy = sum(1 for d in direct if d.get("via") == "string_url" or d.get("confidence") in ("fuzzy", "inferred"))
+            per_file_direct += len(direct)
+            per_file_fuzzy += fuzzy
+            grand_total_direct += len(direct)
+            grand_total_fuzzy += fuzzy
+            for w in (node.get("warnings") or []):
+                code = w.get("code") or "?"
+                per_file_warnings.add(code)
+                all_warnings.add(code)
+            dossier_warn = _check_dossier(node)
+            if dossier_warn:
+                per_file_warnings.add(dossier_warn)
+                all_warnings.add(dossier_warn)
+            if len(direct) >= 5:
+                high_impact.append((nid, node))
+
+        # Per-file line: file path, node count, kind summary, direct deps
+        kinds = {by_id.get(nid, {}).get("kind", "?") for nid in ids}
+        kind_summary = ",".join(sorted(kinds))
+        warn_str = f", warnings={','.join(sorted(per_file_warnings))}" if per_file_warnings else ""
+        lines.append(
+            f"  - {fpath}: {len(ids)} {kind_summary} node(s)"
+            f", direct-deps={per_file_direct} (fuzzy={per_file_fuzzy})"
+            f"{warn_str}"
+        )
+
+    if high_impact:
+        lines.append("  high-impact (>=5 direct deps):")
+        # Sort by direct desc, top 10
+        scored = [(len(deps_index.get(nid) or []), nid) for nid, _ in high_impact]
+        scored.sort(reverse=True)
+        for n_direct, nid in scored[:10]:
+            lines.append(f"    {n_direct:>4}  {nid}")
+        if len(scored) > 10:
+            lines.append(f"    ... +{len(scored) - 10} more")
+
+    if untracked_files:
+        sample = ",".join(untracked_files[:5])
+        more = f" (+{len(untracked_files) - 5} more)" if len(untracked_files) > 5 else ""
+        lines.append(f"  untracked: {sample}{more}")
+
+    lines.append(
+        f"  totals: direct-deps={grand_total_direct} (fuzzy={grand_total_fuzzy}), "
+        f"warnings={','.join(sorted(all_warnings)) or 'none'}"
+    )
+
+    print("\n".join(lines))
+    return 0
+
+
+def cmd_memory_sync(args: argparse.Namespace) -> int:
+    """Mirror Claude's project memories from ~/.claude/.../memory/ into
+    ~/concorda/memory/ for version control.
+
+    Refuses to mirror files containing plaintext credentials — replaces those
+    files with a redacted version that points back at the canonical path.
+    """
+    import re
+
+    canonical = Path.home() / ".claude" / "projects" / "-home-lgreenlee" / "memory"
+    mirror = Path.home() / "concorda" / "memory"
+    if not canonical.exists():
+        print(f"canonical memory dir not found: {canonical}", file=sys.stderr)
+        return 1
+    mirror.mkdir(parents=True, exist_ok=True)
+
+    # Patterns that, if matched, force the line to be replaced with a
+    # placeholder. Conservative: false positives just mean the user has to
+    # re-read the canonical file when restoring. The patterns target real
+    # leakage shapes seen in this repo's memories so far.
+    line_patterns = [
+        # Backtick-quoted passwords ("password `hunter2`")
+        re.compile(r"password\s+`[^`]+`", re.IGNORECASE),
+        # YAML-style "password: value" (excludes REDACTED/null/unset placeholders)
+        re.compile(r"^\s*password:\s*(?!(?:REDACTED|null|unset|\s*$))[^\s].*", re.IGNORECASE),
+        # `user` / `value` ... creds — catches "Same `lgreenlee` / `in53cure` creds."
+        re.compile(r"`[^`]+`\s*/\s*`[^`]+`.*\b(creds|credentials|login)\b", re.IGNORECASE),
+        # Inline "user:pass@host" credential URLs
+        re.compile(r"://[^/\s:@]+:[^/\s@]+@", re.IGNORECASE),
+        # API key / token / secret literal patterns
+        re.compile(r"(api[_-]?key|secret|token)\s*[:=]\s*['\"][^'\"]{8,}['\"]", re.IGNORECASE),
+        re.compile(r"^-----BEGIN\s+(RSA|OPENSSH|EC|DSA|PRIVATE)"),
+        # AWS-style secrets
+        re.compile(r"AKIA[0-9A-Z]{16}"),
+    ]
+
+    def _redact_line(line: str, src_path: Path, line_no: int) -> str:
+        # Preserve the leading bullet / heading marker so the file structure
+        # stays readable; replace the value portion with a pointer.
+        prefix = ""
+        m = re.match(r"^(\s*[-*]\s+(?:\*\*[^*]+\*\*\s*[:.]?\s*)?|\s*#+\s+)", line)
+        if m:
+            prefix = m.group(1)
+        return (
+            prefix
+            + f"REDACTED — see canonical memory at `{src_path}` (line {line_no})"
+        )
+
+    written = 0
+    redacted_files: list[str] = []
+    for src in canonical.glob("*.md"):
+        text = src.read_text()
+        original_lines = text.splitlines(keepends=False)
+        had_match = False
+        rebuilt: list[str] = []
+        for line_no, line in enumerate(original_lines, 1):
+            matched = any(pat.search(line) for pat in line_patterns)
+            if matched:
+                had_match = True
+                rebuilt.append(_redact_line(line, src.relative_to(Path.home()), line_no))
+            else:
+                rebuilt.append(line)
+        new_text = "\n".join(rebuilt)
+        if text.endswith("\n"):
+            new_text += "\n"
+
+        dest = mirror / src.name
+        if had_match:
+            dest.write_text(new_text)
+            redacted_files.append(src.name)
+        else:
+            dest.write_text(text)
+        written += 1
+
+    # Detect deletions: files in mirror but not in canonical
+    canonical_names = {f.name for f in canonical.glob("*.md")}
+    stale = [f for f in mirror.glob("*.md") if f.name not in canonical_names and f.name != "README.md"]
+    for f in stale:
+        f.unlink()
+
+    print(f"memory-sync: wrote {written} file(s) to {mirror.relative_to(Path.home())}")
+    if redacted_files:
+        print(f"redacted: {len(redacted_files)} file(s)")
+        for name in redacted_files[:5]:
+            print(f"  - {name}")
+        if len(redacted_files) > 5:
+            print(f"  ... +{len(redacted_files) - 5} more")
+    if stale:
+        print(f"removed stale (no longer in canonical): {len(stale)}")
+        for f in stale[:5]:
+            print(f"  - {f.name}")
+    return 0
+
+
+def cmd_self_check(args: argparse.Namespace) -> int:
+    """Smoke-test: emit a fake PreToolUse payload and assert the hook produces something."""
+    payload = json.dumps(
+        {
+            "tool_name": "Edit",
+            "tool_input": {"file_path": str(Path.home() / "concorda-api" / "routers" / "invite.py")},
+        }
+    )
+    proc = subprocess.run(
+        ["python3", str(DEPGRAPH / "hooks" / "pre_edit_inject.py")],
+        input=payload,
+        capture_output=True,
+        text=True,
+        timeout=5,
+    )
+    print("hook stdout:")
+    print(proc.stdout)
+    if proc.returncode != 0:
+        print(f"FAILED rc={proc.returncode}", file=sys.stderr)
+        return 1
+    return 0
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(prog="depgraph")
+    sub = parser.add_subparsers(dest="cmd", required=True)
+
+    p_regen = sub.add_parser("regen")
+    p_regen.add_argument("--all", action="store_true")
+    p_regen.add_argument("--since")
+    p_regen.set_defaults(func=cmd_regen)
+
+    p_ctx = sub.add_parser("context")
+    p_ctx.add_argument("target")
+    p_ctx.set_defaults(func=cmd_context)
+
+    p_dep = sub.add_parser("dependents")
+    p_dep.add_argument("id")
+    p_dep.add_argument("--depth", type=int, default=2)
+    p_dep.set_defaults(func=cmd_dependents)
+
+    p_orph = sub.add_parser("orphans")
+    p_orph.add_argument("--purge", action="store_true")
+    p_orph.set_defaults(func=cmd_orphans)
+
+    p_val = sub.add_parser("validate")
+    p_val.add_argument("--strict", action="store_true")
+    p_val.set_defaults(func=cmd_validate)
+
+    p_sc = sub.add_parser("self-check")
+    p_sc.set_defaults(func=cmd_self_check)
+
+    p_cs = sub.add_parser("commit-summary", help="Compact summary for commit body trailer")
+    p_cs.add_argument("files", nargs="*", help="Files to summarize; empty = git diff --name-only")
+    p_cs.set_defaults(func=cmd_commit_summary)
+
+    p_ms = sub.add_parser("memory-sync", help="Mirror ~/.claude memories into concorda/memory/")
+    p_ms.set_defaults(func=cmd_memory_sync)
+
+    args = parser.parse_args()
+    return args.func(args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

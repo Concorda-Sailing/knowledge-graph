@@ -1,0 +1,25 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/models/concorda-api__models_contact_role.py__ContactRole.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::models/contact_role.py::ContactRole",
+  "kind": "model",
+  "schema_version": 1,
+  "signature": {
+    "kind": "model",
+    "name": "ContactRole",
+    "tablename": "contact_roles"
+  },
+  "source": {
+    "line": 6,
+    "path": "models/contact_role.py",
+    "repo": "concorda-api",
+    "symbol": "ContactRole"
+  },
+  "structural_hash": "4cc02c30842d715a972800a9a892fe53f851a7ce15245f79be81fe770656f6c2",
+  "tests": [],
+  "title": "ContactRole",
+  "warnings": []
+}

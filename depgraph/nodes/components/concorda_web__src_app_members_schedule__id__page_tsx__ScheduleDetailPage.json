@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleDetailPage",
+  "kind": "component",
+  "title": "ScheduleDetailPage",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/schedule/[id]/page.tsx",
+    "symbol": "ScheduleDetailPage",
+    "line": 56
+  },
+  "signature": {
+    "name": "ScheduleDetailPage",
+    "kind": "component"
+  },
+  "structural_hash": "e60b378ec527cf59bcc3b3758b95266c1e04541fb6191f1b7771623dc4c99b17",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_schedule__id__page_tsx__ScheduleDetailPage.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

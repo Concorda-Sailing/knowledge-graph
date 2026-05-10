@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::seriesApi.list",
+  "kind": "service",
+  "title": "seriesApi.list",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "seriesApi.list",
+    "line": 1529
+  },
+  "signature": {
+    "name": "seriesApi.list",
+    "kind": "service"
+  },
+  "structural_hash": "53c01afcd2520b5720ae02a3bdbb2866d6b74f512d9f7fc7e1592ddc6d039d25",
+  "depends_on": [
+    {
+      "target": "GET::/api/series",
+      "via": "http_call",
+      "where": "api.ts:1529",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__seriesApi_list.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

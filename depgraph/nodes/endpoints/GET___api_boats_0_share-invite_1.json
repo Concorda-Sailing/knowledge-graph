@@ -1,0 +1,34 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/boat_share_invite.py::BoatShareInvite",
+      "via": "db_query",
+      "where": "routers/boats.py:282"
+    }
+  ],
+  "dossier": "dossiers/endpoints/GET___api_boats_0_share-invite_1.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/boats/{0}/share-invite/{1}",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "GET",
+    "path": "/api/boats/{boat_id}/share-invite/{invite_token}",
+    "request_schema_ref": null,
+    "response_schema_ref": "ShareInviteStatus"
+  },
+  "source": {
+    "line": 265,
+    "path": "routers/boats.py",
+    "repo": "concorda-api",
+    "symbol": "get_share_invite_status"
+  },
+  "structural_hash": "ccc0d1f1860b6236697c7af78d6833c398cafe5608730d330dea839064e40cce",
+  "tests": [],
+  "title": "GET /api/boats/{boat_id}/share-invite/{invite_token}",
+  "warnings": []
+}

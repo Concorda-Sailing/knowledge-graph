@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/crewfinder/crew/[id]/page.tsx::CrewDetailPage",
+  "kind": "component",
+  "title": "CrewDetailPage",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/crewfinder/crew/[id]/page.tsx",
+    "symbol": "CrewDetailPage",
+    "line": 23
+  },
+  "signature": {
+    "name": "CrewDetailPage",
+    "kind": "component"
+  },
+  "structural_hash": "0fc539784a9e442dae07c07742baf5cf86762502a8c4a99d602436ba1b60b20d",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/hooks/use-boats.ts::useBoats",
+      "via": "hook_call",
+      "where": "page.tsx:36",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/contexts/auth-context.tsx::useAuth",
+      "via": "hook_call",
+      "where": "page.tsx:37",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/hooks/use-toast.ts::useToast",
+      "via": "hook_call",
+      "where": "page.tsx:39",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::crewfinderApi.getCrewDetail",
+      "via": "hook_call",
+      "where": "page.tsx:47",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::constantsApi.getAll",
+      "via": "hook_call",
+      "where": "page.tsx:48",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::boatApi.inviteCrew",
+      "via": "hook_call",
+      "where": "page.tsx:64",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::boatApi.getCrew",
+      "via": "hook_call",
+      "where": "page.tsx:83",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_crewfinder_crew__id__page_tsx__CrewDetailPage.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

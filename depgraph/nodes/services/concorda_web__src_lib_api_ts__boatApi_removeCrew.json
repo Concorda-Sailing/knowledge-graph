@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::boatApi.removeCrew",
+  "kind": "service",
+  "title": "boatApi.removeCrew",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "boatApi.removeCrew",
+    "line": 3101
+  },
+  "signature": {
+    "name": "boatApi.removeCrew",
+    "kind": "service"
+  },
+  "structural_hash": "d295f966a6a2ccade23c9bbe3e4566b48f35e6a4ad97229779332f2554f065f8",
+  "depends_on": [
+    {
+      "target": "DELETE::/api/boats/{0}/crew/{1}",
+      "via": "string_url",
+      "where": "api.ts:3102",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__boatApi_removeCrew.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

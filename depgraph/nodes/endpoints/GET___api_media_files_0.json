@@ -1,0 +1,34 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/media.py::MediaFile",
+      "via": "db_query",
+      "where": "routers/media.py:385"
+    }
+  ],
+  "dossier": "dossiers/endpoints/GET___api_media_files_0.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/media/files/{0}",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "GET",
+    "path": "/api/media/files/{file_id}",
+    "request_schema_ref": null,
+    "response_schema_ref": "FileRead"
+  },
+  "source": {
+    "line": 380,
+    "path": "routers/media.py",
+    "repo": "concorda-api",
+    "symbol": "get_file"
+  },
+  "structural_hash": "e98f9106de1d49dd5afaa400c87a231daf0085a858f882f2fadb19727bed9d26",
+  "tests": [],
+  "title": "GET /api/media/files/{file_id}",
+  "warnings": []
+}

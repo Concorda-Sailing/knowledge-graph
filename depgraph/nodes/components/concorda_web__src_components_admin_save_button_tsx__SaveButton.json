@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/admin/save-button.tsx::SaveButton",
+  "kind": "component",
+  "title": "SaveButton",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/admin/save-button.tsx",
+    "symbol": "SaveButton",
+    "line": 14
+  },
+  "signature": {
+    "name": "SaveButton",
+    "kind": "component"
+  },
+  "structural_hash": "779188ffc26083af5b225d4890530ce68466f3485e5a13514449869b6ddde374",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_admin_save_button_tsx__SaveButton.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

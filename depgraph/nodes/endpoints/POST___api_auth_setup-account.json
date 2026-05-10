@@ -1,0 +1,46 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/account_setup_token.py::AccountSetupToken",
+      "via": "db_query",
+      "where": "routers/auth.py:941"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/person.py::Person",
+      "via": "db_query",
+      "where": "routers/auth.py:963"
+    }
+  ],
+  "dossier": "dossiers/endpoints/POST___api_auth_setup-account.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "POST::/api/auth/setup-account",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "POST",
+    "path": "/api/auth/setup-account",
+    "request_schema_ref": "SetupAccountRequest",
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 939,
+    "path": "routers/auth.py",
+    "repo": "concorda-api",
+    "symbol": "setup_account"
+  },
+  "structural_hash": "98ceee88c4de636d18ea8b012070eb22b140cc24d3223e66491e47ea31cb378f",
+  "tests": [],
+  "title": "POST /api/auth/setup-account",
+  "warnings": [
+    {
+      "code": "weakly_typed_response",
+      "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
+      "where": "routers/auth.py:939"
+    }
+  ]
+}

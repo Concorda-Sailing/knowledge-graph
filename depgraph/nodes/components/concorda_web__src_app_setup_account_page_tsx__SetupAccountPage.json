@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/setup-account/page.tsx::SetupAccountPage",
+  "kind": "component",
+  "title": "SetupAccountPage",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/setup-account/page.tsx",
+    "symbol": "SetupAccountPage",
+    "line": 16
+  },
+  "signature": {
+    "name": "SetupAccountPage",
+    "kind": "component"
+  },
+  "structural_hash": "82d61ef3cf58f4c3f746d190d884ab4e15dcc4658bd77c6176e85e8d32779046",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_setup_account_page_tsx__SetupAccountPage.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

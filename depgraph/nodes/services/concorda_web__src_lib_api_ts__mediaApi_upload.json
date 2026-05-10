@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::mediaApi.upload",
+  "kind": "service",
+  "title": "mediaApi.upload",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "mediaApi.upload",
+    "line": 2881
+  },
+  "signature": {
+    "name": "mediaApi.upload",
+    "kind": "service"
+  },
+  "structural_hash": "6f6eaf71fc2ccb46c48994d5f73389bfecea6b0de0ebe9030e3a1824c7f98d0c",
+  "depends_on": [
+    {
+      "target": "POST::/api/media/upload{1}",
+      "via": "string_url",
+      "where": "api.ts:2893",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__mediaApi_upload.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/auth/register.spec.ts::test@105",
+  "kind": "test",
+  "title": "weak password shows validation error",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/auth/register.spec.ts",
+    "symbol": "test@105",
+    "line": 105
+  },
+  "signature": {
+    "name": "test@105",
+    "kind": "test"
+  },
+  "structural_hash": "36d2dee8f723adfae46cf6fac3cd153ad0ba4a8ead51b9aa107a270fa3fd3d7c",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_auth_register_spec_ts__test_105.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

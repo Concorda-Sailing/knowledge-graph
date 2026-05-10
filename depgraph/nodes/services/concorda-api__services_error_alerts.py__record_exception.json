@@ -1,0 +1,25 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/services/concorda-api__services_error_alerts.py__record_exception.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::services/error_alerts.py::record_exception",
+  "kind": "service",
+  "schema_version": 1,
+  "signature": {
+    "args": [],
+    "kind": "service",
+    "name": "record_exception"
+  },
+  "source": {
+    "line": 229,
+    "path": "services/error_alerts.py",
+    "repo": "concorda-api",
+    "symbol": "record_exception"
+  },
+  "structural_hash": "83dfbc4f84fc45c2b2e9703050000fa2042a2176479f74c551c895486b4c5d78",
+  "tests": [],
+  "title": "record_exception",
+  "warnings": []
+}

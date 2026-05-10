@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::eventsApi.update",
+  "kind": "service",
+  "title": "eventsApi.update",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "eventsApi.update",
+    "line": 417
+  },
+  "signature": {
+    "name": "eventsApi.update",
+    "kind": "service"
+  },
+  "structural_hash": "22e94c574e03ba62154e59413cb7a5fec373d344939926aa69feb137d639c467",
+  "depends_on": [
+    {
+      "target": "PUT::/api/events/{0}",
+      "via": "string_url",
+      "where": "api.ts:418",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__eventsApi_update.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

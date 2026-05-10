@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/ui/avatar-upload.tsx::AvatarUpload",
+  "kind": "component",
+  "title": "AvatarUpload",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/ui/avatar-upload.tsx",
+    "symbol": "AvatarUpload",
+    "line": 64
+  },
+  "signature": {
+    "name": "AvatarUpload",
+    "kind": "component"
+  },
+  "structural_hash": "87228476692a3cb8b14e04fd9914e1850026fcab74fe18e6f0d0c64c607b6b5e",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/utils.ts::cn",
+      "via": "hook_call",
+      "where": "avatar-upload.tsx:136",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_ui_avatar_upload_tsx__AvatarUpload.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

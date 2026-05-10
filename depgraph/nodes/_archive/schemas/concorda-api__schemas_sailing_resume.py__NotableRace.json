@@ -1,0 +1,32 @@
+{
+  "_archived_at": "2026-05-09T11:23:39.010313Z",
+  "_archived_reason": "domain_orphan_symbol_removed",
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_sailing_resume.py__NotableRace.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/sailing_resume.py::NotableRace",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "boat",
+      "name",
+      "role",
+      "year"
+    ],
+    "kind": "schema",
+    "name": "NotableRace"
+  },
+  "source": {
+    "line": 21,
+    "path": "schemas/sailing_resume.py",
+    "repo": "concorda-api",
+    "symbol": "NotableRace"
+  },
+  "structural_hash": "531d9f6025728e9f787534459cb9c2dfb8f204382fa4c813a5de57c067972ce7",
+  "tests": [],
+  "title": "NotableRace",
+  "warnings": []
+}

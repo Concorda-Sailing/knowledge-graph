@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/awards/page.tsx::AwardsPage",
+  "kind": "component",
+  "title": "AwardsPage",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/awards/page.tsx",
+    "symbol": "AwardsPage",
+    "line": 6
+  },
+  "signature": {
+    "name": "AwardsPage",
+    "kind": "component"
+  },
+  "structural_hash": "b2b306ff33909ad876eead6ccfb791e5728e825953db95ea2ce70347778a2ed9",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/content.ts::readContent",
+      "via": "hook_call",
+      "where": "page.tsx:7",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/content.ts::stripLeadingH1",
+      "via": "hook_call",
+      "where": "page.tsx:17",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_awards_page_tsx__AwardsPage.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

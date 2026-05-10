@@ -1,0 +1,41 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_event.py__EventCreate.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/event.py::EventCreate",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "category",
+      "comment",
+      "date",
+      "description",
+      "end_date",
+      "location",
+      "members_only",
+      "name",
+      "organizing_authority_uuids",
+      "organizing_club_id",
+      "owner_id",
+      "price",
+      "region",
+      "registration_deadline",
+      "slug"
+    ],
+    "kind": "schema",
+    "name": "EventCreate"
+  },
+  "source": {
+    "line": 15,
+    "path": "schemas/event.py",
+    "repo": "concorda-api",
+    "symbol": "EventCreate"
+  },
+  "structural_hash": "547e6e7606a08da82f2a779af6ed1f7d50d35ddf79169f72f66a1df67e5cad19",
+  "tests": [],
+  "title": "EventCreate",
+  "warnings": []
+}

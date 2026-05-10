@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::pages/boat-crew.page.ts::BoatCrewPage.openBoat",
+  "kind": "service",
+  "title": "BoatCrewPage.openBoat",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "pages/boat-crew.page.ts",
+    "symbol": "BoatCrewPage.openBoat",
+    "line": 91
+  },
+  "signature": {
+    "name": "BoatCrewPage.openBoat",
+    "kind": "service"
+  },
+  "structural_hash": "1e869b928a588d4f3d063eebb41bec1f049800db72cf0c8b6bceb64573313c96",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__pages_boat_crew_page_ts__BoatCrewPage_openBoat.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

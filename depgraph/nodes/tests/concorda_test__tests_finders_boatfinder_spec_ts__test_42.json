@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/finders/boatfinder.spec.ts::test@42",
+  "kind": "test",
+  "title": "apply button opens dialog",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/finders/boatfinder.spec.ts",
+    "symbol": "test@42",
+    "line": 42
+  },
+  "signature": {
+    "name": "test@42",
+    "kind": "test"
+  },
+  "structural_hash": "fe307c018c1ba1683ffffec4d9848d551ad05e8166cee7622d72e5da2ad1d000",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_finders_boatfinder_spec_ts__test_42.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

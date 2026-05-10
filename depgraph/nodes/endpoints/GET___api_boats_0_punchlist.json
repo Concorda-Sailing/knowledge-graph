@@ -1,0 +1,40 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::schemas/boat.py::PunchlistItemRead",
+      "via": "import",
+      "where": "routers/boats.py:936"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/boat_punchlist.py::BoatPunchlistItem",
+      "via": "db_query",
+      "where": "routers/boats.py:948"
+    }
+  ],
+  "dossier": "dossiers/endpoints/GET___api_boats_0_punchlist.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/boats/{0}/punchlist",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "GET",
+    "path": "/api/boats/{boat_id}/punchlist",
+    "request_schema_ref": null,
+    "response_schema_ref": "list"
+  },
+  "source": {
+    "line": 937,
+    "path": "routers/boats.py",
+    "repo": "concorda-api",
+    "symbol": "list_punchlist"
+  },
+  "structural_hash": "b81f418da65218f5a6cdefbd635f2e31555df71e0213b77c54d75230071fc080",
+  "tests": [],
+  "title": "GET /api/boats/{boat_id}/punchlist",
+  "warnings": []
+}

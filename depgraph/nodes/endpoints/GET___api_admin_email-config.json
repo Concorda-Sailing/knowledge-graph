@@ -1,0 +1,34 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/email_config.py::EmailConfig",
+      "via": "db_query",
+      "where": "routers/admin.py:626"
+    }
+  ],
+  "dossier": "dossiers/endpoints/GET___api_admin_email-config.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/admin/email-config",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "GET",
+    "path": "/api/admin/email-config",
+    "request_schema_ref": null,
+    "response_schema_ref": "EmailConfigResponse"
+  },
+  "source": {
+    "line": 620,
+    "path": "routers/admin.py",
+    "repo": "concorda-api",
+    "symbol": "get_email_config"
+  },
+  "structural_hash": "4a18189b1c7524f7a03b908635def540493082a36072f69b3b92fba4131d4994",
+  "tests": [],
+  "title": "GET /api/admin/email-config",
+  "warnings": []
+}

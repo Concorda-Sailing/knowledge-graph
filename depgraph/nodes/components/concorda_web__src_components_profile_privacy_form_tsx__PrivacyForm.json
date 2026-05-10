@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/profile/privacy-form.tsx::PrivacyForm",
+  "kind": "component",
+  "title": "PrivacyForm",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/profile/privacy-form.tsx",
+    "symbol": "PrivacyForm",
+    "line": 16
+  },
+  "signature": {
+    "name": "PrivacyForm",
+    "kind": "component"
+  },
+  "structural_hash": "c938b0bbb2974564c2ea779a4bdc2050e96e69c67bac5c11c6adb078887a49af",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.update",
+      "via": "hook_call",
+      "where": "privacy-form.tsx:42",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_profile_privacy_form_tsx__PrivacyForm.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/profile/privacy-settings.spec.ts::test@39",
+  "kind": "test",
+  "title": "can toggle show phone setting",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/profile/privacy-settings.spec.ts",
+    "symbol": "test@39",
+    "line": 39
+  },
+  "signature": {
+    "name": "test@39",
+    "kind": "test"
+  },
+  "structural_hash": "a83ba85e504aa5ba039f06d26fef40c18660417cd0f075e5fbde187a02e891aa",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_profile_privacy_settings_spec_ts__test_39.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

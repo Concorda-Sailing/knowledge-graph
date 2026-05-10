@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/boat/boat-owner-view.tsx::BoatOwnerView",
+  "kind": "component",
+  "title": "BoatOwnerView",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/boat/boat-owner-view.tsx",
+    "symbol": "BoatOwnerView",
+    "line": 34
+  },
+  "signature": {
+    "name": "BoatOwnerView",
+    "kind": "component"
+  },
+  "structural_hash": "3c982821af582f59eb183eb742d455d1d55fcb9823fe34be9eb3cb8926e685e1",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/contexts/auth-context.tsx::useAuth",
+      "via": "hook_call",
+      "where": "boat-owner-view.tsx:35",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/hooks/use-boats.ts::useBoats",
+      "via": "hook_call",
+      "where": "boat-owner-view.tsx:36",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.getBoats",
+      "via": "hook_call",
+      "where": "boat-owner-view.tsx:98",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::boatApi.getCrew",
+      "via": "hook_call",
+      "where": "boat-owner-view.tsx:111",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::boatApi.getPunchlist",
+      "via": "hook_call",
+      "where": "boat-owner-view.tsx:115",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::boatApi.getEvents",
+      "via": "hook_call",
+      "where": "boat-owner-view.tsx:119",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.getBoatResume",
+      "via": "hook_call",
+      "where": "boat-owner-view.tsx:123",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/hooks/use-ws-freshness.ts::useWsFreshness",
+      "via": "hook_call",
+      "where": "boat-owner-view.tsx:134",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.uploadBoatPicture",
+      "via": "hook_call",
+      "where": "boat-owner-view.tsx:139",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.deleteBoatPicture",
+      "via": "hook_call",
+      "where": "boat-owner-view.tsx:148",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.uploadBoatBanner",
+      "via": "hook_call",
+      "where": "boat-owner-view.tsx:189",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.deleteBoatBanner",
+      "via": "hook_call",
+      "where": "boat-owner-view.tsx:200",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/utils.ts::cn",
+      "via": "hook_call",
+      "where": "boat-owner-view.tsx:279",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/utils.ts::cn",
+      "via": "hook_call",
+      "where": "boat-owner-view.tsx:293",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_boat_boat_owner_view_tsx__BoatOwnerView.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

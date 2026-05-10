@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/admin/events/races/page.tsx::RacesPage",
+  "kind": "component",
+  "title": "RacesPage",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/admin/events/races/page.tsx",
+    "symbol": "RacesPage",
+    "line": 25
+  },
+  "signature": {
+    "name": "RacesPage",
+    "kind": "component"
+  },
+  "structural_hash": "0f2f9715a3b11e1cbbb4ff109ec616e6da1d9420dc5d5b52d6c7ffbd93460fb5",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/hooks/use-constants.ts::useConstants",
+      "via": "hook_call",
+      "where": "page.tsx:27",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/hooks/use-toast.ts::useToast",
+      "via": "hook_call",
+      "where": "page.tsx:29",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::regattaApi.list",
+      "via": "hook_call",
+      "where": "page.tsx:41",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::regattaApi.delete",
+      "via": "hook_call",
+      "where": "page.tsx:48",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::ymdInOrgTz",
+      "via": "hook_call",
+      "where": "page.tsx:60",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
+      "via": "hook_call",
+      "where": "page.tsx:66",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::ymdInOrgTz",
+      "via": "hook_call",
+      "where": "page.tsx:106",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
+      "via": "hook_call",
+      "where": "page.tsx:162",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::ymdInOrgTz",
+      "via": "hook_call",
+      "where": "page.tsx:208",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_admin_events_races_page_tsx__RacesPage.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

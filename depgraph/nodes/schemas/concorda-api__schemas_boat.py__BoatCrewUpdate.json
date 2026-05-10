@@ -1,0 +1,31 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_boat.py__BoatCrewUpdate.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/boat.py::BoatCrewUpdate",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "config_uuid",
+      "notes",
+      "position",
+      "role",
+      "status"
+    ],
+    "kind": "schema",
+    "name": "BoatCrewUpdate"
+  },
+  "source": {
+    "line": 16,
+    "path": "schemas/boat.py",
+    "repo": "concorda-api",
+    "symbol": "BoatCrewUpdate"
+  },
+  "structural_hash": "07078a6b680763b713b072434e4d0e19c4cd2f3219722cb72db72c6b3483072d",
+  "tests": [],
+  "title": "BoatCrewUpdate",
+  "warnings": []
+}

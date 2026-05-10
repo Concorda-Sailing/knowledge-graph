@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::profileApi.deleteBoatResume",
+  "kind": "service",
+  "title": "profileApi.deleteBoatResume",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "profileApi.deleteBoatResume",
+    "line": 1349
+  },
+  "signature": {
+    "name": "profileApi.deleteBoatResume",
+    "kind": "service"
+  },
+  "structural_hash": "6bcdf3742d73c3f9cd5f7a95122193e1ec74d361b2f0c8be40edc0bb3c8a3d43",
+  "depends_on": [
+    {
+      "target": "DELETE::/api/profile/boats/{0}/resume",
+      "via": "string_url",
+      "where": "api.ts:1350",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__profileApi_deleteBoatResume.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

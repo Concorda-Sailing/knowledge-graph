@@ -1,0 +1,27 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/endpoints/GET___api_constants_certifications.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/constants/certifications",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "GET",
+    "path": "/api/constants/certifications",
+    "request_schema_ref": null,
+    "response_schema_ref": "list"
+  },
+  "source": {
+    "line": 179,
+    "path": "routers/constants.py",
+    "repo": "concorda-api",
+    "symbol": "get_certifications"
+  },
+  "structural_hash": "e0ac0ac588d63749573ee579134afc60f34d13a74a31c7df749a793e3f25f103",
+  "tests": [],
+  "title": "GET /api/constants/certifications",
+  "warnings": []
+}

@@ -1,0 +1,25 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/models/concorda-api__models_auth_token.py__AuthToken.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::models/auth_token.py::AuthToken",
+  "kind": "model",
+  "schema_version": 1,
+  "signature": {
+    "kind": "model",
+    "name": "AuthToken",
+    "tablename": "auth_tokens"
+  },
+  "source": {
+    "line": 8,
+    "path": "models/auth_token.py",
+    "repo": "concorda-api",
+    "symbol": "AuthToken"
+  },
+  "structural_hash": "b36197754c03ddffa78efb53d4e456ec69fa7efc093e8f6de55dbb6a56546f1e",
+  "tests": [],
+  "title": "AuthToken",
+  "warnings": []
+}

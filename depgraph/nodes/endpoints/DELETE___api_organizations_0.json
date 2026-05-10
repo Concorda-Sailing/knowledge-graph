@@ -1,0 +1,34 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/organization.py::Organization",
+      "via": "db_query",
+      "where": "routers/organizations.py:213"
+    }
+  ],
+  "dossier": "dossiers/endpoints/DELETE___api_organizations_0.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "DELETE::/api/organizations/{0}",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "admin",
+    "method": "DELETE",
+    "path": "/api/organizations/{org_id}",
+    "request_schema_ref": null,
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 208,
+    "path": "routers/organizations.py",
+    "repo": "concorda-api",
+    "symbol": "delete_organization"
+  },
+  "structural_hash": "252d565eceff20a4dc377f6b2a025e00b4c75e13b942b463e433a24598061c34",
+  "tests": [],
+  "title": "DELETE /api/organizations/{org_id}",
+  "warnings": []
+}

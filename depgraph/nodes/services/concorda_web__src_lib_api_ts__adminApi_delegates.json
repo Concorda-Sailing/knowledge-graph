@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::adminApi.delegates",
+  "kind": "service",
+  "title": "adminApi.delegates",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "adminApi.delegates",
+    "line": 827
+  },
+  "signature": {
+    "name": "adminApi.delegates",
+    "kind": "service"
+  },
+  "structural_hash": "4126e355ed494ec92eb45164642ad8618302dcf89e689dea43ce547713c39b24",
+  "depends_on": [
+    {
+      "target": "GET::/api/admin/delegates",
+      "via": "http_call",
+      "where": "api.ts:827",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__adminApi_delegates.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

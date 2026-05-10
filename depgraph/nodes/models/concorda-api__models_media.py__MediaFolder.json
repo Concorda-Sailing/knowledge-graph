@@ -1,0 +1,25 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/models/concorda-api__models_media.py__MediaFolder.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::models/media.py::MediaFolder",
+  "kind": "model",
+  "schema_version": 1,
+  "signature": {
+    "kind": "model",
+    "name": "MediaFolder",
+    "tablename": "media_folders"
+  },
+  "source": {
+    "line": 6,
+    "path": "models/media.py",
+    "repo": "concorda-api",
+    "symbol": "MediaFolder"
+  },
+  "structural_hash": "f50f131c17db512caedb55ea76d9564745953d082e89324569d1d2fd6c5b5622",
+  "tests": [],
+  "title": "MediaFolder",
+  "warnings": []
+}

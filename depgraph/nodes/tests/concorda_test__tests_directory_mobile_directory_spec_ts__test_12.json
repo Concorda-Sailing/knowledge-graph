@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/directory/mobile-directory.spec.ts::test@12",
+  "kind": "test",
+  "title": "no horizontal overflow at 375px",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/directory/mobile-directory.spec.ts",
+    "symbol": "test@12",
+    "line": 12
+  },
+  "signature": {
+    "name": "test@12",
+    "kind": "test"
+  },
+  "structural_hash": "ac59d942346427109d8cb3108768e0c928bf95e91c1371325e7e60311ce06bdf",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_directory_mobile_directory_spec_ts__test_12.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

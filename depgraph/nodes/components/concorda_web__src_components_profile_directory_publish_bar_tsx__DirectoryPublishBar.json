@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/profile/directory-publish-bar.tsx::DirectoryPublishBar",
+  "kind": "component",
+  "title": "DirectoryPublishBar",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/profile/directory-publish-bar.tsx",
+    "symbol": "DirectoryPublishBar",
+    "line": 15
+  },
+  "signature": {
+    "name": "DirectoryPublishBar",
+    "kind": "component"
+  },
+  "structural_hash": "420746566ba8279c15e67e82ac057904c53001c689a1c1d2b06d2b4758d49eaa",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/api.ts::profileApi.update",
+      "via": "hook_call",
+      "where": "directory-publish-bar.tsx:62",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_profile_directory_publish_bar_tsx__DirectoryPublishBar.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

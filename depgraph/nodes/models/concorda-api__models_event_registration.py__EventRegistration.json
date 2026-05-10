@@ -1,0 +1,25 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/models/concorda-api__models_event_registration.py__EventRegistration.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::models/event_registration.py::EventRegistration",
+  "kind": "model",
+  "schema_version": 1,
+  "signature": {
+    "kind": "model",
+    "name": "EventRegistration",
+    "tablename": "event_registrations"
+  },
+  "source": {
+    "line": 6,
+    "path": "models/event_registration.py",
+    "repo": "concorda-api",
+    "symbol": "EventRegistration"
+  },
+  "structural_hash": "5891ab1b4549f8cb8d851a56e58ce395f424a87900003f7b846249e134519f41",
+  "tests": [],
+  "title": "EventRegistration",
+  "warnings": []
+}

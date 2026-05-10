@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/boats/coowner-inbox.spec.ts::test@144",
+  "kind": "test",
+  "title": "inviter cancels an outgoing co-owner invite from the Inbox",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/boats/coowner-inbox.spec.ts",
+    "symbol": "test@144",
+    "line": 144
+  },
+  "signature": {
+    "name": "test@144",
+    "kind": "test"
+  },
+  "structural_hash": "2272d1fb07b185a1720aef11d8ed15d2969f4003c5a32c4abd9c91f9b0fc0192",
+  "depends_on": [
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.login",
+      "via": "hook_call",
+      "where": "coowner-inbox.spec.ts:146",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.acceptAllPendingPolicies",
+      "via": "hook_call",
+      "where": "coowner-inbox.spec.ts:147",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.login",
+      "via": "hook_call",
+      "where": "coowner-inbox.spec.ts:149",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.acceptAllPendingPolicies",
+      "via": "hook_call",
+      "where": "coowner-inbox.spec.ts:150",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.coownerInvite",
+      "via": "hook_call",
+      "where": "coowner-inbox.spec.ts:162",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-test::lib/api-client.ts::ApiClient.listApprovalRequests",
+      "via": "hook_call",
+      "where": "coowner-inbox.spec.ts:189",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_boats_coowner_inbox_spec_ts__test_144.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

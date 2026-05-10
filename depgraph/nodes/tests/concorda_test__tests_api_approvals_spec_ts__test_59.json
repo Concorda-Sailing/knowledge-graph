@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/api/approvals.spec.ts::test@59",
+  "kind": "test",
+  "title": "lookup returns exists=false for unknown boat",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/api/approvals.spec.ts",
+    "symbol": "test@59",
+    "line": 59
+  },
+  "signature": {
+    "name": "test@59",
+    "kind": "test"
+  },
+  "structural_hash": "408422e2897fd62bbdf965b048bc80c6577edd3d343fe36ce88701f8cc335dd1",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_api_approvals_spec_ts__test_59.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

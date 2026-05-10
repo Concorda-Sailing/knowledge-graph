@@ -1,0 +1,40 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/notification_log.py::NotificationLog",
+      "via": "db_query",
+      "where": "routers/tracking.py:40"
+    }
+  ],
+  "dossier": "dossiers/endpoints/GET___api_tracking_email-open_0.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/tracking/email-open/{0}",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "GET",
+    "path": "/api/tracking/email-open/{token}",
+    "request_schema_ref": null,
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 30,
+    "path": "routers/tracking.py",
+    "repo": "concorda-api",
+    "symbol": "track_email_open"
+  },
+  "structural_hash": "bd4127c79fb71676e3251721b7606f1151f636bbbd9cf8060e1a24bd60b6873b",
+  "tests": [],
+  "title": "GET /api/tracking/email-open/{token}",
+  "warnings": [
+    {
+      "code": "weakly_typed_response",
+      "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
+      "where": "routers/tracking.py:30"
+    }
+  ]
+}

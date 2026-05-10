@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::lib/api-client.ts::ApiClient.acceptAllPendingPolicies",
+  "kind": "service",
+  "title": "ApiClient.acceptAllPendingPolicies",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "lib/api-client.ts",
+    "symbol": "ApiClient.acceptAllPendingPolicies",
+    "line": 333
+  },
+  "signature": {
+    "name": "ApiClient.acceptAllPendingPolicies",
+    "kind": "service"
+  },
+  "structural_hash": "7b883eaca4478e16ae50942fb02f6faa2e535bfd4670c06b73ff9701b23a5247",
+  "depends_on": [
+    {
+      "target": "POST::/api/policies/me/accept",
+      "via": "http_call",
+      "where": "api-client.ts:336",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__lib_api_client_ts__ApiClient_acceptAllPendingPolicies.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

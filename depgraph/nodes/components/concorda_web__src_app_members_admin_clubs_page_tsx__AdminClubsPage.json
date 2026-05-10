@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/admin/clubs/page.tsx::AdminClubsPage",
+  "kind": "component",
+  "title": "AdminClubsPage",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/admin/clubs/page.tsx",
+    "symbol": "AdminClubsPage",
+    "line": 18
+  },
+  "signature": {
+    "name": "AdminClubsPage",
+    "kind": "component"
+  },
+  "structural_hash": "817e642ec9d6132c98c5a0019243a02debd784eea0d36f5090abd02e9fd643c9",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/hooks/use-toast.ts::useToast",
+      "via": "hook_call",
+      "where": "page.tsx:19",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/contexts/auth-context.tsx::useAuth",
+      "via": "hook_call",
+      "where": "page.tsx:20",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::organizationsApi.list",
+      "via": "hook_call",
+      "where": "page.tsx:36",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::adminApi.members",
+      "via": "hook_call",
+      "where": "page.tsx:47",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::organizationsApi.list",
+      "via": "hook_call",
+      "where": "page.tsx:56",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::organizationsApi.exportCsv",
+      "via": "hook_call",
+      "where": "page.tsx:86",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::organizationsApi.importCsv",
+      "via": "hook_call",
+      "where": "page.tsx:104",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_admin_clubs_page_tsx__AdminClubsPage.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

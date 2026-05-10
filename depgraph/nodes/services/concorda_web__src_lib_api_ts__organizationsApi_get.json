@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::organizationsApi.get",
+  "kind": "service",
+  "title": "organizationsApi.get",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "organizationsApi.get",
+    "line": 659
+  },
+  "signature": {
+    "name": "organizationsApi.get",
+    "kind": "service"
+  },
+  "structural_hash": "de8540e49903c5dc93ff8fc043f8e051a04f78757c31ddfb36433a59aaae0d45",
+  "depends_on": [
+    {
+      "target": "GET::/api/organizations/{0}",
+      "via": "string_url",
+      "where": "api.ts:659",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__organizationsApi_get.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

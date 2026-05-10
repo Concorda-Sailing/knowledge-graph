@@ -1,0 +1,40 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::utils/notification_utils.py::send_sms",
+      "via": "import",
+      "where": "routers/notifications.py:120"
+    }
+  ],
+  "dossier": "dossiers/endpoints/POST___api_admin_notifications_test-sms.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "POST::/api/admin/notifications/test-sms",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "POST",
+    "path": "/api/admin/notifications/test-sms",
+    "request_schema_ref": "TestSMSRequest",
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 114,
+    "path": "routers/notifications.py",
+    "repo": "concorda-api",
+    "symbol": "test_sms"
+  },
+  "structural_hash": "500bb472eee0c3fdd295874606f958172b47ccde56b3790c9d6d674566464730",
+  "tests": [],
+  "title": "POST /api/admin/notifications/test-sms",
+  "warnings": [
+    {
+      "code": "weakly_typed_response",
+      "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
+      "where": "routers/notifications.py:114"
+    }
+  ]
+}

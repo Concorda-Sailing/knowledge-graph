@@ -1,0 +1,29 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/services/concorda-api__services_approvals.py__list_requests_for_voter.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::services/approvals.py::list_requests_for_voter",
+  "kind": "service",
+  "schema_version": 1,
+  "signature": {
+    "args": [
+      "db",
+      "voter_uuid",
+      "status"
+    ],
+    "kind": "service",
+    "name": "list_requests_for_voter"
+  },
+  "source": {
+    "line": 135,
+    "path": "services/approvals.py",
+    "repo": "concorda-api",
+    "symbol": "list_requests_for_voter"
+  },
+  "structural_hash": "623a7e685ca0d9e6c23f289eeaafa8bedbff3d9e7435090f07d4dcc7488497ae",
+  "tests": [],
+  "title": "list_requests_for_voter",
+  "warnings": []
+}

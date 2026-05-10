@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::regattasApi.list",
+  "kind": "service",
+  "title": "regattasApi.list",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "regattasApi.list",
+    "line": 2769
+  },
+  "signature": {
+    "name": "regattasApi.list",
+    "kind": "service"
+  },
+  "structural_hash": "bc340d72ce17e112ca575d51e2db2c5fd073f685f69f19a89898c29583ee184e",
+  "depends_on": [
+    {
+      "target": "GET::/api/events/regattas/{0}",
+      "via": "string_url",
+      "where": "api.ts:2774",
+      "confidence": "fuzzy"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__regattasApi_list.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

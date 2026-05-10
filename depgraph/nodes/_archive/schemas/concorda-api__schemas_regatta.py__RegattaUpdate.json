@@ -1,0 +1,49 @@
+{
+  "_archived_at": "2026-05-09T11:23:39.013263Z",
+  "_archived_reason": "domain_orphan_symbol_removed",
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_regatta.py__RegattaUpdate.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/regatta.py::RegattaUpdate",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "additional_events",
+      "classes",
+      "course_type",
+      "description",
+      "end",
+      "first_warning",
+      "image_url",
+      "links",
+      "location",
+      "max_races",
+      "name",
+      "oa_uuid",
+      "organizing_authority_uuids",
+      "qualifier",
+      "rc_channel",
+      "region_uuid",
+      "scoring_system",
+      "series_uuid",
+      "start",
+      "start_area_location",
+      "start_area_text"
+    ],
+    "kind": "schema",
+    "name": "RegattaUpdate"
+  },
+  "source": {
+    "line": 37,
+    "path": "schemas/regatta.py",
+    "repo": "concorda-api",
+    "symbol": "RegattaUpdate"
+  },
+  "structural_hash": "fb8256a9282d55750a80a0d4b858165d04db60b7b11865d9d95c038c0371cbb7",
+  "tests": [],
+  "title": "RegattaUpdate",
+  "warnings": []
+}

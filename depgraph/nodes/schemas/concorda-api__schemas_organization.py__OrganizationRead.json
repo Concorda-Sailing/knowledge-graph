@@ -1,0 +1,47 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_organization.py__OrganizationRead.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/organization.py::OrganizationRead",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "abbreviation",
+      "address",
+      "billing_contact_id",
+      "burgee_url",
+      "contact_email",
+      "created",
+      "fleet_captain_id",
+      "id",
+      "modified",
+      "name",
+      "org_type",
+      "parent_org_id",
+      "phone_number",
+      "reciprocity_with",
+      "region",
+      "services",
+      "social_media",
+      "steward_id",
+      "type",
+      "vhf_channel",
+      "website"
+    ],
+    "kind": "schema",
+    "name": "OrganizationRead"
+  },
+  "source": {
+    "line": 46,
+    "path": "schemas/organization.py",
+    "repo": "concorda-api",
+    "symbol": "OrganizationRead"
+  },
+  "structural_hash": "51b8bd380c6c7accb3749937b5c34dae47990225cc96480e33933075d5af6b64",
+  "tests": [],
+  "title": "OrganizationRead",
+  "warnings": []
+}

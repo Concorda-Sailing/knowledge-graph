@@ -1,0 +1,52 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/person.py::Person",
+      "via": "db_query",
+      "where": "routers/admin.py:101"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/temporal_product.py::TemporalProduct",
+      "via": "db_query",
+      "where": "routers/admin.py:113"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/person_product.py::PersonProduct",
+      "via": "db_query",
+      "where": "routers/admin.py:112"
+    }
+  ],
+  "dossier": "dossiers/endpoints/GET___api_admin_members.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/admin/members",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "GET",
+    "path": "/api/admin/members",
+    "request_schema_ref": null,
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 91,
+    "path": "routers/admin.py",
+    "repo": "concorda-api",
+    "symbol": "list_members"
+  },
+  "structural_hash": "04be09a99fa436b13497198a4cb4ad240b8ea16fca19ac21d87a3a81cf1e20da",
+  "tests": [],
+  "title": "GET /api/admin/members",
+  "warnings": [
+    {
+      "code": "weakly_typed_response",
+      "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
+      "where": "routers/admin.py:91"
+    }
+  ]
+}

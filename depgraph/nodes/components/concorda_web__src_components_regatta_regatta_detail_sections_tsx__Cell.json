@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/regatta/regatta-detail-sections.tsx::Cell",
+  "kind": "component",
+  "title": "Cell",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/regatta/regatta-detail-sections.tsx",
+    "symbol": "Cell",
+    "line": 24
+  },
+  "signature": {
+    "name": "Cell",
+    "kind": "component"
+  },
+  "structural_hash": "d40b8c30451082b5c2548588a22dd2bba28143e01b703a070c900d77afb4fa33",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_regatta_regatta_detail_sections_tsx__Cell.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

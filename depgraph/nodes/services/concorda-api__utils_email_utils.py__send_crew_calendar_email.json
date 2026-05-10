@@ -1,0 +1,25 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/services/concorda-api__utils_email_utils.py__send_crew_calendar_email.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::utils/email_utils.py::send_crew_calendar_email",
+  "kind": "service",
+  "schema_version": 1,
+  "signature": {
+    "args": [],
+    "kind": "service",
+    "name": "send_crew_calendar_email"
+  },
+  "source": {
+    "line": 1227,
+    "path": "utils/email_utils.py",
+    "repo": "concorda-api",
+    "symbol": "send_crew_calendar_email"
+  },
+  "structural_hash": "f03a823733b94efd8dd049fd52b6055b3df42483736cbd8224fb358745b7a563",
+  "tests": [],
+  "title": "send_crew_calendar_email",
+  "warnings": []
+}

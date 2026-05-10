@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/layout.tsx::RootLayout",
+  "kind": "component",
+  "title": "RootLayout",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/layout.tsx",
+    "symbol": "RootLayout",
+    "line": 19
+  },
+  "signature": {
+    "name": "RootLayout",
+    "kind": "component"
+  },
+  "structural_hash": "b0c0d256589f4f359b6abc9af1c28140c34f8011b370a2d2ba8cf7b2ff8edd59",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_layout_tsx__RootLayout.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

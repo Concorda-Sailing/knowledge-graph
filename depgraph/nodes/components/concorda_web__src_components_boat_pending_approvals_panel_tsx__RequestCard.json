@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/boat/pending-approvals-panel.tsx::RequestCard",
+  "kind": "component",
+  "title": "RequestCard",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/boat/pending-approvals-panel.tsx",
+    "symbol": "RequestCard",
+    "line": 36
+  },
+  "signature": {
+    "name": "RequestCard",
+    "kind": "component"
+  },
+  "structural_hash": "1bd087297be35e1c9e87f6d8ad46d579502e8719f8f4a5c86d3c50b5700e0a05",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/api.ts::approvalsApi.vote",
+      "via": "hook_call",
+      "where": "pending-approvals-panel.tsx:42",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/api.ts::approvalsApi.vote",
+      "via": "hook_call",
+      "where": "pending-approvals-panel.tsx:46",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_boat_pending_approvals_panel_tsx__RequestCard.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

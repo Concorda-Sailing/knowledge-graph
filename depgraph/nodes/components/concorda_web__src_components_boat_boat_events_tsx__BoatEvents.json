@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/boat/boat-events.tsx::BoatEvents",
+  "kind": "component",
+  "title": "BoatEvents",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/boat/boat-events.tsx",
+    "symbol": "BoatEvents",
+    "line": 22
+  },
+  "signature": {
+    "name": "BoatEvents",
+    "kind": "component"
+  },
+  "structural_hash": "7d26fce4dc45cc88c8e7b1fe57ee2bdf72928ff3ae03ac53146dee1b32fc078a",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/hooks/use-constants.ts::useConstants",
+      "via": "hook_call",
+      "where": "boat-events.tsx:23",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
+      "via": "hook_call",
+      "where": "boat-events.tsx:53",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_boat_boat_events_tsx__BoatEvents.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

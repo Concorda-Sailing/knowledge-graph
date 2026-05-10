@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/ThemeToggle.tsx::ThemeToggle",
+  "kind": "component",
+  "title": "ThemeToggle",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/ThemeToggle.tsx",
+    "symbol": "ThemeToggle",
+    "line": 9
+  },
+  "signature": {
+    "name": "ThemeToggle",
+    "kind": "component"
+  },
+  "structural_hash": "e7307dbb0e3211bb8791d94bff927d50bfdc071dbb8600d7cd1fe95a3f220fbe",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_ThemeToggle_tsx__ThemeToggle.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

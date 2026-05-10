@@ -1,0 +1,28 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/services/concorda-api__services_approvals.py__get_votes.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::services/approvals.py::get_votes",
+  "kind": "service",
+  "schema_version": 1,
+  "signature": {
+    "args": [
+      "db",
+      "request_id"
+    ],
+    "kind": "service",
+    "name": "get_votes"
+  },
+  "source": {
+    "line": 155,
+    "path": "services/approvals.py",
+    "repo": "concorda-api",
+    "symbol": "get_votes"
+  },
+  "structural_hash": "c760bd2af78831f03eb616c02d2df4170d3d0689feb1222401c610628447ee33",
+  "tests": [],
+  "title": "get_votes",
+  "warnings": []
+}

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::pages/notifications.page.ts::NotificationsPage.expectItemGone",
+  "kind": "service",
+  "title": "NotificationsPage.expectItemGone",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "pages/notifications.page.ts",
+    "symbol": "NotificationsPage.expectItemGone",
+    "line": 136
+  },
+  "signature": {
+    "name": "NotificationsPage.expectItemGone",
+    "kind": "service"
+  },
+  "structural_hash": "b0840002e373aabe3fd273593cfac546935a7a14289d3f3bb38285990ade4dda",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__pages_notifications_page_ts__NotificationsPage_expectItemGone.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

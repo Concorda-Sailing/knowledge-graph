@@ -1,0 +1,34 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/llm_config.py::LLMConfig",
+      "via": "db_query",
+      "where": "routers/admin.py:1143"
+    }
+  ],
+  "dossier": "dossiers/endpoints/GET___api_admin_llm-config.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/admin/llm-config",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "none",
+    "method": "GET",
+    "path": "/api/admin/llm-config",
+    "request_schema_ref": null,
+    "response_schema_ref": "LLMConfigResponse"
+  },
+  "source": {
+    "line": 1141,
+    "path": "routers/admin.py",
+    "repo": "concorda-api",
+    "symbol": "get_llm_config"
+  },
+  "structural_hash": "c369eaaba643d8b849c596bf15805e26b40b5982c7de299366d841c23df690ea",
+  "tests": [],
+  "title": "GET /api/admin/llm-config",
+  "warnings": []
+}

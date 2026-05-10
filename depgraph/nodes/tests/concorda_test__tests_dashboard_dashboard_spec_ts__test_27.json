@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/dashboard/dashboard.spec.ts::test@27",
+  "kind": "test",
+  "title": "finder link navigates to unified finder page",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/dashboard/dashboard.spec.ts",
+    "symbol": "test@27",
+    "line": 27
+  },
+  "signature": {
+    "name": "test@27",
+    "kind": "test"
+  },
+  "structural_hash": "1ba3320d9eddacc1d17232df23477c84eb6ce543357465a7e80bf127a883d9b9",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_dashboard_dashboard_spec_ts__test_27.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

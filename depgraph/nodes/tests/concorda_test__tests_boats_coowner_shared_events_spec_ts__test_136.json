@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/boats/coowner-shared-events.spec.ts::test@136",
+  "kind": "test",
+  "title": "regatta Bob attaches to Test Breeze appears on Dan's schedule",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/boats/coowner-shared-events.spec.ts",
+    "symbol": "test@136",
+    "line": 136
+  },
+  "signature": {
+    "name": "test@136",
+    "kind": "test"
+  },
+  "structural_hash": "21ba6529c3d1713eee5f7427dced4b11099dd038cb7aa4ae2735720b7dcf956a",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_boats_coowner_shared_events_spec_ts__test_136.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

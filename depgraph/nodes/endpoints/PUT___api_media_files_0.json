@@ -1,0 +1,34 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/media.py::MediaFile",
+      "via": "db_query",
+      "where": "routers/media.py:400"
+    }
+  ],
+  "dossier": "dossiers/endpoints/PUT___api_media_files_0.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "PUT::/api/media/files/{0}",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "PUT",
+    "path": "/api/media/files/{file_id}",
+    "request_schema_ref": "FileUpdate",
+    "response_schema_ref": "FileRead"
+  },
+  "source": {
+    "line": 394,
+    "path": "routers/media.py",
+    "repo": "concorda-api",
+    "symbol": "update_file"
+  },
+  "structural_hash": "bf76e6ca116dbe0308b6b6db4ad33fef4b7e5aa359a40d6592570afb7fcc2591",
+  "tests": [],
+  "title": "PUT /api/media/files/{file_id}",
+  "warnings": []
+}

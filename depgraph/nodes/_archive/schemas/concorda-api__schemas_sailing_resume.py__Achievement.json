@@ -1,0 +1,31 @@
+{
+  "_archived_at": "2026-05-09T11:23:39.008457Z",
+  "_archived_reason": "domain_orphan_symbol_removed",
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_sailing_resume.py__Achievement.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/sailing_resume.py::Achievement",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "award",
+      "place",
+      "year"
+    ],
+    "kind": "schema",
+    "name": "Achievement"
+  },
+  "source": {
+    "line": 28,
+    "path": "schemas/sailing_resume.py",
+    "repo": "concorda-api",
+    "symbol": "Achievement"
+  },
+  "structural_hash": "77f177a7f6cef91ce76fb3e3cb17f222ab392c3580c20f7ee5426c84a7eb0c1b",
+  "tests": [],
+  "title": "Achievement",
+  "warnings": []
+}

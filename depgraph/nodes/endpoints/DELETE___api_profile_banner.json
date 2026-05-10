@@ -1,0 +1,52 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::utils/image_utils.py::delete_upload",
+      "via": "import",
+      "where": "routers/profile.py:278"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::utils/websocket_manager.py::broadcast_event",
+      "via": "websocket",
+      "where": "routers/profile.py:284"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::schemas/profile.py::ProfileRead",
+      "via": "import",
+      "where": "routers/profile.py:267"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/person.py::Person",
+      "via": "db_query",
+      "where": "routers/profile.py:274"
+    }
+  ],
+  "dossier": "dossiers/endpoints/DELETE___api_profile_banner.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "DELETE::/api/profile/banner",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "DELETE",
+    "path": "/api/profile/banner",
+    "request_schema_ref": null,
+    "response_schema_ref": "ProfileRead"
+  },
+  "source": {
+    "line": 268,
+    "path": "routers/profile.py",
+    "repo": "concorda-api",
+    "symbol": "delete_profile_banner"
+  },
+  "structural_hash": "c9277f42413e203009d470b9efa2a4caf46ce74ac29f8d5587c0ce2fd43ae7ae",
+  "tests": [],
+  "title": "DELETE /api/profile/banner",
+  "warnings": []
+}

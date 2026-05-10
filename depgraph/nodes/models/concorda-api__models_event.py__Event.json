@@ -1,0 +1,25 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/models/concorda-api__models_event.py__Event.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::models/event.py::Event",
+  "kind": "model",
+  "schema_version": 1,
+  "signature": {
+    "kind": "model",
+    "name": "Event",
+    "tablename": "events"
+  },
+  "source": {
+    "line": 9,
+    "path": "models/event.py",
+    "repo": "concorda-api",
+    "symbol": "Event"
+  },
+  "structural_hash": "ff987f0c2fc9f71f1793195f1bb75e75cbf1a0f89ecf834fd787e8df90524825",
+  "tests": [],
+  "title": "Event",
+  "warnings": []
+}

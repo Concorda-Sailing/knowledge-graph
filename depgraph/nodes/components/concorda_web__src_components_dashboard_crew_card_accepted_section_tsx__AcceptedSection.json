@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/components/dashboard/crew-card/accepted-section.tsx::AcceptedSection",
+  "kind": "component",
+  "title": "AcceptedSection",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/components/dashboard/crew-card/accepted-section.tsx",
+    "symbol": "AcceptedSection",
+    "line": 19
+  },
+  "signature": {
+    "name": "AcceptedSection",
+    "kind": "component"
+  },
+  "structural_hash": "8ec01c4ae8719daa1b7a3f2260435ede3d6316452289543ea804f47643275d3c",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/lib/utils.ts::cn",
+      "via": "hook_call",
+      "where": "accepted-section.tsx:47",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_components_dashboard_crew_card_accepted_section_tsx__AcceptedSection.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

@@ -1,0 +1,25 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/models/concorda-api__models_regatta.py__Regatta.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::models/regatta.py::Regatta",
+  "kind": "model",
+  "schema_version": 1,
+  "signature": {
+    "kind": "model",
+    "name": "Regatta",
+    "tablename": "regattas"
+  },
+  "source": {
+    "line": 8,
+    "path": "models/regatta.py",
+    "repo": "concorda-api",
+    "symbol": "Regatta"
+  },
+  "structural_hash": "31f181e8e8e6a3ddcd56255ee27d8db6e61fd02fb1769e442bf23e0a801f14bb",
+  "tests": [],
+  "title": "Regatta",
+  "warnings": []
+}

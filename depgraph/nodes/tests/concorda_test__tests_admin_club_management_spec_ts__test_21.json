@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/admin/club-management.spec.ts::test@21",
+  "kind": "test",
+  "title": "search filters clubs",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/admin/club-management.spec.ts",
+    "symbol": "test@21",
+    "line": 21
+  },
+  "signature": {
+    "name": "test@21",
+    "kind": "test"
+  },
+  "structural_hash": "3b41660167e878903b3bc3d2e4902907d03f2052f5e073f80b23ece767fcf530",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_admin_club_management_spec_ts__test_21.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

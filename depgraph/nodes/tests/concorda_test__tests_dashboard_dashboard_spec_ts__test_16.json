@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/dashboard/dashboard.spec.ts::test@16",
+  "kind": "test",
+  "title": "sidebar contains main navigation links",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/dashboard/dashboard.spec.ts",
+    "symbol": "test@16",
+    "line": 16
+  },
+  "signature": {
+    "name": "test@16",
+    "kind": "test"
+  },
+  "structural_hash": "c389310914b3319fdf2ef4bf87e7b4242eddf8c36a6a2ee4787f2d6c1c8789b6",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_dashboard_dashboard_spec_ts__test_16.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/courses/page.tsx::CoursesPage",
+  "kind": "component",
+  "title": "CoursesPage",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/courses/page.tsx",
+    "symbol": "CoursesPage",
+    "line": 5
+  },
+  "signature": {
+    "name": "CoursesPage",
+    "kind": "component"
+  },
+  "structural_hash": "0d625c755565061abba9e90cfd4652d2f8e873e5523455f1cc8083517c0cbfad",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_courses_page_tsx__CoursesPage.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

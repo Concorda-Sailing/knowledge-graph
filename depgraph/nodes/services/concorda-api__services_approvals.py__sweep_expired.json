@@ -1,0 +1,27 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/services/concorda-api__services_approvals.py__sweep_expired.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::services/approvals.py::sweep_expired",
+  "kind": "service",
+  "schema_version": 1,
+  "signature": {
+    "args": [
+      "db"
+    ],
+    "kind": "service",
+    "name": "sweep_expired"
+  },
+  "source": {
+    "line": 123,
+    "path": "services/approvals.py",
+    "repo": "concorda-api",
+    "symbol": "sweep_expired"
+  },
+  "structural_hash": "6c4a76f812b2e10170e9cb0ce47d73547e5864be9de6dd253ee8861b6919f978",
+  "tests": [],
+  "title": "sweep_expired",
+  "warnings": []
+}

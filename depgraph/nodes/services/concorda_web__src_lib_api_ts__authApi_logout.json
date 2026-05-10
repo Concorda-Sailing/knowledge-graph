@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts::authApi.logout",
+  "kind": "service",
+  "title": "authApi.logout",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "symbol": "authApi.logout",
+    "line": 188
+  },
+  "signature": {
+    "name": "authApi.logout",
+    "kind": "service"
+  },
+  "structural_hash": "c544ea2dc9c46f6ab77ca8b31897f086f2959de12df455c127f0d8cdf8f82cb1",
+  "depends_on": [
+    {
+      "target": "POST::/api/auth/logout",
+      "via": "http_call",
+      "where": "api.ts:189",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_web__src_lib_api_ts__authApi_logout.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

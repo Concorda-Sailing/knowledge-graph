@@ -1,0 +1,58 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/sailing_event.py::SailingEvent",
+      "via": "db_query",
+      "where": "routers/events.py:706"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/event.py::Event",
+      "via": "db_query",
+      "where": "routers/events.py:656"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/person_event.py::PersonEvent",
+      "via": "db_query",
+      "where": "routers/events.py:674"
+    },
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/crew_pool.py::CrewPool",
+      "via": "db_query",
+      "where": "routers/events.py:635"
+    }
+  ],
+  "dossier": "dossiers/endpoints/POST___api_events_my-schedule_add-series.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "POST::/api/events/my-schedule/add-series",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "POST",
+    "path": "/api/events/my-schedule/add-series",
+    "request_schema_ref": "AddSeriesToSchedule",
+    "response_schema_ref": null
+  },
+  "source": {
+    "line": 620,
+    "path": "routers/events.py",
+    "repo": "concorda-api",
+    "symbol": "add_series_to_schedule"
+  },
+  "structural_hash": "da1c25dc9fc358356be04cd188becdd461932598ace8121fbcb4abc8cf359ae1",
+  "tests": [],
+  "title": "POST /api/events/my-schedule/add-series",
+  "warnings": [
+    {
+      "code": "weakly_typed_response",
+      "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
+      "where": "routers/events.py:620"
+    }
+  ]
+}

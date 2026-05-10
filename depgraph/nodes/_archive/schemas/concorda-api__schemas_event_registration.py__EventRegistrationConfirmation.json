@@ -1,0 +1,36 @@
+{
+  "_archived_at": "2026-05-09T11:23:39.012381Z",
+  "_archived_reason": "domain_orphan_symbol_removed",
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_event_registration.py__EventRegistrationConfirmation.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/event_registration.py::EventRegistrationConfirmation",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [
+      "created",
+      "email",
+      "first_name",
+      "id",
+      "status",
+      "ticket_name",
+      "ticket_price",
+      "transaction_id"
+    ],
+    "kind": "schema",
+    "name": "EventRegistrationConfirmation"
+  },
+  "source": {
+    "line": 47,
+    "path": "schemas/event_registration.py",
+    "repo": "concorda-api",
+    "symbol": "EventRegistrationConfirmation"
+  },
+  "structural_hash": "190ad8a3b51d207a982d3dde926ecd4d2402c1c0978401217a013a8e4af7e644",
+  "tests": [],
+  "title": "EventRegistrationConfirmation",
+  "warnings": []
+}

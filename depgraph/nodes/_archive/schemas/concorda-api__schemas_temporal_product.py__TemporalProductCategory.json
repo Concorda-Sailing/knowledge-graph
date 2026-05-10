@@ -1,0 +1,27 @@
+{
+  "_archived_at": "2026-05-09T11:23:39.008529Z",
+  "_archived_reason": "domain_orphan_symbol_removed",
+  "depends_on": [],
+  "dossier": "dossiers/schemas/concorda-api__schemas_temporal_product.py__TemporalProductCategory.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::schemas/temporal_product.py::TemporalProductCategory",
+  "kind": "schema",
+  "schema_version": 1,
+  "signature": {
+    "fields": [],
+    "kind": "schema",
+    "name": "TemporalProductCategory"
+  },
+  "source": {
+    "line": 10,
+    "path": "schemas/temporal_product.py",
+    "repo": "concorda-api",
+    "symbol": "TemporalProductCategory"
+  },
+  "structural_hash": "357f0e633f24f699a16762f1fb29ce713795dc0ce88760ac52fe58a28612e34f",
+  "tests": [],
+  "title": "TemporalProductCategory",
+  "warnings": []
+}

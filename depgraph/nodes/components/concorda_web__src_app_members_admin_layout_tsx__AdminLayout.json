@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/app/members/admin/layout.tsx::AdminLayout",
+  "kind": "component",
+  "title": "AdminLayout",
+  "feature": null,
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/app/members/admin/layout.tsx",
+    "symbol": "AdminLayout",
+    "line": 9
+  },
+  "signature": {
+    "name": "AdminLayout",
+    "kind": "component"
+  },
+  "structural_hash": "49d23cc79cd01da1c7cc8ae6b729234c59d2cb744407c04113636e534d930ff7",
+  "depends_on": [
+    {
+      "target": "concorda-web::src/contexts/auth-context.tsx::useAuth",
+      "via": "hook_call",
+      "where": "layout.tsx:10",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/components/concorda_web__src_app_members_admin_layout_tsx__AdminLayout.md",
+  "extractor": "extract_web.ts",
+  "warnings": []
+}

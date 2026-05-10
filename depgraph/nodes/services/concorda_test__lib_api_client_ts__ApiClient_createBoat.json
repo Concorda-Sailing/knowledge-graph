@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::lib/api-client.ts::ApiClient.createBoat",
+  "kind": "service",
+  "title": "ApiClient.createBoat",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "lib/api-client.ts",
+    "symbol": "ApiClient.createBoat",
+    "line": 206
+  },
+  "signature": {
+    "name": "ApiClient.createBoat",
+    "kind": "service"
+  },
+  "structural_hash": "7d03651b3dbfdd14412858b6496291a816cb2e05b1e1a1df18de98e51b8c1c73",
+  "depends_on": [
+    {
+      "target": "POST::/api/profile/boats",
+      "via": "http_call",
+      "where": "api-client.ts:207",
+      "confidence": "exact"
+    }
+  ],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/services/concorda_test__lib_api_client_ts__ApiClient_createBoat.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

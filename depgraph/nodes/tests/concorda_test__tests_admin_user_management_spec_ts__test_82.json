@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/admin/user-management.spec.ts::test@82",
+  "kind": "test",
+  "title": "can open change password dialog",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/admin/user-management.spec.ts",
+    "symbol": "test@82",
+    "line": 82
+  },
+  "signature": {
+    "name": "test@82",
+    "kind": "test"
+  },
+  "structural_hash": "4098a1ac745bfdd2b87e13ab5876ebef9f2443668634e9150624f465d129df93",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_admin_user_management_spec_ts__test_82.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

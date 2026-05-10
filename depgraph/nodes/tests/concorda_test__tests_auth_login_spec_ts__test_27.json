@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/auth/login.spec.ts::test@27",
+  "kind": "test",
+  "title": "wrong password shows error",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/auth/login.spec.ts",
+    "symbol": "test@27",
+    "line": 27
+  },
+  "signature": {
+    "name": "test@27",
+    "kind": "test"
+  },
+  "structural_hash": "173c122401a4f0188795b0019ba5eabaac1f2d8f3bd49eeaa1152c96cf2a6e9d",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_auth_login_spec_ts__test_27.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

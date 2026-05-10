@@ -1,0 +1,28 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/services/concorda-api__services_organizing_authorities.py__get_event_oas.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::services/organizing_authorities.py::get_event_oas",
+  "kind": "service",
+  "schema_version": 1,
+  "signature": {
+    "args": [
+      "db",
+      "event_uuid"
+    ],
+    "kind": "service",
+    "name": "get_event_oas"
+  },
+  "source": {
+    "line": 90,
+    "path": "services/organizing_authorities.py",
+    "repo": "concorda-api",
+    "symbol": "get_event_oas"
+  },
+  "structural_hash": "e219380c9f1d2e28f3529782833c2cefcc203c0dd0aefebf9ee00c036fe7d03d",
+  "tests": [],
+  "title": "get_event_oas",
+  "warnings": []
+}
