@@ -13,7 +13,7 @@
     "name": "render_event_crew_marked_response_email"
   },
   "source": {
-    "line": 706,
+    "line": 779,
     "path": "utils/email_utils.py",
     "repo": "concorda-api",
     "symbol": "render_event_crew_marked_response_email"

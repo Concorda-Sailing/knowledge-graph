@@ -23,7 +23,7 @@
     "name": "send_boat_crew_invitation_email"
   },
   "source": {
-    "line": 837,
+    "line": 910,
     "path": "utils/email_utils.py",
     "repo": "concorda-api",
     "symbol": "send_boat_crew_invitation_email"

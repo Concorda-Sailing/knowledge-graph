@@ -13,7 +13,7 @@
     "name": "send_coowner_invite_email"
   },
   "source": {
-    "line": 951,
+    "line": 1024,
     "path": "utils/email_utils.py",
     "repo": "concorda-api",
     "symbol": "send_coowner_invite_email"
