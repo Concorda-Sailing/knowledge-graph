@@ -4,7 +4,7 @@ node_kind: model
 feature: null
 last_reviewed: 2026-05-10
 last_reviewed_against_hash: af2c3976fcbe404a306256337e2af3105a5cd8f58f8dd7d9ba4548dc9f58262b
-status: llm_drafted
+status: current
 ---
 
 # Contract
