@@ -4,7 +4,7 @@
       "confidence": "exact",
       "target": "concorda-api::models/pending_crew_invite.py::PendingCrewInvite",
       "via": "db_query",
-      "where": "routers/boats.py:208"
+      "where": "routers/boats.py:209"
     }
   ],
   "dossier": "dossiers/endpoints/GET___api_boats_0_pending-invites.md",
@@ -22,7 +22,7 @@
     "response_schema_ref": "list"
   },
   "source": {
-    "line": 193,
+    "line": 194,
     "path": "routers/boats.py",
     "repo": "concorda-api",
     "symbol": "list_pending_invites"

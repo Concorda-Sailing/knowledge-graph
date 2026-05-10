@@ -4,43 +4,43 @@
       "confidence": "exact",
       "target": "concorda-api::schemas/event_crew.py::EventCrewRespond",
       "via": "import",
-      "where": "routers/events.py:2445"
+      "where": "routers/events.py:2632"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::utils/websocket_manager.py::broadcast_event",
       "via": "websocket",
-      "where": "routers/events.py:2509"
+      "where": "routers/events.py:2696"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::schemas/event_crew.py::EventCrewRead",
       "via": "import",
-      "where": "routers/events.py:2442"
+      "where": "routers/events.py:2629"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/event_crew.py::EventCrew",
       "via": "db_query",
-      "where": "routers/events.py:2452"
+      "where": "routers/events.py:2639"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/boat_crew.py::BoatCrew",
       "via": "db_query",
-      "where": "routers/events.py:2515"
+      "where": "routers/events.py:2702"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/person.py::Person",
       "via": "db_query",
-      "where": "routers/events.py:2521"
+      "where": "routers/events.py:2708"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/event.py::Event",
       "via": "db_query",
-      "where": "routers/events.py:2523"
+      "where": "routers/events.py:2710"
     }
   ],
   "dossier": "dossiers/endpoints/PUT___api_events_0_sailing-event_crew-respond.md",
@@ -58,7 +58,7 @@
     "response_schema_ref": "EventCrewRead"
   },
   "source": {
-    "line": 2443,
+    "line": 2630,
     "path": "routers/events.py",
     "repo": "concorda-api",
     "symbol": "respond_to_event_crew"

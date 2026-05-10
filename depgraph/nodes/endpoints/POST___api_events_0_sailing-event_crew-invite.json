@@ -4,49 +4,49 @@
       "confidence": "exact",
       "target": "concorda-api::schemas/event_crew.py::EventCrewInviteSend",
       "via": "import",
-      "where": "routers/events.py:2333"
+      "where": "routers/events.py:2520"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::utils/websocket_manager.py::broadcast_event",
       "via": "websocket",
-      "where": "routers/events.py:2437"
+      "where": "routers/events.py:2624"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/event_crew.py::EventCrew",
       "via": "db_query",
-      "where": "routers/events.py:2348"
+      "where": "routers/events.py:2535"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::schemas/event_crew.py::EventCrewRead",
       "via": "import",
-      "where": "routers/events.py:2330"
+      "where": "routers/events.py:2517"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/org_config.py::OrgConfig",
       "via": "db_query",
-      "where": "routers/events.py:2392"
+      "where": "routers/events.py:2579"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/event.py::Event",
       "via": "db_query",
-      "where": "routers/events.py:2340"
+      "where": "routers/events.py:2527"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/boat.py::Boat",
       "via": "db_query",
-      "where": "routers/events.py:2341"
+      "where": "routers/events.py:2528"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/person.py::Person",
       "via": "db_query",
-      "where": "routers/events.py:2400"
+      "where": "routers/events.py:2587"
     }
   ],
   "dossier": "dossiers/endpoints/POST___api_events_0_sailing-event_crew-invite.md",
@@ -64,7 +64,7 @@
     "response_schema_ref": "list"
   },
   "source": {
-    "line": 2331,
+    "line": 2518,
     "path": "routers/events.py",
     "repo": "concorda-api",
     "symbol": "send_crew_invites"

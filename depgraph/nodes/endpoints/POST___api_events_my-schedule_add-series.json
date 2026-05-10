@@ -4,25 +4,25 @@
       "confidence": "exact",
       "target": "concorda-api::models/sailing_event.py::SailingEvent",
       "via": "db_query",
-      "where": "routers/events.py:706"
+      "where": "routers/events.py:897"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/event.py::Event",
       "via": "db_query",
-      "where": "routers/events.py:656"
+      "where": "routers/events.py:847"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/person_event.py::PersonEvent",
       "via": "db_query",
-      "where": "routers/events.py:674"
+      "where": "routers/events.py:865"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/crew_pool.py::CrewPool",
       "via": "db_query",
-      "where": "routers/events.py:635"
+      "where": "routers/events.py:826"
     }
   ],
   "dossier": "dossiers/endpoints/POST___api_events_my-schedule_add-series.md",
@@ -40,7 +40,7 @@
     "response_schema_ref": null
   },
   "source": {
-    "line": 620,
+    "line": 811,
     "path": "routers/events.py",
     "repo": "concorda-api",
     "symbol": "add_series_to_schedule"
@@ -52,7 +52,7 @@
     {
       "code": "weakly_typed_response",
       "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
-      "where": "routers/events.py:620"
+      "where": "routers/events.py:811"
     }
   ]
 }

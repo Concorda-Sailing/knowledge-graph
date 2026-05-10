@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "regen_status": "complete",
-  "generated_at": "2026-05-09T12:21:48.818473+00:00",
+  "generated_at": "2026-05-10T02:35:15.271768+00:00",
   "git_commit": "23668de69b72",
-  "node_count": 1507,
-  "edge_count": 2066
+  "node_count": 1510,
+  "edge_count": 2069
 }

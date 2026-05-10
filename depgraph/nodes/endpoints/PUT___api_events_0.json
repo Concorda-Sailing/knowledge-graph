@@ -4,25 +4,25 @@
       "confidence": "exact",
       "target": "concorda-api::schemas/event.py::EventUpdate",
       "via": "import",
-      "where": "routers/events.py:1103"
+      "where": "routers/events.py:1294"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::schemas/event.py::EventRead",
       "via": "import",
-      "where": "routers/events.py:1100"
+      "where": "routers/events.py:1291"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::services/organizing_authorities.py::set_event_oas",
       "via": "import",
-      "where": "routers/events.py:1134"
+      "where": "routers/events.py:1325"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/event.py::Event",
       "via": "db_query",
-      "where": "routers/events.py:1107"
+      "where": "routers/events.py:1298"
     }
   ],
   "dossier": "dossiers/endpoints/PUT___api_events_0.md",
@@ -40,7 +40,7 @@
     "response_schema_ref": "EventRead"
   },
   "source": {
-    "line": 1101,
+    "line": 1292,
     "path": "routers/events.py",
     "repo": "concorda-api",
     "symbol": "update_event"

@@ -4,25 +4,25 @@
       "confidence": "exact",
       "target": "concorda-api::schemas/event_crew.py::EventCrewPositionUpdate",
       "via": "import",
-      "where": "routers/events.py:2655"
+      "where": "routers/events.py:2842"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::utils/websocket_manager.py::broadcast_event",
       "via": "websocket",
-      "where": "routers/events.py:2699"
+      "where": "routers/events.py:2886"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::schemas/event_crew.py::EventCrewRead",
       "via": "import",
-      "where": "routers/events.py:2652"
+      "where": "routers/events.py:2839"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/event_crew.py::EventCrew",
       "via": "db_query",
-      "where": "routers/events.py:2662"
+      "where": "routers/events.py:2849"
     }
   ],
   "dossier": "dossiers/endpoints/PUT___api_events_0_sailing-event_crew-position.md",
@@ -40,7 +40,7 @@
     "response_schema_ref": "EventCrewRead"
   },
   "source": {
-    "line": 2653,
+    "line": 2840,
     "path": "routers/events.py",
     "repo": "concorda-api",
     "symbol": "update_my_position"

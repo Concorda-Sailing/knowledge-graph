@@ -4,19 +4,19 @@
       "confidence": "exact",
       "target": "concorda-api::models/event.py::Event",
       "via": "db_query",
-      "where": "routers/events.py:1330"
+      "where": "routers/events.py:1521"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/product.py::Product",
       "via": "db_query",
-      "where": "routers/events.py:1338"
+      "where": "routers/events.py:1529"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/event_registration.py::EventRegistration",
       "via": "db_query",
-      "where": "routers/events.py:1358"
+      "where": "routers/events.py:1549"
     }
   ],
   "dossier": "dossiers/endpoints/POST___api_events_slug_0_check-registration.md",
@@ -34,7 +34,7 @@
     "response_schema_ref": "RegistrationCheckResponse"
   },
   "source": {
-    "line": 1324,
+    "line": 1515,
     "path": "routers/events.py",
     "repo": "concorda-api",
     "symbol": "check_registration"

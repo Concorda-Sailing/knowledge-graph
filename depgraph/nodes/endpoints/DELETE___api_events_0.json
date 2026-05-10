@@ -4,7 +4,7 @@
       "confidence": "exact",
       "target": "concorda-api::models/event.py::Event",
       "via": "db_query",
-      "where": "routers/events.py:1147"
+      "where": "routers/events.py:1338"
     }
   ],
   "dossier": "dossiers/endpoints/DELETE___api_events_0.md",
@@ -22,7 +22,7 @@
     "response_schema_ref": null
   },
   "source": {
-    "line": 1142,
+    "line": 1333,
     "path": "routers/events.py",
     "repo": "concorda-api",
     "symbol": "delete_event"

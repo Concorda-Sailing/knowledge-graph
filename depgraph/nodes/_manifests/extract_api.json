@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "extractor": "extract_api",
-  "generated_at": "2026-05-09T11:23:47.501102+00:00",
+  "generated_at": "2026-05-10T02:35:10.011672+00:00",
   "node_ids": [
     "DELETE::/api/admin/email-templates/{0}",
     "DELETE::/api/admin/llm-prompts/{0}",
@@ -106,6 +106,7 @@
     "GET::/api/events/slug/{0}/tickets",
     "GET::/api/events/upcoming",
     "GET::/api/events/{0}",
+    "GET::/api/events/{0}/detail",
     "GET::/api/events/{0}/discounts",
     "GET::/api/events/{0}/registrations",
     "GET::/api/events/{0}/sailing-event",
@@ -473,6 +474,8 @@
     "concorda-api::services/organizing_authorities.py::set_event_oas",
     "concorda-api::services/organizing_authorities.py::set_regatta_oas",
     "concorda-api::services/organizing_authorities.py::set_series_oas",
+    "concorda-api::services/visibility.py::has_published_resume",
+    "concorda-api::services/visibility.py::peer_can_see_pii",
     "concorda-api::utils/document_extract.py::extract_text",
     "concorda-api::utils/document_extract.py::pdf_page_to_base64",
     "concorda-api::utils/email_utils.py::get_email_config",

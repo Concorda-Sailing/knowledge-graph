@@ -4,25 +4,25 @@
       "confidence": "exact",
       "target": "concorda-api::models/event.py::Event",
       "via": "db_query",
-      "where": "routers/events.py:2962"
+      "where": "routers/events.py:3181"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/event_crew.py::EventCrew",
       "via": "db_query",
-      "where": "routers/events.py:2998"
+      "where": "routers/events.py:3217"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/event_relationship.py::EventRelationship",
       "via": "db_query",
-      "where": "routers/events.py:2967"
+      "where": "routers/events.py:3186"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/sailing_event.py::SailingEvent",
       "via": "db_query",
-      "where": "routers/events.py:2979"
+      "where": "routers/events.py:3198"
     }
   ],
   "dossier": "dossiers/endpoints/GET___api_events_0_sailing-event_crew-suggest.md",
@@ -40,7 +40,7 @@
     "response_schema_ref": "list"
   },
   "source": {
-    "line": 2954,
+    "line": 3173,
     "path": "routers/events.py",
     "repo": "concorda-api",
     "symbol": "suggest_crew_pool"

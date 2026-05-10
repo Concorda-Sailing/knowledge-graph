@@ -4,7 +4,7 @@
       "confidence": "exact",
       "target": "concorda-api::models/event_registration.py::EventRegistration",
       "via": "db_query",
-      "where": "routers/events.py:145"
+      "where": "routers/events.py:146"
     }
   ],
   "dossier": "dossiers/endpoints/GET___api_events_registration-counts.md",
@@ -22,7 +22,7 @@
     "response_schema_ref": null
   },
   "source": {
-    "line": 141,
+    "line": 142,
     "path": "routers/events.py",
     "repo": "concorda-api",
     "symbol": "get_registration_counts"
@@ -34,7 +34,7 @@
     {
       "code": "weakly_typed_response",
       "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
-      "where": "routers/events.py:141"
+      "where": "routers/events.py:142"
     }
   ]
 }

@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-05-09T12:21:48.809952+00:00",
+  "generated_at": "2026-05-10T02:35:15.264917+00:00",
   "git_commit": "23668de69b72",
-  "node_count": 1507,
-  "edge_count": 2066,
+  "node_count": 1510,
+  "edge_count": 2069,
   "by_target": {
     "DELETE::/api/admin/email-templates/{0}": [
       {
@@ -2619,7 +2619,7 @@
       {
         "source": "GET::/api/boats/lookup",
         "via": "db_query",
-        "where": "routers/boats.py:135",
+        "where": "routers/boats.py:136",
         "confidence": "exact"
       },
       {
@@ -2637,13 +2637,13 @@
       {
         "source": "GET::/api/events/crew-requests/inbox",
         "via": "db_query",
-        "where": "routers/events.py:2869",
+        "where": "routers/events.py:3088",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/events/my-schedule",
         "via": "db_query",
-        "where": "routers/events.py:444",
+        "where": "routers/events.py:442",
         "confidence": "exact"
       },
       {
@@ -2691,19 +2691,19 @@
       {
         "source": "POST::/api/events/{0}/sailing-event/crew-confirm",
         "via": "db_query",
-        "where": "routers/events.py:2716",
+        "where": "routers/events.py:2912",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/{0}/sailing-event/crew-invite",
         "via": "db_query",
-        "where": "routers/events.py:2341",
+        "where": "routers/events.py:2528",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/{0}/sailing-event/crew-request",
         "via": "db_query",
-        "where": "routers/events.py:2809",
+        "where": "routers/events.py:3028",
         "confidence": "exact"
       },
       {
@@ -2779,7 +2779,7 @@
       {
         "source": "DELETE::/api/events/my-schedule/events/{0}",
         "via": "db_query",
-        "where": "routers/events.py:818",
+        "where": "routers/events.py:1009",
         "confidence": "exact"
       },
       {
@@ -2797,19 +2797,19 @@
       {
         "source": "GET::/api/boats/lookup",
         "via": "db_query",
-        "where": "routers/boats.py:138",
+        "where": "routers/boats.py:139",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/boats/{0}/crew",
         "via": "db_query",
-        "where": "routers/boats.py:173",
+        "where": "routers/boats.py:174",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/boats/{0}/crew/visible",
         "via": "db_query",
-        "where": "routers/boats.py:310",
+        "where": "routers/boats.py:311",
         "confidence": "exact"
       },
       {
@@ -2827,13 +2827,13 @@
       {
         "source": "GET::/api/events/crew-requests/inbox",
         "via": "db_query",
-        "where": "routers/events.py:2857",
+        "where": "routers/events.py:3076",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/events/my-schedule",
         "via": "db_query",
-        "where": "routers/events.py:177",
+        "where": "routers/events.py:178",
         "confidence": "exact"
       },
       {
@@ -2911,7 +2911,7 @@
       {
         "source": "POST::/api/events/{0}/sailing-event/crew-request",
         "via": "db_query",
-        "where": "routers/events.py:2777",
+        "where": "routers/events.py:2996",
         "confidence": "exact"
       },
       {
@@ -2947,19 +2947,19 @@
       {
         "source": "PUT::/api/events/{0}/sailing-event",
         "via": "db_query",
-        "where": "routers/events.py:1774",
+        "where": "routers/events.py:1965",
         "confidence": "exact"
       },
       {
         "source": "PUT::/api/events/{0}/sailing-event/crew-request/{1}",
         "via": "db_query",
-        "where": "routers/events.py:2930",
+        "where": "routers/events.py:3149",
         "confidence": "exact"
       },
       {
         "source": "PUT::/api/events/{0}/sailing-event/crew-respond",
         "via": "db_query",
-        "where": "routers/events.py:2515",
+        "where": "routers/events.py:2702",
         "confidence": "exact"
       }
     ],
@@ -3061,13 +3061,13 @@
       {
         "source": "GET::/api/boats/{0}/share-invite/{1}",
         "via": "db_query",
-        "where": "routers/boats.py:282",
+        "where": "routers/boats.py:283",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/boats/{0}/share-invite",
         "via": "db_query",
-        "where": "routers/boats.py:253",
+        "where": "routers/boats.py:254",
         "confidence": "exact"
       }
     ],
@@ -3171,13 +3171,13 @@
       {
         "source": "POST::/api/events/my-schedule/add-regattas",
         "via": "db_query",
-        "where": "routers/events.py:521",
+        "where": "routers/events.py:712",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/my-schedule/add-series",
         "via": "db_query",
-        "where": "routers/events.py:635",
+        "where": "routers/events.py:826",
         "confidence": "exact"
       },
       {
@@ -3189,7 +3189,7 @@
       {
         "source": "PUT::/api/events/{0}/sailing-event",
         "via": "db_query",
-        "where": "routers/events.py:1808",
+        "where": "routers/events.py:1999",
         "confidence": "exact"
       },
       {
@@ -3275,25 +3275,25 @@
       {
         "source": "DELETE::/api/events/my-schedule/events/{0}",
         "via": "db_query",
-        "where": "routers/events.py:795",
+        "where": "routers/events.py:986",
         "confidence": "exact"
       },
       {
         "source": "DELETE::/api/events/my-schedule/series/{0}",
         "via": "db_query",
-        "where": "routers/events.py:885",
+        "where": "routers/events.py:1076",
         "confidence": "exact"
       },
       {
         "source": "DELETE::/api/events/{0}",
         "via": "db_query",
-        "where": "routers/events.py:1147",
+        "where": "routers/events.py:1338",
         "confidence": "exact"
       },
       {
         "source": "DELETE::/api/events/{0}/image",
         "via": "db_query",
-        "where": "routers/events.py:1244",
+        "where": "routers/events.py:1435",
         "confidence": "exact"
       },
       {
@@ -3305,67 +3305,73 @@
       {
         "source": "GET::/api/events",
         "via": "db_query",
-        "where": "routers/events.py:104",
+        "where": "routers/events.py:105",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/events/crew-requests/inbox",
         "via": "db_query",
-        "where": "routers/events.py:2876",
+        "where": "routers/events.py:3095",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/events/my-schedule",
         "via": "db_query",
-        "where": "routers/events.py:212",
+        "where": "routers/events.py:210",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/events/personal",
         "via": "db_query",
-        "where": "routers/events.py:88",
+        "where": "routers/events.py:89",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/events/slug/{0}",
         "via": "db_query",
-        "where": "routers/events.py:153",
+        "where": "routers/events.py:154",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/events/slug/{0}/confirmation",
         "via": "db_query",
-        "where": "routers/events.py:1420",
+        "where": "routers/events.py:1611",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/events/slug/{0}/discounts",
         "via": "db_query",
-        "where": "routers/events.py:1301",
+        "where": "routers/events.py:1492",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/events/slug/{0}/my-registration",
         "via": "db_query",
-        "where": "routers/events.py:1380",
+        "where": "routers/events.py:1571",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/events/slug/{0}/tickets",
         "via": "db_query",
-        "where": "routers/events.py:1259",
+        "where": "routers/events.py:1450",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/events/upcoming",
         "via": "db_query",
-        "where": "routers/events.py:128",
+        "where": "routers/events.py:129",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/events/{0}",
         "via": "db_query",
-        "where": "routers/events.py:974",
+        "where": "routers/events.py:1165",
+        "confidence": "exact"
+      },
+      {
+        "source": "GET::/api/events/{0}/detail",
+        "via": "db_query",
+        "where": "routers/events.py:651",
         "confidence": "exact"
       },
       {
@@ -3377,13 +3383,13 @@
       {
         "source": "GET::/api/events/{0}/registrations",
         "via": "db_query",
-        "where": "routers/events.py:1574",
+        "where": "routers/events.py:1765",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/events/{0}/sailing-event/crew-suggest",
         "via": "db_query",
-        "where": "routers/events.py:2962",
+        "where": "routers/events.py:3181",
         "confidence": "exact"
       },
       {
@@ -3407,49 +3413,49 @@
       {
         "source": "POST::/api/events",
         "via": "db_query",
-        "where": "routers/events.py:1060",
+        "where": "routers/events.py:1251",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/check-duplicates",
         "via": "db_query",
-        "where": "routers/events.py:997",
+        "where": "routers/events.py:1188",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/custom",
         "via": "db_query",
-        "where": "routers/events.py:1863",
+        "where": "routers/events.py:2054",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/my-schedule/add-events",
         "via": "db_query",
-        "where": "routers/events.py:752",
+        "where": "routers/events.py:943",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/my-schedule/add-regattas",
         "via": "db_query",
-        "where": "routers/events.py:541",
+        "where": "routers/events.py:732",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/my-schedule/add-series",
         "via": "db_query",
-        "where": "routers/events.py:656",
+        "where": "routers/events.py:847",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/slug/{0}/check-registration",
         "via": "db_query",
-        "where": "routers/events.py:1330",
+        "where": "routers/events.py:1521",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/slug/{0}/register",
         "via": "db_query",
-        "where": "routers/events.py:1472",
+        "where": "routers/events.py:1663",
         "confidence": "exact"
       },
       {
@@ -3461,55 +3467,55 @@
       {
         "source": "POST::/api/events/{0}/duplicate",
         "via": "db_query",
-        "where": "routers/events.py:1173",
+        "where": "routers/events.py:1364",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/{0}/image",
         "via": "db_query",
-        "where": "routers/events.py:1226",
+        "where": "routers/events.py:1417",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/{0}/sailing-event/crew-confirm",
         "via": "db_query",
-        "where": "routers/events.py:2715",
+        "where": "routers/events.py:2911",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/{0}/sailing-event/crew-invite",
         "via": "db_query",
-        "where": "routers/events.py:2340",
+        "where": "routers/events.py:2527",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/{0}/sailing-event/crew-request",
         "via": "db_query",
-        "where": "routers/events.py:2808",
+        "where": "routers/events.py:3027",
         "confidence": "exact"
       },
       {
         "source": "PUT::/api/events/{0}",
         "via": "db_query",
-        "where": "routers/events.py:1107",
+        "where": "routers/events.py:1298",
         "confidence": "exact"
       },
       {
         "source": "PUT::/api/events/{0}/sailing-event",
         "via": "db_query",
-        "where": "routers/events.py:1761",
+        "where": "routers/events.py:1952",
         "confidence": "exact"
       },
       {
         "source": "PUT::/api/events/{0}/sailing-event/crew-mark-response",
         "via": "db_query",
-        "where": "routers/events.py:2623",
+        "where": "routers/events.py:2810",
         "confidence": "exact"
       },
       {
         "source": "PUT::/api/events/{0}/sailing-event/crew-respond",
         "via": "db_query",
-        "where": "routers/events.py:2523",
+        "where": "routers/events.py:2710",
         "confidence": "exact"
       }
     ],
@@ -3517,31 +3523,31 @@
       {
         "source": "DELETE::/api/events/{0}/sailing-event/crew/{1}",
         "via": "db_query",
-        "where": "routers/events.py:2287",
+        "where": "routers/events.py:2474",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/events/crew-requests/inbox",
         "via": "db_query",
-        "where": "routers/events.py:2872",
+        "where": "routers/events.py:3091",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/events/my-schedule",
         "via": "db_query",
-        "where": "routers/events.py:246",
+        "where": "routers/events.py:244",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/events/{0}/sailing-event/crew",
         "via": "db_query",
-        "where": "routers/events.py:2202",
+        "where": "routers/events.py:2391",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/events/{0}/sailing-event/crew-suggest",
         "via": "db_query",
-        "where": "routers/events.py:2998",
+        "where": "routers/events.py:3217",
         "confidence": "exact"
       },
       {
@@ -3559,61 +3565,61 @@
       {
         "source": "POST::/api/events/{0}/sailing-event/crew-confirm",
         "via": "db_query",
-        "where": "routers/events.py:2727",
+        "where": "routers/events.py:2929",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/{0}/sailing-event/crew-invite",
         "via": "db_query",
-        "where": "routers/events.py:2348",
+        "where": "routers/events.py:2535",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/{0}/sailing-event/crew-request",
         "via": "db_query",
-        "where": "routers/events.py:2793",
+        "where": "routers/events.py:3012",
         "confidence": "exact"
       },
       {
         "source": "PUT::/api/events/{0}/sailing-event",
         "via": "db_query",
-        "where": "routers/events.py:1837",
+        "where": "routers/events.py:2028",
         "confidence": "exact"
       },
       {
         "source": "PUT::/api/events/{0}/sailing-event/crew-assign",
         "via": "db_query",
-        "where": "routers/events.py:2565",
+        "where": "routers/events.py:2752",
         "confidence": "exact"
       },
       {
         "source": "PUT::/api/events/{0}/sailing-event/crew-mark-response",
         "via": "db_query",
-        "where": "routers/events.py:2597",
+        "where": "routers/events.py:2784",
         "confidence": "exact"
       },
       {
         "source": "PUT::/api/events/{0}/sailing-event/crew-pool",
         "via": "db_query",
-        "where": "routers/events.py:2258",
+        "where": "routers/events.py:2445",
         "confidence": "exact"
       },
       {
         "source": "PUT::/api/events/{0}/sailing-event/crew-position",
         "via": "db_query",
-        "where": "routers/events.py:2662",
+        "where": "routers/events.py:2849",
         "confidence": "exact"
       },
       {
         "source": "PUT::/api/events/{0}/sailing-event/crew-request/{1}",
         "via": "db_query",
-        "where": "routers/events.py:2911",
+        "where": "routers/events.py:3130",
         "confidence": "exact"
       },
       {
         "source": "PUT::/api/events/{0}/sailing-event/crew-respond",
         "via": "db_query",
-        "where": "routers/events.py:2452",
+        "where": "routers/events.py:2639",
         "confidence": "exact"
       }
     ],
@@ -3627,7 +3633,7 @@
       {
         "source": "GET::/api/events/slug/{0}/discounts",
         "via": "db_query",
-        "where": "routers/events.py:1306",
+        "where": "routers/events.py:1497",
         "confidence": "exact"
       },
       {
@@ -3665,37 +3671,37 @@
       {
         "source": "GET::/api/events/my-schedule",
         "via": "db_query",
-        "where": "routers/events.py:231",
+        "where": "routers/events.py:229",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/events/registration-counts",
         "via": "db_query",
-        "where": "routers/events.py:145",
+        "where": "routers/events.py:146",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/events/slug/{0}/confirmation",
         "via": "db_query",
-        "where": "routers/events.py:1424",
+        "where": "routers/events.py:1615",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/events/slug/{0}/my-registration",
         "via": "db_query",
-        "where": "routers/events.py:1385",
+        "where": "routers/events.py:1576",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/events/slug/{0}/tickets",
         "via": "db_query",
-        "where": "routers/events.py:1280",
+        "where": "routers/events.py:1471",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/events/{0}/registrations",
         "via": "db_query",
-        "where": "routers/events.py:1581",
+        "where": "routers/events.py:1772",
         "confidence": "exact"
       },
       {
@@ -3707,13 +3713,13 @@
       {
         "source": "POST::/api/events/slug/{0}/check-registration",
         "via": "db_query",
-        "where": "routers/events.py:1358",
+        "where": "routers/events.py:1549",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/slug/{0}/register",
         "via": "db_query",
-        "where": "routers/events.py:1553",
+        "where": "routers/events.py:1744",
         "confidence": "exact"
       }
     ],
@@ -3721,7 +3727,7 @@
       {
         "source": "GET::/api/events/{0}/sailing-event/crew-suggest",
         "via": "db_query",
-        "where": "routers/events.py:2967",
+        "where": "routers/events.py:3186",
         "confidence": "exact"
       }
     ],
@@ -3947,13 +3953,13 @@
       {
         "source": "POST::/api/events/{0}/sailing-event/crew-confirm",
         "via": "db_query",
-        "where": "routers/events.py:2720",
+        "where": "routers/events.py:2916",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/{0}/sailing-event/crew-invite",
         "via": "db_query",
-        "where": "routers/events.py:2392",
+        "where": "routers/events.py:2579",
         "confidence": "exact"
       },
       {
@@ -4081,7 +4087,7 @@
       {
         "source": "GET::/api/boats/{0}/pending-invites",
         "via": "db_query",
-        "where": "routers/boats.py:208",
+        "where": "routers/boats.py:209",
         "confidence": "exact"
       },
       {
@@ -4185,19 +4191,19 @@
       {
         "source": "GET::/api/boats/lookup",
         "via": "db_query",
-        "where": "routers/boats.py:145",
+        "where": "routers/boats.py:146",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/boats/{0}/crew",
         "via": "db_query",
-        "where": "routers/boats.py:176",
+        "where": "routers/boats.py:177",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/boats/{0}/crew/visible",
         "via": "db_query",
-        "where": "routers/boats.py:320",
+        "where": "routers/boats.py:321",
         "confidence": "exact"
       },
       {
@@ -4239,13 +4245,13 @@
       {
         "source": "GET::/api/events/crew-requests/inbox",
         "via": "db_query",
-        "where": "routers/events.py:2870",
+        "where": "routers/events.py:3089",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/events/{0}/sailing-event/crew",
         "via": "db_query",
-        "where": "routers/events.py:2209",
+        "where": "routers/events.py:2398",
         "confidence": "exact"
       },
       {
@@ -4407,19 +4413,19 @@
       {
         "source": "POST::/api/events/{0}/sailing-event/crew-confirm",
         "via": "db_query",
-        "where": "routers/events.py:2733",
+        "where": "routers/events.py:2929",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/{0}/sailing-event/crew-invite",
         "via": "db_query",
-        "where": "routers/events.py:2400",
+        "where": "routers/events.py:2587",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/{0}/sailing-event/crew-request",
         "via": "db_query",
-        "where": "routers/events.py:2810",
+        "where": "routers/events.py:3029",
         "confidence": "exact"
       },
       {
@@ -4497,13 +4503,13 @@
       {
         "source": "PUT::/api/events/{0}/sailing-event/crew-mark-response",
         "via": "db_query",
-        "where": "routers/events.py:2621",
+        "where": "routers/events.py:2808",
         "confidence": "exact"
       },
       {
         "source": "PUT::/api/events/{0}/sailing-event/crew-respond",
         "via": "db_query",
-        "where": "routers/events.py:2521",
+        "where": "routers/events.py:2708",
         "confidence": "exact"
       },
       {
@@ -4555,31 +4561,31 @@
       {
         "source": "DELETE::/api/events/my-schedule/events/{0}",
         "via": "db_query",
-        "where": "routers/events.py:781",
+        "where": "routers/events.py:972",
         "confidence": "exact"
       },
       {
         "source": "DELETE::/api/events/my-schedule/series/{0}",
         "via": "db_query",
-        "where": "routers/events.py:895",
+        "where": "routers/events.py:1086",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/events/my-schedule",
         "via": "db_query",
-        "where": "routers/events.py:219",
+        "where": "routers/events.py:217",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/my-schedule/add-regattas",
         "via": "db_query",
-        "where": "routers/events.py:559",
+        "where": "routers/events.py:750",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/my-schedule/add-series",
         "via": "db_query",
-        "where": "routers/events.py:674",
+        "where": "routers/events.py:865",
         "confidence": "exact"
       }
     ],
@@ -4667,19 +4673,19 @@
       {
         "source": "GET::/api/events/slug/{0}/confirmation",
         "via": "db_query",
-        "where": "routers/events.py:1449",
+        "where": "routers/events.py:1640",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/events/slug/{0}/my-registration",
         "via": "db_query",
-        "where": "routers/events.py:1398",
+        "where": "routers/events.py:1589",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/events/slug/{0}/tickets",
         "via": "db_query",
-        "where": "routers/events.py:1269",
+        "where": "routers/events.py:1460",
         "confidence": "exact"
       },
       {
@@ -4703,13 +4709,13 @@
       {
         "source": "POST::/api/events/slug/{0}/check-registration",
         "via": "db_query",
-        "where": "routers/events.py:1338",
+        "where": "routers/events.py:1529",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/slug/{0}/register",
         "via": "db_query",
-        "where": "routers/events.py:1482",
+        "where": "routers/events.py:1673",
         "confidence": "exact"
       },
       {
@@ -4721,7 +4727,7 @@
       {
         "source": "POST::/api/events/{0}/duplicate",
         "via": "db_query",
-        "where": "routers/events.py:1198",
+        "where": "routers/events.py:1389",
         "confidence": "exact"
       },
       {
@@ -4979,25 +4985,25 @@
       {
         "source": "DELETE::/api/events/my-schedule/events/{0}",
         "via": "db_query",
-        "where": "routers/events.py:820",
+        "where": "routers/events.py:1011",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/events/crew-requests/inbox",
         "via": "db_query",
-        "where": "routers/events.py:2873",
+        "where": "routers/events.py:3092",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/events/my-schedule",
         "via": "db_query",
-        "where": "routers/events.py:246",
+        "where": "routers/events.py:244",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/events/{0}/sailing-event/crew-suggest",
         "via": "db_query",
-        "where": "routers/events.py:2979",
+        "where": "routers/events.py:3198",
         "confidence": "exact"
       },
       {
@@ -5009,25 +5015,25 @@
       {
         "source": "POST::/api/events/custom",
         "via": "db_query",
-        "where": "routers/events.py:1876",
+        "where": "routers/events.py:2067",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/my-schedule/add-regattas",
         "via": "db_query",
-        "where": "routers/events.py:594",
+        "where": "routers/events.py:785",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/my-schedule/add-series",
         "via": "db_query",
-        "where": "routers/events.py:706",
+        "where": "routers/events.py:897",
         "confidence": "exact"
       },
       {
         "source": "PUT::/api/events/{0}/sailing-event",
         "via": "db_query",
-        "where": "routers/events.py:1801",
+        "where": "routers/events.py:1992",
         "confidence": "exact"
       }
     ],
@@ -5277,7 +5283,7 @@
       {
         "source": "POST::/api/events/slug/{0}/register",
         "via": "db_query",
-        "where": "routers/events.py:1512",
+        "where": "routers/events.py:1703",
         "confidence": "exact"
       },
       {
@@ -5427,7 +5433,7 @@
       {
         "source": "GET::/api/boats/{0}/crew",
         "via": "import",
-        "where": "routers/boats.py:161",
+        "where": "routers/boats.py:162",
         "confidence": "exact"
       },
       {
@@ -5569,7 +5575,7 @@
       {
         "source": "POST::/api/events",
         "via": "import",
-        "where": "routers/events.py:1036",
+        "where": "routers/events.py:1227",
         "confidence": "exact"
       }
     ],
@@ -5577,43 +5583,43 @@
       {
         "source": "DELETE::/api/events/{0}/image",
         "via": "import",
-        "where": "routers/events.py:1238",
+        "where": "routers/events.py:1429",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/events/my-schedule",
         "via": "import",
-        "where": "routers/events.py:417",
+        "where": "routers/events.py:415",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/events/personal",
         "via": "import",
-        "where": "routers/events.py:79",
+        "where": "routers/events.py:80",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events",
         "via": "import",
-        "where": "routers/events.py:1034",
+        "where": "routers/events.py:1225",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/custom",
         "via": "import",
-        "where": "routers/events.py:1895",
+        "where": "routers/events.py:2086",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/{0}/image",
         "via": "import",
-        "where": "routers/events.py:1219",
+        "where": "routers/events.py:1410",
         "confidence": "exact"
       },
       {
         "source": "PUT::/api/events/{0}",
         "via": "import",
-        "where": "routers/events.py:1100",
+        "where": "routers/events.py:1291",
         "confidence": "exact"
       }
     ],
@@ -5621,31 +5627,31 @@
       {
         "source": "GET::/api/events",
         "via": "import",
-        "where": "routers/events.py:96",
+        "where": "routers/events.py:97",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/events/slug/{0}",
         "via": "import",
-        "where": "routers/events.py:151",
+        "where": "routers/events.py:152",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/events/upcoming",
         "via": "import",
-        "where": "routers/events.py:121",
+        "where": "routers/events.py:122",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/events/{0}",
         "via": "import",
-        "where": "routers/events.py:972",
+        "where": "routers/events.py:1163",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/{0}/duplicate",
         "via": "import",
-        "where": "routers/events.py:1160",
+        "where": "routers/events.py:1351",
         "confidence": "exact"
       }
     ],
@@ -5653,7 +5659,7 @@
       {
         "source": "PUT::/api/events/{0}",
         "via": "import",
-        "where": "routers/events.py:1103",
+        "where": "routers/events.py:1294",
         "confidence": "exact"
       }
     ],
@@ -5661,7 +5667,7 @@
       {
         "source": "PUT::/api/events/{0}/sailing-event/crew-assign",
         "via": "import",
-        "where": "routers/events.py:2552",
+        "where": "routers/events.py:2739",
         "confidence": "exact"
       }
     ],
@@ -5669,7 +5675,7 @@
       {
         "source": "POST::/api/events/{0}/sailing-event/crew-invite",
         "via": "import",
-        "where": "routers/events.py:2333",
+        "where": "routers/events.py:2520",
         "confidence": "exact"
       }
     ],
@@ -5677,7 +5683,7 @@
       {
         "source": "PUT::/api/events/{0}/sailing-event/crew-mark-response",
         "via": "import",
-        "where": "routers/events.py:2586",
+        "where": "routers/events.py:2773",
         "confidence": "exact"
       }
     ],
@@ -5685,7 +5691,7 @@
       {
         "source": "PUT::/api/events/{0}/sailing-event/crew-pool",
         "via": "import",
-        "where": "routers/events.py:2225",
+        "where": "routers/events.py:2412",
         "confidence": "exact"
       }
     ],
@@ -5693,7 +5699,7 @@
       {
         "source": "PUT::/api/events/{0}/sailing-event/crew-position",
         "via": "import",
-        "where": "routers/events.py:2655",
+        "where": "routers/events.py:2842",
         "confidence": "exact"
       }
     ],
@@ -5701,61 +5707,61 @@
       {
         "source": "GET::/api/events/{0}/sailing-event/crew",
         "via": "import",
-        "where": "routers/events.py:2190",
+        "where": "routers/events.py:2379",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/{0}/sailing-event/crew-invite",
         "via": "import",
-        "where": "routers/events.py:2330",
+        "where": "routers/events.py:2517",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/{0}/sailing-event/crew-notify",
         "via": "import",
-        "where": "routers/events.py:2311",
+        "where": "routers/events.py:2498",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/{0}/sailing-event/crew-request",
         "via": "import",
-        "where": "routers/events.py:2763",
+        "where": "routers/events.py:2982",
         "confidence": "exact"
       },
       {
         "source": "PUT::/api/events/{0}/sailing-event/crew-assign",
         "via": "import",
-        "where": "routers/events.py:2549",
+        "where": "routers/events.py:2736",
         "confidence": "exact"
       },
       {
         "source": "PUT::/api/events/{0}/sailing-event/crew-mark-response",
         "via": "import",
-        "where": "routers/events.py:2583",
+        "where": "routers/events.py:2770",
         "confidence": "exact"
       },
       {
         "source": "PUT::/api/events/{0}/sailing-event/crew-pool",
         "via": "import",
-        "where": "routers/events.py:2222",
+        "where": "routers/events.py:2409",
         "confidence": "exact"
       },
       {
         "source": "PUT::/api/events/{0}/sailing-event/crew-position",
         "via": "import",
-        "where": "routers/events.py:2652",
+        "where": "routers/events.py:2839",
         "confidence": "exact"
       },
       {
         "source": "PUT::/api/events/{0}/sailing-event/crew-request/{1}",
         "via": "import",
-        "where": "routers/events.py:2900",
+        "where": "routers/events.py:3119",
         "confidence": "exact"
       },
       {
         "source": "PUT::/api/events/{0}/sailing-event/crew-respond",
         "via": "import",
-        "where": "routers/events.py:2442",
+        "where": "routers/events.py:2629",
         "confidence": "exact"
       }
     ],
@@ -5763,7 +5769,7 @@
       {
         "source": "PUT::/api/events/{0}/sailing-event/crew-respond",
         "via": "import",
-        "where": "routers/events.py:2445",
+        "where": "routers/events.py:2632",
         "confidence": "exact"
       }
     ],
@@ -5779,7 +5785,7 @@
       {
         "source": "GET::/api/events/slug/{0}/discounts",
         "via": "import",
-        "where": "routers/events.py:1298",
+        "where": "routers/events.py:1489",
         "confidence": "exact"
       }
     ],
@@ -5815,13 +5821,13 @@
       {
         "source": "GET::/api/events/slug/{0}/confirmation",
         "via": "import",
-        "where": "routers/events.py:1412",
+        "where": "routers/events.py:1603",
         "confidence": "exact"
       },
       {
         "source": "GET::/api/events/slug/{0}/my-registration",
         "via": "import",
-        "where": "routers/events.py:1373",
+        "where": "routers/events.py:1564",
         "confidence": "exact"
       }
     ],
@@ -5829,7 +5835,7 @@
       {
         "source": "POST::/api/events/slug/{0}/register",
         "via": "import",
-        "where": "routers/events.py:1467",
+        "where": "routers/events.py:1658",
         "confidence": "exact"
       }
     ],
@@ -5837,13 +5843,13 @@
       {
         "source": "GET::/api/events/{0}/registrations",
         "via": "import",
-        "where": "routers/events.py:1570",
+        "where": "routers/events.py:1761",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/slug/{0}/register",
         "via": "import",
-        "where": "routers/events.py:1464",
+        "where": "routers/events.py:1655",
         "confidence": "exact"
       }
     ],
@@ -5851,7 +5857,7 @@
       {
         "source": "GET::/api/events/slug/{0}/tickets",
         "via": "import",
-        "where": "routers/events.py:1256",
+        "where": "routers/events.py:1447",
         "confidence": "exact"
       }
     ],
@@ -6391,7 +6397,7 @@
       {
         "source": "POST::/api/events/{0}/duplicate",
         "via": "import",
-        "where": "routers/events.py:1210",
+        "where": "routers/events.py:1401",
         "confidence": "exact"
       }
     ],
@@ -6415,19 +6421,19 @@
       {
         "source": "POST::/api/events",
         "via": "import",
-        "where": "routers/events.py:1064",
+        "where": "routers/events.py:1255",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/{0}/duplicate",
         "via": "import",
-        "where": "routers/events.py:1212",
+        "where": "routers/events.py:1403",
         "confidence": "exact"
       },
       {
         "source": "PUT::/api/events/{0}",
         "via": "import",
-        "where": "routers/events.py:1134",
+        "where": "routers/events.py:1325",
         "confidence": "exact"
       }
     ],
@@ -6456,6 +6462,22 @@
         "source": "PUT::/api/series/{0}",
         "via": "import",
         "where": "routers/series.py:185",
+        "confidence": "exact"
+      }
+    ],
+    "concorda-api::services/visibility.py::has_published_resume": [
+      {
+        "source": "GET::/api/boats/{0}/crew/visible",
+        "via": "import",
+        "where": "routers/boats.py:324",
+        "confidence": "exact"
+      }
+    ],
+    "concorda-api::services/visibility.py::peer_can_see_pii": [
+      {
+        "source": "GET::/api/events/{0}/sailing-event/crew",
+        "via": "import",
+        "where": "routers/events.py:2399",
         "confidence": "exact"
       }
     ],
@@ -6553,7 +6575,7 @@
       {
         "source": "DELETE::/api/events/{0}/image",
         "via": "import",
-        "where": "routers/events.py:1249",
+        "where": "routers/events.py:1440",
         "confidence": "exact"
       },
       {
@@ -6591,7 +6613,7 @@
       {
         "source": "POST::/api/events/{0}/image",
         "via": "import",
-        "where": "routers/events.py:1231",
+        "where": "routers/events.py:1422",
         "confidence": "exact"
       },
       {
@@ -6651,7 +6673,7 @@
       {
         "source": "DELETE::/api/events/{0}/sailing-event/crew/{1}",
         "via": "websocket",
-        "where": "routers/events.py:2306",
+        "where": "routers/events.py:2493",
         "confidence": "exact"
       },
       {
@@ -6735,25 +6757,25 @@
       {
         "source": "POST::/api/events/{0}/sailing-event/crew-confirm",
         "via": "websocket",
-        "where": "routers/events.py:2750",
+        "where": "routers/events.py:2937",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/{0}/sailing-event/crew-invite",
         "via": "websocket",
-        "where": "routers/events.py:2437",
+        "where": "routers/events.py:2624",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/{0}/sailing-event/crew-notify",
         "via": "websocket",
-        "where": "routers/events.py:2326",
+        "where": "routers/events.py:2513",
         "confidence": "exact"
       },
       {
         "source": "POST::/api/events/{0}/sailing-event/crew-request",
         "via": "websocket",
-        "where": "routers/events.py:2803",
+        "where": "routers/events.py:3022",
         "confidence": "exact"
       },
       {
@@ -6819,37 +6841,37 @@
       {
         "source": "PUT::/api/events/{0}/sailing-event/crew-assign",
         "via": "websocket",
-        "where": "routers/events.py:2578",
+        "where": "routers/events.py:2765",
         "confidence": "exact"
       },
       {
         "source": "PUT::/api/events/{0}/sailing-event/crew-mark-response",
         "via": "websocket",
-        "where": "routers/events.py:2615",
+        "where": "routers/events.py:2802",
         "confidence": "exact"
       },
       {
         "source": "PUT::/api/events/{0}/sailing-event/crew-pool",
         "via": "websocket",
-        "where": "routers/events.py:2268",
+        "where": "routers/events.py:2455",
         "confidence": "exact"
       },
       {
         "source": "PUT::/api/events/{0}/sailing-event/crew-position",
         "via": "websocket",
-        "where": "routers/events.py:2699",
+        "where": "routers/events.py:2886",
         "confidence": "exact"
       },
       {
         "source": "PUT::/api/events/{0}/sailing-event/crew-request/{1}",
         "via": "websocket",
-        "where": "routers/events.py:2946",
+        "where": "routers/events.py:3165",
         "confidence": "exact"
       },
       {
         "source": "PUT::/api/events/{0}/sailing-event/crew-respond",
         "via": "websocket",
-        "where": "routers/events.py:2509",
+        "where": "routers/events.py:2696",
         "confidence": "exact"
       },
       {

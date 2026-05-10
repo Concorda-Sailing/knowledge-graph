@@ -4,19 +4,19 @@
       "confidence": "exact",
       "target": "concorda-api::utils/image_utils.py::save_upload",
       "via": "import",
-      "where": "routers/events.py:1231"
+      "where": "routers/events.py:1422"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::schemas/event.py::EventRead",
       "via": "import",
-      "where": "routers/events.py:1219"
+      "where": "routers/events.py:1410"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/event.py::Event",
       "via": "db_query",
-      "where": "routers/events.py:1226"
+      "where": "routers/events.py:1417"
     }
   ],
   "dossier": "dossiers/endpoints/POST___api_events_0_image.md",
@@ -34,7 +34,7 @@
     "response_schema_ref": "EventRead"
   },
   "source": {
-    "line": 1220,
+    "line": 1411,
     "path": "routers/events.py",
     "repo": "concorda-api",
     "symbol": "upload_event_image"

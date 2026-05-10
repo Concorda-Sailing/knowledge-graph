@@ -1,0 +1,34 @@
+{
+  "depends_on": [
+    {
+      "confidence": "exact",
+      "target": "concorda-api::models/event.py::Event",
+      "via": "db_query",
+      "where": "routers/events.py:651"
+    }
+  ],
+  "dossier": "dossiers/endpoints/GET___api_events_0_detail.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "GET::/api/events/{0}/detail",
+  "kind": "endpoint",
+  "schema_version": 1,
+  "signature": {
+    "auth": "user",
+    "method": "GET",
+    "path": "/api/events/{event_id}/detail",
+    "request_schema_ref": null,
+    "response_schema_ref": "dict"
+  },
+  "source": {
+    "line": 639,
+    "path": "routers/events.py",
+    "repo": "concorda-api",
+    "symbol": "get_event_detail"
+  },
+  "structural_hash": "94d516664832fa70778f933201cc640795cc2a8e685518f72bd17f7ea814a9df",
+  "tests": [],
+  "title": "GET /api/events/{event_id}/detail",
+  "warnings": []
+}

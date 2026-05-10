@@ -2,15 +2,21 @@
   "depends_on": [
     {
       "confidence": "exact",
+      "target": "concorda-api::services/visibility.py::has_published_resume",
+      "via": "import",
+      "where": "routers/boats.py:324"
+    },
+    {
+      "confidence": "exact",
       "target": "concorda-api::models/boat_crew.py::BoatCrew",
       "via": "db_query",
-      "where": "routers/boats.py:310"
+      "where": "routers/boats.py:311"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/person.py::Person",
       "via": "db_query",
-      "where": "routers/boats.py:320"
+      "where": "routers/boats.py:321"
     }
   ],
   "dossier": "dossiers/endpoints/GET___api_boats_0_crew_visible.md",
@@ -28,7 +34,7 @@
     "response_schema_ref": null
   },
   "source": {
-    "line": 293,
+    "line": 294,
     "path": "routers/boats.py",
     "repo": "concorda-api",
     "symbol": "list_visible_crew"
@@ -40,7 +46,7 @@
     {
       "code": "weakly_typed_response",
       "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
-      "where": "routers/boats.py:293"
+      "where": "routers/boats.py:294"
     }
   ]
 }

@@ -4,19 +4,19 @@
       "confidence": "exact",
       "target": "concorda-api::models/event.py::Event",
       "via": "db_query",
-      "where": "routers/events.py:1863"
+      "where": "routers/events.py:2054"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/sailing_event.py::SailingEvent",
       "via": "db_query",
-      "where": "routers/events.py:1876"
+      "where": "routers/events.py:2067"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::schemas/event.py::EventRead",
       "via": "import",
-      "where": "routers/events.py:1895"
+      "where": "routers/events.py:2086"
     }
   ],
   "dossier": "dossiers/endpoints/POST___api_events_custom.md",
@@ -34,7 +34,7 @@
     "response_schema_ref": "dict"
   },
   "source": {
-    "line": 1854,
+    "line": 2045,
     "path": "routers/events.py",
     "repo": "concorda-api",
     "symbol": "create_custom_event"

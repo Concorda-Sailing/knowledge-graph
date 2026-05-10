@@ -4,25 +4,25 @@
       "confidence": "exact",
       "target": "concorda-api::schemas/event.py::EventCreate",
       "via": "import",
-      "where": "routers/events.py:1036"
+      "where": "routers/events.py:1227"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::models/event.py::Event",
       "via": "db_query",
-      "where": "routers/events.py:1060"
+      "where": "routers/events.py:1251"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::schemas/event.py::EventRead",
       "via": "import",
-      "where": "routers/events.py:1034"
+      "where": "routers/events.py:1225"
     },
     {
       "confidence": "exact",
       "target": "concorda-api::services/organizing_authorities.py::set_event_oas",
       "via": "import",
-      "where": "routers/events.py:1064"
+      "where": "routers/events.py:1255"
     }
   ],
   "dossier": "dossiers/endpoints/POST___api_events.md",
@@ -40,7 +40,7 @@
     "response_schema_ref": "EventRead"
   },
   "source": {
-    "line": 1035,
+    "line": 1226,
     "path": "routers/events.py",
     "repo": "concorda-api",
     "symbol": "create_event"

@@ -4,7 +4,7 @@
       "confidence": "exact",
       "target": "concorda-api::models/event.py::Event",
       "via": "db_query",
-      "where": "routers/events.py:752"
+      "where": "routers/events.py:943"
     }
   ],
   "dossier": "dossiers/endpoints/POST___api_events_my-schedule_add-events.md",
@@ -22,7 +22,7 @@
     "response_schema_ref": null
   },
   "source": {
-    "line": 727,
+    "line": 918,
     "path": "routers/events.py",
     "repo": "concorda-api",
     "symbol": "add_events_to_schedule"
@@ -34,7 +34,7 @@
     {
       "code": "weakly_typed_response",
       "message": "Handler has no declared response_model; structural hash cannot detect response shape changes. See DRIFT.md scenario 3.",
-      "where": "routers/events.py:727"
+      "where": "routers/events.py:918"
     }
   ]
 }

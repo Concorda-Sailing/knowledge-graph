@@ -4,7 +4,7 @@
       "confidence": "exact",
       "target": "concorda-api::models/boat_share_invite.py::BoatShareInvite",
       "via": "db_query",
-      "where": "routers/boats.py:282"
+      "where": "routers/boats.py:283"
     }
   ],
   "dossier": "dossiers/endpoints/GET___api_boats_0_share-invite_1.md",
@@ -22,7 +22,7 @@
     "response_schema_ref": "ShareInviteStatus"
   },
   "source": {
-    "line": 265,
+    "line": 266,
     "path": "routers/boats.py",
     "repo": "concorda-api",
     "symbol": "get_share_invite_status"
