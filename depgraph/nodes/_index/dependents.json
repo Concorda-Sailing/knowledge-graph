@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-05-10T20:54:00.864073+00:00",
+  "generated_at": "2026-05-10T21:44:37.191531+00:00",
   "git_commit": "dd72f2f60a11",
   "node_count": 1511,
   "edge_count": 2074,
@@ -8575,7 +8575,7 @@
       {
         "source": "concorda-web::src/contexts/websocket-context.tsx::WebSocketProvider",
         "via": "hook_call",
-        "where": "websocket-context.tsx:30",
+        "where": "websocket-context.tsx:38",
         "confidence": "exact"
       }
     ],

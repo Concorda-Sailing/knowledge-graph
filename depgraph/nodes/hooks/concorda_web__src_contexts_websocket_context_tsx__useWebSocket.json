@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/contexts/websocket-context.tsx",
     "symbol": "useWebSocket",
-    "line": 104
+    "line": 123
   },
   "signature": {
     "name": "useWebSocket",

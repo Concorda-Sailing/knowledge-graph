@@ -8,18 +8,18 @@
     "repo": "concorda-web",
     "path": "src/contexts/websocket-context.tsx",
     "symbol": "WebSocketProvider",
-    "line": 29
+    "line": 37
   },
   "signature": {
     "name": "WebSocketProvider",
     "kind": "component"
   },
-  "structural_hash": "1763035a59541f4fc38f8a32388d3097f8b020015020974175e153903485af41",
+  "structural_hash": "4737a1a4e6e7c8d05368323e0a2265a8bc8f416d7d979ca32b57a1b24a061c86",
   "depends_on": [
     {
       "target": "concorda-web::src/contexts/auth-context.tsx::useAuth",
       "via": "hook_call",
-      "where": "websocket-context.tsx:30",
+      "where": "websocket-context.tsx:38",
       "confidence": "exact"
     }
   ],
