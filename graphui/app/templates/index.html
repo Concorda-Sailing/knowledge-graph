@@ -50,20 +50,20 @@
   <details class="glossary">
     <summary>What do these terms mean?</summary>
     <dl>
-      <dt><strong>Tier A</strong> <span class="muted">(fan-out ≥ 10)</span></dt>
+      <dt><strong>Tier A</strong> <span class="muted">(10+ dependents)</span></dt>
       <dd>Hot nodes — heavily depended-on. Editing one ripples through 10+ call sites. Hand-author dossiers; assume any edit here is high-blast-radius.</dd>
 
-      <dt><strong>Tier B</strong> <span class="muted">(fan-out 3–9)</span></dt>
-      <dd>Mid-fan — common-but-not-critical wrappers, mid-traffic models, schemas. LLM-drafted dossiers acceptable; review-via-graphui ratifies them.</dd>
+      <dt><strong>Tier B</strong> <span class="muted">(3–9 dependents)</span></dt>
+      <dd>Mid-traffic wrappers, models, schemas. LLM-drafted dossiers acceptable; review-via-graphui ratifies them.</dd>
 
-      <dt><strong>Tier C</strong> <span class="muted">(fan-out 1–2)</span></dt>
-      <dd>The long tail — one-off endpoints, narrow helpers. Drafted by Haiku or local models in bulk; review-via-graphui as a sweep, not per-node.</dd>
+      <dt><strong>Tier C</strong> <span class="muted">(1–2 dependents)</span></dt>
+      <dd>The long tail — one-off endpoints, narrow helpers. Drafted by local models in bulk; review-via-graphui as a sweep, not per-node.</dd>
 
       <dt><strong>Tier *</strong></dt>
       <dd>Logigraph rules and ontology nodes — tier-independent because they describe invariants, not code. Always hand-curated.</dd>
 
-      <dt><strong>Fan-out</strong></dt>
-      <dd>Number of distinct callers/dependents the node has, derived from <code>nodes/_index/dependents.json</code>. Drives tier assignment. Higher = bigger blast radius if you change the contract.</dd>
+      <dt><strong>Dependents</strong> <span class="muted">(a.k.a. fan-out)</span></dt>
+      <dd>Number of distinct callers, importers, or referencers the node has — i.e. how many other places in the code touch it. Derived from <code>nodes/_index/dependents.json</code>. Drives tier assignment. Higher = bigger blast radius if you change the contract.</dd>
 
       <dt><strong>Kind</strong></dt>
       <dd>What the node is: <code>model</code> (SQLAlchemy class), <code>service</code> (function/wrapper), <code>endpoint</code> (HTTP route handler), <code>schema</code> (Pydantic class), <code>component</code> (React component), <code>hook</code> (React hook), <code>test</code> (Playwright spec), <code>rule</code> / <code>ontology</code> (logigraph nodes).</dd>
@@ -118,7 +118,7 @@
       <tr>
         <th data-sort="kind">kind</th>
         <th data-sort="tier">tier</th>
-        <th data-sort="fan_out" class="numeric">fan</th>
+        <th data-sort="fan_out" class="numeric" title="number of distinct callers/dependents">deps</th>
         <th data-sort="state">state</th>
         <th data-sort="title">title</th>
         <th data-sort="src">src</th>

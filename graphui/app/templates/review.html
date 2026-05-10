@@ -3,7 +3,7 @@
 {% block content %}
 <section>
   <h2>Review queue — Tier {{ tier }}{% if kind %} · {{ kind }}{% endif %}</h2>
-  <p class="legend">{{ rows|length }} llm_drafted dossiers awaiting review, ranked by fan-out. Click into the first one and use the prev/next links inside the dossier to walk the queue.</p>
+  <p class="legend">{{ rows|length }} llm_drafted dossiers awaiting review, ranked by dependent count. Click into the first one and use the prev/next links inside the dossier to walk the queue.</p>
 
   {% if rows %}
     <p style="margin: 12px 0;">
@@ -16,7 +16,7 @@
       <tr>
         <th>#</th>
         <th>kind</th>
-        <th class="numeric">fan</th>
+        <th class="numeric" title="number of distinct callers/dependents">deps</th>
         <th>title</th>
         <th>id</th>
       </tr>

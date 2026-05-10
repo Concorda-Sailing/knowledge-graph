@@ -10,7 +10,7 @@
   <h1>{{ node.title or node.id }}</h1>
   <div class="meta-row">
     <span class="pill">id: {{ node.id }}</span>
-    <span class="pill">fan {{ node.fan_out }}</span>
+    <span class="pill">{{ node.fan_out }} dependent{{ '' if node.fan_out == 1 else 's' }}</span>
     <span class="pill">state: <span class="state-{{ node.dossier_state }}">{{ node.dossier_state }}</span></span>
     {% if node.structural_hash %}<span class="pill">hash: {{ node.structural_hash[:12] }}</span>{% endif %}
     {% if commits_30d %}<span class="pill">{{ commits_30d }} commits / 30d</span>{% endif %}
@@ -23,8 +23,8 @@
   <div class="review-strip" id="review-strip">
     <span class="review-title">Review queue</span>
     <span class="review-pos">{{ queue_position }} / {{ queue_total }}</span>
-    {% if prev_node %}<a href="/graph/node/{{ prev_node.id }}">← prev (fan {{ prev_node.fan_out }})</a>{% else %}<span class="muted">← prev</span>{% endif %}
-    {% if next_node %}<a href="/graph/node/{{ next_node.id }}" id="next-link">next (fan {{ next_node.fan_out }}) →</a>{% else %}<span class="muted">next →</span>{% endif %}
+    {% if prev_node %}<a href="/graph/node/{{ prev_node.id }}">← prev ({{ prev_node.fan_out }} dep{{ '' if prev_node.fan_out == 1 else 's' }})</a>{% else %}<span class="muted">← prev</span>{% endif %}
+    {% if next_node %}<a href="/graph/node/{{ next_node.id }}" id="next-link">next ({{ next_node.fan_out }} dep{{ '' if next_node.fan_out == 1 else 's' }}) →</a>{% else %}<span class="muted">next →</span>{% endif %}
     <a href="/graph/review?tier={{ node.tier }}" class="muted">queue</a>
     <button class="approve-btn" onclick="approveDossier('{{ node.id }}', {% if next_node %}'/graph/node/{{ next_node.id }}'{% else %}'/graph/review?tier={{ node.tier }}'{% endif %})">
       ✓ Approve as current
