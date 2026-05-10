@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}review queue{% endblock %}
+{% block content %}
+<section>
+  <h2>Review queue — Tier {{ tier }}{% if kind %} · {{ kind }}{% endif %}</h2>
+  <p class="legend">{{ rows|length }} llm_drafted dossiers awaiting review, ranked by fan-out. Click into the first one and use the prev/next links inside the dossier to walk the queue.</p>
+
+  {% if rows %}
+    <p style="margin: 12px 0;">
+      <a class="idref" href="/graph/node/{{ rows[0].id }}"><strong>Start review →</strong></a>
+    </p>
+  {% endif %}
+
+  <table class="nodes-tbl">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>kind</th>
+        <th class="numeric">fan</th>
+        <th>title</th>
+        <th>id</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for r in rows %}
+      <tr class="state-llm_drafted">
+        <td class="numeric">{{ loop.index }}</td>
+        <td class="kind">{{ r.kind }}</td>
+        <td class="numeric">{{ r.fan_out }}</td>
+        <td><a href="/graph/node/{{ r.id }}">{{ r.title or r.id.rsplit('::', 1)[-1] }}</a></td>
+        <td class="src">{{ r.id }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

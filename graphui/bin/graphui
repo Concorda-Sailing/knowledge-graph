@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Run the graphui FastAPI app. Bootstraps a venv on first run.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+VENV="$ROOT/.venv"
+HOST="${GRAPHUI_HOST:-127.0.0.1}"
+PORT="${GRAPHUI_PORT:-8081}"
+RELOAD="${GRAPHUI_RELOAD:-}"
+
+if [[ ! -d "$VENV" ]]; then
+  echo "[graphui] creating venv at $VENV"
+  python3 -m venv "$VENV"
+fi
+
+# Install deps if uvicorn isn't present, or if requirements.txt is newer than the marker
+MARKER="$VENV/.deps_installed"
+REQS="$ROOT/requirements.txt"
+if [[ ! -f "$MARKER" ]] || [[ "$REQS" -nt "$MARKER" ]]; then
+  echo "[graphui] installing deps"
+  "$VENV/bin/pip" install --quiet --upgrade pip
+  "$VENV/bin/pip" install --quiet -r "$REQS"
+  touch "$MARKER"
+fi
+
+cd "$ROOT"
+EXTRA=()
+[[ "$RELOAD" == "1" ]] && EXTRA+=(--reload)
+exec "$VENV/bin/uvicorn" app.main:app --host "$HOST" --port "$PORT" "${EXTRA[@]}"

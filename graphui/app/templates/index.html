@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% block title %}index{% endblock %}
+{% block content %}
+
+<section class="summary">
+  <div class="stat"><span class="num">{{ depgraph_node_count }}</span><span class="lbl">depgraph nodes</span></div>
+  <div class="stat"><span class="num">{{ rule_count }}</span><span class="lbl">rules</span></div>
+  <div class="stat"><span class="num">{{ ontology_count }}</span><span class="lbl">ontology</span></div>
+</section>
+
+<section class="coverage">
+  <h2>Coverage matrix</h2>
+  <table class="cov">
+    <thead>
+      <tr>
+        <th>kind</th>
+        {% for tier in tier_order %}
+          <th>tier {{ tier }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+    {% for row in matrix_rows %}
+      <tr>
+        <td class="kind">{{ row.kind }}</td>
+        {% for tier in tier_order %}
+          {% set cell = row.tiers.get(tier) %}
+          {% if cell %}
+            <td class="cell pct-{{ (cell.pct // 20) * 20 }}">
+              <a href="?kind={{ row.kind }}&tier={{ tier }}">
+                <span class="pct">{{ cell.pct }}%</span>
+                <span class="counts">{{ cell.current + cell.llm_drafted }}/{{ cell.total }}</span>
+                {% if cell.stale %}<span class="badge stale" title="stale">{{ cell.stale }}⌛</span>{% endif %}
+                {% if cell.unreviewed %}<span class="badge unreviewed" title="unreviewed">{{ cell.unreviewed }}?</span>{% endif %}
+              </a>
+            </td>
+          {% else %}
+            <td class="cell empty">—</td>
+          {% endif %}
+        {% endfor %}
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <p class="legend">
+    cell = <em>(current+drafted) / total</em> · color = % covered ·
+    <span class="badge stale">⌛</span> stale · <span class="badge unreviewed">?</span> unreviewed
+  </p>
+</section>
+
+<section class="nodes">
+  <h2>Nodes</h2>
+  <div class="filters">
+    <input id="q" type="search" placeholder="filter by id, title, src…" autofocus>
+    <select id="f-kind">
+      <option value="">any kind</option>
+      <option value="model">model</option>
+      <option value="service">service</option>
+      <option value="endpoint">endpoint</option>
+      <option value="schema">schema</option>
+      <option value="component">component</option>
+      <option value="hook">hook</option>
+      <option value="test">test</option>
+      <option value="rule">rule</option>
+      <option value="ontology">ontology</option>
+    </select>
+    <select id="f-tier">
+      <option value="">any tier</option>
+      <option value="A">A</option>
+      <option value="B">B</option>
+      <option value="C">C</option>
+      <option value="*">* (rules/ontology)</option>
+    </select>
+    <select id="f-state">
+      <option value="">any state</option>
+      <option value="current">current</option>
+      <option value="llm_drafted">llm_drafted</option>
+      <option value="unreviewed">unreviewed</option>
+      <option value="stale">stale</option>
+      <option value="missing">missing</option>
+    </select>
+    <span id="count" class="count"></span>
+  </div>
+  <table class="nodes-tbl">
+    <thead>
+      <tr>
+        <th data-sort="kind">kind</th>
+        <th data-sort="tier">tier</th>
+        <th data-sort="fan_out" class="numeric">fan</th>
+        <th data-sort="state">state</th>
+        <th data-sort="title">title</th>
+        <th data-sort="src">src</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+</section>
+
+<script>
+const params = new URLSearchParams(location.search);
+const initial = {
+  kind: params.get('kind') || '',
+  tier: params.get('tier') || '',
+  state: params.get('state') || '',
+  q:    params.get('q')    || '',
+};
+let DATA = [];
+let SORT = { key: 'fan_out', desc: true };
+
+const $ = (id) => document.getElementById(id);
+const rowsEl = $('rows');
+const countEl = $('count');
+
+function applyFilters() {
+  const q = $('q').value.trim().toLowerCase();
+  const k = $('f-kind').value;
+  const t = $('f-tier').value;
+  const s = $('f-state').value;
+  let rows = DATA.filter(r =>
+    (!k || r.kind === k) &&
+    (!t || r.tier === t) &&
+    (!s || r.state === s) &&
+    (!q || (r.id + ' ' + r.title + ' ' + r.src).toLowerCase().includes(q))
+  );
+  rows.sort((a, b) => {
+    const av = a[SORT.key], bv = b[SORT.key];
+    if (typeof av === 'number') return SORT.desc ? bv - av : av - bv;
+    return SORT.desc
+      ? String(bv).localeCompare(String(av))
+      : String(av).localeCompare(String(bv));
+  });
+  countEl.textContent = `${rows.length} of ${DATA.length}`;
+  rowsEl.innerHTML = rows.slice(0, 500).map(r => `
+    <tr class="state-${r.state}">
+      <td class="kind">${r.kind}</td>
+      <td class="tier tier-${r.tier === '*' ? 'star' : r.tier}">${r.tier}</td>
+      <td class="numeric">${r.fan_out || ''}</td>
+      <td class="state">${r.state}</td>
+      <td><a href="${r.href}">${escapeHtml(r.title)}</a></td>
+      <td class="src">${escapeHtml(r.src)}</td>
+    </tr>
+  `).join('') + (rows.length > 500 ? `<tr><td colspan="6" class="more">+ ${rows.length - 500} more (refine filters)</td></tr>` : '');
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+document.querySelectorAll('th[data-sort]').forEach(th => {
+  th.addEventListener('click', () => {
+    const key = th.dataset.sort;
+    if (SORT.key === key) SORT.desc = !SORT.desc;
+    else { SORT.key = key; SORT.desc = (key === 'fan_out'); }
+    document.querySelectorAll('th').forEach(t => t.classList.remove('asc','desc'));
+    th.classList.add(SORT.desc ? 'desc' : 'asc');
+    applyFilters();
+  });
+});
+
+['q','f-kind','f-tier','f-state'].forEach(id => {
+  $(id).addEventListener('input', applyFilters);
+});
+
+fetch('/graph/api/nodes.json')
+  .then(r => r.json())
+  .then(j => {
+    DATA = j;
+    $('q').value = initial.q;
+    $('f-kind').value = initial.kind;
+    $('f-tier').value = initial.tier;
+    $('f-state').value = initial.state;
+    applyFilters();
+  });
+</script>
+{% endblock %}

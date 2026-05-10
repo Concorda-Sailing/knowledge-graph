@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}{{ node.title or node.id }}{% endblock %}
+{% block content %}
+<div class="detail">
+  <div class="breadcrumb">
+    <a href="/graph/">index</a> &nbsp;/&nbsp;
+    {{ node.kind }} &nbsp;/&nbsp;
+    <span class="tier-{{ node.tier }}">tier {{ node.tier }}</span>
+  </div>
+  <h1>{{ node.title or node.id }}</h1>
+  <div class="meta-row">
+    <span class="pill">id: {{ node.id }}</span>
+    <span class="pill">fan {{ node.fan_out }}</span>
+    <span class="pill">state: <span class="state-{{ node.dossier_state }}">{{ node.dossier_state }}</span></span>
+    {% if node.structural_hash %}<span class="pill">hash: {{ node.structural_hash[:12] }}</span>{% endif %}
+    {% if commits_30d %}<span class="pill">{{ commits_30d }} commits / 30d</span>{% endif %}
+    {% if src.repo and src.path %}
+      <span class="pill">{{ src.repo }}/{{ src.path }}{% if src.line %}:{{ src.line }}{% endif %}</span>
+    {% endif %}
+  </div>
+
+  {% if queue_position %}
+  <div class="review-strip">
+    <span class="review-title">Review queue</span>
+    <span class="review-pos">{{ queue_position }} / {{ queue_total }}</span>
+    {% if prev_node %}<a href="/graph/node/{{ prev_node.id }}">← prev (fan {{ prev_node.fan_out }})</a>{% else %}<span class="muted">← prev</span>{% endif %}
+    {% if next_node %}<a href="/graph/node/{{ next_node.id }}">next (fan {{ next_node.fan_out }}) →</a>{% else %}<span class="muted">next →</span>{% endif %}
+    <a href="/graph/review?tier={{ node.tier }}" class="muted">queue</a>
+    <code class="bump-cmd" title="copy &amp; paste in a terminal to mark this dossier reviewed">~/concorda/depgraph/bin/depgraph dossier-bump '{{ node.id }}'</code>
+  </div>
+  {% endif %}
+
+  <div class="cols">
+    <div class="dossier">
+      {% if dossier_html %}
+        {{ dossier_html | safe }}
+      {% else %}
+        <p class="empty">No dossier yet for this node.</p>
+      {% endif %}
+    </div>
+
+    <aside class="side">
+      <div class="card">
+        <h3>Applicable rules</h3>
+        {% if rules %}
+          <ul>
+          {% for r in rules %}
+            <li><a href="/graph/rule/{{ r.id }}">{{ r.title or r.id }}</a></li>
+          {% endfor %}
+          </ul>
+        {% else %}
+          <p class="empty">No rules touch this node.</p>
+        {% endif %}
+      </div>
+
+      <div class="card">
+        <h3>Dependents ({{ dependents|length }})</h3>
+        {% if dependents %}
+          <ul>
+          {% for d in dependents[:50] %}
+            <li>
+              <a href="/graph/node/{{ d.source }}">{{ d.source }}</a>
+              <div class="where">via {{ d.via or '?' }} · {{ d.where or '?' }}</div>
+            </li>
+          {% endfor %}
+          {% if dependents|length > 50 %}
+            <li class="empty">+ {{ dependents|length - 50 }} more</li>
+          {% endif %}
+          </ul>
+        {% else %}
+          <p class="empty">No tracked dependents.</p>
+        {% endif %}
+      </div>
+
+      {% if node.depends_on %}
+      <div class="card">
+        <h3>Depends on ({{ node.depends_on|length }})</h3>
+        <ul>
+        {% for d in node.depends_on[:50] %}
+          <li>
+            {% if d.target %}<a href="/graph/node/{{ d.target }}">{{ d.target }}</a>
+            {% else %}<span>{{ d }}</span>{% endif %}
+          </li>
+        {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    </aside>
+  </div>
+</div>
+{% endblock %}

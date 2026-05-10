@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}{{ ont.title or ont.id }}{% endblock %}
+{% block content %}
+<div class="detail">
+  <div class="breadcrumb">
+    <a href="/graph/">index</a> &nbsp;/&nbsp;
+    ontology / {{ ont.subkind }}
+  </div>
+  <h1>{{ ont.title or ont.id }}</h1>
+  <div class="meta-row">
+    <span class="pill">id: {{ ont.id }}</span>
+    <span class="pill">def: {{ ont.definition_status }}</span>
+    <span class="pill">state: <span class="state-{{ ont.dossier_state }}">{{ ont.dossier_state }}</span></span>
+  </div>
+
+  {% if ont.summary %}
+  <div class="dossier" style="margin-bottom: 14px;">
+    <h2>Summary</h2>
+    <p>{{ ont.summary }}</p>
+  </div>
+  {% endif %}
+
+  <div class="cols">
+    <div class="dossier">
+      {% if dossier_html %}
+        {{ dossier_html | safe }}
+      {% else %}
+        <p class="empty">No dossier body yet.</p>
+      {% endif %}
+    </div>
+
+    <aside class="side">
+      {% if ont.aliases %}
+      <div class="card">
+        <h3>Aliases</h3>
+        <ul>
+        {% for a in ont.aliases %}<li><code>{{ a }}</code></li>{% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+      {% if ont.source %}
+      <div class="card">
+        <h3>Source</h3>
+        <ul>
+        {% for k, v in ont.source.items() %}<li>{{ k }}: <code>{{ v }}</code></li>{% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    </aside>
+  </div>
+</div>
+{% endblock %}
