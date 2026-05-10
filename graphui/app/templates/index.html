@@ -46,6 +46,38 @@
     cell = <em>(current+drafted) / total</em> · color = % covered ·
     <span class="badge stale">⌛</span> stale · <span class="badge unreviewed">?</span> unreviewed
   </p>
+
+  <details class="glossary">
+    <summary>What do these terms mean?</summary>
+    <dl>
+      <dt><strong>Tier A</strong> <span class="muted">(fan-out ≥ 10)</span></dt>
+      <dd>Hot nodes — heavily depended-on. Editing one ripples through 10+ call sites. Hand-author dossiers; assume any edit here is high-blast-radius.</dd>
+
+      <dt><strong>Tier B</strong> <span class="muted">(fan-out 3–9)</span></dt>
+      <dd>Mid-fan — common-but-not-critical wrappers, mid-traffic models, schemas. LLM-drafted dossiers acceptable; review-via-graphui ratifies them.</dd>
+
+      <dt><strong>Tier C</strong> <span class="muted">(fan-out 1–2)</span></dt>
+      <dd>The long tail — one-off endpoints, narrow helpers. Drafted by Haiku or local models in bulk; review-via-graphui as a sweep, not per-node.</dd>
+
+      <dt><strong>Tier *</strong></dt>
+      <dd>Logigraph rules and ontology nodes — tier-independent because they describe invariants, not code. Always hand-curated.</dd>
+
+      <dt><strong>Fan-out</strong></dt>
+      <dd>Number of distinct callers/dependents the node has, derived from <code>nodes/_index/dependents.json</code>. Drives tier assignment. Higher = bigger blast radius if you change the contract.</dd>
+
+      <dt><strong>Kind</strong></dt>
+      <dd>What the node is: <code>model</code> (SQLAlchemy class), <code>service</code> (function/wrapper), <code>endpoint</code> (HTTP route handler), <code>schema</code> (Pydantic class), <code>component</code> (React component), <code>hook</code> (React hook), <code>test</code> (Playwright spec), <code>rule</code> / <code>ontology</code> (logigraph nodes).</dd>
+
+      <dt><strong>Dossier states</strong></dt>
+      <dd>
+        <code>current</code> — human-reviewed, hash matches the live code &middot;
+        <code>llm_drafted</code> — written by an LLM agent, not yet reviewed &middot;
+        <code>unreviewed</code> — has a frontmatter but flagged as not-yet-reviewed &middot;
+        <code>stale</code> — the code's <code>structural_hash</code> has shifted since <code>last_reviewed_against_hash</code> was pinned &middot;
+        <code>missing</code> — node exists, no dossier file yet.
+      </dd>
+    </dl>
+  </details>
 </section>
 
 <section class="nodes">
