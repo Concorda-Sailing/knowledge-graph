@@ -21,13 +21,31 @@ declaring the project's repos.
 ```bash
 git clone https://github.com/Concorda-Sailing/knowledge-graph.git
 cd knowledge-graph
-./install.sh
+./install.sh                     # framework only
+./install.sh --concorda          # framework + clone Concorda data
+./install.sh bootstrap-concorda  # one-shot: tools + Concorda data +
+                                 #   apply Claude Code hooks +
+                                 #   register graphui systemd daemon
 ```
 
-The default target is `~/tools/` — pass `--target /some/other/path`
+The default install target is `~/tools/` — pass `--target /some/other/path`
 to override. The installer clones the three tool repos, sets up
-graphui's Python venv, and prints the next steps for wiring hooks
-into your Claude Code `~/.claude/settings.json`.
+graphui's Python venv, and (if `--apply` flags are used) wires
+everything up.
+
+### Agent-runnable
+
+`install.sh` is **safe for Claude Code (or another LLM agent) to run
+unattended**:
+
+- No interactive prompts.
+- Idempotent: re-running with the same args is a no-op success
+  (`hooks already match`, `unit file already current`, etc.).
+- ANSI colors auto-suppress when stdout is not a TTY (or
+  `NO_COLOR=1` is set).
+- Side-effecting subcommands (`hooks --apply`, `systemd --apply`)
+  back up the existing file before writing.
+- Exits non-zero on any failure; everything important goes to stderr.
 
 ## What gets installed
 
