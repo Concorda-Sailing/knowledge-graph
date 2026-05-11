@@ -42,7 +42,13 @@ def _tier_of(fan_out: int) -> str:
 
 
 def _dossier_state(node: dict, root: Path) -> str:
-    """Match depgraph CLI's _dossier_state semantics."""
+    """Read dossier frontmatter to determine state.
+
+    Depgraph dossiers use `status:` (current|llm_drafted|unreviewed).
+    Logigraph dossiers use `definition_status:` (human_reviewed|llm_drafted|stub).
+    Both are accepted; logigraph's `human_reviewed` maps to "current"
+    for unified state-ordering across the UI.
+    """
     rel = node.get("dossier")
     if not rel:
         return "missing"
@@ -51,10 +57,12 @@ def _dossier_state(node: dict, root: Path) -> str:
         return "missing"
     text = full.read_text()
     pinned = None
-    status = "current"
+    status = None
     for line in text.splitlines():
         s = line.strip()
         if s.startswith("status:"):
+            status = s.split(":", 1)[1].strip()
+        elif s.startswith("definition_status:"):
             status = s.split(":", 1)[1].strip()
         if s.startswith("last_reviewed_against_hash:"):
             pinned = s.split(":", 1)[1].strip().strip('"').strip("'")
@@ -66,6 +74,8 @@ def _dossier_state(node: dict, root: Path) -> str:
         return "unreviewed"
     if status == "llm_drafted":
         return "llm_drafted"
+    if status == "stub":
+        return "llm_drafted"  # logigraph stubs surface in the same queue
     return "current"
 
 
