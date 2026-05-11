@@ -103,19 +103,19 @@
     {
       "target": "concorda-web::src/lib/linkify-location.tsx::renderLocation",
       "via": "hook_call",
-      "where": "page.tsx:482",
+      "where": "page.tsx:488",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
       "via": "hook_call",
-      "where": "page.tsx:538",
+      "where": "page.tsx:544",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/lib/linkify-location.tsx::renderLocation",
       "via": "hook_call",
-      "where": "page.tsx:736",
+      "where": "page.tsx:748",
       "confidence": "exact"
     }
   ],

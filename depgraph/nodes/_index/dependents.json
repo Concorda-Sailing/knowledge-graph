@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-05-11T02:10:25.169492+00:00",
+  "generated_at": "2026-05-11T02:18:15.831717+00:00",
   "git_commit": "dd72f2f60a11",
   "node_count": 1511,
   "edge_count": 2087,
@@ -12809,7 +12809,7 @@
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
         "via": "hook_call",
-        "where": "page.tsx:538",
+        "where": "page.tsx:544",
         "confidence": "exact"
       },
       {
@@ -13649,13 +13649,13 @@
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
         "via": "hook_call",
-        "where": "page.tsx:482",
+        "where": "page.tsx:488",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
         "via": "hook_call",
-        "where": "page.tsx:736",
+        "where": "page.tsx:748",
         "confidence": "exact"
       },
       {
