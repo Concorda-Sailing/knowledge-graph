@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/app/events/[slug]/page.tsx",
     "symbol": "formatTime",
-    "line": 55
+    "line": 56
   },
   "signature": {
     "name": "formatTime",
@@ -19,7 +19,7 @@
     {
       "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
       "via": "hook_call",
-      "where": "page.tsx:56",
+      "where": "page.tsx:57",
       "confidence": "exact"
     }
   ],

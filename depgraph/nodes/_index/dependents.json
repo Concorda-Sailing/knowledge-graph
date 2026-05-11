@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-05-11T02:18:15.831717+00:00",
+  "generated_at": "2026-05-11T02:21:34.965381+00:00",
   "git_commit": "dd72f2f60a11",
   "node_count": 1511,
-  "edge_count": 2087,
+  "edge_count": 2088,
   "by_target": {
     "DELETE::/api/admin/email-templates/{0}": [
       {
@@ -1737,13 +1737,13 @@
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
         "via": "string_url",
-        "where": "page.tsx:366",
+        "where": "page.tsx:373",
         "confidence": "fuzzy"
       },
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
         "via": "string_url",
-        "where": "page.tsx:370",
+        "where": "page.tsx:377",
         "confidence": "fuzzy"
       },
       {
@@ -8413,7 +8413,7 @@
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
         "via": "hook_call",
-        "where": "page.tsx:102",
+        "where": "page.tsx:103",
         "confidence": "exact"
       },
       {
@@ -8677,7 +8677,7 @@
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
         "via": "hook_call",
-        "where": "page.tsx:103",
+        "where": "page.tsx:104",
         "confidence": "exact"
       },
       {
@@ -10807,7 +10807,7 @@
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
         "via": "hook_call",
-        "where": "page.tsx:298",
+        "where": "page.tsx:305",
         "confidence": "exact"
       }
     ],
@@ -10845,7 +10845,7 @@
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
         "via": "hook_call",
-        "where": "page.tsx:198",
+        "where": "page.tsx:199",
         "confidence": "exact"
       }
     ],
@@ -10853,13 +10853,13 @@
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
         "via": "hook_call",
-        "where": "page.tsx:217",
+        "where": "page.tsx:218",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
         "via": "hook_call",
-        "where": "page.tsx:382",
+        "where": "page.tsx:389",
         "confidence": "exact"
       }
     ],
@@ -10905,7 +10905,7 @@
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
         "via": "hook_call",
-        "where": "page.tsx:200",
+        "where": "page.tsx:201",
         "confidence": "exact"
       }
     ],
@@ -10969,7 +10969,7 @@
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
         "via": "hook_call",
-        "where": "page.tsx:226",
+        "where": "page.tsx:227",
         "confidence": "exact"
       },
       {
@@ -10983,7 +10983,7 @@
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
         "via": "hook_call",
-        "where": "page.tsx:199",
+        "where": "page.tsx:200",
         "confidence": "exact"
       }
     ],
@@ -11235,7 +11235,7 @@
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
         "via": "hook_call",
-        "where": "page.tsx:349",
+        "where": "page.tsx:356",
         "confidence": "exact"
       },
       {
@@ -11589,7 +11589,7 @@
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
         "via": "hook_call",
-        "where": "page.tsx:315",
+        "where": "page.tsx:322",
         "confidence": "exact"
       }
     ],
@@ -11611,7 +11611,7 @@
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
         "via": "hook_call",
-        "where": "page.tsx:253",
+        "where": "page.tsx:260",
         "confidence": "exact"
       },
       {
@@ -11826,6 +11826,12 @@
       }
     ],
     "concorda-web::src/lib/api.ts::profileApi.get": [
+      {
+        "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
+        "via": "hook_call",
+        "where": "page.tsx:248",
+        "confidence": "exact"
+      },
       {
         "source": "concorda-web::src/app/members/page.tsx::DashboardPage",
         "via": "hook_call",
@@ -12809,19 +12815,19 @@
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
         "via": "hook_call",
-        "where": "page.tsx:544",
+        "where": "page.tsx:551",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::formatDate",
         "via": "hook_call",
-        "where": "page.tsx:47",
+        "where": "page.tsx:48",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::formatTime",
         "via": "hook_call",
-        "where": "page.tsx:56",
+        "where": "page.tsx:57",
         "confidence": "exact"
       },
       {
@@ -13649,13 +13655,13 @@
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
         "via": "hook_call",
-        "where": "page.tsx:488",
+        "where": "page.tsx:495",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
         "via": "hook_call",
-        "where": "page.tsx:748",
+        "where": "page.tsx:755",
         "confidence": "exact"
       },
       {
