@@ -252,9 +252,9 @@ def load_depgraph_nodes() -> list[dict]:
 
 
 def load_logigraph_nodes() -> dict[str, list[dict]]:
-    """Returns {'rules': [...], 'ontology': [...]} with derived dossier_state."""
-    out: dict[str, list[dict]] = {"rules": [], "ontology": []}
-    for kind, sub in (("rules", "rules"), ("ontology", "ontology")):
+    """Returns {'rules': [...], 'domain': [...]} with derived dossier_state."""
+    out: dict[str, list[dict]] = {"rules": [], "domain": []}
+    for kind, sub in (("rules", "rules"), ("domain", "domain")):
         d = LOGIGRAPH_NODES / sub
         if not d.is_dir():
             continue
@@ -286,8 +286,8 @@ def load_rule_by_id(rule_id: str) -> dict | None:
     return None
 
 
-def load_ontology_by_id(ont_id: str) -> dict | None:
-    for n in load_logigraph_nodes()["ontology"]:
+def load_domain_by_id(ont_id: str) -> dict | None:
+    for n in load_logigraph_nodes()["domain"]:
         if n["id"] == ont_id:
             return n
     return None
@@ -313,14 +313,14 @@ KIND_LABELS = {
     "hook": "hooks",
     "test": "tests",
     "rule": "rules",
-    "ontology": "ontology",
+    "domain": "domain",
 }
 
 
 def coverage_matrix() -> dict[str, dict[str, dict[str, int]]]:
     """{ kind: { tier: { state: count } } }
     states: current, llm_drafted, unreviewed, stale, missing
-    Includes both depgraph kinds and logigraph kinds (rules+ontology, all Tier ?).
+    Includes both depgraph kinds and logigraph kinds (rules+domain, all Tier ?).
     Logigraph kinds use a synthetic '*' tier slot since they're tier-independent.
     """
     out: dict[str, dict[str, dict[str, int]]] = {}
@@ -331,7 +331,7 @@ def coverage_matrix() -> dict[str, dict[str, dict[str, int]]]:
         out.setdefault(kind, {}).setdefault(tier, {}).setdefault(state, 0)
         out[kind][tier][state] += 1
     lg = load_logigraph_nodes()
-    for kind in ("rules", "ontology"):
+    for kind in ("rules", "domain"):
         for n in lg[kind]:
             state = n["dossier_state"]
             out.setdefault(kind, {}).setdefault("*", {}).setdefault(state, 0)

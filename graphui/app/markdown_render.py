@@ -33,7 +33,7 @@ def _link_ids(html_text: str) -> str:
         if nid.startswith("rule::"):
             href = f"/graph/rule/{nid}"
         elif nid.startswith(("resource::", "role::")):
-            href = f"/graph/ontology/{nid}"
+            href = f"/graph/domain/{nid}"
         else:
             href = f"/graph/node/{nid}"
         return f'<a class="idref" href="{href}"><code>{html.escape(nid)}</code></a>'

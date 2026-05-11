@@ -35,11 +35,11 @@
       {% include "_telemetry_card.html" %}
 
       <div class="card">
-        <h3>References ontology</h3>
-        {% if rule.references_ontology %}
+        <h3>References domain</h3>
+        {% if rule.references_domain %}
           <ul>
-          {% for o in rule.references_ontology %}
-            <li><a href="/graph/ontology/{{ o }}">{{ o }}</a></li>
+          {% for o in rule.references_domain %}
+            <li><a href="/graph/domain/{{ o }}">{{ o }}</a></li>
           {% endfor %}
           </ul>
         {% else %}

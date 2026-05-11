@@ -34,7 +34,7 @@ STATE_ORDER = ["current", "llm_drafted", "unreviewed", "stale", "missing"]
 TIER_ORDER = ["A", "B", "C", "*"]
 KIND_ORDER = [
     "model", "service", "endpoint", "schema",
-    "component", "hook", "test", "rule", "ontology",
+    "component", "hook", "test", "rule", "domain",
 ]
 
 
@@ -79,7 +79,7 @@ def index(request: Request) -> HTMLResponse:
             "tier_order": TIER_ORDER,
             "depgraph_node_count": len(nodes),
             "rule_count": len(lg["rules"]),
-            "ontology_count": len(lg["ontology"]),
+            "domain_count": len(lg["domain"]),
             "meta": meta,
         },
     )
@@ -88,7 +88,7 @@ def index(request: Request) -> HTMLResponse:
 @app.get("/graph/api/nodes.json")
 def nodes_json() -> JSONResponse:
     """Flat node list for client-side filter/sort on the index page.
-    Includes both depgraph nodes and logigraph rules+ontology, distinguished
+    Includes both depgraph nodes and logigraph rules+domain, distinguished
     by `kind`."""
     out = []
     for n in loader.load_depgraph_nodes():
@@ -115,16 +115,16 @@ def nodes_json() -> JSONResponse:
             "src": "",
             "href": f"/graph/rule/{r['id']}",
         })
-    for o in lg["ontology"]:
+    for o in lg["domain"]:
         out.append({
             "id": o["id"],
-            "kind": "ontology",
+            "kind": "domain",
             "title": o.get("title", o["id"]),
             "tier": "*",
             "fan_out": 0,
             "state": o["dossier_state"],
             "src": "",
-            "href": f"/graph/ontology/{o['id']}",
+            "href": f"/graph/domain/{o['id']}",
         })
     return JSONResponse(out)
 
@@ -239,11 +239,11 @@ def rule_detail(request: Request, rule_id: str) -> HTMLResponse:
     )
 
 
-@app.get("/graph/ontology/{ont_id:path}", response_class=HTMLResponse)
-def ontology_detail(request: Request, ont_id: str) -> HTMLResponse:
-    ont = loader.load_ontology_by_id(ont_id)
+@app.get("/graph/domain/{ont_id:path}", response_class=HTMLResponse)
+def domain_detail(request: Request, ont_id: str) -> HTMLResponse:
+    ont = loader.load_domain_by_id(ont_id)
     if not ont:
-        raise HTTPException(404, f"ontology node not found: {ont_id}")
+        raise HTTPException(404, f"domain node not found: {ont_id}")
     dossier_text = loader.read_dossier(ont.get("dossier"), loader.LOGIGRAPH)
     dossier_html = markdown_render.render(dossier_text) if dossier_text else None
     history = loader.commit_history(
@@ -252,7 +252,7 @@ def ontology_detail(request: Request, ont_id: str) -> HTMLResponse:
     )
     return TEMPLATES.TemplateResponse(
         request,
-        "ontology.html",
+        "domain.html",
         {
             "ont": ont,
             "dossier_html": dossier_html,

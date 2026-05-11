@@ -20,7 +20,7 @@
   --warn:      #f0c674;
   --bad:       #ff8581;
   --rule:      #c89cff;
-  --ontology:  #6dd0c5;
+  --domain:  #6dd0c5;
 
   /* Borders + glow */
   --border:    #262d3e;
@@ -329,7 +329,7 @@ h2 {
 .review-strip .approve-status.ok      { color: var(--good); }
 .review-strip .approve-status.err     { color: var(--bad); }
 
-/* ===== detail (node / rule / ontology) =================================== */
+/* ===== detail (node / rule / domain) =================================== */
 .detail h1 {
   font: 600 22px var(--mono);
   color: var(--fg);
