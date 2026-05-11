@@ -38,11 +38,37 @@ NODES = DEPGRAPH / "nodes"
 DEPENDENTS_INDEX = NODES / "_index" / "dependents.json"
 CORPUS_META = NODES / "_meta.json"
 MANIFESTS_DIR = NODES / "_manifests"
+TELEMETRY_DIR = DEPGRAPH / "telemetry"
+INJECTIONS_LOG = TELEMETRY_DIR / "injections.jsonl"
 DOSSIER_LINE_LIMIT = 200
 TRANSITIVE_DEPTH = 3
 DEPENDENTS_PER_DEPTH_CAP = 30
 NODE_SCHEMA_VERSION = 1
 EXPECTED_EXTRACTORS = ("extract_api", "extract_web", "extract_tests")
+
+
+def _log_injection(tool: str, file_path: str, node_ids: list[str]) -> None:
+    """Append one JSONL line per node whose context was injected. Mirror of
+    the logigraph telemetry pattern: lets us answer "did the depgraph hook
+    actually fire for this file" post-hoc, and is the input data for a
+    future ack-rate / consumption-rate metric. Failure is silently swallowed
+    — telemetry must NEVER block the hook."""
+    try:
+        import datetime as _dt
+        TELEMETRY_DIR.mkdir(parents=True, exist_ok=True)
+        ts = _dt.datetime.now(_dt.timezone.utc).isoformat()
+        with INJECTIONS_LOG.open("a") as f:
+            for nid in node_ids:
+                f.write(json.dumps({
+                    "ts": ts,
+                    "kind": "injection",
+                    "tool": tool,
+                    "file_path": file_path,
+                    "node_id": nid,
+                }) + "\n")
+    except Exception:
+        # Telemetry failure must not propagate. Silent swallow is the policy.
+        pass
 
 
 def load_meta_and_status() -> tuple[dict, list[str]]:
@@ -412,6 +438,8 @@ def main() -> int:
             "> ⚠ Reverse-dependency index missing or unreadable — direct callers will not show. "
             "Run `bin/depgraph regen` to rebuild `nodes/_index/dependents.json`."
         )
+    injected_node_ids: list[str] = []
+    primary_target: str | None = targets[0] if targets else None
     for abs_path in targets:
         rr = repo_relative(abs_path)
         if not rr:
@@ -427,6 +455,7 @@ def main() -> int:
             node = by_id.get(nid)
             if node:
                 rendered_blocks.append(render_for_node(node, dependents_index))
+                injected_node_ids.append(nid)
 
     if not rendered_blocks:
         return 0
@@ -447,6 +476,9 @@ def main() -> int:
             }
         }
     )
+
+    if injected_node_ids and primary_target:
+        _log_injection(tool_name, primary_target, injected_node_ids)
     return 0
 
 
