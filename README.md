@@ -1,14 +1,13 @@
 # knowledge-graph
 
-Umbrella for the **Concorda Sailing knowledge-graph substrate** — three
-project-agnostic tools that together give an AI coding collaborator
-working memory about a codebase:
+A small, project-agnostic substrate that gives an AI coding
+collaborator working memory about a codebase:
 
 | Tool | What it does | Repo |
 |---|---|---|
-| **depgraph** | Extracts code-structure nodes (models, services, endpoints, components, hooks, tests) + reverse-dependency index. Hooks into Claude Code's PreToolUse to inject dependent context before any edit. | [`Concorda-Sailing/depgraph`](https://github.com/Concorda-Sailing/depgraph) |
-| **logigraph** | Authored business rules + a domain model (entities, relationships) with mediation-collision detection. Hooks inject applicable rule prose before edits. | [`Concorda-Sailing/logigraph`](https://github.com/Concorda-Sailing/logigraph) |
-| **graphui** | FastAPI + Jinja2 viewer for both graphs. Renders dossiers, surfaces relationships, shows commit history and telemetry per node. Designed for desktop and mobile. | [`Concorda-Sailing/graphui`](https://github.com/Concorda-Sailing/graphui) |
+| **depgraph** | Extracts code-structure nodes (models, services, endpoints, components, hooks, tests) + reverse-dependency index. Hooks into Claude Code's PreToolUse to inject dependent context before any edit. | [`depgraph`](https://github.com/Concorda-Sailing/depgraph) |
+| **logigraph** | Authored business rules + a domain model (entities, relationships) with mediation-collision detection. Hooks inject applicable rule prose before edits. | [`logigraph`](https://github.com/Concorda-Sailing/logigraph) |
+| **graphui** | FastAPI + Jinja2 viewer for both graphs. Renders dossiers, surfaces relationships, shows commit history and telemetry per node. Desktop + mobile. | [`graphui`](https://github.com/Concorda-Sailing/graphui) |
 
 The three pieces are **framework code only** — they ship no
 project-specific data. Each project that uses them maintains its own
@@ -16,33 +15,44 @@ data dir (`<project>/depgraph/`, `<project>/logigraph/`) with its
 extractors, nodes, dossiers, telemetry, and a `project.toml`
 declaring the project's repos.
 
-## Quick install
+## Quick start
 
 ```bash
 git clone https://github.com/Concorda-Sailing/knowledge-graph.git
 cd knowledge-graph
-./install.sh                     # framework only
-./install.sh --concorda          # framework + clone Concorda data
-./install.sh bootstrap-concorda  # one-shot: tools + Concorda data +
-                                 #   apply Claude Code hooks +
-                                 #   register graphui systemd daemon
+
+# Install tools + scaffold a fresh project + wire hooks + register
+# graphui daemon, in one shot:
+./install.sh bootstrap ~/your-project
 ```
 
-The default install target is `~/tools/` — pass `--target /some/other/path`
-to override. The installer clones the three tool repos, sets up
-graphui's Python venv, and (if `--apply` flags are used) wires
-everything up.
+Or step-by-step:
+
+```bash
+./install.sh                                        # framework only
+./install.sh init ~/your-project                    # scaffold empty data dir
+./install.sh hooks --project ~/your-project --apply # wire Claude Code hooks
+./install.sh systemd --project ~/your-project --apply  # graphui daemon
+```
+
+If you already have a data repo to clone:
+
+```bash
+./install.sh --data owner/repo=~/your-project/depgraph
+./install.sh hooks --project ~/your-project --apply
+./install.sh systemd --project ~/your-project --apply
+```
 
 ### Agent-runnable
 
-`install.sh` is **safe for Claude Code (or another LLM agent) to run
-unattended**:
+`install.sh` is safe for Claude Code (or any other LLM agent) to run
+unattended:
 
 - No interactive prompts.
-- Idempotent: re-running with the same args is a no-op success
-  (`hooks already match`, `unit file already current`, etc.).
-- ANSI colors auto-suppress when stdout is not a TTY (or
-  `NO_COLOR=1` is set).
+- Idempotent — re-running with the same args reports `already match`,
+  `already current`, `already active`, and exits 0.
+- ANSI colors auto-suppress when stdout is not a TTY (or `NO_COLOR=1`
+  is set).
 - Side-effecting subcommands (`hooks --apply`, `systemd --apply`)
   back up the existing file before writing.
 - Exits non-zero on any failure; everything important goes to stderr.
@@ -56,23 +66,13 @@ unattended**:
 └── graphui/         # FastAPI viewer (+ .venv)
 ```
 
-Nothing else is touched without your explicit consent. The installer
-does **not** modify `~/.claude/settings.json` or register systemd
-units automatically — it prints the snippets and lets you decide.
-
-## Scaffold a new project
-
-```bash
-./install.sh init ~/myproject
-```
-
-Creates:
+## What you scaffold
 
 ```
-~/myproject/
+~/your-project/
 ├── depgraph/
 │   ├── project.toml         # name, repo paths
-│   ├── extractors/          # your project-specific extractors go here
+│   ├── extractors/          # your project-specific extractors
 │   ├── nodes/               # populated by `bin/depgraph regen`
 │   ├── dossiers/            # plain-language dossiers per node
 │   └── telemetry/           # injection + acknowledgment logs
@@ -86,45 +86,46 @@ Creates:
 ## How the pieces fit
 
 1. **You write extractors** in `<project>/depgraph/extractors/` that
-   walk your codebase and emit JSON node files. The framework provides
-   the JSON schema and a `reconcile` pass that builds reverse-dependency
-   indexes.
+   walk your codebase and emit JSON node files. The framework
+   provides the JSON schema and a `reconcile` pass that builds
+   reverse-dependency indexes.
 2. **You hand-author (or LLM-draft + review) dossiers** — markdown
    files describing each significant node's purpose, invariants,
    gotchas. The depgraph hook injects these into Claude Code's
    reasoning context before any edit.
 3. **You hand-author business rules** in `<project>/logigraph/nodes/
-   rules/` with claims pointing at depgraph nodes. The logigraph hook
-   injects applicable rule prose on every edit to a claimed file.
+   rules/` with claims pointing at depgraph nodes. The logigraph
+   hook injects applicable rule prose on every edit to a claimed
+   file.
 4. **The domain model** (`<project>/logigraph/nodes/domain/`)
    describes entities, roles, attributes, and the relationships
    between them. Relationships carry `from`, `to`, `mediated_by`,
    `cardinality`, `lifecycle`. Mediation collisions across distinct
    relationships are flagged at regen as design-defect signals.
 5. **graphui** serves all of this over HTTP — coverage matrix,
-   per-node detail with rules+dependents+history+telemetry, mediation
-   collision banners, mobile-friendly layout.
+   per-node detail with rules + dependents + history + telemetry,
+   mediation collision banners, mobile-friendly layout.
 
 ## Telemetry
 
-Both `depgraph` and `logigraph` log every injection (per
-file-edit) and every acknowledgment (when the LLM's
-transcript mentions a node or rule id post-hoc). Combined, this
-answers "is the prose actually being read, or shouted into the void?"
-View via `bin/depgraph stats --telemetry` and the graphui Telemetry
-card per node.
+Both `depgraph` and `logigraph` log every injection (per file-edit)
+and every acknowledgment (when the LLM's transcript mentions a node
+or rule id post-hoc). Combined, this answers *"is the prose actually
+being read, or shouted into the void?"* View via `bin/depgraph stats
+--telemetry` and the graphui Telemetry card per node.
 
-## Status
+## Provenance
 
-This substrate was designed and built incrementally for the
-[Concorda Sailing](https://members.massbaysailing.org/) project
-between 2026-04 and 2026-05. The split into reusable tools landed
-2026-05-11. Concorda's own use is the reference implementation.
-
-For the longer arc this substrate is part of, see Logan Greenlee's
-notes on POLIS.
+This substrate was designed and built incrementally as the internal
+collaboration infrastructure for one project, then split into
+reusable tools when it became clear the shape was general. There is
+not yet a second project deploying it — early adopters welcome.
 
 ## License
 
-TBD — currently private repos under the Concorda-Sailing org. Open up
-when there's a second project deploying these tools.
+[MIT](./LICENSE). Copyright (c) 2026 Logan Greenlee.
+
+The software is provided **AS IS**, without warranty of any kind,
+express or implied, including but not limited to merchantability,
+fitness for a particular purpose, and non-infringement. See the
+LICENSE file for the full text.

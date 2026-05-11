@@ -5,12 +5,9 @@
 # Usage:
 #   ./install.sh                              install tools to ~/tools/
 #   ./install.sh --target /path               install tools to /path/
-#   ./install.sh --data <owner/repo>=<path>   clone a data repo too (repeatable)
-#   ./install.sh --concorda                   shortcut: clones Concorda's
-#                                             concorda-depgraph + concorda-logigraph
-#                                             into ~/concorda/{depgraph,logigraph}
+#   ./install.sh --data <owner/repo>=<path>   also clone a data repo (repeatable)
 #
-#   ./install.sh init <project>               scaffold a project data dir
+#   ./install.sh init <project>               scaffold a fresh project data dir
 #
 #   ./install.sh hooks [--project <dir>] [--apply]
 #                                             print (or write) the
@@ -18,10 +15,10 @@
 #   ./install.sh systemd [--project <dir>] [--apply]
 #                                             print (or write) graphui systemd unit
 #
-#   ./install.sh bootstrap-concorda           one-shot: install tools + clone
-#                                             Concorda data + apply hooks + apply
-#                                             systemd. Idempotent; asks before
-#                                             touching ~/.claude/settings.json.
+#   ./install.sh bootstrap <project-dir>      one-shot: install tools + scaffold
+#                                             project (or use existing data) +
+#                                             apply hooks + apply systemd.
+#                                             Idempotent.
 #
 #   ./install.sh --help                       show this help
 #
@@ -33,18 +30,13 @@ set -euo pipefail
 # ----- configuration --------------------------------------------------------
 
 DEFAULT_TARGET="$HOME/tools"
-ORG="Concorda-Sailing"
+# Default GitHub org for framework repos; override with KNOWLEDGE_GRAPH_ORG env.
+ORG="${KNOWLEDGE_GRAPH_ORG:-Concorda-Sailing}"
 FRAMEWORK_REPOS=("depgraph" "logigraph" "graphui")
 SETTINGS_FILE="$HOME/.claude/settings.json"
 SYSTEMD_DIR="$HOME/.config/systemd/user"
 SYSTEMD_UNIT="graphui.service"
 GRAPHUI_PORT=8081
-
-# Concorda bootstrap data repos: "github_repo=local_path" pairs
-CONCORDA_DATA=(
-    "concorda-depgraph=$HOME/concorda/depgraph"
-    "concorda-logigraph=$HOME/concorda/logigraph"
-)
 
 # ----- helpers --------------------------------------------------------------
 
@@ -128,12 +120,10 @@ backup_file() {
 cmd_install() {
     local target="$DEFAULT_TARGET"
     local extra_data=()
-    local include_concorda=0
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --target)   target="$2"; shift 2 ;;
             --data)     extra_data+=("$2"); shift 2 ;;
-            --concorda) include_concorda=1; shift ;;
             --help|-h)  usage; exit 0 ;;
             *)          die "unknown flag: $1" ;;
         esac
@@ -160,11 +150,6 @@ cmd_install() {
     fi
     ok "graphui venv at $g/.venv"
 
-    # Concorda data shortcut adds the two repos to extra_data
-    if [[ "$include_concorda" -eq 1 ]]; then
-        for d in "${CONCORDA_DATA[@]}"; do extra_data+=("$d"); done
-    fi
-
     # Arbitrary --data clones
     for spec in "${extra_data[@]}"; do
         local repo="${spec%%=*}"
@@ -177,16 +162,16 @@ cmd_install() {
 
     echo
     ok "install complete"
-    if [[ "$include_concorda" -eq 1 || ${#extra_data[@]} -gt 0 ]]; then
+    if [[ ${#extra_data[@]} -gt 0 ]]; then
         echo
         cat <<NEXT
 $(color_yellow "Next:")
 
-  Apply Claude Code hooks for the data dirs you just cloned:
-    $0 hooks --project $HOME/concorda --apply
+  Apply Claude Code hooks pointing at your project data dir:
+    $0 hooks --project <project-dir> --apply
 
   Register graphui as a systemd --user service:
-    $0 systemd --project $HOME/concorda --apply
+    $0 systemd --project <project-dir> --apply
 NEXT
     else
         echo
@@ -196,6 +181,8 @@ $(color_yellow "Next:")
   1. Scaffold a project data dir:           $0 init ~/your-project
   2. Print the hook snippet:                $0 hooks
   3. (Optional) Register graphui daemon:    $0 systemd
+
+  Or one-shot:                              $0 bootstrap ~/your-project
 NEXT
     fi
 }
@@ -510,31 +497,53 @@ HEADER
     fi
 }
 
-# ----- bootstrap-concorda: install + data + hooks + systemd ----------------
+# ----- bootstrap: install + (init|use existing data) + hooks + systemd -----
 
-cmd_bootstrap_concorda() {
-    log "bootstrapping the full Concorda substrate"
+cmd_bootstrap() {
+    local project=""
+    local data_args=()
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --data) data_args+=(--data "$2"); shift 2 ;;
+            --help|-h) usage; exit 0 ;;
+            -*) die "unknown flag: $1" ;;
+            *) [[ -z "$project" ]] || die "multiple project dirs given"; project="$1"; shift ;;
+        esac
+    done
+    [[ -n "$project" ]] || die "usage: $0 bootstrap <project-dir> [--data owner/repo=path]"
+    [[ "$project" = /* ]] || project="$PWD/$project"
+
+    log "bootstrapping → $(color_yellow "$project")"
     echo
 
-    cmd_install --concorda
+    cmd_install "${data_args[@]}"
     echo
+
+    # If the project doesn't have a data layout yet, scaffold it. Otherwise
+    # use what's there (e.g. cloned via --data).
+    if [[ ! -d "$project/depgraph" || ! -d "$project/logigraph" ]]; then
+        log "scaffolding empty project layout at $project"
+        cmd_init "$project"
+        echo
+    else
+        log "using existing project data at $project"
+    fi
 
     log "applying Claude Code hooks → $SETTINGS_FILE"
-    # bootstrap-concorda implies "set up Concorda from scratch" — overwrite
-    # any existing hooks (after backing them up). Use plain `cmd_hooks` for
-    # interactive review.
-    cmd_hooks --project "$HOME/concorda" --apply --force
+    # bootstrap implies "set up from scratch" — overwrite any existing hooks
+    # block (after backing it up). Use plain `cmd_hooks` for interactive review.
+    cmd_hooks --project "$project" --apply --force
     echo
 
     log "applying systemd unit for graphui"
-    cmd_systemd --project "$HOME/concorda" --apply
+    cmd_systemd --project "$project" --apply
     echo
 
-    ok "Concorda bootstrap complete"
+    ok "bootstrap complete"
     cat <<DONE
 
-  Tools:                       ~/tools/{depgraph,logigraph,graphui}/
-  Concorda data:               ~/concorda/{depgraph,logigraph}/
+  Tools:                       $DEFAULT_TARGET/{depgraph,logigraph,graphui}/
+  Project data:                $project/{depgraph,logigraph}/
   Claude Code hooks:           $SETTINGS_FILE
   Graphui daemon:              $SYSTEMD_DIR/$SYSTEMD_UNIT
   Graphui URL:                 http://localhost:$GRAPHUI_PORT/graph/
@@ -554,13 +563,12 @@ main() {
     local cmd="$1"
     case "$cmd" in
         --help|-h)              shift; usage ;;
-        --target|--data|--concorda)
-                                cmd_install "$@" ;;
+        --target|--data)        cmd_install "$@" ;;
         init)                   shift; cmd_init "$@" ;;
         hooks)                  shift; cmd_hooks "$@" ;;
         systemd)                shift; cmd_systemd "$@" ;;
         install)                shift; cmd_install "$@" ;;
-        bootstrap-concorda)     shift; cmd_bootstrap_concorda "$@" ;;
+        bootstrap)              shift; cmd_bootstrap "$@" ;;
         *)                      err "unknown command: $cmd"; usage; exit 1 ;;
     esac
 }
