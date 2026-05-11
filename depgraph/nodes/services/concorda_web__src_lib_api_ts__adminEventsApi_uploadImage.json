@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "adminEventsApi.uploadImage",
-    "line": 606
+    "line": 614
   },
   "signature": {
     "name": "adminEventsApi.uploadImage",

@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "organizationsApi.delete",
-    "line": 670
+    "line": 678
   },
   "signature": {
     "name": "organizationsApi.delete",
@@ -19,7 +19,7 @@
     {
       "target": "DELETE::/api/organizations/{0}",
       "via": "string_url",
-      "where": "api.ts:671",
+      "where": "api.ts:679",
       "confidence": "fuzzy"
     }
   ],

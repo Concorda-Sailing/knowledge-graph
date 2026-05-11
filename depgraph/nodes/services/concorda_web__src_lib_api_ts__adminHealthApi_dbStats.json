@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "adminHealthApi.dbStats",
-    "line": 1125
+    "line": 1133
   },
   "signature": {
     "name": "adminHealthApi.dbStats",
@@ -19,7 +19,7 @@
     {
       "target": "GET::/api/admin/db-stats",
       "via": "http_call",
-      "where": "api.ts:1125",
+      "where": "api.ts:1133",
       "confidence": "exact"
     }
   ],

@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "seriesApi.update",
-    "line": 1533
+    "line": 1541
   },
   "signature": {
     "name": "seriesApi.update",
@@ -19,7 +19,7 @@
     {
       "target": "PUT::/api/series/{0}",
       "via": "string_url",
-      "where": "api.ts:1534",
+      "where": "api.ts:1542",
       "confidence": "fuzzy"
     }
   ],

@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "adminOrgConfigApi.deleteLogo",
-    "line": 1181
+    "line": 1189
   },
   "signature": {
     "name": "adminOrgConfigApi.deleteLogo",
@@ -19,7 +19,7 @@
     {
       "target": "DELETE::/api/admin/org-config/logo",
       "via": "http_call",
-      "where": "api.ts:1182",
+      "where": "api.ts:1190",
       "confidence": "exact"
     }
   ],

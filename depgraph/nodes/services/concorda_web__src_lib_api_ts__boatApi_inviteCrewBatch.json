@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "boatApi.inviteCrewBatch",
-    "line": 3127
+    "line": 3135
   },
   "signature": {
     "name": "boatApi.inviteCrewBatch",
@@ -19,7 +19,7 @@
     {
       "target": "POST::/api/boats/{0}/crew/invite-batch",
       "via": "string_url",
-      "where": "api.ts:3128",
+      "where": "api.ts:3136",
       "confidence": "fuzzy"
     }
   ],

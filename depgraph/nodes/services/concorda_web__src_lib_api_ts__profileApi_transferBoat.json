@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "profileApi.transferBoat",
-    "line": 1326
+    "line": 1334
   },
   "signature": {
     "name": "profileApi.transferBoat",
@@ -19,7 +19,7 @@
     {
       "target": "POST::/api/profile/boats/{0}/transfer",
       "via": "string_url",
-      "where": "api.ts:1327",
+      "where": "api.ts:1335",
       "confidence": "fuzzy"
     }
   ],

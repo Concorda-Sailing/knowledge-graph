@@ -13,7 +13,7 @@
     "name": "send_crew_calendar_email"
   },
   "source": {
-    "line": 1300,
+    "line": 1331,
     "path": "utils/email_utils.py",
     "repo": "concorda-api",
     "symbol": "send_crew_calendar_email"

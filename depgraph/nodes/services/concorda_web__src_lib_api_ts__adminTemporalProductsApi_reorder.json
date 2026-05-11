@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "adminTemporalProductsApi.reorder",
-    "line": 2614
+    "line": 2622
   },
   "signature": {
     "name": "adminTemporalProductsApi.reorder",
@@ -19,7 +19,7 @@
     {
       "target": "PUT::/api/temporal-products/reorder",
       "via": "http_call",
-      "where": "api.ts:2615",
+      "where": "api.ts:2623",
       "confidence": "exact"
     }
   ],

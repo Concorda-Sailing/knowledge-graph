@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "adminApi.deleteUser",
-    "line": 845
+    "line": 853
   },
   "signature": {
     "name": "adminApi.deleteUser",
@@ -19,7 +19,7 @@
     {
       "target": "DELETE::/api/admin/users/{0}",
       "via": "string_url",
-      "where": "api.ts:846",
+      "where": "api.ts:854",
       "confidence": "fuzzy"
     }
   ],

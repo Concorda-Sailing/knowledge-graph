@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "seriesApi.generateRaces",
-    "line": 1537
+    "line": 1545
   },
   "signature": {
     "name": "seriesApi.generateRaces",
@@ -19,7 +19,7 @@
     {
       "target": "POST::/api/series/{0}/generate-races",
       "via": "string_url",
-      "where": "api.ts:1538",
+      "where": "api.ts:1546",
       "confidence": "fuzzy"
     }
   ],

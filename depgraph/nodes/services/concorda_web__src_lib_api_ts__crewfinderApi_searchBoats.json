@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "crewfinderApi.searchBoats",
-    "line": 769
+    "line": 777
   },
   "signature": {
     "name": "crewfinderApi.searchBoats",
@@ -19,7 +19,7 @@
     {
       "target": "GET::/api/crewfinder/boats/search",
       "via": "string_url",
-      "where": "api.ts:770",
+      "where": "api.ts:778",
       "confidence": "fuzzy"
     }
   ],

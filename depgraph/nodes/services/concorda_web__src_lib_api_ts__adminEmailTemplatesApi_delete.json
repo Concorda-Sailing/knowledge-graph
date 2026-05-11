@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "adminEmailTemplatesApi.delete",
-    "line": 977
+    "line": 985
   },
   "signature": {
     "name": "adminEmailTemplatesApi.delete",
@@ -19,7 +19,7 @@
     {
       "target": "DELETE::/api/admin/email-templates/{0}",
       "via": "string_url",
-      "where": "api.ts:978",
+      "where": "api.ts:986",
       "confidence": "fuzzy"
     }
   ],

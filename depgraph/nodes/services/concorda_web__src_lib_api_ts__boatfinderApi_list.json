@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "boatfinderApi.list",
-    "line": 790
+    "line": 798
   },
   "signature": {
     "name": "boatfinderApi.list",
@@ -19,7 +19,7 @@
     {
       "target": "GET::/api/boatfinder/search{0}",
       "via": "string_url",
-      "where": "api.ts:796",
+      "where": "api.ts:804",
       "confidence": "fuzzy"
     }
   ],

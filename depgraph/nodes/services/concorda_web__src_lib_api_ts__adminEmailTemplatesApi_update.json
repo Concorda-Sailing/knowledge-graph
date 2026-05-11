@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "adminEmailTemplatesApi.update",
-    "line": 962
+    "line": 970
   },
   "signature": {
     "name": "adminEmailTemplatesApi.update",
@@ -19,7 +19,7 @@
     {
       "target": "PUT::/api/admin/email-templates/{0}",
       "via": "string_url",
-      "where": "api.ts:973",
+      "where": "api.ts:981",
       "confidence": "fuzzy"
     }
   ],

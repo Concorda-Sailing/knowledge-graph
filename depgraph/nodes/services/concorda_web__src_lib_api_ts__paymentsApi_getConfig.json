@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "paymentsApi.getConfig",
-    "line": 2762
+    "line": 2770
   },
   "signature": {
     "name": "paymentsApi.getConfig",
@@ -19,7 +19,7 @@
     {
       "target": "GET::/api/payments/config",
       "via": "http_call",
-      "where": "api.ts:2763",
+      "where": "api.ts:2771",
       "confidence": "exact"
     }
   ],

@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "constantsApi.getAll",
-    "line": 1228
+    "line": 1236
   },
   "signature": {
     "name": "constantsApi.getAll",
@@ -19,7 +19,7 @@
     {
       "target": "GET::/api/constants",
       "via": "http_call",
-      "where": "api.ts:1228",
+      "where": "api.ts:1236",
       "confidence": "exact"
     }
   ],

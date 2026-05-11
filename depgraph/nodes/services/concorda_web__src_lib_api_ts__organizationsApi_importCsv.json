@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "organizationsApi.importCsv",
-    "line": 683
+    "line": 691
   },
   "signature": {
     "name": "organizationsApi.importCsv",
@@ -19,7 +19,7 @@
     {
       "target": "POST::/api/organizations/import/csv",
       "via": "string_url",
-      "where": "api.ts:688",
+      "where": "api.ts:696",
       "confidence": "fuzzy"
     }
   ],

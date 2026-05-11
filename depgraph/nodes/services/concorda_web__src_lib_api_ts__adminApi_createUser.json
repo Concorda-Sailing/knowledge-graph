@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "adminApi.createUser",
-    "line": 830
+    "line": 838
   },
   "signature": {
     "name": "adminApi.createUser",
@@ -19,7 +19,7 @@
     {
       "target": "POST::/api/admin/users",
       "via": "http_call",
-      "where": "api.ts:831",
+      "where": "api.ts:839",
       "confidence": "exact"
     }
   ],

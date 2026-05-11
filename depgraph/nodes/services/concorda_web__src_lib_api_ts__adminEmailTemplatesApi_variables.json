@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "adminEmailTemplatesApi.variables",
-    "line": 986
+    "line": 994
   },
   "signature": {
     "name": "adminEmailTemplatesApi.variables",
@@ -19,7 +19,7 @@
     {
       "target": "GET::/api/admin/email-templates/variables",
       "via": "http_call",
-      "where": "api.ts:987",
+      "where": "api.ts:995",
       "confidence": "exact"
     }
   ],

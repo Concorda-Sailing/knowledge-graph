@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "eventsApi.assignEventCrew",
-    "line": 500
+    "line": 508
   },
   "signature": {
     "name": "eventsApi.assignEventCrew",
@@ -19,7 +19,7 @@
     {
       "target": "PUT::/api/events/{0}/sailing-event/crew-assign",
       "via": "string_url",
-      "where": "api.ts:501",
+      "where": "api.ts:509",
       "confidence": "fuzzy"
     }
   ],

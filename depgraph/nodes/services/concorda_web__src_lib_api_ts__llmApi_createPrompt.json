@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "llmApi.createPrompt",
-    "line": 3252
+    "line": 3260
   },
   "signature": {
     "name": "llmApi.createPrompt",
@@ -19,7 +19,7 @@
     {
       "target": "POST::/api/admin/llm-prompts",
       "via": "http_call",
-      "where": "api.ts:3253",
+      "where": "api.ts:3261",
       "confidence": "exact"
     }
   ],

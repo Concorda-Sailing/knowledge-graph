@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "adminOrgConfigApi.uploadLogo",
-    "line": 1179
+    "line": 1187
   },
   "signature": {
     "name": "adminOrgConfigApi.uploadLogo",

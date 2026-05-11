@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "eventsApi.setCrewPool",
-    "line": 481
+    "line": 489
   },
   "signature": {
     "name": "eventsApi.setCrewPool",
@@ -19,7 +19,7 @@
     {
       "target": "PUT::/api/events/{0}/sailing-event/crew-pool",
       "via": "string_url",
-      "where": "api.ts:482",
+      "where": "api.ts:490",
       "confidence": "fuzzy"
     }
   ],

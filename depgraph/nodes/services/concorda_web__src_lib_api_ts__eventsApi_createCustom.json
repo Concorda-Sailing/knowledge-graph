@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "eventsApi.createCustom",
-    "line": 429
+    "line": 437
   },
   "signature": {
     "name": "eventsApi.createCustom",
@@ -19,7 +19,7 @@
     {
       "target": "POST::/api/events/custom",
       "via": "http_call",
-      "where": "api.ts:430",
+      "where": "api.ts:438",
       "confidence": "exact"
     }
   ],

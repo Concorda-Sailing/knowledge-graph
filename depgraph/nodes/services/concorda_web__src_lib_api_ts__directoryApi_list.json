@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "directoryApi.list",
-    "line": 734
+    "line": 742
   },
   "signature": {
     "name": "directoryApi.list",
@@ -19,7 +19,7 @@
     {
       "target": "GET::/api/persons/directory",
       "via": "http_call",
-      "where": "api.ts:734",
+      "where": "api.ts:742",
       "confidence": "exact"
     }
   ],

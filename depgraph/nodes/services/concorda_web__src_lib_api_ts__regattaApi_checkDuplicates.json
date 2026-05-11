@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "regattaApi.checkDuplicates",
-    "line": 1554
+    "line": 1562
   },
   "signature": {
     "name": "regattaApi.checkDuplicates",
@@ -19,7 +19,7 @@
     {
       "target": "POST::/api/regattas/check-duplicates",
       "via": "http_call",
-      "where": "api.ts:1555",
+      "where": "api.ts:1563",
       "confidence": "exact"
     }
   ],

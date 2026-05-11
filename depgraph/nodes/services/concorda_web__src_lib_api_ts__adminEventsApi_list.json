@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "adminEventsApi.list",
-    "line": 577
+    "line": 585
   },
   "signature": {
     "name": "adminEventsApi.list",
@@ -19,7 +19,7 @@
     {
       "target": "GET::/api/events{0}",
       "via": "string_url",
-      "where": "api.ts:583",
+      "where": "api.ts:591",
       "confidence": "fuzzy"
     }
   ],

@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "profileApi.listCrewPools",
-    "line": 1373
+    "line": 1381
   },
   "signature": {
     "name": "profileApi.listCrewPools",
@@ -19,7 +19,7 @@
     {
       "target": "GET::/api/profile/boats/{0}/crew-pools",
       "via": "string_url",
-      "where": "api.ts:1374",
+      "where": "api.ts:1382",
       "confidence": "fuzzy"
     }
   ],

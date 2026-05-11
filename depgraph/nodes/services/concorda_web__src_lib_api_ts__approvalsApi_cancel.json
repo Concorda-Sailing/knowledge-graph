@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "approvalsApi.cancel",
-    "line": 3314
+    "line": 3322
   },
   "signature": {
     "name": "approvalsApi.cancel",
@@ -19,7 +19,7 @@
     {
       "target": "POST::/api/approval-requests/{0}/cancel",
       "via": "string_url",
-      "where": "api.ts:3315",
+      "where": "api.ts:3323",
       "confidence": "fuzzy"
     }
   ],

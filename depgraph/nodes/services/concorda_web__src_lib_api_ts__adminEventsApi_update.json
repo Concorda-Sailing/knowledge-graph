@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "adminEventsApi.update",
-    "line": 597
+    "line": 605
   },
   "signature": {
     "name": "adminEventsApi.update",
@@ -19,7 +19,7 @@
     {
       "target": "PUT::/api/events/{0}",
       "via": "string_url",
-      "where": "api.ts:598",
+      "where": "api.ts:606",
       "confidence": "fuzzy"
     }
   ],

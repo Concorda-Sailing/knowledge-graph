@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "eventsApi.respondToCrewRequest",
-    "line": 525
+    "line": 533
   },
   "signature": {
     "name": "eventsApi.respondToCrewRequest",
@@ -19,7 +19,7 @@
     {
       "target": "PUT::/api/events/{0}/sailing-event/crew-request/{1}",
       "via": "string_url",
-      "where": "api.ts:526",
+      "where": "api.ts:534",
       "confidence": "fuzzy"
     }
   ],

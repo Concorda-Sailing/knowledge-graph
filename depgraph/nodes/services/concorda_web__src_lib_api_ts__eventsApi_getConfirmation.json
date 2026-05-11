@@ -14,12 +14,12 @@
     "name": "eventsApi.getConfirmation",
     "kind": "service"
   },
-  "structural_hash": "6ae121738caee7261c271ca4bcd26dccc932e45af52b9154ef6f88fb4c868a83",
+  "structural_hash": "f3810735f7f1a09065309aae8e550f6898c760723184531b56515dc3c5e89349",
   "depends_on": [
     {
       "target": "GET::/api/events/slug/{0}/confirmation",
       "via": "string_url",
-      "where": "api.ts:397",
+      "where": "api.ts:402",
       "confidence": "fuzzy"
     }
   ],

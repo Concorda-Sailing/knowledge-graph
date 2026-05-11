@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "adminNotificationConfigApi.update",
-    "line": 1003
+    "line": 1011
   },
   "signature": {
     "name": "adminNotificationConfigApi.update",
@@ -19,7 +19,7 @@
     {
       "target": "PUT::/api/admin/notifications/config",
       "via": "http_call",
-      "where": "api.ts:1004",
+      "where": "api.ts:1012",
       "confidence": "exact"
     }
   ],

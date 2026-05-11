@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "norApi.extract",
-    "line": 3224
+    "line": 3232
   },
   "signature": {
     "name": "norApi.extract",
@@ -19,7 +19,7 @@
     {
       "target": "POST::/api/nor/extract/{0}",
       "via": "string_url",
-      "where": "api.ts:3225",
+      "where": "api.ts:3233",
       "confidence": "fuzzy"
     }
   ],

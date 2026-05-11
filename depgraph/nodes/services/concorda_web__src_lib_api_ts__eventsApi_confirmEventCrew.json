@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "eventsApi.confirmEventCrew",
-    "line": 510
+    "line": 518
   },
   "signature": {
     "name": "eventsApi.confirmEventCrew",
@@ -19,7 +19,7 @@
     {
       "target": "POST::/api/events/{0}/sailing-event/crew-confirm",
       "via": "string_url",
-      "where": "api.ts:511",
+      "where": "api.ts:519",
       "confidence": "fuzzy"
     }
   ],

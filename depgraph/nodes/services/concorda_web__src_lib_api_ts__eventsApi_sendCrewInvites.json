@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "eventsApi.sendCrewInvites",
-    "line": 490
+    "line": 498
   },
   "signature": {
     "name": "eventsApi.sendCrewInvites",
@@ -19,7 +19,7 @@
     {
       "target": "POST::/api/events/{0}/sailing-event/crew-invite",
       "via": "string_url",
-      "where": "api.ts:491",
+      "where": "api.ts:499",
       "confidence": "fuzzy"
     }
   ],

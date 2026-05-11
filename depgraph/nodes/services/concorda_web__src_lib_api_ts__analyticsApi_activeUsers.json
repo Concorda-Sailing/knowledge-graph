@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "analyticsApi.activeUsers",
-    "line": 2834
+    "line": 2842
   },
   "signature": {
     "name": "analyticsApi.activeUsers",
@@ -19,7 +19,7 @@
     {
       "target": "GET::/api/analytics/active-users",
       "via": "string_url",
-      "where": "api.ts:2835",
+      "where": "api.ts:2843",
       "confidence": "fuzzy"
     }
   ],

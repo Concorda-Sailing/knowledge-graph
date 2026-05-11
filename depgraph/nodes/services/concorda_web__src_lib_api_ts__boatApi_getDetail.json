@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "boatApi.getDetail",
-    "line": 3145
+    "line": 3153
   },
   "signature": {
     "name": "boatApi.getDetail",
@@ -19,7 +19,7 @@
     {
       "target": "GET::/api/boats/{0}/detail",
       "via": "string_url",
-      "where": "api.ts:3146",
+      "where": "api.ts:3154",
       "confidence": "fuzzy"
     }
   ],

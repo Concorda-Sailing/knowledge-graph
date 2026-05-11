@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "eventsApi.mySchedule",
-    "line": 434
+    "line": 442
   },
   "signature": {
     "name": "eventsApi.mySchedule",
@@ -19,7 +19,7 @@
     {
       "target": "GET::/api/events/my-schedule",
       "via": "http_call",
-      "where": "api.ts:435",
+      "where": "api.ts:443",
       "confidence": "exact"
     }
   ],

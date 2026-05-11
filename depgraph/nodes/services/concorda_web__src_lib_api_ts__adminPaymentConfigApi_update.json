@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "adminPaymentConfigApi.update",
-    "line": 1031
+    "line": 1039
   },
   "signature": {
     "name": "adminPaymentConfigApi.update",
@@ -19,7 +19,7 @@
     {
       "target": "PUT::/api/admin/payment-config",
       "via": "http_call",
-      "where": "api.ts:1032",
+      "where": "api.ts:1040",
       "confidence": "exact"
     }
   ],

@@ -22,7 +22,7 @@
     "name": "send_crewfinder_contact_email"
   },
   "source": {
-    "line": 393,
+    "line": 424,
     "path": "utils/email_utils.py",
     "repo": "concorda-api",
     "symbol": "send_crewfinder_contact_email"

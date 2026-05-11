@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "seriesApi.create",
-    "line": 1531
+    "line": 1539
   },
   "signature": {
     "name": "seriesApi.create",
@@ -19,7 +19,7 @@
     {
       "target": "POST::/api/series",
       "via": "http_call",
-      "where": "api.ts:1532",
+      "where": "api.ts:1540",
       "confidence": "exact"
     }
   ],

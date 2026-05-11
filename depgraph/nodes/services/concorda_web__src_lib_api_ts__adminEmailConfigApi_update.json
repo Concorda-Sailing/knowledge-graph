@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "adminEmailConfigApi.update",
-    "line": 897
+    "line": 905
   },
   "signature": {
     "name": "adminEmailConfigApi.update",
@@ -19,7 +19,7 @@
     {
       "target": "PUT::/api/admin/email-config",
       "via": "http_call",
-      "where": "api.ts:898",
+      "where": "api.ts:906",
       "confidence": "exact"
     }
   ],

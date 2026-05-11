@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "adminErrorLogApi.list",
-    "line": 1070
+    "line": 1078
   },
   "signature": {
     "name": "adminErrorLogApi.list",
@@ -19,7 +19,7 @@
     {
       "target": "GET::/api/admin/error-log{0}",
       "via": "string_url",
-      "where": "api.ts:1076",
+      "where": "api.ts:1084",
       "confidence": "fuzzy"
     }
   ],

@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "adminOrgConfigApi.update",
-    "line": 1174
+    "line": 1182
   },
   "signature": {
     "name": "adminOrgConfigApi.update",
@@ -19,7 +19,7 @@
     {
       "target": "PUT::/api/admin/org-config",
       "via": "http_call",
-      "where": "api.ts:1175",
+      "where": "api.ts:1183",
       "confidence": "exact"
     }
   ],

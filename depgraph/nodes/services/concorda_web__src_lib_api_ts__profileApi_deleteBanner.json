@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "profileApi.deleteBanner",
-    "line": 1279
+    "line": 1287
   },
   "signature": {
     "name": "profileApi.deleteBanner",
@@ -19,7 +19,7 @@
     {
       "target": "DELETE::/api/profile/banner",
       "via": "http_call",
-      "where": "api.ts:1280",
+      "where": "api.ts:1288",
       "confidence": "exact"
     }
   ],

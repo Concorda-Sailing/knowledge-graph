@@ -13,7 +13,7 @@
     "name": "send_coowner_status_email"
   },
   "source": {
-    "line": 1047,
+    "line": 1078,
     "path": "utils/email_utils.py",
     "repo": "concorda-api",
     "symbol": "send_coowner_status_email"

@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "mediaApi.listFiles",
-    "line": 2875
+    "line": 2883
   },
   "signature": {
     "name": "mediaApi.listFiles",
@@ -19,7 +19,7 @@
     {
       "target": "GET::/api/media/files{0}",
       "via": "string_url",
-      "where": "api.ts:2883",
+      "where": "api.ts:2891",
       "confidence": "fuzzy"
     }
   ],

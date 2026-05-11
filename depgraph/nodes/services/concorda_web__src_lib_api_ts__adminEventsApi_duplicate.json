@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "adminEventsApi.duplicate",
-    "line": 614
+    "line": 622
   },
   "signature": {
     "name": "adminEventsApi.duplicate",
@@ -19,7 +19,7 @@
     {
       "target": "POST::/api/events/{0}/duplicate",
       "via": "string_url",
-      "where": "api.ts:615",
+      "where": "api.ts:623",
       "confidence": "fuzzy"
     }
   ],

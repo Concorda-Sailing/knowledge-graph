@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "llmApi.deletePrompt",
-    "line": 3262
+    "line": 3270
   },
   "signature": {
     "name": "llmApi.deletePrompt",
@@ -19,7 +19,7 @@
     {
       "target": "DELETE::/api/admin/llm-prompts/{0}",
       "via": "string_url",
-      "where": "api.ts:3263",
+      "where": "api.ts:3271",
       "confidence": "fuzzy"
     }
   ],

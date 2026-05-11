@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "mediaApi.deleteFolder",
-    "line": 2936
+    "line": 2944
   },
   "signature": {
     "name": "mediaApi.deleteFolder",
@@ -19,7 +19,7 @@
     {
       "target": "DELETE::/api/media/folders/{0}",
       "via": "string_url",
-      "where": "api.ts:2937",
+      "where": "api.ts:2945",
       "confidence": "fuzzy"
     }
   ],

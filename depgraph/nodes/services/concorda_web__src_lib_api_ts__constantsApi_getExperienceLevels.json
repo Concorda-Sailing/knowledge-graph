@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "constantsApi.getExperienceLevels",
-    "line": 1230
+    "line": 1238
   },
   "signature": {
     "name": "constantsApi.getExperienceLevels",
@@ -19,7 +19,7 @@
     {
       "target": "GET::/api/constants/experience-levels",
       "via": "http_call",
-      "where": "api.ts:1231",
+      "where": "api.ts:1239",
       "confidence": "exact"
     }
   ],

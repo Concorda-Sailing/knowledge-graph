@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "profileApi.updateBoatConfig",
-    "line": 1362
+    "line": 1370
   },
   "signature": {
     "name": "profileApi.updateBoatConfig",
@@ -19,7 +19,7 @@
     {
       "target": "PUT::/api/profile/boats/{0}/configs/{1}",
       "via": "string_url",
-      "where": "api.ts:1363",
+      "where": "api.ts:1371",
       "confidence": "fuzzy"
     }
   ],

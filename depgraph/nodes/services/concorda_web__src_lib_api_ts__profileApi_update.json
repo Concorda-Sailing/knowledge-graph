@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "profileApi.update",
-    "line": 1264
+    "line": 1272
   },
   "signature": {
     "name": "profileApi.update",
@@ -19,7 +19,7 @@
     {
       "target": "PUT::/api/profile",
       "via": "http_call",
-      "where": "api.ts:1265",
+      "where": "api.ts:1273",
       "confidence": "exact"
     }
   ],

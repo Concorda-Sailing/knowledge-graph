@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "boatApi.lookup",
-    "line": 3147
+    "line": 3155
   },
   "signature": {
     "name": "boatApi.lookup",
@@ -19,7 +19,7 @@
     {
       "target": "GET::/api/boats/lookup",
       "via": "string_url",
-      "where": "api.ts:3149",
+      "where": "api.ts:3157",
       "confidence": "fuzzy"
     }
   ],

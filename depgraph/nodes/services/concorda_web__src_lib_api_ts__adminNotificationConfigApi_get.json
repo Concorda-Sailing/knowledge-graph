@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "adminNotificationConfigApi.get",
-    "line": 1001
+    "line": 1009
   },
   "signature": {
     "name": "adminNotificationConfigApi.get",
@@ -19,7 +19,7 @@
     {
       "target": "GET::/api/admin/notifications/config",
       "via": "http_call",
-      "where": "api.ts:1002",
+      "where": "api.ts:1010",
       "confidence": "exact"
     }
   ],

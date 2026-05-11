@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "profileApi.deleteCrewPool",
-    "line": 1385
+    "line": 1393
   },
   "signature": {
     "name": "profileApi.deleteCrewPool",
@@ -19,7 +19,7 @@
     {
       "target": "DELETE::/api/profile/boats/{0}/crew-pools/{1}",
       "via": "string_url",
-      "where": "api.ts:1386",
+      "where": "api.ts:1394",
       "confidence": "fuzzy"
     }
   ],

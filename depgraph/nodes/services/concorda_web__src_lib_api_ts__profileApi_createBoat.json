@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "profileApi.createBoat",
-    "line": 1312
+    "line": 1320
   },
   "signature": {
     "name": "profileApi.createBoat",
@@ -19,7 +19,7 @@
     {
       "target": "POST::/api/profile/boats",
       "via": "http_call",
-      "where": "api.ts:1313",
+      "where": "api.ts:1321",
       "confidence": "exact"
     }
   ],

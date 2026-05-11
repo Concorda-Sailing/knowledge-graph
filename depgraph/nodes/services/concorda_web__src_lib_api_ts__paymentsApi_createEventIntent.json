@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "paymentsApi.createEventIntent",
-    "line": 2769
+    "line": 2777
   },
   "signature": {
     "name": "paymentsApi.createEventIntent",

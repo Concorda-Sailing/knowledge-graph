@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "adminApi.updateUser",
-    "line": 835
+    "line": 843
   },
   "signature": {
     "name": "adminApi.updateUser",
@@ -19,7 +19,7 @@
     {
       "target": "PUT::/api/admin/users/{0}",
       "via": "string_url",
-      "where": "api.ts:836",
+      "where": "api.ts:844",
       "confidence": "fuzzy"
     }
   ],

@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "profileApi.deleteSailingResume",
-    "line": 1302
+    "line": 1310
   },
   "signature": {
     "name": "profileApi.deleteSailingResume",
@@ -19,7 +19,7 @@
     {
       "target": "DELETE::/api/profile/sailing-resume",
       "via": "http_call",
-      "where": "api.ts:1303",
+      "where": "api.ts:1311",
       "confidence": "exact"
     }
   ],

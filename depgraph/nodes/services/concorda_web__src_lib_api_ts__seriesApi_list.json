@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "seriesApi.list",
-    "line": 1529
+    "line": 1537
   },
   "signature": {
     "name": "seriesApi.list",
@@ -19,7 +19,7 @@
     {
       "target": "GET::/api/series",
       "via": "http_call",
-      "where": "api.ts:1529",
+      "where": "api.ts:1537",
       "confidence": "exact"
     }
   ],

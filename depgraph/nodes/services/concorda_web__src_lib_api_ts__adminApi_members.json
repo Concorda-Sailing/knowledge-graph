@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "adminApi.members",
-    "line": 809
+    "line": 817
   },
   "signature": {
     "name": "adminApi.members",
@@ -19,7 +19,7 @@
     {
       "target": "GET::/api/admin/members{0}",
       "via": "string_url",
-      "where": "api.ts:824",
+      "where": "api.ts:832",
       "confidence": "fuzzy"
     }
   ],

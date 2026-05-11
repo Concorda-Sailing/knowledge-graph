@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "boatApi.updatePunchlistItem",
-    "line": 3178
+    "line": 3186
   },
   "signature": {
     "name": "boatApi.updatePunchlistItem",
@@ -19,7 +19,7 @@
     {
       "target": "PUT::/api/boats/{0}/punchlist/{1}",
       "via": "string_url",
-      "where": "api.ts:3179",
+      "where": "api.ts:3187",
       "confidence": "fuzzy"
     }
   ],

@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "rolesApi.listPermissions",
-    "line": 1213
+    "line": 1221
   },
   "signature": {
     "name": "rolesApi.listPermissions",
@@ -19,7 +19,7 @@
     {
       "target": "GET::/api/roles/permissions/all",
       "via": "http_call",
-      "where": "api.ts:1214",
+      "where": "api.ts:1222",
       "confidence": "exact"
     }
   ],

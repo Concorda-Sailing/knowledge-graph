@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "eventsApi.removeScheduleEvent",
-    "line": 470
+    "line": 478
   },
   "signature": {
     "name": "eventsApi.removeScheduleEvent",
@@ -19,7 +19,7 @@
     {
       "target": "DELETE::/api/events/my-schedule/events/{0}",
       "via": "string_url",
-      "where": "api.ts:471",
+      "where": "api.ts:479",
       "confidence": "fuzzy"
     }
   ],

@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "orgContactsApi.create",
-    "line": 716
+    "line": 724
   },
   "signature": {
     "name": "orgContactsApi.create",
@@ -19,7 +19,7 @@
     {
       "target": "POST::/api/organizations/{0}/contacts",
       "via": "string_url",
-      "where": "api.ts:717",
+      "where": "api.ts:725",
       "confidence": "fuzzy"
     }
   ],

@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "rolesApi.get",
-    "line": 1212
+    "line": 1220
   },
   "signature": {
     "name": "rolesApi.get",
@@ -19,7 +19,7 @@
     {
       "target": "GET::/api/roles/{0}",
       "via": "string_url",
-      "where": "api.ts:1212",
+      "where": "api.ts:1220",
       "confidence": "fuzzy"
     }
   ],

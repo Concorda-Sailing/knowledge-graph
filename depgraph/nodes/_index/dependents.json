@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-05-11T01:38:22.782508+00:00",
+  "generated_at": "2026-05-11T02:10:25.169492+00:00",
   "git_commit": "dd72f2f60a11",
   "node_count": 1511,
   "edge_count": 2087,
@@ -9,7 +9,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminEmailTemplatesApi.delete",
         "via": "string_url",
-        "where": "api.ts:978",
+        "where": "api.ts:986",
         "confidence": "fuzzy"
       }
     ],
@@ -17,7 +17,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::llmApi.deletePrompt",
         "via": "string_url",
-        "where": "api.ts:3263",
+        "where": "api.ts:3271",
         "confidence": "fuzzy"
       }
     ],
@@ -25,7 +25,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminOrgConfigApi.deleteLogo",
         "via": "http_call",
-        "where": "api.ts:1182",
+        "where": "api.ts:1190",
         "confidence": "exact"
       }
     ],
@@ -33,7 +33,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminApi.deleteUser",
         "via": "string_url",
-        "where": "api.ts:846",
+        "where": "api.ts:854",
         "confidence": "fuzzy"
       }
     ],
@@ -47,7 +47,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::boatApi.removeCrew",
         "via": "string_url",
-        "where": "api.ts:3114",
+        "where": "api.ts:3122",
         "confidence": "fuzzy"
       }
     ],
@@ -55,7 +55,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::boatApi.deletePunchlistItem",
         "via": "string_url",
-        "where": "api.ts:3184",
+        "where": "api.ts:3192",
         "confidence": "fuzzy"
       }
     ],
@@ -77,7 +77,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::eventsApi.removeScheduleEvent",
         "via": "string_url",
-        "where": "api.ts:471",
+        "where": "api.ts:479",
         "confidence": "fuzzy"
       }
     ],
@@ -85,7 +85,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::eventsApi.removeScheduleSeries",
         "via": "string_url",
-        "where": "api.ts:475",
+        "where": "api.ts:483",
         "confidence": "fuzzy"
       }
     ],
@@ -93,7 +93,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminEventsApi.delete",
         "via": "string_url",
-        "where": "api.ts:603",
+        "where": "api.ts:611",
         "confidence": "fuzzy"
       }
     ],
@@ -101,7 +101,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminEventDiscountsApi.delete",
         "via": "string_url",
-        "where": "api.ts:2746",
+        "where": "api.ts:2754",
         "confidence": "fuzzy"
       }
     ],
@@ -109,7 +109,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminEventsApi.deleteImage",
         "via": "string_url",
-        "where": "api.ts:609",
+        "where": "api.ts:617",
         "confidence": "fuzzy"
       }
     ],
@@ -117,7 +117,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::eventsApi.removeEventCrew",
         "via": "string_url",
-        "where": "api.ts:515",
+        "where": "api.ts:523",
         "confidence": "fuzzy"
       }
     ],
@@ -125,7 +125,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::mediaApi.deleteFile",
         "via": "string_url",
-        "where": "api.ts:2892",
+        "where": "api.ts:2900",
         "confidence": "fuzzy"
       }
     ],
@@ -133,7 +133,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::mediaApi.deleteFolder",
         "via": "string_url",
-        "where": "api.ts:2937",
+        "where": "api.ts:2945",
         "confidence": "fuzzy"
       }
     ],
@@ -141,7 +141,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminMerchandiseApi.delete",
         "via": "string_url",
-        "where": "api.ts:2683",
+        "where": "api.ts:2691",
         "confidence": "fuzzy"
       }
     ],
@@ -149,7 +149,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::organizationsApi.delete",
         "via": "string_url",
-        "where": "api.ts:671",
+        "where": "api.ts:679",
         "confidence": "fuzzy"
       }
     ],
@@ -157,7 +157,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::orgContactsApi.remove",
         "via": "string_url",
-        "where": "api.ts:727",
+        "where": "api.ts:735",
         "confidence": "fuzzy"
       }
     ],
@@ -165,7 +165,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminProductsApi.delete",
         "via": "string_url",
-        "where": "api.ts:2480",
+        "where": "api.ts:2488",
         "confidence": "fuzzy"
       }
     ],
@@ -173,7 +173,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::agentTokensApi.revoke",
         "via": "string_url",
-        "where": "api.ts:3351",
+        "where": "api.ts:3359",
         "confidence": "fuzzy"
       }
     ],
@@ -181,7 +181,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::profileApi.deleteBanner",
         "via": "http_call",
-        "where": "api.ts:1280",
+        "where": "api.ts:1288",
         "confidence": "exact"
       }
     ],
@@ -189,7 +189,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::profileApi.deleteBoat",
         "via": "string_url",
-        "where": "api.ts:1323",
+        "where": "api.ts:1331",
         "confidence": "fuzzy"
       }
     ],
@@ -197,7 +197,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::profileApi.deleteBoatBanner",
         "via": "string_url",
-        "where": "api.ts:1292",
+        "where": "api.ts:1300",
         "confidence": "fuzzy"
       }
     ],
@@ -205,7 +205,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::profileApi.deleteBoatConfig",
         "via": "string_url",
-        "where": "api.ts:1368",
+        "where": "api.ts:1376",
         "confidence": "fuzzy"
       }
     ],
@@ -213,7 +213,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::profileApi.deleteCrewPool",
         "via": "string_url",
-        "where": "api.ts:1386",
+        "where": "api.ts:1394",
         "confidence": "fuzzy"
       }
     ],
@@ -221,7 +221,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::profileApi.deleteBoatPicture",
         "via": "string_url",
-        "where": "api.ts:1286",
+        "where": "api.ts:1294",
         "confidence": "fuzzy"
       }
     ],
@@ -229,7 +229,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::profileApi.deleteBoatResume",
         "via": "string_url",
-        "where": "api.ts:1350",
+        "where": "api.ts:1358",
         "confidence": "fuzzy"
       }
     ],
@@ -237,7 +237,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::profileApi.cancelEventRegistration",
         "via": "string_url",
-        "where": "api.ts:1394",
+        "where": "api.ts:1402",
         "confidence": "fuzzy"
       }
     ],
@@ -245,7 +245,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::profileApi.deletePicture",
         "via": "http_call",
-        "where": "api.ts:1274",
+        "where": "api.ts:1282",
         "confidence": "exact"
       }
     ],
@@ -253,7 +253,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::profileApi.deleteSailingResume",
         "via": "http_call",
-        "where": "api.ts:1303",
+        "where": "api.ts:1311",
         "confidence": "exact"
       }
     ],
@@ -261,7 +261,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::regattaApi.delete",
         "via": "string_url",
-        "where": "api.ts:1553",
+        "where": "api.ts:1561",
         "confidence": "fuzzy"
       }
     ],
@@ -269,7 +269,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::seriesApi.delete",
         "via": "string_url",
-        "where": "api.ts:1536",
+        "where": "api.ts:1544",
         "confidence": "fuzzy"
       }
     ],
@@ -277,7 +277,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminTemporalProductsApi.delete",
         "via": "string_url",
-        "where": "api.ts:2611",
+        "where": "api.ts:2619",
         "confidence": "fuzzy"
       }
     ],
@@ -285,7 +285,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminHealthApi.dbStats",
         "via": "http_call",
-        "where": "api.ts:1125",
+        "where": "api.ts:1133",
         "confidence": "exact"
       }
     ],
@@ -293,7 +293,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminApi.delegates",
         "via": "http_call",
-        "where": "api.ts:827",
+        "where": "api.ts:835",
         "confidence": "exact"
       }
     ],
@@ -301,7 +301,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminEmailConfigApi.get",
         "via": "http_call",
-        "where": "api.ts:896",
+        "where": "api.ts:904",
         "confidence": "exact"
       }
     ],
@@ -309,7 +309,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminEmailTemplatesApi.list",
         "via": "http_call",
-        "where": "api.ts:948",
+        "where": "api.ts:956",
         "confidence": "exact"
       }
     ],
@@ -317,7 +317,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminEmailTemplatesApi.variables",
         "via": "http_call",
-        "where": "api.ts:987",
+        "where": "api.ts:995",
         "confidence": "exact"
       }
     ],
@@ -325,7 +325,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminEmailTemplatesApi.get",
         "via": "string_url",
-        "where": "api.ts:950",
+        "where": "api.ts:958",
         "confidence": "fuzzy"
       }
     ],
@@ -333,7 +333,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminErrorLogApi.get",
         "via": "string_url",
-        "where": "api.ts:1081",
+        "where": "api.ts:1089",
         "confidence": "fuzzy"
       }
     ],
@@ -341,7 +341,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminErrorLogApi.list",
         "via": "string_url",
-        "where": "api.ts:1076",
+        "where": "api.ts:1084",
         "confidence": "fuzzy"
       }
     ],
@@ -357,7 +357,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::llmApi.listPrompts",
         "via": "http_call",
-        "where": "api.ts:3249",
+        "where": "api.ts:3257",
         "confidence": "exact"
       }
     ],
@@ -365,7 +365,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::llmApi.getPrompt",
         "via": "string_url",
-        "where": "api.ts:3251",
+        "where": "api.ts:3259",
         "confidence": "fuzzy"
       }
     ],
@@ -373,7 +373,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminApi.members",
         "via": "string_url",
-        "where": "api.ts:824",
+        "where": "api.ts:832",
         "confidence": "fuzzy"
       }
     ],
@@ -381,7 +381,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminNotificationConfigApi.get",
         "via": "http_call",
-        "where": "api.ts:1002",
+        "where": "api.ts:1010",
         "confidence": "exact"
       }
     ],
@@ -389,7 +389,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminOrgConfigApi.get",
         "via": "http_call",
-        "where": "api.ts:1173",
+        "where": "api.ts:1181",
         "confidence": "exact"
       }
     ],
@@ -397,7 +397,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminPaymentConfigApi.get",
         "via": "http_call",
-        "where": "api.ts:1030",
+        "where": "api.ts:1038",
         "confidence": "exact"
       }
     ],
@@ -405,7 +405,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminHealthApi.responseTimesRequests",
         "via": "string_url",
-        "where": "api.ts:1165",
+        "where": "api.ts:1173",
         "confidence": "fuzzy"
       }
     ],
@@ -413,7 +413,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminHealthApi.responseTimesTimeseries",
         "via": "string_url",
-        "where": "api.ts:1146",
+        "where": "api.ts:1154",
         "confidence": "fuzzy"
       }
     ],
@@ -421,7 +421,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminHealthApi.responseTimes",
         "via": "string_url",
-        "where": "api.ts:1131",
+        "where": "api.ts:1139",
         "confidence": "fuzzy"
       }
     ],
@@ -429,7 +429,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminApi.stats",
         "via": "http_call",
-        "where": "api.ts:826",
+        "where": "api.ts:834",
         "confidence": "exact"
       }
     ],
@@ -437,7 +437,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminStorageApi.get",
         "via": "http_call",
-        "where": "api.ts:1206",
+        "where": "api.ts:1214",
         "confidence": "exact"
       }
     ],
@@ -445,7 +445,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminApi.getUser",
         "via": "string_url",
-        "where": "api.ts:829",
+        "where": "api.ts:837",
         "confidence": "fuzzy"
       }
     ],
@@ -453,7 +453,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::analyticsApi.activeUsers",
         "via": "string_url",
-        "where": "api.ts:2835",
+        "where": "api.ts:2843",
         "confidence": "fuzzy"
       }
     ],
@@ -461,7 +461,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::analyticsApi.dailyActivity",
         "via": "string_url",
-        "where": "api.ts:2837",
+        "where": "api.ts:2845",
         "confidence": "fuzzy"
       }
     ],
@@ -469,7 +469,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::analyticsApi.onlineNow",
         "via": "http_call",
-        "where": "api.ts:2838",
+        "where": "api.ts:2846",
         "confidence": "exact"
       }
     ],
@@ -477,7 +477,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::analyticsApi.summary",
         "via": "string_url",
-        "where": "api.ts:2831",
+        "where": "api.ts:2839",
         "confidence": "fuzzy"
       }
     ],
@@ -485,7 +485,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::analyticsApi.topEndpoints",
         "via": "string_url",
-        "where": "api.ts:2833",
+        "where": "api.ts:2841",
         "confidence": "fuzzy"
       }
     ],
@@ -499,7 +499,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::approvalsApi.list",
         "via": "string_url",
-        "where": "api.ts:3307",
+        "where": "api.ts:3315",
         "confidence": "fuzzy"
       }
     ],
@@ -559,7 +559,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::boatfinderApi.getDetail",
         "via": "string_url",
-        "where": "api.ts:799",
+        "where": "api.ts:807",
         "confidence": "fuzzy"
       }
     ],
@@ -567,7 +567,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::boatfinderApi.list",
         "via": "string_url",
-        "where": "api.ts:796",
+        "where": "api.ts:804",
         "confidence": "fuzzy"
       }
     ],
@@ -581,7 +581,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::boatApi.lookup",
         "via": "string_url",
-        "where": "api.ts:3149",
+        "where": "api.ts:3157",
         "confidence": "fuzzy"
       }
     ],
@@ -595,7 +595,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::boatApi.getCrew",
         "via": "string_url",
-        "where": "api.ts:3092",
+        "where": "api.ts:3100",
         "confidence": "fuzzy"
       }
     ],
@@ -603,7 +603,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::boatApi.getVisibleCrew",
         "via": "string_url",
-        "where": "api.ts:3142",
+        "where": "api.ts:3150",
         "confidence": "fuzzy"
       }
     ],
@@ -611,7 +611,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::boatApi.getDetail",
         "via": "string_url",
-        "where": "api.ts:3146",
+        "where": "api.ts:3154",
         "confidence": "fuzzy"
       }
     ],
@@ -619,7 +619,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::boatApi.getEvents",
         "via": "string_url",
-        "where": "api.ts:3190",
+        "where": "api.ts:3198",
         "confidence": "fuzzy"
       }
     ],
@@ -627,7 +627,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::boatApi.getPendingInvites",
         "via": "string_url",
-        "where": "api.ts:3094",
+        "where": "api.ts:3102",
         "confidence": "fuzzy"
       }
     ],
@@ -635,7 +635,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::boatApi.getPunchlist",
         "via": "string_url",
-        "where": "api.ts:3172",
+        "where": "api.ts:3180",
         "confidence": "fuzzy"
       }
     ],
@@ -643,7 +643,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::boatApi.getResume",
         "via": "string_url",
-        "where": "api.ts:3144",
+        "where": "api.ts:3152",
         "confidence": "fuzzy"
       }
     ],
@@ -651,7 +651,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::boatApi.getShareInviteStatus",
         "via": "string_url",
-        "where": "api.ts:3100",
+        "where": "api.ts:3108",
         "confidence": "fuzzy"
       }
     ],
@@ -673,7 +673,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::constantsApi.getAll",
         "via": "http_call",
-        "where": "api.ts:1228",
+        "where": "api.ts:1236",
         "confidence": "exact"
       }
     ],
@@ -681,7 +681,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::constantsApi.getExperienceLevels",
         "via": "http_call",
-        "where": "api.ts:1231",
+        "where": "api.ts:1239",
         "confidence": "exact"
       }
     ],
@@ -689,7 +689,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::constantsApi.getPositions",
         "via": "http_call",
-        "where": "api.ts:1229",
+        "where": "api.ts:1237",
         "confidence": "exact"
       }
     ],
@@ -697,7 +697,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::crewfinderApi.searchBoats",
         "via": "string_url",
-        "where": "api.ts:770",
+        "where": "api.ts:778",
         "confidence": "fuzzy"
       }
     ],
@@ -705,7 +705,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::crewfinderApi.getBoatDetail",
         "via": "string_url",
-        "where": "api.ts:783",
+        "where": "api.ts:791",
         "confidence": "fuzzy"
       }
     ],
@@ -713,7 +713,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::crewfinderApi.getCrewDetail",
         "via": "string_url",
-        "where": "api.ts:779",
+        "where": "api.ts:787",
         "confidence": "fuzzy"
       }
     ],
@@ -721,7 +721,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::crewfinderApi.search",
         "via": "string_url",
-        "where": "api.ts:765",
+        "where": "api.ts:773",
         "confidence": "fuzzy"
       }
     ],
@@ -729,7 +729,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::crewfinderApi.list",
         "via": "string_url",
-        "where": "api.ts:754",
+        "where": "api.ts:762",
         "confidence": "fuzzy"
       }
     ],
@@ -743,7 +743,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::socialsApi.list",
         "via": "http_call",
-        "where": "api.ts:2792",
+        "where": "api.ts:2800",
         "confidence": "exact"
       }
     ],
@@ -751,7 +751,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::eventsApi.listInboxCrewRequests",
         "via": "http_call",
-        "where": "api.ts:532",
+        "where": "api.ts:540",
         "confidence": "exact"
       }
     ],
@@ -765,7 +765,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::eventsApi.mySchedule",
         "via": "http_call",
-        "where": "api.ts:435",
+        "where": "api.ts:443",
         "confidence": "exact"
       }
     ],
@@ -773,7 +773,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::regattasApi.list",
         "via": "string_url",
-        "where": "api.ts:2786",
+        "where": "api.ts:2794",
         "confidence": "fuzzy"
       }
     ],
@@ -781,7 +781,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminEventsApi.getRegistrationCounts",
         "via": "http_call",
-        "where": "api.ts:619",
+        "where": "api.ts:627",
         "confidence": "exact"
       }
     ],
@@ -803,7 +803,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::eventsApi.getConfirmation",
         "via": "string_url",
-        "where": "api.ts:397",
+        "where": "api.ts:402",
         "confidence": "fuzzy"
       }
     ],
@@ -843,7 +843,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminEventsApi.get",
         "via": "string_url",
-        "where": "api.ts:586",
+        "where": "api.ts:594",
         "confidence": "fuzzy"
       },
       {
@@ -865,7 +865,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminEventDiscountsApi.list",
         "via": "string_url",
-        "where": "api.ts:2734",
+        "where": "api.ts:2742",
         "confidence": "fuzzy"
       }
     ],
@@ -873,7 +873,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminEventsApi.getRegistrations",
         "via": "string_url",
-        "where": "api.ts:613",
+        "where": "api.ts:621",
         "confidence": "fuzzy"
       }
     ],
@@ -881,7 +881,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::eventsApi.getSailingEvent",
         "via": "string_url",
-        "where": "api.ts:423",
+        "where": "api.ts:431",
         "confidence": "fuzzy"
       }
     ],
@@ -895,7 +895,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::eventsApi.getEventCrew",
         "via": "string_url",
-        "where": "api.ts:480",
+        "where": "api.ts:488",
         "confidence": "fuzzy"
       }
     ],
@@ -903,7 +903,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::eventsApi.suggestCrewPool",
         "via": "string_url",
-        "where": "api.ts:519",
+        "where": "api.ts:527",
         "confidence": "fuzzy"
       }
     ],
@@ -911,7 +911,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminEventsApi.list",
         "via": "string_url",
-        "where": "api.ts:583",
+        "where": "api.ts:591",
         "confidence": "fuzzy"
       },
       {
@@ -933,7 +933,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::mediaApi.getFile",
         "via": "string_url",
-        "where": "api.ts:2885",
+        "where": "api.ts:2893",
         "confidence": "fuzzy"
       }
     ],
@@ -941,7 +941,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::mediaApi.listFiles",
         "via": "string_url",
-        "where": "api.ts:2883",
+        "where": "api.ts:2891",
         "confidence": "fuzzy"
       }
     ],
@@ -949,7 +949,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::mediaApi.listFolders",
         "via": "string_url",
-        "where": "api.ts:2924",
+        "where": "api.ts:2932",
         "confidence": "fuzzy"
       }
     ],
@@ -957,7 +957,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminMerchandiseApi.get",
         "via": "string_url",
-        "where": "api.ts:2671",
+        "where": "api.ts:2679",
         "confidence": "fuzzy"
       }
     ],
@@ -965,7 +965,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminMerchandiseApi.list",
         "via": "string_url",
-        "where": "api.ts:2668",
+        "where": "api.ts:2676",
         "confidence": "fuzzy"
       }
     ],
@@ -973,7 +973,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::organizationsApi.delegates",
         "via": "http_call",
-        "where": "api.ts:658",
+        "where": "api.ts:666",
         "confidence": "exact"
       }
     ],
@@ -981,7 +981,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::organizationsApi.exportCsv",
         "via": "string_url",
-        "where": "api.ts:676",
+        "where": "api.ts:684",
         "confidence": "fuzzy"
       }
     ],
@@ -989,7 +989,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::organizationsApi.get",
         "via": "string_url",
-        "where": "api.ts:659",
+        "where": "api.ts:667",
         "confidence": "fuzzy"
       }
     ],
@@ -997,7 +997,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::orgContactsApi.list",
         "via": "string_url",
-        "where": "api.ts:715",
+        "where": "api.ts:723",
         "confidence": "fuzzy"
       }
     ],
@@ -1005,7 +1005,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::organizationsApi.list",
         "via": "string_url",
-        "where": "api.ts:656",
+        "where": "api.ts:664",
         "confidence": "fuzzy"
       }
     ],
@@ -1013,7 +1013,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::paymentsApi.getConfig",
         "via": "http_call",
-        "where": "api.ts:2763",
+        "where": "api.ts:2771",
         "confidence": "exact"
       }
     ],
@@ -1033,7 +1033,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::directoryApi.list",
         "via": "http_call",
-        "where": "api.ts:734",
+        "where": "api.ts:742",
         "confidence": "exact"
       }
     ],
@@ -1079,7 +1079,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminProductsApi.get",
         "via": "string_url",
-        "where": "api.ts:2468",
+        "where": "api.ts:2476",
         "confidence": "fuzzy"
       }
     ],
@@ -1087,7 +1087,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminProductsApi.list",
         "via": "string_url",
-        "where": "api.ts:2465",
+        "where": "api.ts:2473",
         "confidence": "fuzzy"
       }
     ],
@@ -1101,7 +1101,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::profileApi.get",
         "via": "http_call",
-        "where": "api.ts:1263",
+        "where": "api.ts:1271",
         "confidence": "exact"
       }
     ],
@@ -1109,7 +1109,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::agentTokensApi.list",
         "via": "http_call",
-        "where": "api.ts:3339",
+        "where": "api.ts:3347",
         "confidence": "exact"
       }
     ],
@@ -1117,7 +1117,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::profileApi.getBoatResumes",
         "via": "http_call",
-        "where": "api.ts:1341",
+        "where": "api.ts:1349",
         "confidence": "exact"
       }
     ],
@@ -1131,7 +1131,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::profileApi.getBoats",
         "via": "http_call",
-        "where": "api.ts:1311",
+        "where": "api.ts:1319",
         "confidence": "exact"
       }
     ],
@@ -1139,7 +1139,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::profileApi.listBoatConfigs",
         "via": "string_url",
-        "where": "api.ts:1356",
+        "where": "api.ts:1364",
         "confidence": "fuzzy"
       }
     ],
@@ -1147,7 +1147,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::profileApi.listCrewPools",
         "via": "string_url",
-        "where": "api.ts:1374",
+        "where": "api.ts:1382",
         "confidence": "fuzzy"
       }
     ],
@@ -1161,7 +1161,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::profileApi.getBoatResume",
         "via": "string_url",
-        "where": "api.ts:1343",
+        "where": "api.ts:1351",
         "confidence": "fuzzy"
       }
     ],
@@ -1175,7 +1175,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::profileApi.getMyCrew",
         "via": "http_call",
-        "where": "api.ts:1308",
+        "where": "api.ts:1316",
         "confidence": "exact"
       }
     ],
@@ -1183,7 +1183,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::profileApi.getEventRegistrations",
         "via": "http_call",
-        "where": "api.ts:1392",
+        "where": "api.ts:1400",
         "confidence": "exact"
       }
     ],
@@ -1197,7 +1197,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::profileApi.getSailingResume",
         "via": "http_call",
-        "where": "api.ts:1296",
+        "where": "api.ts:1304",
         "confidence": "exact"
       }
     ],
@@ -1211,7 +1211,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::regattaApi.list",
         "via": "http_call",
-        "where": "api.ts:1544",
+        "where": "api.ts:1552",
         "confidence": "exact"
       }
     ],
@@ -1219,7 +1219,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::regattaApi.get",
         "via": "string_url",
-        "where": "api.ts:1545",
+        "where": "api.ts:1553",
         "confidence": "fuzzy"
       }
     ],
@@ -1227,7 +1227,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::regattaApi.getMatchRoster",
         "via": "string_url",
-        "where": "api.ts:1547",
+        "where": "api.ts:1555",
         "confidence": "fuzzy"
       }
     ],
@@ -1235,7 +1235,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::rolesApi.list",
         "via": "http_call",
-        "where": "api.ts:1211",
+        "where": "api.ts:1219",
         "confidence": "exact"
       }
     ],
@@ -1243,7 +1243,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::rolesApi.listPermissions",
         "via": "http_call",
-        "where": "api.ts:1214",
+        "where": "api.ts:1222",
         "confidence": "exact"
       }
     ],
@@ -1251,7 +1251,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::rolesApi.getUserPermissions",
         "via": "string_url",
-        "where": "api.ts:1223",
+        "where": "api.ts:1231",
         "confidence": "fuzzy"
       }
     ],
@@ -1259,7 +1259,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::rolesApi.getUserRoles",
         "via": "string_url",
-        "where": "api.ts:1221",
+        "where": "api.ts:1229",
         "confidence": "fuzzy"
       }
     ],
@@ -1267,7 +1267,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::rolesApi.get",
         "via": "string_url",
-        "where": "api.ts:1212",
+        "where": "api.ts:1220",
         "confidence": "fuzzy"
       }
     ],
@@ -1275,7 +1275,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::seriesApi.list",
         "via": "http_call",
-        "where": "api.ts:1529",
+        "where": "api.ts:1537",
         "confidence": "exact"
       }
     ],
@@ -1283,7 +1283,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::seriesApi.get",
         "via": "string_url",
-        "where": "api.ts:1530",
+        "where": "api.ts:1538",
         "confidence": "fuzzy"
       }
     ],
@@ -1291,7 +1291,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::seriesApi.listRaces",
         "via": "string_url",
-        "where": "api.ts:1540",
+        "where": "api.ts:1548",
         "confidence": "fuzzy"
       }
     ],
@@ -1307,7 +1307,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::temporalProductsApi.getAvailable",
         "via": "string_url",
-        "where": "api.ts:2584",
+        "where": "api.ts:2592",
         "confidence": "fuzzy"
       }
     ],
@@ -1315,7 +1315,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminTemporalProductsApi.get",
         "via": "string_url",
-        "where": "api.ts:2599",
+        "where": "api.ts:2607",
         "confidence": "fuzzy"
       }
     ],
@@ -1323,7 +1323,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminTemporalProductsApi.list",
         "via": "string_url",
-        "where": "api.ts:2596",
+        "where": "api.ts:2604",
         "confidence": "fuzzy"
       }
     ],
@@ -1347,7 +1347,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminEmailConfigApi.sendTestEmail",
         "via": "http_call",
-        "where": "api.ts:903",
+        "where": "api.ts:911",
         "confidence": "exact"
       }
     ],
@@ -1355,7 +1355,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminEmailTemplatesApi.create",
         "via": "http_call",
-        "where": "api.ts:958",
+        "where": "api.ts:966",
         "confidence": "exact"
       }
     ],
@@ -1363,7 +1363,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminEmailTemplatesApi.preview",
         "via": "string_url",
-        "where": "api.ts:982",
+        "where": "api.ts:990",
         "confidence": "fuzzy"
       }
     ],
@@ -1371,7 +1371,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminEmailConfigApi.sendBulk",
         "via": "http_call",
-        "where": "api.ts:914",
+        "where": "api.ts:922",
         "confidence": "exact"
       }
     ],
@@ -1379,7 +1379,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::llmApi.createPrompt",
         "via": "http_call",
-        "where": "api.ts:3253",
+        "where": "api.ts:3261",
         "confidence": "exact"
       }
     ],
@@ -1387,7 +1387,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminNotificationConfigApi.testSMS",
         "via": "http_call",
-        "where": "api.ts:1009",
+        "where": "api.ts:1017",
         "confidence": "exact"
       }
     ],
@@ -1395,7 +1395,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminNotificationConfigApi.testWhatsApp",
         "via": "http_call",
-        "where": "api.ts:1014",
+        "where": "api.ts:1022",
         "confidence": "exact"
       }
     ],
@@ -1409,7 +1409,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminApi.createUser",
         "via": "http_call",
-        "where": "api.ts:831",
+        "where": "api.ts:839",
         "confidence": "exact"
       }
     ],
@@ -1417,7 +1417,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminApi.importUsers",
         "via": "string_url",
-        "where": "api.ts:856",
+        "where": "api.ts:864",
         "confidence": "fuzzy"
       }
     ],
@@ -1431,7 +1431,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::approvalsApi.create",
         "via": "http_call",
-        "where": "api.ts:3292",
+        "where": "api.ts:3300",
         "confidence": "exact"
       }
     ],
@@ -1445,7 +1445,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::approvalsApi.cancel",
         "via": "string_url",
-        "where": "api.ts:3315",
+        "where": "api.ts:3323",
         "confidence": "fuzzy"
       }
     ],
@@ -1459,7 +1459,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::approvalsApi.vote",
         "via": "string_url",
-        "where": "api.ts:3310",
+        "where": "api.ts:3318",
         "confidence": "fuzzy"
       }
     ],
@@ -1547,7 +1547,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::boatfinderApi.apply",
         "via": "http_call",
-        "where": "api.ts:801",
+        "where": "api.ts:809",
         "confidence": "exact"
       }
     ],
@@ -1561,7 +1561,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::boatApi.coownerInvite",
         "via": "string_url",
-        "where": "api.ts:3160",
+        "where": "api.ts:3168",
         "confidence": "fuzzy"
       }
     ],
@@ -1569,7 +1569,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::boatApi.coownerRemove",
         "via": "string_url",
-        "where": "api.ts:3165",
+        "where": "api.ts:3173",
         "confidence": "fuzzy"
       }
     ],
@@ -1583,7 +1583,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::boatApi.requestCoowner",
         "via": "string_url",
-        "where": "api.ts:3152",
+        "where": "api.ts:3160",
         "confidence": "fuzzy"
       }
     ],
@@ -1591,7 +1591,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::boatApi.addCrew",
         "via": "string_url",
-        "where": "api.ts:3104",
+        "where": "api.ts:3112",
         "confidence": "fuzzy"
       }
     ],
@@ -1599,7 +1599,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::boatApi.inviteCrew",
         "via": "string_url",
-        "where": "api.ts:3123",
+        "where": "api.ts:3131",
         "confidence": "fuzzy"
       }
     ],
@@ -1613,7 +1613,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::boatApi.inviteCrewBatch",
         "via": "string_url",
-        "where": "api.ts:3128",
+        "where": "api.ts:3136",
         "confidence": "fuzzy"
       }
     ],
@@ -1621,7 +1621,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::boatApi.resendInvite",
         "via": "string_url",
-        "where": "api.ts:3138",
+        "where": "api.ts:3146",
         "confidence": "fuzzy"
       }
     ],
@@ -1629,7 +1629,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::boatApi.createPunchlistItem",
         "via": "string_url",
-        "where": "api.ts:3174",
+        "where": "api.ts:3182",
         "confidence": "fuzzy"
       }
     ],
@@ -1637,7 +1637,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::boatApi.createShareInvite",
         "via": "string_url",
-        "where": "api.ts:3096",
+        "where": "api.ts:3104",
         "confidence": "fuzzy"
       }
     ],
@@ -1653,7 +1653,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::crewfinderApi.contact",
         "via": "http_call",
-        "where": "api.ts:774",
+        "where": "api.ts:782",
         "confidence": "exact"
       }
     ],
@@ -1661,7 +1661,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminEventsApi.create",
         "via": "http_call",
-        "where": "api.ts:588",
+        "where": "api.ts:596",
         "confidence": "exact"
       }
     ],
@@ -1669,7 +1669,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminEventsApi.checkDuplicates",
         "via": "http_call",
-        "where": "api.ts:593",
+        "where": "api.ts:601",
         "confidence": "exact"
       }
     ],
@@ -1683,7 +1683,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::eventsApi.createCustom",
         "via": "http_call",
-        "where": "api.ts:430",
+        "where": "api.ts:438",
         "confidence": "exact"
       }
     ],
@@ -1691,7 +1691,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::eventsApi.addEvents",
         "via": "http_call",
-        "where": "api.ts:466",
+        "where": "api.ts:474",
         "confidence": "exact"
       }
     ],
@@ -1705,7 +1705,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::eventsApi.addRegattas",
         "via": "http_call",
-        "where": "api.ts:446",
+        "where": "api.ts:454",
         "confidence": "exact"
       }
     ],
@@ -1713,7 +1713,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::eventsApi.addSeries",
         "via": "http_call",
-        "where": "api.ts:461",
+        "where": "api.ts:469",
         "confidence": "exact"
       }
     ],
@@ -1749,13 +1749,13 @@
       {
         "source": "concorda-web::src/lib/api.ts::eventsApi.register",
         "via": "string_url",
-        "where": "api.ts:408",
+        "where": "api.ts:416",
         "confidence": "fuzzy"
       },
       {
         "source": "concorda-web::src/lib/api.ts::eventsApi.registerAuthenticated",
         "via": "string_url",
-        "where": "api.ts:413",
+        "where": "api.ts:421",
         "confidence": "fuzzy"
       }
     ],
@@ -1763,7 +1763,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminEventDiscountsApi.create",
         "via": "string_url",
-        "where": "api.ts:2736",
+        "where": "api.ts:2744",
         "confidence": "fuzzy"
       }
     ],
@@ -1771,7 +1771,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminEventsApi.duplicate",
         "via": "string_url",
-        "where": "api.ts:615",
+        "where": "api.ts:623",
         "confidence": "fuzzy"
       }
     ],
@@ -1779,7 +1779,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::eventsApi.confirmEventCrew",
         "via": "string_url",
-        "where": "api.ts:511",
+        "where": "api.ts:519",
         "confidence": "fuzzy"
       }
     ],
@@ -1793,7 +1793,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::eventsApi.sendCrewInvites",
         "via": "string_url",
-        "where": "api.ts:491",
+        "where": "api.ts:499",
         "confidence": "fuzzy"
       }
     ],
@@ -1801,7 +1801,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::eventsApi.notifyCrew",
         "via": "string_url",
-        "where": "api.ts:487",
+        "where": "api.ts:495",
         "confidence": "fuzzy"
       }
     ],
@@ -1815,7 +1815,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::eventsApi.requestToCrew",
         "via": "string_url",
-        "where": "api.ts:521",
+        "where": "api.ts:529",
         "confidence": "fuzzy"
       }
     ],
@@ -1829,7 +1829,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::inviteResponseApi.respond",
         "via": "http_call",
-        "where": "api.ts:3280",
+        "where": "api.ts:3288",
         "confidence": "exact"
       }
     ],
@@ -1845,7 +1845,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::mediaApi.createFolder",
         "via": "http_call",
-        "where": "api.ts:2927",
+        "where": "api.ts:2935",
         "confidence": "exact"
       }
     ],
@@ -1853,7 +1853,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::mediaApi.upload",
         "via": "string_url",
-        "where": "api.ts:2905",
+        "where": "api.ts:2913",
         "confidence": "fuzzy"
       }
     ],
@@ -1861,7 +1861,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminMerchandiseApi.create",
         "via": "http_call",
-        "where": "api.ts:2673",
+        "where": "api.ts:2681",
         "confidence": "exact"
       }
     ],
@@ -1869,7 +1869,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::norApi.extract",
         "via": "string_url",
-        "where": "api.ts:3225",
+        "where": "api.ts:3233",
         "confidence": "fuzzy"
       }
     ],
@@ -1877,7 +1877,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::norApi.uploadAndExtract",
         "via": "string_url",
-        "where": "api.ts:3232",
+        "where": "api.ts:3240",
         "confidence": "fuzzy"
       }
     ],
@@ -1885,7 +1885,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::organizationsApi.create",
         "via": "http_call",
-        "where": "api.ts:661",
+        "where": "api.ts:669",
         "confidence": "exact"
       }
     ],
@@ -1893,7 +1893,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::organizationsApi.importCsv",
         "via": "string_url",
-        "where": "api.ts:688",
+        "where": "api.ts:696",
         "confidence": "fuzzy"
       }
     ],
@@ -1901,7 +1901,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::orgContactsApi.create",
         "via": "string_url",
-        "where": "api.ts:717",
+        "where": "api.ts:725",
         "confidence": "fuzzy"
       }
     ],
@@ -1909,7 +1909,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::paymentsApi.createIntent",
         "via": "http_call",
-        "where": "api.ts:2765",
+        "where": "api.ts:2773",
         "confidence": "exact"
       }
     ],
@@ -1939,7 +1939,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminProductsApi.create",
         "via": "http_call",
-        "where": "api.ts:2470",
+        "where": "api.ts:2478",
         "confidence": "exact"
       }
     ],
@@ -1947,7 +1947,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::agentTokensApi.create",
         "via": "http_call",
-        "where": "api.ts:3341",
+        "where": "api.ts:3349",
         "confidence": "exact"
       }
     ],
@@ -1955,7 +1955,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::agentTokensApi.rotate",
         "via": "string_url",
-        "where": "api.ts:3346",
+        "where": "api.ts:3354",
         "confidence": "fuzzy"
       }
     ],
@@ -1969,7 +1969,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::profileApi.createBoat",
         "via": "http_call",
-        "where": "api.ts:1313",
+        "where": "api.ts:1321",
         "confidence": "exact"
       }
     ],
@@ -1977,7 +1977,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::profileApi.createBoatConfig",
         "via": "string_url",
-        "where": "api.ts:1358",
+        "where": "api.ts:1366",
         "confidence": "fuzzy"
       }
     ],
@@ -1985,7 +1985,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::profileApi.createCrewPool",
         "via": "string_url",
-        "where": "api.ts:1376",
+        "where": "api.ts:1384",
         "confidence": "fuzzy"
       }
     ],
@@ -1993,7 +1993,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::profileApi.transferBoat",
         "via": "string_url",
-        "where": "api.ts:1327",
+        "where": "api.ts:1335",
         "confidence": "fuzzy"
       }
     ],
@@ -2001,7 +2001,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::profileApi.upgradeMembership",
         "via": "http_call",
-        "where": "api.ts:1334",
+        "where": "api.ts:1342",
         "confidence": "exact"
       }
     ],
@@ -2009,7 +2009,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::regattaApi.create",
         "via": "http_call",
-        "where": "api.ts:1549",
+        "where": "api.ts:1557",
         "confidence": "exact"
       }
     ],
@@ -2017,7 +2017,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::regattaApi.checkDuplicates",
         "via": "http_call",
-        "where": "api.ts:1555",
+        "where": "api.ts:1563",
         "confidence": "exact"
       }
     ],
@@ -2033,7 +2033,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::seriesApi.create",
         "via": "http_call",
-        "where": "api.ts:1532",
+        "where": "api.ts:1540",
         "confidence": "exact"
       }
     ],
@@ -2041,7 +2041,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::seriesApi.generateRaces",
         "via": "string_url",
-        "where": "api.ts:1538",
+        "where": "api.ts:1546",
         "confidence": "fuzzy"
       }
     ],
@@ -2057,7 +2057,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminTemporalProductsApi.create",
         "via": "http_call",
-        "where": "api.ts:2601",
+        "where": "api.ts:2609",
         "confidence": "exact"
       }
     ],
@@ -2065,7 +2065,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminEmailConfigApi.update",
         "via": "http_call",
-        "where": "api.ts:898",
+        "where": "api.ts:906",
         "confidence": "exact"
       }
     ],
@@ -2073,7 +2073,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminEmailTemplatesApi.update",
         "via": "string_url",
-        "where": "api.ts:973",
+        "where": "api.ts:981",
         "confidence": "fuzzy"
       }
     ],
@@ -2089,7 +2089,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::llmApi.updatePrompt",
         "via": "string_url",
-        "where": "api.ts:3258",
+        "where": "api.ts:3266",
         "confidence": "fuzzy"
       }
     ],
@@ -2097,7 +2097,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminNotificationConfigApi.update",
         "via": "http_call",
-        "where": "api.ts:1004",
+        "where": "api.ts:1012",
         "confidence": "exact"
       }
     ],
@@ -2105,7 +2105,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminOrgConfigApi.update",
         "via": "http_call",
-        "where": "api.ts:1175",
+        "where": "api.ts:1183",
         "confidence": "exact"
       }
     ],
@@ -2113,7 +2113,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminPaymentConfigApi.update",
         "via": "http_call",
-        "where": "api.ts:1032",
+        "where": "api.ts:1040",
         "confidence": "exact"
       }
     ],
@@ -2121,7 +2121,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminApi.updateUser",
         "via": "string_url",
-        "where": "api.ts:836",
+        "where": "api.ts:844",
         "confidence": "fuzzy"
       }
     ],
@@ -2129,7 +2129,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminApi.changePassword",
         "via": "string_url",
-        "where": "api.ts:841",
+        "where": "api.ts:849",
         "confidence": "fuzzy"
       }
     ],
@@ -2143,7 +2143,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::boatApi.respondToInvite",
         "via": "string_url",
-        "where": "api.ts:3133",
+        "where": "api.ts:3141",
         "confidence": "fuzzy"
       }
     ],
@@ -2151,7 +2151,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::boatApi.reorderCrew",
         "via": "string_url",
-        "where": "api.ts:3118",
+        "where": "api.ts:3126",
         "confidence": "fuzzy"
       }
     ],
@@ -2159,7 +2159,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::boatApi.updateCrew",
         "via": "string_url",
-        "where": "api.ts:3109",
+        "where": "api.ts:3117",
         "confidence": "fuzzy"
       }
     ],
@@ -2167,7 +2167,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::boatApi.updatePunchlistItem",
         "via": "string_url",
-        "where": "api.ts:3179",
+        "where": "api.ts:3187",
         "confidence": "fuzzy"
       }
     ],
@@ -2175,13 +2175,13 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminEventsApi.update",
         "via": "string_url",
-        "where": "api.ts:598",
+        "where": "api.ts:606",
         "confidence": "fuzzy"
       },
       {
         "source": "concorda-web::src/lib/api.ts::eventsApi.update",
         "via": "string_url",
-        "where": "api.ts:418",
+        "where": "api.ts:426",
         "confidence": "fuzzy"
       }
     ],
@@ -2189,7 +2189,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminEventDiscountsApi.update",
         "via": "string_url",
-        "where": "api.ts:2741",
+        "where": "api.ts:2749",
         "confidence": "fuzzy"
       }
     ],
@@ -2209,7 +2209,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::eventsApi.upsertSailingEvent",
         "via": "string_url",
-        "where": "api.ts:425",
+        "where": "api.ts:433",
         "confidence": "fuzzy"
       }
     ],
@@ -2217,7 +2217,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::eventsApi.assignEventCrew",
         "via": "string_url",
-        "where": "api.ts:501",
+        "where": "api.ts:509",
         "confidence": "fuzzy"
       }
     ],
@@ -2225,7 +2225,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::eventsApi.markCrewResponse",
         "via": "string_url",
-        "where": "api.ts:506",
+        "where": "api.ts:514",
         "confidence": "fuzzy"
       }
     ],
@@ -2239,7 +2239,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::eventsApi.setCrewPool",
         "via": "string_url",
-        "where": "api.ts:482",
+        "where": "api.ts:490",
         "confidence": "fuzzy"
       }
     ],
@@ -2247,7 +2247,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::eventsApi.updateMyPosition",
         "via": "string_url",
-        "where": "api.ts:534",
+        "where": "api.ts:542",
         "confidence": "fuzzy"
       }
     ],
@@ -2255,7 +2255,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::eventsApi.respondToCrewRequest",
         "via": "string_url",
-        "where": "api.ts:526",
+        "where": "api.ts:534",
         "confidence": "fuzzy"
       }
     ],
@@ -2269,7 +2269,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::eventsApi.respondToEventCrew",
         "via": "string_url",
-        "where": "api.ts:496",
+        "where": "api.ts:504",
         "confidence": "fuzzy"
       }
     ],
@@ -2283,7 +2283,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::mediaApi.updateFile",
         "via": "string_url",
-        "where": "api.ts:2887",
+        "where": "api.ts:2895",
         "confidence": "fuzzy"
       }
     ],
@@ -2291,7 +2291,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::mediaApi.updateFolder",
         "via": "string_url",
-        "where": "api.ts:2932",
+        "where": "api.ts:2940",
         "confidence": "fuzzy"
       }
     ],
@@ -2299,7 +2299,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminMerchandiseApi.update",
         "via": "string_url",
-        "where": "api.ts:2678",
+        "where": "api.ts:2686",
         "confidence": "fuzzy"
       }
     ],
@@ -2307,7 +2307,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::organizationsApi.update",
         "via": "string_url",
-        "where": "api.ts:666",
+        "where": "api.ts:674",
         "confidence": "fuzzy"
       }
     ],
@@ -2315,7 +2315,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::orgContactsApi.update",
         "via": "string_url",
-        "where": "api.ts:722",
+        "where": "api.ts:730",
         "confidence": "fuzzy"
       }
     ],
@@ -2323,7 +2323,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminProductsApi.update",
         "via": "string_url",
-        "where": "api.ts:2475",
+        "where": "api.ts:2483",
         "confidence": "fuzzy"
       }
     ],
@@ -2337,7 +2337,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::profileApi.update",
         "via": "http_call",
-        "where": "api.ts:1265",
+        "where": "api.ts:1273",
         "confidence": "exact"
       }
     ],
@@ -2351,7 +2351,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::profileApi.updateBoat",
         "via": "string_url",
-        "where": "api.ts:1318",
+        "where": "api.ts:1326",
         "confidence": "fuzzy"
       }
     ],
@@ -2359,7 +2359,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::profileApi.updateBoatConfig",
         "via": "string_url",
-        "where": "api.ts:1363",
+        "where": "api.ts:1371",
         "confidence": "fuzzy"
       }
     ],
@@ -2367,7 +2367,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::profileApi.updateCrewPool",
         "via": "string_url",
-        "where": "api.ts:1381",
+        "where": "api.ts:1389",
         "confidence": "fuzzy"
       }
     ],
@@ -2381,7 +2381,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::profileApi.updateBoatResume",
         "via": "string_url",
-        "where": "api.ts:1345",
+        "where": "api.ts:1353",
         "confidence": "fuzzy"
       }
     ],
@@ -2389,7 +2389,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::profileApi.changePassword",
         "via": "http_call",
-        "where": "api.ts:1400",
+        "where": "api.ts:1408",
         "confidence": "exact"
       }
     ],
@@ -2403,7 +2403,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::profileApi.updateSailingResume",
         "via": "http_call",
-        "where": "api.ts:1298",
+        "where": "api.ts:1306",
         "confidence": "exact"
       }
     ],
@@ -2411,7 +2411,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::regattaApi.update",
         "via": "string_url",
-        "where": "api.ts:1551",
+        "where": "api.ts:1559",
         "confidence": "fuzzy"
       }
     ],
@@ -2419,7 +2419,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::rolesApi.updatePermissions",
         "via": "string_url",
-        "where": "api.ts:1216",
+        "where": "api.ts:1224",
         "confidence": "fuzzy"
       }
     ],
@@ -2427,7 +2427,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::seriesApi.update",
         "via": "string_url",
-        "where": "api.ts:1534",
+        "where": "api.ts:1542",
         "confidence": "fuzzy"
       }
     ],
@@ -2435,7 +2435,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminTemporalProductsApi.reorder",
         "via": "http_call",
-        "where": "api.ts:2615",
+        "where": "api.ts:2623",
         "confidence": "exact"
       }
     ],
@@ -2443,7 +2443,7 @@
       {
         "source": "concorda-web::src/lib/api.ts::adminTemporalProductsApi.update",
         "via": "string_url",
-        "where": "api.ts:2606",
+        "where": "api.ts:2614",
         "confidence": "fuzzy"
       }
     ],

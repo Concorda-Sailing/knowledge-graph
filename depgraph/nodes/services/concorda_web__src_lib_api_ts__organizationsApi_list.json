@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "organizationsApi.list",
-    "line": 654
+    "line": 662
   },
   "signature": {
     "name": "organizationsApi.list",
@@ -19,7 +19,7 @@
     {
       "target": "GET::/api/organizations{0}",
       "via": "string_url",
-      "where": "api.ts:656",
+      "where": "api.ts:664",
       "confidence": "fuzzy"
     }
   ],

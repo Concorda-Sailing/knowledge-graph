@@ -28,7 +28,7 @@
     "name": "send_crew_application_email"
   },
   "source": {
-    "line": 427,
+    "line": 458,
     "path": "utils/email_utils.py",
     "repo": "concorda-api",
     "symbol": "send_crew_application_email"

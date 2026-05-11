@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "regattasApi.list",
-    "line": 2781
+    "line": 2789
   },
   "signature": {
     "name": "regattasApi.list",
@@ -19,7 +19,7 @@
     {
       "target": "GET::/api/events/regattas/{0}",
       "via": "string_url",
-      "where": "api.ts:2786",
+      "where": "api.ts:2794",
       "confidence": "fuzzy"
     }
   ],

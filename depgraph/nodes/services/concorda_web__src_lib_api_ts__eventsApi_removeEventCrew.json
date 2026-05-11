@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "eventsApi.removeEventCrew",
-    "line": 514
+    "line": 522
   },
   "signature": {
     "name": "eventsApi.removeEventCrew",
@@ -19,7 +19,7 @@
     {
       "target": "DELETE::/api/events/{0}/sailing-event/crew/{1}",
       "via": "string_url",
-      "where": "api.ts:515",
+      "where": "api.ts:523",
       "confidence": "fuzzy"
     }
   ],

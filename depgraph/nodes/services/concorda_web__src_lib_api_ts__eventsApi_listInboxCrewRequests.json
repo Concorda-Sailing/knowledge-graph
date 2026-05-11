@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "eventsApi.listInboxCrewRequests",
-    "line": 531
+    "line": 539
   },
   "signature": {
     "name": "eventsApi.listInboxCrewRequests",
@@ -19,7 +19,7 @@
     {
       "target": "GET::/api/events/crew-requests/inbox",
       "via": "http_call",
-      "where": "api.ts:532",
+      "where": "api.ts:540",
       "confidence": "exact"
     }
   ],

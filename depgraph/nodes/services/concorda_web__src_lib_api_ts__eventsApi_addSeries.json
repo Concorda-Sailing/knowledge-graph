@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/lib/api.ts",
     "symbol": "eventsApi.addSeries",
-    "line": 453
+    "line": 461
   },
   "signature": {
     "name": "eventsApi.addSeries",
@@ -19,7 +19,7 @@
     {
       "target": "POST::/api/events/my-schedule/add-series",
       "via": "http_call",
-      "where": "api.ts:461",
+      "where": "api.ts:469",
       "confidence": "exact"
     }
   ],
