@@ -8,6 +8,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+import os
 import subprocess
 
 from fastapi import FastAPI, HTTPException, Request
@@ -18,7 +19,13 @@ from fastapi.templating import Jinja2Templates
 from . import loader
 from . import markdown_render
 
-DEPGRAPH_BIN = Path.home() / "concorda" / "depgraph" / "bin" / "depgraph"
+# Where the depgraph CLI lives. Env var lets us point at the tool repo
+# without coupling graphui to the Concorda layout. Falls back to the
+# in-place location for backward compat.
+DEPGRAPH_BIN = Path(
+    os.environ.get("DEPGRAPH_BIN")
+    or (Path.home() / "concorda" / "depgraph" / "bin" / "depgraph")
+)
 
 APP_ROOT = Path(__file__).parent
 TEMPLATES = Jinja2Templates(directory=str(APP_ROOT / "templates"))

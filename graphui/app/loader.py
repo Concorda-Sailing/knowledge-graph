@@ -9,13 +9,25 @@ from __future__ import annotations
 import json
 import re
 import subprocess
+import os
 import time
 from pathlib import Path
 from typing import Any
 
 HOME = Path.home()
-DEPGRAPH = HOME / "concorda" / "depgraph"
-LOGIGRAPH = HOME / "concorda" / "logigraph"
+# Data dirs are env-var-driven so graphui can serve any project, not just
+# Concorda. Source priority: DEPGRAPH_DATA_DIR / LOGIGRAPH_DATA_DIR (new),
+# CONCORDA_*_PATH (legacy), then the original in-place default.
+DEPGRAPH = Path(
+    os.environ.get("DEPGRAPH_DATA_DIR")
+    or os.environ.get("CONCORDA_DEPGRAPH_PATH")
+    or (HOME / "concorda" / "depgraph")
+).resolve()
+LOGIGRAPH = Path(
+    os.environ.get("LOGIGRAPH_DATA_DIR")
+    or os.environ.get("CONCORDA_LOGIGRAPH_PATH")
+    or (HOME / "concorda" / "logigraph")
+).resolve()
 
 DEPGRAPH_NODES = DEPGRAPH / "nodes"
 LOGIGRAPH_NODES = LOGIGRAPH / "nodes"
