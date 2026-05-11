@@ -15,7 +15,7 @@
     "name": "build_eventcrew_ics"
   },
   "source": {
-    "line": 358,
+    "line": 369,
     "path": "utils/ics_utils.py",
     "repo": "concorda-api",
     "symbol": "build_eventcrew_ics"

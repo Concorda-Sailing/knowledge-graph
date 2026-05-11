@@ -16,7 +16,7 @@
     "name": "build_feed_ics"
   },
   "source": {
-    "line": 463,
+    "line": 481,
     "path": "utils/ics_utils.py",
     "repo": "concorda-api",
     "symbol": "build_feed_ics"

@@ -17,7 +17,7 @@
     "name": "build_schedule_feed_ics"
   },
   "source": {
-    "line": 433,
+    "line": 451,
     "path": "utils/ics_utils.py",
     "repo": "concorda-api",
     "symbol": "build_schedule_feed_ics"
