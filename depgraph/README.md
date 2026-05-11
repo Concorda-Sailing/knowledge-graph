@@ -178,3 +178,12 @@ The system is live across `concorda-api`, `concorda-web`, and `concorda-test`. A
 `extract_expo.ts` is a deliberate skeleton — Expo isn't yet in production use. When it goes live, the rewrite is mechanical: it shares structure with `extract_web.ts`.
 
 See **PROCESS.md** for the rules of engagement and **DRIFT.md** for the catalog of failure modes and their mitigations.
+
+## License
+
+[MIT](./LICENSE). Copyright (c) 2026 Logan Greenlee.
+
+The software is provided **AS IS**, without warranty of any kind,
+express or implied, including but not limited to merchantability,
+fitness for a particular purpose, and non-infringement. See the
+LICENSE file for the full text.
