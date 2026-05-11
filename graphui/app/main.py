@@ -176,6 +176,10 @@ def node_detail(request: Request, node_id: str) -> HTMLResponse:
     dossier_html = markdown_render.render(dossier_text) if dossier_text else None
     src = node.get("source") or {}
     commits_30d = loader.commits_30d(src.get("repo", ""), src.get("path", ""))
+    history = loader.commit_history(
+        loader.DEPGRAPH,
+        [p for p in (node.get("_node_file"), node.get("dossier")) if p],
+    )
     # If this node is in the review queue, compute prev/next siblings.
     prev_node = next_node = None
     queue_position = queue_total = None
@@ -204,6 +208,7 @@ def node_detail(request: Request, node_id: str) -> HTMLResponse:
             "next_node": next_node,
             "queue_position": queue_position,
             "queue_total": queue_total,
+            "history": history,
         },
     )
 
@@ -216,6 +221,10 @@ def rule_detail(request: Request, rule_id: str) -> HTMLResponse:
     dossier_text = loader.read_dossier(rule.get("dossier"), loader.LOGIGRAPH)
     dossier_html = markdown_render.render(dossier_text) if dossier_text else None
     telemetry = loader.telemetry_for_rule(rule_id)
+    history = loader.commit_history(
+        loader.LOGIGRAPH,
+        [p for p in (rule.get("_node_file"), rule.get("dossier")) if p],
+    )
     return TEMPLATES.TemplateResponse(
         request,
         "rule.html",
@@ -223,6 +232,7 @@ def rule_detail(request: Request, rule_id: str) -> HTMLResponse:
             "rule": rule,
             "dossier_html": dossier_html,
             "telemetry": telemetry,
+            "history": history,
         },
     )
 
@@ -234,12 +244,17 @@ def ontology_detail(request: Request, ont_id: str) -> HTMLResponse:
         raise HTTPException(404, f"ontology node not found: {ont_id}")
     dossier_text = loader.read_dossier(ont.get("dossier"), loader.LOGIGRAPH)
     dossier_html = markdown_render.render(dossier_text) if dossier_text else None
+    history = loader.commit_history(
+        loader.LOGIGRAPH,
+        [p for p in (ont.get("_node_file"), ont.get("dossier")) if p],
+    )
     return TEMPLATES.TemplateResponse(
         request,
         "ontology.html",
         {
             "ont": ont,
             "dossier_html": dossier_html,
+            "history": history,
         },
     )
 

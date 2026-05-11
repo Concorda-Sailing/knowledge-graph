@@ -87,6 +87,112 @@ def commits_30d(repo: str, rel_path: str) -> int:
     return n
 
 
+# ----- Commit history (per-node card) -----------------------------------------
+
+_HISTORY_CACHE: dict[tuple[str, tuple[str, ...]], tuple[float, list[dict]]] = {}
+_REMOTE_CACHE: dict[str, tuple[float, str | None]] = {}
+
+# Matches `Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>`
+# and any other `Co-Authored-By:` trailer.
+_COAUTHOR_RE = re.compile(r"^Co-Authored-By:\s*(.+?)\s*<([^>]+)>\s*$", re.MULTILINE | re.IGNORECASE)
+_CLAUDE_MODEL_RE = re.compile(r"\bClaude\s+([A-Za-z]+\s+\d+(?:\.\d+)?(?:\s*\([^)]+\))?)", re.IGNORECASE)
+
+
+def _model_from_commit(author: str, body: str) -> str:
+    """Pull the most informative model/author label from a commit.
+
+    Priority:
+      1. Claude `Co-Authored-By:` trailer  → e.g. "Opus 4.7 (1M context)".
+      2. Any other `Co-Authored-By:`        → that human's name.
+      3. Fall back to the commit author.
+    """
+    matches = _COAUTHOR_RE.findall(body or "")
+    for name, _email in matches:
+        m = _CLAUDE_MODEL_RE.search(name)
+        if m:
+            return m.group(1).strip()
+    if matches:
+        # First co-author is usually the "primary" collaborator.
+        return matches[0][0].strip()
+    return author or "—"
+
+
+def git_remote_url(repo_root: Path) -> str | None:
+    """Return the canonical https://github.com/owner/name for `repo_root`,
+    or None if no GitHub remote is configured. Cached for 5 minutes."""
+    key = str(repo_root)
+    now = time.time()
+    if key in _REMOTE_CACHE:
+        ts, val = _REMOTE_CACHE[key]
+        if now - ts < 300:
+            return val
+    url: str | None = None
+    try:
+        out = subprocess.run(
+            ["git", "remote", "get-url", "origin"],
+            cwd=str(repo_root),
+            capture_output=True, text=True, timeout=5,
+        )
+        raw = out.stdout.strip()
+        if raw.startswith("git@github.com:"):
+            raw = "https://github.com/" + raw[len("git@github.com:"):]
+        if raw.endswith(".git"):
+            raw = raw[:-4]
+        if raw.startswith("https://github.com/"):
+            url = raw
+    except (OSError, subprocess.SubprocessError):
+        url = None
+    _REMOTE_CACHE[key] = (now, url)
+    return url
+
+
+def commit_history(repo_root: Path, rel_paths: list[str], limit: int = 20) -> list[dict]:
+    """Return the last `limit` commits touching any of `rel_paths` in
+    `repo_root`. Each entry: {sha, short, date, author, model, subject,
+    url|None}. Cached for 5 minutes per (repo, paths) tuple."""
+    paths = tuple(sorted(p for p in rel_paths if p))
+    if not paths or not (repo_root / ".git").exists():
+        return []
+    key = (str(repo_root), paths)
+    now = time.time()
+    if key in _HISTORY_CACHE:
+        ts, val = _HISTORY_CACHE[key]
+        if now - ts < 300:
+            return val
+    remote = git_remote_url(repo_root)
+    out_rows: list[dict] = []
+    # NUL-separated records; \x1f-separated fields. Body is last field.
+    fmt = "%H%x1f%h%x1f%aI%x1f%an%x1f%s%x1f%B"
+    try:
+        proc = subprocess.run(
+            ["git", "log", "-z", f"-n{limit}", f"--pretty=format:{fmt}", "--", *paths],
+            cwd=str(repo_root),
+            capture_output=True, text=True, timeout=10,
+        )
+        raw = proc.stdout
+    except (OSError, subprocess.SubprocessError):
+        raw = ""
+    for rec in raw.split("\x00"):
+        rec = rec.strip()
+        if not rec:
+            continue
+        parts = rec.split("\x1f", 5)
+        if len(parts) < 6:
+            continue
+        sha, short, date, author, subject, body = parts
+        out_rows.append({
+            "sha": sha,
+            "short": short,
+            "date": date[:10],  # YYYY-MM-DD
+            "author": author,
+            "model": _model_from_commit(author, body),
+            "subject": subject,
+            "url": f"{remote}/commit/{sha}" if remote else None,
+        })
+    _HISTORY_CACHE[key] = (now, out_rows)
+    return out_rows
+
+
 def load_dependents() -> dict[str, list[dict]]:
     p = DEPGRAPH_NODES / "_index" / "dependents.json"
     if not p.exists():
@@ -138,6 +244,7 @@ def load_depgraph_nodes() -> list[dict]:
         d["fan_out"] = fan_out
         d["tier"] = _tier_of(fan_out)
         d["dossier_state"] = _dossier_state(d, DEPGRAPH)
+        d["_node_file"] = str(nf.relative_to(DEPGRAPH))
         src = d.get("source") or {}
         nodes.append(d)
     nodes.sort(key=lambda n: n["id"])
@@ -157,6 +264,7 @@ def load_logigraph_nodes() -> dict[str, list[dict]]:
             except (OSError, json.JSONDecodeError):
                 continue
             node["dossier_state"] = _dossier_state(node, LOGIGRAPH)
+            node["_node_file"] = str(nf.relative_to(LOGIGRAPH))
             # Logigraph rules carry their own fan_out (claims count); use it.
             if "fan_out" not in node:
                 node["fan_out"] = len(node.get("claims_code") or [])

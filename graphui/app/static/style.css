@@ -457,6 +457,44 @@ h2 {
 }
 .side .empty { color: var(--fg-faint); font-style: italic; font-size: 12.5px; }
 
+/* ===== history card ====================================================== */
+.history-card ul.history { padding-left: 0; list-style: none; }
+.history-card li {
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 12px;
+  word-break: normal;
+}
+.history-card li:first-child { border-top: none; padding-top: 0; }
+.history-card .row {
+  display: flex; align-items: baseline; gap: 8px;
+  flex-wrap: wrap;
+}
+.history-card .sha {
+  color: var(--accent-2);
+  text-decoration: none;
+  font-weight: 500;
+}
+.history-card .sha:hover { text-decoration: underline; }
+.history-card .date {
+  color: var(--fg-mute);
+  font-size: 11px;
+}
+.history-card .model {
+  color: var(--fg-faint);
+  font-size: 11px;
+  font-style: italic;
+}
+.history-card .subject {
+  color: var(--fg);
+  font-size: 12px;
+  margin-top: 3px;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.4;
+}
+
 /* ===== rule-specific telemetry =========================================== */
 .telemetry { display: flex; gap: 16px; }
 .telemetry .stat { flex-direction: column; padding: 10px 14px; }
