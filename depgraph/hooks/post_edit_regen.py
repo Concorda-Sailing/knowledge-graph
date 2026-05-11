@@ -38,11 +38,17 @@ import subprocess
 import sys
 from pathlib import Path
 
-DEPGRAPH = Path(
-    os.environ.get("DEPGRAPH_DATA_DIR")
-    or os.environ.get("CONCORDA_DEPGRAPH_PATH")
-    or (Path.home() / "concorda" / "depgraph")
-).resolve()
+TOOL_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(TOOL_ROOT))
+from lib.config import (  # noqa: E402
+    resolve_data_dir,
+    project_repos,
+    render_extractor,
+    repo_basenames,
+    repo_for_basename,
+)
+
+DEPGRAPH = resolve_data_dir("DEPGRAPH_DATA_DIR")
 HOME = Path.home()
 
 
@@ -65,7 +71,7 @@ def repo_for_path(abs_path: str) -> str | None:
     if parts[: len(home_parts)] != home_parts:
         return None
     seg = parts[len(home_parts)]
-    if seg.startswith("concorda"):
+    if seg in repo_basenames(DEPGRAPH):
         return seg
     return None
 
@@ -118,20 +124,17 @@ def collect_touched_files(payload: dict) -> dict[str, list[str]]:
 
 
 def run_extractor(repo: str, files: list[str]) -> tuple[int, str]:
-    """Map repo → extractor and run it. Return (exit_code, summary_line)."""
-    if repo == "concorda-api":
-        cmd = ["python3", str(DEPGRAPH / "extractors" / "extract_api.py")]
-        # extract_api currently runs over the whole app; --only narrows output
-        for f in files:
-            cmd += ["--only", f]
-    elif repo == "concorda-web":
-        cmd = ["npx", "tsx", str(DEPGRAPH / "extractors" / "extract_web.ts")]
-    elif repo == "concorda-expo":
-        cmd = ["npx", "tsx", str(DEPGRAPH / "extractors" / "extract_expo.ts")]
-    elif repo == "concorda-test":
-        cmd = ["npx", "tsx", str(DEPGRAPH / "extractors" / "extract_tests.ts")]
-    else:
+    """Map repo (basename) → extractor and run it. Return (exit_code, summary_line)."""
+    info = repo_for_basename(DEPGRAPH, repo)
+    if not info:
+        return 0, f"{repo}: not a configured repo"
+    cmd = render_extractor(info, DEPGRAPH)
+    if not cmd:
         return 0, f"{repo}: no extractor"
+    files_arg = info.get("files_arg")
+    if files_arg:
+        for f in files:
+            cmd += [files_arg, f]
     proc = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
     summary = (proc.stdout or "").strip().splitlines()
     last = summary[-1] if summary else ""
@@ -142,7 +145,7 @@ def run_extractor(repo: str, files: list[str]) -> tuple[int, str]:
 
 def run_reconcile() -> tuple[int, str]:
     proc = subprocess.run(
-        ["python3", str(DEPGRAPH / "extractors" / "reconcile.py")],
+        ["python3", str(TOOL_ROOT / "extractors" / "reconcile.py")],
         capture_output=True,
         text=True,
         timeout=60,

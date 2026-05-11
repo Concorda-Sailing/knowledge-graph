@@ -30,7 +30,11 @@ import os
 import sys
 from pathlib import Path
 
-DEPGRAPH = Path(os.environ.get("CONCORDA_DEPGRAPH_PATH", Path.home() / "concorda" / "depgraph")).resolve()
+TOOL_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(TOOL_ROOT))
+from lib.config import resolve_data_dir, primary_repo_path  # noqa: E402
+
+DEPGRAPH = resolve_data_dir("DEPGRAPH_DATA_DIR")
 NODES = DEPGRAPH / "nodes"
 INDEX_DIR = NODES / "_index"
 DEPENDENTS_INDEX = INDEX_DIR / "dependents.json"
@@ -100,7 +104,7 @@ def write_dependents_index(by_target: dict[str, list[dict]], node_count: int, ed
     payload = {
         "schema_version": INDEX_SCHEMA_VERSION,
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "git_commit": _git_head_concorda(),
+        "git_commit": _git_head_primary(),
         "node_count": node_count,
         "edge_count": edge_count,
         # Keys sorted so by_target itself serializes deterministically.
@@ -164,7 +168,7 @@ def write_corpus_meta(node_count: int, edge_count: int) -> tuple[bool, Path]:
         "schema_version": META_SCHEMA_VERSION,
         "regen_status": "complete",
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "git_commit": _git_head_concorda(),
+        "git_commit": _git_head_primary(),
         "node_count": node_count,
         "edge_count": edge_count,
     }
@@ -187,14 +191,20 @@ def write_corpus_meta(node_count: int, edge_count: int) -> tuple[bool, Path]:
     return True, CORPUS_META
 
 
-def _git_head_concorda() -> str | None:
-    head = Path.home() / "concorda-api" / ".git" / "HEAD"
+def _git_head_primary() -> str | None:
+    """Return the first 12 chars of the primary repo's git HEAD, or None.
+    Primary repo is determined by [project] primary_repo in project.toml,
+    falling back to the first [repos.*] table."""
+    repo_path = primary_repo_path(DEPGRAPH)
+    if repo_path is None:
+        return None
+    head = repo_path / ".git" / "HEAD"
     if not head.exists():
         return None
     try:
         ref = head.read_text().strip()
         if ref.startswith("ref:"):
-            ref_path = Path.home() / "concorda-api" / ".git" / ref.split(" ", 1)[1]
+            ref_path = repo_path / ".git" / ref.split(" ", 1)[1]
             if ref_path.exists():
                 return ref_path.read_text().strip()[:12]
         return ref[:12]

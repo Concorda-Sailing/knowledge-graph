@@ -23,63 +23,28 @@ from pathlib import Path
 # Tool location (where this script lives) — schemas, framework code.
 TOOL_ROOT = Path(__file__).resolve().parent.parent
 
-# Project data location. Source priority:
-#   1. DEPGRAPH_DATA_DIR env var (new name; project-agnostic)
-#   2. CONCORDA_DEPGRAPH_PATH env var (legacy; Concorda-flavored)
-#   3. Default: ~/concorda/depgraph (legacy in-place location)
-#
-# Pass 2 will flip the default to fail-loud when neither env var is set.
-DEPGRAPH = Path(
-    os.environ.get("DEPGRAPH_DATA_DIR")
-    or os.environ.get("CONCORDA_DEPGRAPH_PATH")
-    or (Path.home() / "concorda" / "depgraph")
-).resolve()
+# Make the shared config helpers importable.
+sys.path.insert(0, str(TOOL_ROOT))
+from lib.config import (  # noqa: E402
+    resolve_data_dir,
+    load_project_config,
+    project_repos,
+    project_primary_repo,
+    primary_repo_path,
+    render_extractor,
+    repo_basenames,
+    repo_for_basename,
+)
+
+# Project data location. Resolved from DEPGRAPH_DATA_DIR or by walking
+# cwd ancestors looking for project.toml + nodes/.
+DEPGRAPH = resolve_data_dir("DEPGRAPH_DATA_DIR")
 NODES = DEPGRAPH / "nodes"
 DEPENDENTS_INDEX = NODES / "_index" / "dependents.json"
 CORPUS_META = NODES / "_meta.json"
 TELEMETRY_DIR = DEPGRAPH / "telemetry"
 INJECTIONS_LOG = TELEMETRY_DIR / "injections.jsonl"
 ACKS_LOG = TELEMETRY_DIR / "acknowledgments.jsonl"
-
-
-def load_project_config() -> dict:
-    """Read project.toml from DEPGRAPH/.. (the project root, one level up
-    from the data dir). Returns {} if missing. Used to resolve
-    project-specific paths (e.g. which repos this project scans)."""
-    candidates = [DEPGRAPH / "project.toml", DEPGRAPH.parent / "project.toml"]
-    for cfg in candidates:
-        if not cfg.exists():
-            continue
-        try:
-            import tomllib
-        except ImportError:
-            try:
-                import tomli as tomllib  # type: ignore
-            except ImportError:
-                return {}
-        try:
-            return tomllib.loads(cfg.read_text())
-        except Exception:
-            return {}
-    return {}
-
-
-# Concorda-default repo mapping (overridden by project.toml [repos] table).
-_DEFAULT_REPOS = {
-    "api": "concorda-api",
-    "web": "concorda-web",
-    "expo": "concorda-expo",
-    "test": "concorda-test",
-}
-
-
-def project_repos() -> dict:
-    """{logical_name: filesystem_dir} for the current project. Falls back
-    to the Concorda defaults if no project.toml is configured. Used by
-    extractors and the memory-sync codepath."""
-    cfg = load_project_config()
-    repos = (cfg.get("repos") or {}) if cfg else {}
-    return repos or dict(_DEFAULT_REPOS)
 
 
 def mark_regen_in_progress() -> None:
@@ -143,7 +108,7 @@ def cmd_regen(args: argparse.Namespace) -> int:
         if rc != 0:
             failed.append(label)
     print("--- reconcile")
-    rc = subprocess.call(["python3", str(DEPGRAPH / "extractors" / "reconcile.py")])
+    rc = subprocess.call(["python3", str(TOOL_ROOT / "extractors" / "reconcile.py")])
     if rc != 0:
         failed.append("reconcile")
     if failed:
@@ -337,19 +302,21 @@ def cmd_commit_summary(args: argparse.Namespace) -> int:
 
     deps_index = load_dependents_index()
 
+    known_basenames = repo_basenames(DEPGRAPH)
+
     def _repo_relative(p: str) -> tuple[str, str] | None:
         ap = Path(p).expanduser().resolve()
         parts = ap.parts
         home_parts = home.parts
         if len(parts) <= len(home_parts) or parts[: len(home_parts)] != home_parts:
-            # Likely already a repo-relative path
-            for repo_name in ("concorda-api", "concorda-web", "concorda-test", "concorda-expo"):
+            # Likely already a repo-relative path — try each configured repo.
+            for repo_name in known_basenames:
                 cand = home / repo_name / p
                 if cand.exists():
                     return repo_name, p
             return None
         seg = parts[len(home_parts)]
-        if not seg.startswith("concorda"):
+        if seg not in known_basenames:
             return None
         return seg, "/".join(parts[len(home_parts) + 1 :])
 

@@ -33,11 +33,12 @@ import os
 import sys
 from pathlib import Path
 
-DEPGRAPH = Path(
-    os.environ.get("DEPGRAPH_DATA_DIR")
-    or os.environ.get("CONCORDA_DEPGRAPH_PATH")
-    or (Path.home() / "concorda" / "depgraph")
-).resolve()
+# Framework code lives one level up from this script.
+TOOL_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(TOOL_ROOT))
+from lib.config import resolve_data_dir, project_repos, repo_basenames  # noqa: E402
+
+DEPGRAPH = resolve_data_dir("DEPGRAPH_DATA_DIR")
 NODES = DEPGRAPH / "nodes"
 DEPENDENTS_INDEX = NODES / "_index" / "dependents.json"
 CORPUS_META = NODES / "_meta.json"
@@ -48,7 +49,21 @@ DOSSIER_LINE_LIMIT = 200
 TRANSITIVE_DEPTH = 3
 DEPENDENTS_PER_DEPTH_CAP = 30
 NODE_SCHEMA_VERSION = 1
-EXPECTED_EXTRACTORS = ("extract_api", "extract_web", "extract_tests")
+
+
+def expected_extractor_stems() -> list[str]:
+    """Manifest stems we expect to exist after a clean regen, derived from
+    each [repos.<key>].extractor command (basename of its last token)."""
+    out: list[str] = []
+    for info in project_repos(DEPGRAPH).values():
+        ext = info.get("extractor")
+        if not ext:
+            continue
+        last = ext[-1].format(data_dir=str(DEPGRAPH), path=str(info["path"]))
+        stem = Path(last).stem
+        if stem and stem not in out:
+            out.append(stem)
+    return out
 
 
 def _log_injection(tool: str, file_path: str, node_ids: list[str]) -> None:
@@ -99,7 +114,7 @@ def load_meta_and_status() -> tuple[dict, list[str]]:
     # Defect #5: if any expected extractor's manifest is missing, surface it.
     if MANIFESTS_DIR.exists():
         present = {f.stem for f in MANIFESTS_DIR.glob("*.json")}
-        missing = [e for e in EXPECTED_EXTRACTORS if e not in present]
+        missing = [e for e in expected_extractor_stems() if e not in present]
         if missing:
             banners.append(
                 "> ⚠ Missing extractor manifest(s): " + ", ".join(missing) +
@@ -150,7 +165,7 @@ def repo_relative(abs_path: str) -> tuple[str, str] | None:
     if parts[: len(home_parts)] != home_parts:
         return None
     seg = parts[len(home_parts)]
-    if not seg.startswith("concorda"):
+    if seg not in repo_basenames(DEPGRAPH):
         return None
     rel = "/".join(parts[len(home_parts) + 1 :])
     return seg, rel
