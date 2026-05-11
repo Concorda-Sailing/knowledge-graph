@@ -13,6 +13,43 @@
     <span class="pill">state: <span class="state-{{ ont.dossier_state }}">{{ ont.dossier_state }}</span></span>
   </div>
 
+  {% if collisions %}
+  <div class="collision-banner">
+    <strong>⚠ Mediation collision</strong> —
+    {% for c in collisions %}
+      <code>{{ c.mechanism }}</code> mediates
+      {% for r in c.relationships %}{% if r.id != ont.id %}<a href="/graph/domain/{{ r.id }}"><code>{{ r.id }}</code></a>{% if not loop.last %}, {% endif %}{% endif %}{% endfor %}
+      and this relationship.
+    {% endfor %}
+    Two conceptually-distinct relationships share the same mediation
+    mechanism. Read both dossiers and audit whether the shared storage
+    is intentional or a category error.
+  </div>
+  {% endif %}
+
+  {% if ont.subkind == "relationship" %}
+  <div class="rel-grid">
+    <div class="rel-cell"><span class="lbl">from</span>
+      <a href="/graph/domain/{{ ont.from }}"><code>{{ ont.from }}</code></a>
+    </div>
+    <div class="rel-cell"><span class="lbl">predicate</span>
+      <span class="rel-predicate">{{ ont.predicate }}</span>
+    </div>
+    <div class="rel-cell"><span class="lbl">to</span>
+      <a href="/graph/domain/{{ ont.to }}"><code>{{ ont.to }}</code></a>
+    </div>
+    <div class="rel-cell"><span class="lbl">mediated by</span>
+      <code>{{ ont.mediated_by }}</code>
+    </div>
+    <div class="rel-cell"><span class="lbl">cardinality</span>
+      <code>{{ ont.cardinality }}</code>
+    </div>
+    <div class="rel-cell"><span class="lbl">lifecycle</span>
+      <code>{{ ont.lifecycle }}</code>
+    </div>
+  </div>
+  {% endif %}
+
   {% if ont.summary %}
   <div class="dossier" style="margin-bottom: 14px;">
     <h2>Summary</h2>
@@ -30,6 +67,37 @@
     </div>
 
     <aside class="side">
+      {% if relationships and (relationships.outgoing or relationships.incoming) %}
+      <div class="card">
+        <h3>Relationships ({{ relationships.outgoing|length + relationships.incoming|length }})</h3>
+        {% if relationships.outgoing %}
+        <div class="rel-section">
+          <div class="rel-section-label">outgoing</div>
+          <ul>
+          {% for r in relationships.outgoing %}
+            <li>
+              <a href="/graph/domain/{{ r.id }}">{{ r.predicate }}</a>
+              <div class="where">→ <a href="/graph/domain/{{ r.to }}">{{ r.to }}</a></div>
+            </li>
+          {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+        {% if relationships.incoming %}
+        <div class="rel-section">
+          <div class="rel-section-label">incoming</div>
+          <ul>
+          {% for r in relationships.incoming %}
+            <li>
+              <a href="/graph/domain/{{ r.from }}">{{ r.from }}</a>
+              <div class="where">{{ r.predicate }} → here</div>
+            </li>
+          {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
       {% if ont.aliases %}
       <div class="card">
         <h3>Aliases</h3>

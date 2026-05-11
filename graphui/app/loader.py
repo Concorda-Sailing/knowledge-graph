@@ -293,6 +293,52 @@ def load_domain_by_id(ont_id: str) -> dict | None:
     return None
 
 
+def relationships_for(entity_id: str) -> dict[str, list[dict]]:
+    """Return {'outgoing': [...], 'incoming': [...]} relationship entities
+    that touch `entity_id`. Empty lists if entity_id is itself a
+    relationship or has no edges."""
+    out: dict[str, list[dict]] = {"outgoing": [], "incoming": []}
+    for n in load_logigraph_nodes()["domain"]:
+        if n.get("subkind") != "relationship":
+            continue
+        if n.get("from") == entity_id:
+            out["outgoing"].append(n)
+        if n.get("to") == entity_id:
+            out["incoming"].append(n)
+    return out
+
+
+def mediation_collisions() -> list[dict]:
+    """All current mediation collisions in the relationship corpus.
+    Mirrors extractors/reconcile.py::detect_mediation_collisions but
+    reads from the live in-memory node set so the UI doesn't depend on
+    a regen run."""
+    by_mech: dict[str, list[dict]] = {}
+    for n in load_logigraph_nodes()["domain"]:
+        if n.get("subkind") != "relationship":
+            continue
+        mech = n.get("mediated_by", "")
+        if not mech:
+            continue
+        head = mech.split("(", 1)[0].strip().rstrip(",").lower()
+        for piece in [p.strip() for p in head.split(" and ")]:
+            if not piece:
+                continue
+            by_mech.setdefault(piece, []).append(n)
+    return [
+        {"mechanism": m, "relationships": rels}
+        for m, rels in sorted(by_mech.items())
+        if len({r["id"] for r in rels}) > 1
+    ]
+
+
+def collisions_for_relationship(rel_id: str) -> list[dict]:
+    return [
+        c for c in mediation_collisions()
+        if any(r["id"] == rel_id for r in c["relationships"])
+    ]
+
+
 def read_dossier(rel_path: str | None, root: Path) -> str | None:
     if not rel_path:
         return None

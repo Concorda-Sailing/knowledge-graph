@@ -250,6 +250,11 @@ def domain_detail(request: Request, ont_id: str) -> HTMLResponse:
         loader.LOGIGRAPH,
         [p for p in (ont.get("_node_file"), ont.get("dossier")) if p],
     )
+    relationships = loader.relationships_for(ont_id)
+    collisions = (
+        loader.collisions_for_relationship(ont_id)
+        if ont.get("subkind") == "relationship" else []
+    )
     return TEMPLATES.TemplateResponse(
         request,
         "domain.html",
@@ -257,6 +262,8 @@ def domain_detail(request: Request, ont_id: str) -> HTMLResponse:
             "ont": ont,
             "dossier_html": dossier_html,
             "history": history,
+            "relationships": relationships,
+            "collisions": collisions,
         },
     )
 
