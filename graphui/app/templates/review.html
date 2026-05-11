@@ -2,12 +2,12 @@
 {% block title %}review queue{% endblock %}
 {% block content %}
 <section>
-  <h2>Review queue — Tier {{ tier }}{% if kind %} · {{ kind }}{% endif %}</h2>
-  <p class="legend">{{ rows|length }} llm_drafted dossiers awaiting review, ranked by dependent count. Click into the first one and use the prev/next links inside the dossier to walk the queue.</p>
+  <h2>Review queue{% if tier %} — Tier {{ tier }}{% endif %}{% if kind %} · {{ kind }}{% endif %}</h2>
+  <p class="legend">{{ rows|length }} llm_drafted dossier(s) awaiting review. Click any row to open the detail page; depgraph nodes are ranked by dependent count, logigraph nodes sort to the bottom (fan_out = 0).</p>
 
   {% if rows %}
     <p style="margin: 12px 0;">
-      <a class="idref" href="/graph/node/{{ rows[0].id }}"><strong>Start review →</strong></a>
+      <a class="idref" href="{{ rows[0].href }}"><strong>Start review →</strong></a>
     </p>
   {% endif %}
 
@@ -27,7 +27,7 @@
         <td class="numeric">{{ loop.index }}</td>
         <td class="kind">{{ r.kind }}</td>
         <td class="numeric">{{ r.fan_out }}</td>
-        <td><a href="/graph/node/{{ r.id }}">{{ r.title or r.id.rsplit('::', 1)[-1] }}</a></td>
+        <td><a href="{{ r.href }}">{{ r.title or r.id.rsplit('::', 1)[-1] }}</a></td>
         <td class="src">{{ r.id }}</td>
       </tr>
     {% endfor %}
