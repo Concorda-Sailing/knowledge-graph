@@ -20,13 +20,66 @@ import subprocess
 import sys
 from pathlib import Path
 
-DEPGRAPH = Path(os.environ.get("CONCORDA_DEPGRAPH_PATH", Path.home() / "concorda" / "depgraph")).resolve()
+# Tool location (where this script lives) — schemas, framework code.
+TOOL_ROOT = Path(__file__).resolve().parent.parent
+
+# Project data location. Source priority:
+#   1. DEPGRAPH_DATA_DIR env var (new name; project-agnostic)
+#   2. CONCORDA_DEPGRAPH_PATH env var (legacy; Concorda-flavored)
+#   3. Default: ~/concorda/depgraph (legacy in-place location)
+#
+# Pass 2 will flip the default to fail-loud when neither env var is set.
+DEPGRAPH = Path(
+    os.environ.get("DEPGRAPH_DATA_DIR")
+    or os.environ.get("CONCORDA_DEPGRAPH_PATH")
+    or (Path.home() / "concorda" / "depgraph")
+).resolve()
 NODES = DEPGRAPH / "nodes"
 DEPENDENTS_INDEX = NODES / "_index" / "dependents.json"
 CORPUS_META = NODES / "_meta.json"
 TELEMETRY_DIR = DEPGRAPH / "telemetry"
 INJECTIONS_LOG = TELEMETRY_DIR / "injections.jsonl"
 ACKS_LOG = TELEMETRY_DIR / "acknowledgments.jsonl"
+
+
+def load_project_config() -> dict:
+    """Read project.toml from DEPGRAPH/.. (the project root, one level up
+    from the data dir). Returns {} if missing. Used to resolve
+    project-specific paths (e.g. which repos this project scans)."""
+    candidates = [DEPGRAPH / "project.toml", DEPGRAPH.parent / "project.toml"]
+    for cfg in candidates:
+        if not cfg.exists():
+            continue
+        try:
+            import tomllib
+        except ImportError:
+            try:
+                import tomli as tomllib  # type: ignore
+            except ImportError:
+                return {}
+        try:
+            return tomllib.loads(cfg.read_text())
+        except Exception:
+            return {}
+    return {}
+
+
+# Concorda-default repo mapping (overridden by project.toml [repos] table).
+_DEFAULT_REPOS = {
+    "api": "concorda-api",
+    "web": "concorda-web",
+    "expo": "concorda-expo",
+    "test": "concorda-test",
+}
+
+
+def project_repos() -> dict:
+    """{logical_name: filesystem_dir} for the current project. Falls back
+    to the Concorda defaults if no project.toml is configured. Used by
+    extractors and the memory-sync codepath."""
+    cfg = load_project_config()
+    repos = (cfg.get("repos") or {}) if cfg else {}
+    return repos or dict(_DEFAULT_REPOS)
 
 
 def mark_regen_in_progress() -> None:

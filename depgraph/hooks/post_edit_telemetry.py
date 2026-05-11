@@ -38,7 +38,11 @@ import re
 import sys
 from pathlib import Path
 
-DEPGRAPH = Path(os.environ.get("CONCORDA_DEPGRAPH_PATH", Path.home() / "concorda" / "depgraph")).resolve()
+DEPGRAPH = Path(
+    os.environ.get("DEPGRAPH_DATA_DIR")
+    or os.environ.get("CONCORDA_DEPGRAPH_PATH")
+    or (Path.home() / "concorda" / "depgraph")
+).resolve()
 TELEMETRY_DIR = DEPGRAPH / "telemetry"
 INJECTIONS_LOG = TELEMETRY_DIR / "injections.jsonl"
 ACKS_LOG = TELEMETRY_DIR / "acknowledgments.jsonl"

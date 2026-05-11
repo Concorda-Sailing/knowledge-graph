@@ -33,7 +33,11 @@ import os
 import sys
 from pathlib import Path
 
-DEPGRAPH = Path(os.environ.get("CONCORDA_DEPGRAPH_PATH", Path.home() / "concorda" / "depgraph")).resolve()
+DEPGRAPH = Path(
+    os.environ.get("DEPGRAPH_DATA_DIR")
+    or os.environ.get("CONCORDA_DEPGRAPH_PATH")
+    or (Path.home() / "concorda" / "depgraph")
+).resolve()
 NODES = DEPGRAPH / "nodes"
 DEPENDENTS_INDEX = NODES / "_index" / "dependents.json"
 CORPUS_META = NODES / "_meta.json"
