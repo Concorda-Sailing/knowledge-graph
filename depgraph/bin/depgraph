@@ -24,6 +24,9 @@ DEPGRAPH = Path(os.environ.get("CONCORDA_DEPGRAPH_PATH", Path.home() / "concorda
 NODES = DEPGRAPH / "nodes"
 DEPENDENTS_INDEX = NODES / "_index" / "dependents.json"
 CORPUS_META = NODES / "_meta.json"
+TELEMETRY_DIR = DEPGRAPH / "telemetry"
+INJECTIONS_LOG = TELEMETRY_DIR / "injections.jsonl"
+ACKS_LOG = TELEMETRY_DIR / "acknowledgments.jsonl"
 
 
 def mark_regen_in_progress() -> None:
@@ -928,6 +931,156 @@ def cmd_self_check(args: argparse.Namespace) -> int:
     return 0
 
 
+def _load_telemetry_events(path: Path, since_hours: int | None = None) -> list[dict]:
+    """Read a JSONL log; if since_hours is given, filter to events newer
+    than that. Returns an empty list if the file is missing or unreadable."""
+    if not path.exists():
+        return []
+    import datetime as _dt
+    cutoff = None
+    if since_hours is not None:
+        cutoff = _dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(hours=since_hours)
+    out: list[dict] = []
+    try:
+        with path.open() as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    ev = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if cutoff is not None:
+                    ts_str = ev.get("ts", "")
+                    try:
+                        ts = _dt.datetime.fromisoformat(ts_str)
+                    except ValueError:
+                        continue
+                    if ts < cutoff:
+                        continue
+                out.append(ev)
+    except OSError:
+        return []
+    return out
+
+
+def cmd_stats(args: argparse.Namespace) -> int:
+    """Corpus rollup + optional telemetry. Mirrors `logigraph stats`."""
+    # ---- corpus rollup --------------------------------------------------
+    by_kind_tier_state: dict[str, dict[str, dict[str, int]]] = {}
+    total = 0
+    dependents = load_dependents_index()
+    for nf in NODES.rglob("*.json"):
+        if nf.name.startswith("_"):
+            continue
+        if any(p.startswith("_") for p in nf.relative_to(NODES).parts):
+            continue
+        try:
+            d = json.loads(nf.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        nid = d.get("id")
+        if not nid:
+            continue
+        kind = d.get("kind", "?")
+        fan_out = len(dependents.get(nid) or [])
+        tier = "A" if fan_out >= 10 else "B" if fan_out >= 3 else "C"
+        # Compute dossier state inline (avoid importing the FastAPI loader).
+        rel = d.get("dossier")
+        if not rel:
+            state = "missing"
+        else:
+            dp = DEPGRAPH / rel
+            if not dp.exists():
+                state = "missing"
+            else:
+                state = "current"
+                text = dp.read_text()
+                if text.startswith("---"):
+                    try:
+                        end = text.index("\n---\n", 4)
+                        for line in text[4:end].splitlines():
+                            s = line.strip()
+                            if s.startswith("status:"):
+                                v = s.split(":", 1)[1].strip()
+                                if v in ("llm_drafted", "unreviewed"):
+                                    state = v
+                                break
+                    except ValueError:
+                        pass
+        by_kind_tier_state.setdefault(kind, {}).setdefault(tier, {}).setdefault(state, 0)
+        by_kind_tier_state[kind][tier][state] += 1
+        total += 1
+
+    print("# Depgraph stats")
+    print()
+    print(f"  total nodes: {total}")
+    print()
+    print("## Coverage (current+llm_drafted / total) by kind+tier")
+    print(f"  {'kind':<11} {'tier':<5} {'%':>5} {'total':>6} {'cur':>5} {'llm':>5} {'unr':>5} {'miss':>5}")
+    for kind in sorted(by_kind_tier_state):
+        for tier in ("A", "B", "C"):
+            buckets = by_kind_tier_state[kind].get(tier)
+            if not buckets:
+                continue
+            t = sum(buckets.values())
+            cur = buckets.get("current", 0)
+            llm = buckets.get("llm_drafted", 0)
+            unr = buckets.get("unreviewed", 0)
+            miss = buckets.get("missing", 0)
+            pct = int(round(100 * (cur + llm) / t)) if t else 0
+            print(f"  {kind:<11} {tier:<5} {pct:>4}% {t:>6} {cur:>5} {llm:>5} {unr:>5} {miss:>5}")
+
+    if args.telemetry:
+        injections = _load_telemetry_events(INJECTIONS_LOG)
+        acks = _load_telemetry_events(ACKS_LOG)
+        recent_injections = _load_telemetry_events(INJECTIONS_LOG, since_hours=24 * 7)
+        recent_acks = _load_telemetry_events(ACKS_LOG, since_hours=24 * 7)
+
+        print()
+        print("## Telemetry (all-time)")
+        print(f"  total injections:        {len(injections)}")
+        print(f"  total acknowledgments:   {len(acks)}")
+        print()
+        print("## Telemetry (last 7 days)")
+        print(f"  injections:              {len(recent_injections)}")
+        print(f"  acknowledgments:         {len(recent_acks)}")
+
+        node_inj: dict[str, int] = {}
+        node_ack: dict[str, int] = {}
+        for ev in injections:
+            nid = ev.get("node_id")
+            if nid:
+                node_inj[nid] = node_inj.get(nid, 0) + 1
+        for ev in acks:
+            nid = ev.get("node_id")
+            if nid:
+                node_ack[nid] = node_ack.get(nid, 0) + 1
+
+        if node_inj:
+            print()
+            print("## Top-injected nodes (all-time, with ack rate)")
+            ranked = sorted(node_inj.items(), key=lambda kv: -kv[1])[:10]
+            print(f"  {'inj':>5}  {'ack':>5}  {'rate':>5}  node")
+            print(f"  {'-'*5}  {'-'*5}  {'-'*5}  {'-'*60}")
+            for nid, inj_n in ranked:
+                ack_n = node_ack.get(nid, 0)
+                rate = (ack_n / inj_n) if inj_n > 0 else 0.0
+                print(f"  {inj_n:>5}  {ack_n:>5}  {rate*100:>4.0f}%  {nid}")
+
+            low_ack = [(nid, inj_n, node_ack.get(nid, 0))
+                       for nid, inj_n in node_inj.items()
+                       if inj_n >= 3 and (node_ack.get(nid, 0) / inj_n) < 0.3]
+            if low_ack:
+                print()
+                print("## Low ack rate — candidates for dossier rework")
+                for nid, inj_n, ack_n in sorted(low_ack, key=lambda x: -x[1])[:10]:
+                    print(f"  {nid}: {inj_n} injected, {ack_n} acknowledged")
+
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(prog="depgraph")
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -956,6 +1109,11 @@ def main() -> int:
 
     p_sc = sub.add_parser("self-check")
     p_sc.set_defaults(func=cmd_self_check)
+
+    p_stats = sub.add_parser("stats", help="Corpus coverage + (optional) telemetry rollup")
+    p_stats.add_argument("--telemetry", action="store_true",
+                         help="Include injection/ack telemetry (last 7d + all-time)")
+    p_stats.set_defaults(func=cmd_stats)
 
     p_cs = sub.add_parser("commit-summary", help="Compact summary for commit body trailer")
     p_cs.add_argument("files", nargs="*", help="Files to summarize; empty = git diff --name-only")
