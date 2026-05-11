@@ -269,7 +269,8 @@ def cmd_validate(args: argparse.Namespace) -> int:
     except ImportError:
         print("jsonschema not installed; install with: pip install jsonschema", file=sys.stderr)
         return 1
-    schema = json.loads((DEPGRAPH / "schema" / "node.schema.json").read_text())
+    # Schema travels with the tool framework; node data lives in DEPGRAPH.
+    schema = json.loads((TOOL_ROOT / "schema" / "node.schema.json").read_text())
     bad = 0
     for node_file in NODES.rglob("*.json"):
         if node_file.name.startswith("_") or any(p.startswith("_") for p in node_file.parts):
