@@ -36,7 +36,7 @@ from pathlib import Path
 # Framework code lives one level up from this script.
 TOOL_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(TOOL_ROOT))
-from lib.config import resolve_data_dir, project_repos, repo_basenames  # noqa: E402
+from lib.config import resolve_data_dir, load_project_config, project_repos, repo_basenames  # noqa: E402
 
 DEPGRAPH = resolve_data_dir("DEPGRAPH_DATA_DIR")
 NODES = DEPGRAPH / "nodes"
@@ -479,8 +479,11 @@ def main() -> int:
     if not rendered_blocks:
         return 0
 
+    cfg = load_project_config(DEPGRAPH)
+    project_name = (cfg.get("project") or {}).get("name", "")
+    header = f"# 📍 {project_name} depgraph context\n\n" if project_name else "# 📍 depgraph context\n\n"
     body = (
-        "# 📍 Concorda depgraph context\n\n"
+        header
         + "\n\n---\n\n".join(rendered_blocks)
         + "\n\n---\n\n"
         "_Reminder: this graph reduces blind spots, it does not make the change safe._ "

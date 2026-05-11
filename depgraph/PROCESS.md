@@ -68,7 +68,7 @@ If the hook is unavailable (running outside Claude Code, working in a different 
 
 ```bash
 # Dump everything the hook would inject for a given file
-bin/depgraph context concorda-api/routers/invite.py
+bin/depgraph context <api-repo>/routers/invite.py
 
 # Or, for a specific node id
 bin/depgraph context "POST::/api/invite/{invite_code}/accept"

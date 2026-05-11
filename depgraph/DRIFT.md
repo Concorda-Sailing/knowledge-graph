@@ -212,7 +212,7 @@ The honest framing: structural drift is mostly mechanically catchable; intent dr
 
 ## 16. Cross-repo extractors disagree about node ids
 
-**Symptom.** `concorda-test` Playwright spec hits `POST /api/invite/{code}/accept`. The test extractor creates an edge to `endpoint::POST::/api/invite/{code}/accept`. The api extractor produces `endpoint::POST::/api/invite/{invite_code}/accept` (different param name). They never link.
+**Symptom.** A test-repo Playwright spec hits `POST /api/invite/{code}/accept`. The test extractor creates an edge to `endpoint::POST::/api/invite/{code}/accept`. The api extractor produces `endpoint::POST::/api/invite/{invite_code}/accept` (different param name). They never link.
 
 **Detection.** Reconciler normalizes path-param names to positional placeholders (`{0}`, `{1}`, …) before id matching. Both ids resolve to the same canonical form.
 

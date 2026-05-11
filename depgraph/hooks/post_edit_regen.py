@@ -14,7 +14,7 @@ Wire it up in .claude/settings.json:
       "Stop": [{
         "hooks": [{
           "type": "command",
-          "command": "python3 ~/concorda/depgraph/hooks/post_edit_regen.py"
+          "command": "python3 ~/tools/depgraph/hooks/post_edit_regen.py"
         }]
       }]
     }
@@ -154,9 +154,11 @@ def run_reconcile() -> tuple[int, str]:
 
 
 def sync_memory_mirror() -> tuple[bool, str]:
-    """Mirror canonical memories into concorda/memory/ so they survive a
-    ~/.claude/ wipe. Best-effort: never fails the Stop hook."""
-    canonical = Path.home() / ".claude" / "projects" / "-home-lgreenlee" / "memory"
+    """Mirror canonical memories into the project's configured mirror dir
+    (project.toml [memory] mirror) so they survive a ~/.claude/ wipe.
+    Best-effort: never fails the Stop hook."""
+    home_encoded = str(Path.home()).replace("/", "-")
+    canonical = Path.home() / ".claude" / "projects" / home_encoded / "memory"
     if not canonical.exists():
         return False, "memory: canonical dir missing"
     proc = subprocess.run(
@@ -176,8 +178,8 @@ def main() -> int:
     files = collect_touched_files(payload)
 
     # Always sync the memory mirror — regardless of whether any tracked file
-    # was touched. Memory writes land in ~/.claude/, not concorda-*, so the
-    # repo-touch check below would otherwise skip them.
+    # was touched. Memory writes land in ~/.claude/, not in tracked repos, so
+    # the repo-touch check below would otherwise skip them.
     mem_ok, mem_summary = sync_memory_mirror()
 
     if not files:

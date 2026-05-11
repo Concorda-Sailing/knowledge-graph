@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "concorda.depgraph.dependents",
-  "title": "Concorda dependency-graph reverse index",
+  "$id": "depgraph.dependents",
+  "title": "Dependency-graph reverse index",
   "description": "Materialized inverse of every node's depends_on across the corpus. One file per regen, owned by reconcile.py. Per-node JSON files do NOT carry dependents; this file is the single source of truth for reverse lookups, so a regen that changes only edges does not touch any node file. Written atomically (tmp + rename).",
   "type": "object",
   "required": ["generated_at", "git_commit", "by_target"],

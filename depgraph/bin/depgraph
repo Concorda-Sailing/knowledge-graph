@@ -120,7 +120,7 @@ def cmd_regen(args: argparse.Namespace) -> int:
 def find_nodes_for_target(target: str) -> list[Path]:
     """If `target` is a file path, return nodes whose source.path matches.
     Otherwise treat it as a node id. Node ids contain `::` separators
-    (e.g. `concorda-api::models/foo.py::Bar` or `GET::/api/x`); a `/` in
+    (e.g. `<repo>::models/foo.py::Bar` or `GET::/api/x`); a `/` in
     the target alone isn't enough to treat it as a path."""
     out: list[Path] = []
     is_id = "::" in target
@@ -280,7 +280,7 @@ def cmd_commit_summary(args: argparse.Namespace) -> int:
         print("Depgraph: no files in diff (or none changed).")
         return 0
 
-    # Resolve paths to absolute, then to (repo, rel) per concorda convention.
+    # Resolve paths to absolute, then to (repo, rel) per project.toml repos.
     home = Path.home()
     by_id: dict[str, dict] = {}
     by_source: dict[tuple[str, str], list[str]] = {}
@@ -429,15 +429,27 @@ def cmd_commit_summary(args: argparse.Namespace) -> int:
 
 def cmd_memory_sync(args: argparse.Namespace) -> int:
     """Mirror Claude's project memories from ~/.claude/.../memory/ into
-    ~/concorda/memory/ for version control.
+    the project's configured mirror dir (project.toml [memory] mirror,
+    relative to $HOME) for version control.
 
     Refuses to mirror files containing plaintext credentials — replaces those
     files with a redacted version that points back at the canonical path.
     """
     import re
 
-    canonical = Path.home() / ".claude" / "projects" / "-home-lgreenlee" / "memory"
-    mirror = Path.home() / "concorda" / "memory"
+    # Claude encodes the project name by replacing path separators in $HOME.
+    home_encoded = str(Path.home()).replace("/", "-")
+    canonical = Path.home() / ".claude" / "projects" / home_encoded / "memory"
+
+    cfg = load_project_config(DEPGRAPH)
+    mirror_rel = (cfg.get("memory") or {}).get("mirror")
+    if not mirror_rel:
+        print(
+            "memory-sync: no [memory] mirror configured in project.toml — nothing to do.",
+            file=sys.stderr,
+        )
+        return 1
+    mirror = Path.home() / mirror_rel
     if not canonical.exists():
         print(f"canonical memory dir not found: {canonical}", file=sys.stderr)
         return 1
@@ -733,8 +745,19 @@ def cmd_dossier_draft(args: argparse.Namespace) -> int:
 
     # Logigraph rules claiming this node
     rules_claiming = []
-    by_code_idx = Path.home() / "concorda" / "logigraph" / "nodes" / "_index" / "by_code.json"
-    if by_code_idx.exists():
+    # Optional: surface logigraph rules claiming this depgraph node.
+    # Resolves from LOGIGRAPH_DATA_DIR or [logigraph].data_dir in project.toml.
+    cfg = load_project_config(DEPGRAPH)
+    logigraph_dir_str = (
+        os.environ.get("LOGIGRAPH_DATA_DIR")
+        or (cfg.get("logigraph") or {}).get("data_dir")
+    )
+    by_code_idx = (
+        Path(logigraph_dir_str).expanduser() / "nodes" / "_index" / "by_code.json"
+        if logigraph_dir_str
+        else None
+    )
+    if by_code_idx is not None and by_code_idx.exists():
         try:
             idx = json.loads(by_code_idx.read_text())
             rules_claiming = idx.get("by_target", {}).get(nid, [])
@@ -745,7 +768,7 @@ def cmd_dossier_draft(args: argparse.Namespace) -> int:
     # Build the prompt
     dossier_path = DEPGRAPH / (node.get("dossier") or "")
 
-    prompt = f"""You are drafting a depgraph dossier for a Concorda code node. The
+    prompt = f"""You are drafting a depgraph dossier for a code node. The
 dossier will be injected at edit time to give future LLM collaborators
 the *intent* and *gotchas* that source code alone doesn't carry.
 
@@ -930,11 +953,18 @@ def cmd_dossier_bump(args: argparse.Namespace) -> int:
 
 
 def cmd_self_check(args: argparse.Namespace) -> int:
-    """Smoke-test: emit a fake PreToolUse payload and assert the hook produces something."""
+    """Smoke-test: emit a fake PreToolUse payload and assert the hook produces something.
+    The payload's file_path is synthesized from the first configured [repos.*] table."""
+    repos = project_repos(DEPGRAPH)
+    if not repos:
+        print("self-check: no [repos.*] configured in project.toml", file=sys.stderr)
+        return 1
+    first = next(iter(repos.values()))
+    sample_path = first["path"] / "self-check-fake.py"
     payload = json.dumps(
         {
             "tool_name": "Edit",
-            "tool_input": {"file_path": str(Path.home() / "concorda-api" / "routers" / "invite.py")},
+            "tool_input": {"file_path": str(sample_path)},
         }
     )
     proc = subprocess.run(
@@ -1140,7 +1170,7 @@ def main() -> int:
     p_cs.add_argument("files", nargs="*", help="Files to summarize; empty = git diff --name-only")
     p_cs.set_defaults(func=cmd_commit_summary)
 
-    p_ms = sub.add_parser("memory-sync", help="Mirror ~/.claude memories into concorda/memory/")
+    p_ms = sub.add_parser("memory-sync", help="Mirror ~/.claude memories into project.toml [memory] mirror dir")
     p_ms.set_defaults(func=cmd_memory_sync)
 
     p_dr = sub.add_parser("dossier-rank", help="Rank unreviewed/stale nodes by leverage (fan-out + recent-commit-frequency)")

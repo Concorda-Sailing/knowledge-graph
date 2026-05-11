@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "concorda.depgraph.node",
-  "title": "Concorda dependency-graph node",
+  "$id": "depgraph.node",
+  "title": "Dependency-graph node",
   "description": "One node = one addressable surface in the system: an HTTP endpoint, a React component, a hook, a service function, a SQLAlchemy model, or a test fixture. Nodes are written by extractors and read by Claude before edits.",
   "type": "object",
   "required": ["schema_version", "id", "kind", "source", "extractor", "structural_hash"],
@@ -33,7 +33,7 @@
       "required": ["repo", "path"],
       "description": "Where the symbol currently lives. Path is informational; node identity comes from `id` so renames don't orphan the file.",
       "properties": {
-        "repo": { "enum": ["concorda-api", "concorda-web", "concorda-expo", "concorda-test", "concorda"] },
+        "repo": { "type": "string", "description": "Repo basename (matches a [repos.<key>].path basename in the project's project.toml)." },
         "path": { "type": ["string", "null"], "description": "Repo-relative path. Null if unresolvable (e.g. dynamic route)." },
         "symbol": { "type": ["string", "null"], "description": "Function/class/component name in the file." },
         "line": { "type": ["integer", "null"], "description": "Best-effort line of the definition; null if inspect could not resolve it." }
