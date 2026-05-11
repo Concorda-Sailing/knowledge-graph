@@ -10,6 +10,7 @@
 
 <section class="coverage">
   <h2>Coverage matrix</h2>
+  <div class="scroll-x">
   <table class="cov">
     <thead>
       <tr>
@@ -42,6 +43,7 @@
     {% endfor %}
     </tbody>
   </table>
+  </div>
   <p class="legend">
     cell = <em>(current+drafted) / total</em> · color = % covered ·
     <span class="badge stale">⌛</span> stale · <span class="badge unreviewed">?</span> unreviewed
@@ -113,6 +115,7 @@
     </select>
     <span id="count" class="count"></span>
   </div>
+  <div class="scroll-x">
   <table class="nodes-tbl">
     <thead>
       <tr>
@@ -126,6 +129,7 @@
     </thead>
     <tbody id="rows"></tbody>
   </table>
+  </div>
 </section>
 
 <script>

@@ -48,6 +48,19 @@ def _link_ids(html_text: str) -> str:
     return code_re.sub(repl, html_text)
 
 
+_TABLE_RE = re.compile(r"<table>(.*?)</table>", re.DOTALL)
+
+
+def _wrap_tables(html_text: str) -> str:
+    """Wrap each rendered <table> in a scroll-x div so it can overflow
+    cleanly on narrow viewports without forcing the whole dossier to
+    scroll. Markdown's tables extension doesn't expose a wrapper option."""
+    return _TABLE_RE.sub(
+        lambda m: f'<div class="scroll-x"><table>{m.group(1)}</table></div>',
+        html_text,
+    )
+
+
 def render(text: str) -> str:
     body = strip_frontmatter(text)
     if _MD_AVAILABLE:
@@ -58,7 +71,7 @@ def render(text: str) -> str:
     else:
         # Plain-text fallback: escape and wrap in <pre>
         out = f"<pre>{html.escape(body)}</pre>"
-    return _link_ids(out)
+    return _link_ids(_wrap_tables(out))
 
 
 def first_paragraph(text: str, limit: int = 280) -> str:
