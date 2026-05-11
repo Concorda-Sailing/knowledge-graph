@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/components/dashboard/events-calendar.tsx",
     "symbol": "EventsCalendar",
-    "line": 91
+    "line": 92
   },
   "signature": {
     "name": "EventsCalendar",
@@ -19,61 +19,67 @@
     {
       "target": "concorda-web::src/hooks/use-constants.ts::useConstants",
       "via": "hook_call",
-      "where": "events-calendar.tsx:98",
+      "where": "events-calendar.tsx:99",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/lib/datetime.ts::ymdInOrgTz",
       "via": "hook_call",
-      "where": "events-calendar.tsx:102",
+      "where": "events-calendar.tsx:103",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/lib/datetime.ts::ymdInOrgTz",
       "via": "hook_call",
-      "where": "events-calendar.tsx:123",
+      "where": "events-calendar.tsx:124",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/lib/datetime.ts::ymdInOrgTz",
       "via": "hook_call",
-      "where": "events-calendar.tsx:125",
+      "where": "events-calendar.tsx:126",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/lib/datetime.ts::ymdInOrgTz",
       "via": "hook_call",
-      "where": "events-calendar.tsx:131",
+      "where": "events-calendar.tsx:132",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/lib/datetime.ts::ymdInOrgTz",
       "via": "hook_call",
-      "where": "events-calendar.tsx:205",
+      "where": "events-calendar.tsx:206",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
       "via": "hook_call",
-      "where": "events-calendar.tsx:252",
+      "where": "events-calendar.tsx:253",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
       "via": "hook_call",
-      "where": "events-calendar.tsx:254",
+      "where": "events-calendar.tsx:255",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/linkify-location.tsx::renderLocation",
+      "via": "hook_call",
+      "where": "events-calendar.tsx:277",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/lib/utils.ts::cn",
       "via": "hook_call",
-      "where": "events-calendar.tsx:362",
+      "where": "events-calendar.tsx:363",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/lib/utils.ts::cn",
       "via": "hook_call",
-      "where": "events-calendar.tsx:368",
+      "where": "events-calendar.tsx:369",
       "confidence": "exact"
     }
   ],

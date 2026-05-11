@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/app/members/socials/page.tsx",
     "symbol": "formatDate",
-    "line": 55
+    "line": 56
   },
   "signature": {
     "name": "formatDate",
@@ -19,13 +19,7 @@
     {
       "target": "concorda-web::src/lib/datetime.ts::ymdInOrgTz",
       "via": "hook_call",
-      "where": "page.tsx:56",
-      "confidence": "exact"
-    },
-    {
-      "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
-      "via": "hook_call",
-      "where": "page.tsx:62",
+      "where": "page.tsx:57",
       "confidence": "exact"
     },
     {
@@ -37,7 +31,13 @@
     {
       "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
       "via": "hook_call",
-      "where": "page.tsx:66",
+      "where": "page.tsx:64",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
+      "via": "hook_call",
+      "where": "page.tsx:67",
       "confidence": "exact"
     }
   ],

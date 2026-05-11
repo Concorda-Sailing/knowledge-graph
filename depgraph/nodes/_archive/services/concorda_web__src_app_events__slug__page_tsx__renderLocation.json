@@ -1,0 +1,26 @@
+{
+  "_archived_at": "2026-05-11T01:38:22.731241Z",
+  "_archived_reason": "domain_orphan_symbol_removed",
+  "depends_on": [],
+  "dossier": "dossiers/services/concorda_web__src_app_events__slug__page_tsx__renderLocation.md",
+  "external_consumers": [],
+  "extractor": "extract_web.ts",
+  "feature": null,
+  "id": "concorda-web::src/app/events/[slug]/page.tsx::renderLocation",
+  "kind": "service",
+  "schema_version": 1,
+  "signature": {
+    "kind": "service",
+    "name": "renderLocation"
+  },
+  "source": {
+    "line": 61,
+    "path": "src/app/events/[slug]/page.tsx",
+    "repo": "concorda-web",
+    "symbol": "renderLocation"
+  },
+  "structural_hash": "54570181b12e751b58fd38a4ac1c920f43514aae87da86de83712a23d9ceffc9",
+  "tests": [],
+  "title": "renderLocation",
+  "warnings": []
+}

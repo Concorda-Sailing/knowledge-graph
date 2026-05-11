@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/components/dashboard/schedule-card.tsx",
     "symbol": "ScheduleCard",
-    "line": 66
+    "line": 67
   },
   "signature": {
     "name": "ScheduleCard",
@@ -19,31 +19,37 @@
     {
       "target": "concorda-web::src/contexts/auth-context.tsx::useAuth",
       "via": "hook_call",
-      "where": "schedule-card.tsx:68",
+      "where": "schedule-card.tsx:69",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/hooks/use-toast.ts::useToast",
       "via": "hook_call",
-      "where": "schedule-card.tsx:69",
+      "where": "schedule-card.tsx:70",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/hooks/use-constants.ts::useConstants",
       "via": "hook_call",
-      "where": "schedule-card.tsx:74",
+      "where": "schedule-card.tsx:75",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/linkify-location.tsx::renderLocation",
+      "via": "hook_call",
+      "where": "schedule-card.tsx:160",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
       "via": "hook_call",
-      "where": "schedule-card.tsx:182",
+      "where": "schedule-card.tsx:183",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/lib/api.ts::eventsApi.requestToCrew",
       "via": "hook_call",
-      "where": "schedule-card.tsx:333",
+      "where": "schedule-card.tsx:334",
       "confidence": "exact"
     }
   ],

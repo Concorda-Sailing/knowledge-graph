@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/components/event-card.tsx",
     "symbol": "EventCard",
-    "line": 38
+    "line": 39
   },
   "signature": {
     "name": "EventCard",
@@ -19,31 +19,43 @@
     {
       "target": "concorda-web::src/hooks/use-constants.ts::useConstants",
       "via": "hook_call",
-      "where": "event-card.tsx:44",
+      "where": "event-card.tsx:45",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
       "via": "hook_call",
-      "where": "event-card.tsx:106",
+      "where": "event-card.tsx:107",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/linkify-location.tsx::renderLocation",
+      "via": "hook_call",
+      "where": "event-card.tsx:112",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
       "via": "hook_call",
-      "where": "event-card.tsx:156",
+      "where": "event-card.tsx:157",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
       "via": "hook_call",
-      "where": "event-card.tsx:158",
+      "where": "event-card.tsx:159",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/linkify-location.tsx::renderLocation",
+      "via": "hook_call",
+      "where": "event-card.tsx:165",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
       "via": "hook_call",
-      "where": "event-card.tsx:190",
+      "where": "event-card.tsx:191",
       "confidence": "exact"
     }
   ],

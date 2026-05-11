@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/app/members/socials/page.tsx",
     "symbol": "getPlanProgress",
-    "line": 93
+    "line": 94
   },
   "signature": {
     "name": "getPlanProgress",

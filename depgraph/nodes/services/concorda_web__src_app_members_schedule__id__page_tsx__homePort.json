@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/app/members/schedule/[id]/page.tsx",
     "symbol": "homePort",
-    "line": 47
+    "line": 48
   },
   "signature": {
     "name": "homePort",

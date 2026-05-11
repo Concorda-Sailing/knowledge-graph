@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/components/dashboard/crew-schedule-detail.tsx",
     "symbol": "CrewScheduleDetail",
-    "line": 37
+    "line": 38
   },
   "signature": {
     "name": "CrewScheduleDetail",
@@ -19,13 +19,19 @@
     {
       "target": "concorda-web::src/hooks/use-constants.ts::useConstants",
       "via": "hook_call",
-      "where": "crew-schedule-detail.tsx:41",
+      "where": "crew-schedule-detail.tsx:42",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
       "via": "hook_call",
-      "where": "crew-schedule-detail.tsx:64",
+      "where": "crew-schedule-detail.tsx:65",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/linkify-location.tsx::renderLocation",
+      "via": "hook_call",
+      "where": "crew-schedule-detail.tsx:70",
       "confidence": "exact"
     }
   ],

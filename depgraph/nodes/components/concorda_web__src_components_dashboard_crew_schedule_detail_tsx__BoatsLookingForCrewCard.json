@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/components/dashboard/crew-schedule-detail.tsx",
     "symbol": "BoatsLookingForCrewCard",
-    "line": 164
+    "line": 165
   },
   "signature": {
     "name": "BoatsLookingForCrewCard",
@@ -19,19 +19,19 @@
     {
       "target": "concorda-web::src/hooks/use-toast.ts::useToast",
       "via": "hook_call",
-      "where": "crew-schedule-detail.tsx:165",
+      "where": "crew-schedule-detail.tsx:166",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/lib/api.ts::regattaApi.getMatchRoster",
       "via": "hook_call",
-      "where": "crew-schedule-detail.tsx:176",
+      "where": "crew-schedule-detail.tsx:177",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/lib/api.ts::eventsApi.requestToCrew",
       "via": "hook_call",
-      "where": "crew-schedule-detail.tsx:185",
+      "where": "crew-schedule-detail.tsx:186",
       "confidence": "exact"
     }
   ],

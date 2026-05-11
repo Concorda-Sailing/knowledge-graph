@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/app/members/schedule/[id]/page.tsx",
     "symbol": "ScheduleDetailPage",
-    "line": 56
+    "line": 57
   },
   "signature": {
     "name": "ScheduleDetailPage",

@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/app/events/[slug]/checkin/page.tsx",
     "symbol": "CheckinPage",
-    "line": 25
+    "line": 26
   },
   "signature": {
     "name": "CheckinPage",
@@ -19,37 +19,43 @@
     {
       "target": "concorda-web::src/hooks/use-constants.ts::useConstants",
       "via": "hook_call",
-      "where": "page.tsx:33",
+      "where": "page.tsx:34",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/lib/api.ts::eventsApi.getBySlug",
       "via": "hook_call",
-      "where": "page.tsx:50",
+      "where": "page.tsx:51",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/lib/api.ts::eventsApi.checkin",
       "via": "hook_call",
-      "where": "page.tsx:70",
+      "where": "page.tsx:71",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
       "via": "hook_call",
-      "where": "page.tsx:113",
+      "where": "page.tsx:114",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
       "via": "hook_call",
-      "where": "page.tsx:140",
+      "where": "page.tsx:141",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
       "via": "hook_call",
-      "where": "page.tsx:187",
+      "where": "page.tsx:188",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/linkify-location.tsx::renderLocation",
+      "via": "hook_call",
+      "where": "page.tsx:198",
       "confidence": "exact"
     }
   ],

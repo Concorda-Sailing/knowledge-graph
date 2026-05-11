@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/app/members/socials/page.tsx",
     "symbol": "groupByMonth",
-    "line": 71
+    "line": 72
   },
   "signature": {
     "name": "groupByMonth",

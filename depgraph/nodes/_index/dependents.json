@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-05-10T21:44:37.191531+00:00",
+  "generated_at": "2026-05-11T01:38:22.782508+00:00",
   "git_commit": "dd72f2f60a11",
   "node_count": 1511,
-  "edge_count": 2074,
+  "edge_count": 2087,
   "by_target": {
     "DELETE::/api/admin/email-templates/{0}": [
       {
@@ -1737,13 +1737,13 @@
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
         "via": "string_url",
-        "where": "page.tsx:386",
+        "where": "page.tsx:366",
         "confidence": "fuzzy"
       },
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
         "via": "string_url",
-        "where": "page.tsx:390",
+        "where": "page.tsx:370",
         "confidence": "fuzzy"
       },
       {
@@ -8413,7 +8413,7 @@
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
         "via": "hook_call",
-        "where": "page.tsx:122",
+        "where": "page.tsx:102",
         "confidence": "exact"
       },
       {
@@ -8467,7 +8467,7 @@
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:83",
+        "where": "page.tsx:84",
         "confidence": "exact"
       },
       {
@@ -8521,7 +8521,7 @@
       {
         "source": "concorda-web::src/components/dashboard/schedule-card.tsx::ScheduleCard",
         "via": "hook_call",
-        "where": "schedule-card.tsx:68",
+        "where": "schedule-card.tsx:69",
         "confidence": "exact"
       },
       {
@@ -8621,7 +8621,7 @@
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:82",
+        "where": "page.tsx:83",
         "confidence": "exact"
       },
       {
@@ -8645,7 +8645,7 @@
       {
         "source": "concorda-web::src/components/dashboard/event-plan-panel.tsx::EventPlanPanel",
         "via": "hook_call",
-        "where": "event-plan-panel.tsx:59",
+        "where": "event-plan-panel.tsx:60",
         "confidence": "exact"
       },
       {
@@ -8671,13 +8671,13 @@
       {
         "source": "concorda-web::src/app/events/[slug]/checkin/page.tsx::CheckinPage",
         "via": "hook_call",
-        "where": "page.tsx:33",
+        "where": "page.tsx:34",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
         "via": "hook_call",
-        "where": "page.tsx:123",
+        "where": "page.tsx:103",
         "confidence": "exact"
       },
       {
@@ -8803,13 +8803,13 @@
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:84",
+        "where": "page.tsx:85",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/members/socials/page.tsx::SocialsPage",
         "via": "hook_call",
-        "where": "page.tsx:229",
+        "where": "page.tsx:230",
         "confidence": "exact"
       },
       {
@@ -8839,19 +8839,19 @@
       {
         "source": "concorda-web::src/components/dashboard/crew-schedule-detail.tsx::CrewScheduleDetail",
         "via": "hook_call",
-        "where": "crew-schedule-detail.tsx:41",
+        "where": "crew-schedule-detail.tsx:42",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/components/dashboard/event-plan-panel.tsx::EventPlanPanel",
         "via": "hook_call",
-        "where": "event-plan-panel.tsx:60",
+        "where": "event-plan-panel.tsx:61",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/components/dashboard/events-calendar.tsx::EventsCalendar",
         "via": "hook_call",
-        "where": "events-calendar.tsx:98",
+        "where": "events-calendar.tsx:99",
         "confidence": "exact"
       },
       {
@@ -8863,7 +8863,7 @@
       {
         "source": "concorda-web::src/components/dashboard/schedule-card.tsx::ScheduleCard",
         "via": "hook_call",
-        "where": "schedule-card.tsx:74",
+        "where": "schedule-card.tsx:75",
         "confidence": "exact"
       },
       {
@@ -8881,7 +8881,7 @@
       {
         "source": "concorda-web::src/components/event-card.tsx::EventCard",
         "via": "hook_call",
-        "where": "event-card.tsx:44",
+        "where": "event-card.tsx:45",
         "confidence": "exact"
       },
       {
@@ -9107,7 +9107,7 @@
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:81",
+        "where": "page.tsx:82",
         "confidence": "exact"
       },
       {
@@ -9119,7 +9119,7 @@
       {
         "source": "concorda-web::src/app/members/socials/page.tsx::SocialsPage",
         "via": "hook_call",
-        "where": "page.tsx:228",
+        "where": "page.tsx:229",
         "confidence": "exact"
       },
       {
@@ -9191,7 +9191,7 @@
       {
         "source": "concorda-web::src/components/dashboard/crew-schedule-detail.tsx::BoatsLookingForCrewCard",
         "via": "hook_call",
-        "where": "crew-schedule-detail.tsx:165",
+        "where": "crew-schedule-detail.tsx:166",
         "confidence": "exact"
       },
       {
@@ -9209,13 +9209,13 @@
       {
         "source": "concorda-web::src/components/dashboard/event-plan-panel.tsx::EventPlanPanel",
         "via": "hook_call",
-        "where": "event-plan-panel.tsx:58",
+        "where": "event-plan-panel.tsx:59",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/components/dashboard/event-plan-panel.tsx::InlineConfigCreate",
         "via": "hook_call",
-        "where": "event-plan-panel.tsx:612",
+        "where": "event-plan-panel.tsx:613",
         "confidence": "exact"
       },
       {
@@ -9239,7 +9239,7 @@
       {
         "source": "concorda-web::src/components/dashboard/schedule-card.tsx::ScheduleCard",
         "via": "hook_call",
-        "where": "schedule-card.tsx:69",
+        "where": "schedule-card.tsx:70",
         "confidence": "exact"
       },
       {
@@ -9277,7 +9277,7 @@
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:330",
+        "where": "page.tsx:331",
         "confidence": "exact"
       },
       {
@@ -10313,7 +10313,7 @@
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:270",
+        "where": "page.tsx:271",
         "confidence": "exact"
       },
       {
@@ -10355,7 +10355,7 @@
       {
         "source": "concorda-web::src/components/dashboard/event-plan-panel.tsx::EventPlanPanel",
         "via": "hook_call",
-        "where": "event-plan-panel.tsx:122",
+        "where": "event-plan-panel.tsx:123",
         "confidence": "exact"
       },
       {
@@ -10667,7 +10667,7 @@
       {
         "source": "concorda-web::src/app/members/socials/page.tsx::SocialsPage",
         "via": "hook_call",
-        "where": "page.tsx:247",
+        "where": "page.tsx:248",
         "confidence": "exact"
       },
       {
@@ -10787,19 +10787,19 @@
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:360",
+        "where": "page.tsx:361",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:393",
+        "where": "page.tsx:394",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/components/dashboard/event-plan-panel.tsx::EventPlanPanel",
         "via": "hook_call",
-        "where": "event-plan-panel.tsx:214",
+        "where": "event-plan-panel.tsx:215",
         "confidence": "exact"
       }
     ],
@@ -10807,7 +10807,7 @@
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
         "via": "hook_call",
-        "where": "page.tsx:318",
+        "where": "page.tsx:298",
         "confidence": "exact"
       }
     ],
@@ -10815,7 +10815,7 @@
       {
         "source": "concorda-web::src/app/events/[slug]/checkin/page.tsx::CheckinPage",
         "via": "hook_call",
-        "where": "page.tsx:70",
+        "where": "page.tsx:71",
         "confidence": "exact"
       }
     ],
@@ -10823,7 +10823,7 @@
       {
         "source": "concorda-web::src/components/dashboard/event-plan-panel.tsx::EventPlanPanel",
         "via": "hook_call",
-        "where": "event-plan-panel.tsx:237",
+        "where": "event-plan-panel.tsx:238",
         "confidence": "exact"
       }
     ],
@@ -10839,13 +10839,13 @@
       {
         "source": "concorda-web::src/app/events/[slug]/checkin/page.tsx::CheckinPage",
         "via": "hook_call",
-        "where": "page.tsx:50",
+        "where": "page.tsx:51",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
         "via": "hook_call",
-        "where": "page.tsx:218",
+        "where": "page.tsx:198",
         "confidence": "exact"
       }
     ],
@@ -10853,13 +10853,13 @@
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
         "via": "hook_call",
-        "where": "page.tsx:237",
+        "where": "page.tsx:217",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
         "via": "hook_call",
-        "where": "page.tsx:402",
+        "where": "page.tsx:382",
         "confidence": "exact"
       }
     ],
@@ -10867,37 +10867,37 @@
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:162",
+        "where": "page.tsx:163",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:245",
+        "where": "page.tsx:246",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:417",
+        "where": "page.tsx:418",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:662",
+        "where": "page.tsx:663",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:690",
+        "where": "page.tsx:691",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:751",
+        "where": "page.tsx:752",
         "confidence": "exact"
       }
     ],
@@ -10905,7 +10905,7 @@
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
         "via": "hook_call",
-        "where": "page.tsx:220",
+        "where": "page.tsx:200",
         "confidence": "exact"
       }
     ],
@@ -10913,49 +10913,49 @@
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:188",
+        "where": "page.tsx:189",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:277",
+        "where": "page.tsx:278",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:325",
+        "where": "page.tsx:326",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:420",
+        "where": "page.tsx:421",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:660",
+        "where": "page.tsx:661",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:688",
+        "where": "page.tsx:689",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:753",
+        "where": "page.tsx:754",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/components/dashboard/event-plan-panel.tsx::EventPlanPanel",
         "via": "hook_call",
-        "where": "event-plan-panel.tsx:132",
+        "where": "event-plan-panel.tsx:133",
         "confidence": "exact"
       },
       {
@@ -10969,13 +10969,13 @@
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
         "via": "hook_call",
-        "where": "page.tsx:246",
+        "where": "page.tsx:226",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:194",
+        "where": "page.tsx:195",
         "confidence": "exact"
       }
     ],
@@ -10983,7 +10983,7 @@
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
         "via": "hook_call",
-        "where": "page.tsx:219",
+        "where": "page.tsx:199",
         "confidence": "exact"
       }
     ],
@@ -11033,7 +11033,7 @@
       {
         "source": "concorda-web::src/app/members/socials/page.tsx::SocialsPage",
         "via": "hook_call",
-        "where": "page.tsx:261",
+        "where": "page.tsx:262",
         "confidence": "exact"
       },
       {
@@ -11075,7 +11075,7 @@
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:489",
+        "where": "page.tsx:490",
         "confidence": "exact"
       },
       {
@@ -11103,19 +11103,19 @@
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:748",
+        "where": "page.tsx:749",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/components/dashboard/crew-schedule-detail.tsx::BoatsLookingForCrewCard",
         "via": "hook_call",
-        "where": "crew-schedule-detail.tsx:185",
+        "where": "crew-schedule-detail.tsx:186",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/components/dashboard/schedule-card.tsx::ScheduleCard",
         "via": "hook_call",
-        "where": "schedule-card.tsx:333",
+        "where": "schedule-card.tsx:334",
         "confidence": "exact"
       }
     ],
@@ -11123,7 +11123,7 @@
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:1455",
+        "where": "page.tsx:1456",
         "confidence": "exact"
       },
       {
@@ -11137,13 +11137,13 @@
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:654",
+        "where": "page.tsx:655",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:686",
+        "where": "page.tsx:687",
         "confidence": "exact"
       },
       {
@@ -11175,7 +11175,7 @@
       {
         "source": "concorda-web::src/components/dashboard/event-plan-panel.tsx::EventPlanPanel",
         "via": "hook_call",
-        "where": "event-plan-panel.tsx:224",
+        "where": "event-plan-panel.tsx:225",
         "confidence": "exact"
       }
     ],
@@ -11199,7 +11199,7 @@
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:437",
+        "where": "page.tsx:438",
         "confidence": "exact"
       }
     ],
@@ -11207,7 +11207,7 @@
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:406",
+        "where": "page.tsx:407",
         "confidence": "exact"
       }
     ],
@@ -11215,19 +11215,19 @@
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:243",
+        "where": "page.tsx:244",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:416",
+        "where": "page.tsx:417",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/components/dashboard/event-plan-panel.tsx::EventPlanPanel",
         "via": "hook_call",
-        "where": "event-plan-panel.tsx:264",
+        "where": "event-plan-panel.tsx:265",
         "confidence": "exact"
       }
     ],
@@ -11235,7 +11235,7 @@
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
         "via": "hook_call",
-        "where": "page.tsx:369",
+        "where": "page.tsx:349",
         "confidence": "exact"
       },
       {
@@ -11589,7 +11589,7 @@
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
         "via": "hook_call",
-        "where": "page.tsx:335",
+        "where": "page.tsx:315",
         "confidence": "exact"
       }
     ],
@@ -11611,7 +11611,7 @@
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
         "via": "hook_call",
-        "where": "page.tsx:273",
+        "where": "page.tsx:253",
         "confidence": "exact"
       },
       {
@@ -11715,7 +11715,7 @@
       {
         "source": "concorda-web::src/components/dashboard/event-plan-panel.tsx::InlineConfigCreate",
         "via": "hook_call",
-        "where": "event-plan-panel.tsx:638",
+        "where": "event-plan-panel.tsx:639",
         "confidence": "exact"
       },
       {
@@ -12063,7 +12063,7 @@
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:269",
+        "where": "page.tsx:270",
         "confidence": "exact"
       },
       {
@@ -12075,7 +12075,7 @@
       {
         "source": "concorda-web::src/components/dashboard/event-plan-panel.tsx::EventPlanPanel",
         "via": "hook_call",
-        "where": "event-plan-panel.tsx:121",
+        "where": "event-plan-panel.tsx:122",
         "confidence": "exact"
       }
     ],
@@ -12095,7 +12095,7 @@
       {
         "source": "concorda-web::src/components/dashboard/event-plan-panel.tsx::EventPlanPanel",
         "via": "hook_call",
-        "where": "event-plan-panel.tsx:123",
+        "where": "event-plan-panel.tsx:124",
         "confidence": "exact"
       },
       {
@@ -12383,7 +12383,7 @@
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:181",
+        "where": "page.tsx:182",
         "confidence": "exact"
       }
     ],
@@ -12397,7 +12397,7 @@
       {
         "source": "concorda-web::src/components/dashboard/crew-schedule-detail.tsx::BoatsLookingForCrewCard",
         "via": "hook_call",
-        "where": "crew-schedule-detail.tsx:176",
+        "where": "crew-schedule-detail.tsx:177",
         "confidence": "exact"
       },
       {
@@ -12581,7 +12581,7 @@
       {
         "source": "concorda-web::src/app/members/socials/page.tsx::SocialsPage",
         "via": "hook_call",
-        "where": "page.tsx:260",
+        "where": "page.tsx:261",
         "confidence": "exact"
       }
     ],
@@ -12791,37 +12791,37 @@
       {
         "source": "concorda-web::src/app/events/[slug]/checkin/page.tsx::CheckinPage",
         "via": "hook_call",
-        "where": "page.tsx:113",
+        "where": "page.tsx:114",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/events/[slug]/checkin/page.tsx::CheckinPage",
         "via": "hook_call",
-        "where": "page.tsx:140",
+        "where": "page.tsx:141",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/events/[slug]/checkin/page.tsx::CheckinPage",
         "via": "hook_call",
-        "where": "page.tsx:187",
+        "where": "page.tsx:188",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
         "via": "hook_call",
-        "where": "page.tsx:558",
+        "where": "page.tsx:538",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::formatDate",
         "via": "hook_call",
-        "where": "page.tsx:46",
+        "where": "page.tsx:47",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/events/[slug]/page.tsx::formatTime",
         "via": "hook_call",
-        "where": "page.tsx:55",
+        "where": "page.tsx:56",
         "confidence": "exact"
       },
       {
@@ -12971,67 +12971,61 @@
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:1011",
+        "where": "page.tsx:1012",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:1062",
+        "where": "page.tsx:1063",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:1069",
+        "where": "page.tsx:1070",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:1132",
+        "where": "page.tsx:1133",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:1237",
+        "where": "page.tsx:1238",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:134",
+        "where": "page.tsx:135",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:596",
+        "where": "page.tsx:597",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:785",
+        "where": "page.tsx:786",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:788",
+        "where": "page.tsx:789",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:811",
-        "confidence": "exact"
-      },
-      {
-        "source": "concorda-web::src/app/members/socials/page.tsx::formatDate",
-        "via": "hook_call",
-        "where": "page.tsx:62",
+        "where": "page.tsx:812",
         "confidence": "exact"
       },
       {
@@ -13043,7 +13037,13 @@
       {
         "source": "concorda-web::src/app/members/socials/page.tsx::formatDate",
         "via": "hook_call",
-        "where": "page.tsx:66",
+        "where": "page.tsx:64",
+        "confidence": "exact"
+      },
+      {
+        "source": "concorda-web::src/app/members/socials/page.tsx::formatDate",
+        "via": "hook_call",
+        "where": "page.tsx:67",
         "confidence": "exact"
       },
       {
@@ -13085,31 +13085,31 @@
       {
         "source": "concorda-web::src/components/dashboard/crew-schedule-detail.tsx::CrewScheduleDetail",
         "via": "hook_call",
-        "where": "crew-schedule-detail.tsx:64",
+        "where": "crew-schedule-detail.tsx:65",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/components/dashboard/event-plan-panel.tsx::EventPlanPanel",
         "via": "hook_call",
-        "where": "event-plan-panel.tsx:289",
+        "where": "event-plan-panel.tsx:290",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/components/dashboard/event-plan-panel.tsx::EventPlanPanel",
         "via": "hook_call",
-        "where": "event-plan-panel.tsx:79",
+        "where": "event-plan-panel.tsx:80",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/components/dashboard/events-calendar.tsx::EventsCalendar",
         "via": "hook_call",
-        "where": "events-calendar.tsx:252",
+        "where": "events-calendar.tsx:253",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/components/dashboard/events-calendar.tsx::EventsCalendar",
         "via": "hook_call",
-        "where": "events-calendar.tsx:254",
+        "where": "events-calendar.tsx:255",
         "confidence": "exact"
       },
       {
@@ -13127,7 +13127,7 @@
       {
         "source": "concorda-web::src/components/dashboard/schedule-card.tsx::ScheduleCard",
         "via": "hook_call",
-        "where": "schedule-card.tsx:182",
+        "where": "schedule-card.tsx:183",
         "confidence": "exact"
       },
       {
@@ -13163,25 +13163,25 @@
       {
         "source": "concorda-web::src/components/event-card.tsx::EventCard",
         "via": "hook_call",
-        "where": "event-card.tsx:106",
+        "where": "event-card.tsx:107",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/components/event-card.tsx::EventCard",
         "via": "hook_call",
-        "where": "event-card.tsx:156",
+        "where": "event-card.tsx:157",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/components/event-card.tsx::EventCard",
         "via": "hook_call",
-        "where": "event-card.tsx:158",
+        "where": "event-card.tsx:159",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/components/event-card.tsx::EventCard",
         "via": "hook_call",
-        "where": "event-card.tsx:190",
+        "where": "event-card.tsx:191",
         "confidence": "exact"
       },
       {
@@ -13305,13 +13305,13 @@
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:444",
+        "where": "page.tsx:445",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/components/dashboard/event-plan-panel.tsx::EventPlanPanel",
         "via": "hook_call",
-        "where": "event-plan-panel.tsx:86",
+        "where": "event-plan-panel.tsx:87",
         "confidence": "exact"
       }
     ],
@@ -13349,25 +13349,25 @@
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:208",
+        "where": "page.tsx:209",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:432",
+        "where": "page.tsx:433",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
         "via": "hook_call",
-        "where": "page.tsx:474",
+        "where": "page.tsx:475",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/components/dashboard/event-plan-panel.tsx::EventPlanPanel",
         "via": "hook_call",
-        "where": "event-plan-panel.tsx:84",
+        "where": "event-plan-panel.tsx:85",
         "confidence": "exact"
       }
     ],
@@ -13497,85 +13497,85 @@
       {
         "source": "concorda-web::src/app/members/socials/page.tsx::SocialsPage",
         "via": "hook_call",
-        "where": "page.tsx:241",
+        "where": "page.tsx:242",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/members/socials/page.tsx::SocialsPage",
         "via": "hook_call",
-        "where": "page.tsx:336",
+        "where": "page.tsx:337",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/members/socials/page.tsx::SocialsPage",
         "via": "hook_call",
-        "where": "page.tsx:375",
+        "where": "page.tsx:376",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/members/socials/page.tsx::SocialsPage",
         "via": "hook_call",
-        "where": "page.tsx:377",
+        "where": "page.tsx:378",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/members/socials/page.tsx::SocialsPage",
         "via": "hook_call",
-        "where": "page.tsx:383",
+        "where": "page.tsx:384",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/members/socials/page.tsx::formatDate",
         "via": "hook_call",
-        "where": "page.tsx:56",
+        "where": "page.tsx:57",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/components/dashboard/events-calendar.tsx::EventsCalendar",
         "via": "hook_call",
-        "where": "events-calendar.tsx:102",
+        "where": "events-calendar.tsx:103",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/components/dashboard/events-calendar.tsx::EventsCalendar",
         "via": "hook_call",
-        "where": "events-calendar.tsx:123",
+        "where": "events-calendar.tsx:124",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/components/dashboard/events-calendar.tsx::EventsCalendar",
         "via": "hook_call",
-        "where": "events-calendar.tsx:125",
+        "where": "events-calendar.tsx:126",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/components/dashboard/events-calendar.tsx::EventsCalendar",
         "via": "hook_call",
-        "where": "events-calendar.tsx:131",
+        "where": "events-calendar.tsx:132",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/components/dashboard/events-calendar.tsx::EventsCalendar",
         "via": "hook_call",
-        "where": "events-calendar.tsx:205",
+        "where": "events-calendar.tsx:206",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/components/dashboard/events-calendar.tsx::groupEventsByMonth",
         "via": "hook_call",
-        "where": "events-calendar.tsx:65",
-        "confidence": "exact"
-      },
-      {
-        "source": "concorda-web::src/components/dashboard/schedule-card.tsx::getCountdown",
-        "via": "hook_call",
-        "where": "schedule-card.tsx:37",
+        "where": "events-calendar.tsx:66",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/components/dashboard/schedule-card.tsx::getCountdown",
         "via": "hook_call",
         "where": "schedule-card.tsx:38",
+        "confidence": "exact"
+      },
+      {
+        "source": "concorda-web::src/components/dashboard/schedule-card.tsx::getCountdown",
+        "via": "hook_call",
+        "where": "schedule-card.tsx:39",
         "confidence": "exact"
       },
       {
@@ -13639,6 +13639,86 @@
         "confidence": "exact"
       }
     ],
+    "concorda-web::src/lib/linkify-location.tsx::renderLocation": [
+      {
+        "source": "concorda-web::src/app/events/[slug]/checkin/page.tsx::CheckinPage",
+        "via": "hook_call",
+        "where": "page.tsx:198",
+        "confidence": "exact"
+      },
+      {
+        "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
+        "via": "hook_call",
+        "where": "page.tsx:482",
+        "confidence": "exact"
+      },
+      {
+        "source": "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
+        "via": "hook_call",
+        "where": "page.tsx:736",
+        "confidence": "exact"
+      },
+      {
+        "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
+        "via": "hook_call",
+        "where": "page.tsx:1079",
+        "confidence": "exact"
+      },
+      {
+        "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
+        "via": "hook_call",
+        "where": "page.tsx:602",
+        "confidence": "exact"
+      },
+      {
+        "source": "concorda-web::src/app/members/schedule/[id]/page.tsx::ScheduleEventDetail",
+        "via": "hook_call",
+        "where": "page.tsx:817",
+        "confidence": "exact"
+      },
+      {
+        "source": "concorda-web::src/app/members/socials/page.tsx::SocialCard",
+        "via": "hook_call",
+        "where": "page.tsx:185",
+        "confidence": "exact"
+      },
+      {
+        "source": "concorda-web::src/components/dashboard/crew-schedule-detail.tsx::CrewScheduleDetail",
+        "via": "hook_call",
+        "where": "crew-schedule-detail.tsx:70",
+        "confidence": "exact"
+      },
+      {
+        "source": "concorda-web::src/components/dashboard/event-plan-panel.tsx::EventPlanPanel",
+        "via": "hook_call",
+        "where": "event-plan-panel.tsx:296",
+        "confidence": "exact"
+      },
+      {
+        "source": "concorda-web::src/components/dashboard/events-calendar.tsx::EventsCalendar",
+        "via": "hook_call",
+        "where": "events-calendar.tsx:277",
+        "confidence": "exact"
+      },
+      {
+        "source": "concorda-web::src/components/dashboard/schedule-card.tsx::ScheduleCard",
+        "via": "hook_call",
+        "where": "schedule-card.tsx:160",
+        "confidence": "exact"
+      },
+      {
+        "source": "concorda-web::src/components/event-card.tsx::EventCard",
+        "via": "hook_call",
+        "where": "event-card.tsx:112",
+        "confidence": "exact"
+      },
+      {
+        "source": "concorda-web::src/components/event-card.tsx::EventCard",
+        "via": "hook_call",
+        "where": "event-card.tsx:165",
+        "confidence": "exact"
+      }
+    ],
     "concorda-web::src/lib/utils.ts::cn": [
       {
         "source": "concorda-web::src/app/members/regattas/page.tsx::FilterGroup",
@@ -13667,19 +13747,19 @@
       {
         "source": "concorda-web::src/app/members/socials/page.tsx::SocialsPage",
         "via": "hook_call",
-        "where": "page.tsx:423",
+        "where": "page.tsx:424",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/members/socials/page.tsx::SocialsPage",
         "via": "hook_call",
-        "where": "page.tsx:425",
+        "where": "page.tsx:426",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/app/members/socials/page.tsx::SocialsPage",
         "via": "hook_call",
-        "where": "page.tsx:438",
+        "where": "page.tsx:439",
         "confidence": "exact"
       },
       {
@@ -13751,13 +13831,13 @@
       {
         "source": "concorda-web::src/components/dashboard/events-calendar.tsx::EventsCalendar",
         "via": "hook_call",
-        "where": "events-calendar.tsx:362",
+        "where": "events-calendar.tsx:363",
         "confidence": "exact"
       },
       {
         "source": "concorda-web::src/components/dashboard/events-calendar.tsx::EventsCalendar",
         "via": "hook_call",
-        "where": "events-calendar.tsx:368",
+        "where": "events-calendar.tsx:369",
         "confidence": "exact"
       },
       {

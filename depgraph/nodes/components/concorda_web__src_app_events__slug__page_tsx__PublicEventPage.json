@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/app/events/[slug]/page.tsx",
     "symbol": "PublicEventPage",
-    "line": 118
+    "line": 98
   },
   "signature": {
     "name": "PublicEventPage",
@@ -19,91 +19,103 @@
     {
       "target": "concorda-web::src/contexts/auth-context.tsx::useAuth",
       "via": "hook_call",
-      "where": "page.tsx:122",
+      "where": "page.tsx:102",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/hooks/use-constants.ts::useConstants",
       "via": "hook_call",
-      "where": "page.tsx:123",
+      "where": "page.tsx:103",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/lib/api.ts::eventsApi.getBySlug",
       "via": "hook_call",
-      "where": "page.tsx:218",
+      "where": "page.tsx:198",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/lib/api.ts::eventsApi.getTickets",
       "via": "hook_call",
-      "where": "page.tsx:219",
+      "where": "page.tsx:199",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/lib/api.ts::eventsApi.getDiscounts",
       "via": "hook_call",
-      "where": "page.tsx:220",
+      "where": "page.tsx:200",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/lib/api.ts::eventsApi.getConfirmation",
       "via": "hook_call",
-      "where": "page.tsx:237",
+      "where": "page.tsx:217",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/lib/api.ts::eventsApi.getMyRegistration",
       "via": "hook_call",
-      "where": "page.tsx:246",
+      "where": "page.tsx:226",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/lib/api.ts::paymentsApi.getConfig",
       "via": "hook_call",
-      "where": "page.tsx:273",
+      "where": "page.tsx:253",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/lib/api.ts::eventsApi.checkRegistration",
       "via": "hook_call",
-      "where": "page.tsx:318",
+      "where": "page.tsx:298",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/lib/api.ts::paymentsApi.createEventIntent",
       "via": "hook_call",
-      "where": "page.tsx:335",
+      "where": "page.tsx:315",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/lib/api.ts::getAuthToken",
       "via": "hook_call",
-      "where": "page.tsx:369",
+      "where": "page.tsx:349",
       "confidence": "exact"
     },
     {
       "target": "POST::/api/events/slug/{0}/register",
       "via": "string_url",
-      "where": "page.tsx:386",
+      "where": "page.tsx:366",
       "confidence": "fuzzy"
     },
     {
       "target": "POST::/api/events/slug/{0}/register",
       "via": "string_url",
-      "where": "page.tsx:390",
+      "where": "page.tsx:370",
       "confidence": "fuzzy"
     },
     {
       "target": "concorda-web::src/lib/api.ts::eventsApi.getConfirmation",
       "via": "hook_call",
-      "where": "page.tsx:402",
+      "where": "page.tsx:382",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/linkify-location.tsx::renderLocation",
+      "via": "hook_call",
+      "where": "page.tsx:482",
       "confidence": "exact"
     },
     {
       "target": "concorda-web::src/lib/datetime.ts::formatInOrgTz",
       "via": "hook_call",
-      "where": "page.tsx:558",
+      "where": "page.tsx:538",
+      "confidence": "exact"
+    },
+    {
+      "target": "concorda-web::src/lib/linkify-location.tsx::renderLocation",
+      "via": "hook_call",
+      "where": "page.tsx:736",
       "confidence": "exact"
     }
   ],

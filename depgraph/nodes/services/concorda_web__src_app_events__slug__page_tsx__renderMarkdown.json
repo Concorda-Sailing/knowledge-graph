@@ -8,7 +8,7 @@
     "repo": "concorda-web",
     "path": "src/app/events/[slug]/page.tsx",
     "symbol": "renderMarkdown",
-    "line": 82
+    "line": 62
   },
   "signature": {
     "name": "renderMarkdown",

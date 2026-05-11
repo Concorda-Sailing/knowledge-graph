@@ -1,14 +1,13 @@
 {
   "schema_version": 1,
   "extractor": "extract_web",
-  "generated_at": "2026-05-10T20:53:59.372Z",
+  "generated_at": "2026-05-11T01:38:21.250Z",
   "node_ids": [
     "concorda-web::src/app/code-of-conduct/page.tsx::CodeOfConductPage",
     "concorda-web::src/app/events/[slug]/checkin/page.tsx::CheckinPage",
     "concorda-web::src/app/events/[slug]/page.tsx::PublicEventPage",
     "concorda-web::src/app/events/[slug]/page.tsx::formatDate",
     "concorda-web::src/app/events/[slug]/page.tsx::formatTime",
-    "concorda-web::src/app/events/[slug]/page.tsx::renderLocation",
     "concorda-web::src/app/events/[slug]/page.tsx::renderMarkdown",
     "concorda-web::src/app/events/page.tsx::PublicEventsPage",
     "concorda-web::src/app/forgot-password/page.tsx::ForgotPasswordPage",
@@ -672,6 +671,7 @@
     "concorda-web::src/lib/datetime.ts::utcIsoToOrgDateInput",
     "concorda-web::src/lib/datetime.ts::utcIsoToOrgInput",
     "concorda-web::src/lib/datetime.ts::ymdInOrgTz",
+    "concorda-web::src/lib/linkify-location.tsx::renderLocation",
     "concorda-web::src/lib/utils.ts::cn",
     "concorda-web::src/lib/utils.ts::formatPhoneInput",
     "concorda-web::src/lib/utils.ts::formatPhoneNumber"
