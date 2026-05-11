@@ -32,19 +32,7 @@
     </div>
 
     <aside class="side">
-      <div class="card">
-        <h3>Telemetry (7d)</h3>
-        <div class="telemetry">
-          <div class="stat"><span class="num">{{ telemetry.injections_7d }}</span><span class="lbl">injections</span></div>
-          <div class="stat"><span class="num">{{ telemetry.acked_7d }}</span><span class="lbl">acked</span></div>
-          {% if telemetry.ack_rate is not none %}
-            <div class="stat"><span class="num">{{ (telemetry.ack_rate * 100) | round | int }}%</span><span class="lbl">ack rate</span></div>
-          {% endif %}
-        </div>
-        {% if telemetry.last_fired %}
-          <p class="empty" style="margin-top: 6px;">last fired: {{ telemetry.last_fired }}</p>
-        {% endif %}
-      </div>
+      {% include "_telemetry_card.html" %}
 
       <div class="card">
         <h3>References ontology</h3>

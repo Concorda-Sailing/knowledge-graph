@@ -180,6 +180,7 @@ def node_detail(request: Request, node_id: str) -> HTMLResponse:
         loader.DEPGRAPH,
         [p for p in (node.get("_node_file"), node.get("dossier")) if p],
     )
+    telemetry = loader.telemetry_for_node(node_id)
     # If this node is in the review queue, compute prev/next siblings.
     prev_node = next_node = None
     queue_position = queue_total = None
@@ -209,6 +210,7 @@ def node_detail(request: Request, node_id: str) -> HTMLResponse:
             "queue_position": queue_position,
             "queue_total": queue_total,
             "history": history,
+            "telemetry": telemetry,
         },
     )
 

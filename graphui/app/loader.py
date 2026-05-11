@@ -357,40 +357,89 @@ def dependents_of(node_id: str) -> list[dict]:
 
 # ----- Telemetry --------------------------------------------------------------
 
-INJECTIONS = LOGIGRAPH / "telemetry" / "injections.jsonl"
-ACKS = LOGIGRAPH / "telemetry" / "acknowledgments.jsonl"
+LOGIGRAPH_INJECTIONS = LOGIGRAPH / "telemetry" / "injections.jsonl"
+LOGIGRAPH_ACKS = LOGIGRAPH / "telemetry" / "acknowledgments.jsonl"
+DEPGRAPH_INJECTIONS = DEPGRAPH / "telemetry" / "injections.jsonl"
+DEPGRAPH_ACKS = DEPGRAPH / "telemetry" / "acknowledgments.jsonl"
 
 
-def telemetry_for_rule(rule_id: str, days: int = 7) -> dict[str, Any]:
+def _telemetry_for_id(
+    *,
+    target_id: str,
+    id_field: str,
+    injections_path: Path,
+    acks_path: Path,
+    days: int = 7,
+) -> dict[str, Any]:
+    """Generic loader for the (injections, acks) JSONL pair. Used by both
+    rule and node telemetry. Counts events from the last `days` against the
+    given id (matched via `id_field`, e.g. 'rule_id' or 'node_id')."""
     cutoff = time.time() - days * 86400
+    from datetime import datetime
+
+    def _epoch(ts: str) -> float:
+        try:
+            return datetime.fromisoformat(ts.replace("Z", "+00:00")).timestamp()
+        except (ValueError, TypeError):
+            return 0.0
+
     inj = 0
     ack = 0
     last_fired: str | None = None
-    if INJECTIONS.exists():
-        for line in INJECTIONS.read_text().splitlines():
+    if injections_path.exists():
+        for line in injections_path.read_text().splitlines():
+            line = line.strip()
+            if not line:
+                continue
             try:
                 row = json.loads(line)
             except json.JSONDecodeError:
                 continue
-            if rule_id not in (row.get("rule_ids") or []):
+            if row.get(id_field) != target_id:
                 continue
             ts = row.get("ts", "")
-            try:
-                # ISO8601 → epoch
-                from datetime import datetime
-                t = datetime.fromisoformat(ts.replace("Z", "+00:00")).timestamp()
-            except (ValueError, TypeError):
-                t = 0
-            if t < cutoff:
+            if _epoch(ts) < cutoff:
                 continue
             inj += 1
             if not last_fired or ts > last_fired:
                 last_fired = ts
-            if row.get("acknowledged"):
-                ack += 1
+    if acks_path.exists():
+        for line in acks_path.read_text().splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if row.get(id_field) != target_id:
+                continue
+            if _epoch(row.get("ts", "")) < cutoff:
+                continue
+            ack += 1
     return {
         "injections_7d": inj,
         "acked_7d": ack,
         "ack_rate": (ack / inj) if inj else None,
         "last_fired": last_fired,
     }
+
+
+def telemetry_for_rule(rule_id: str, days: int = 7) -> dict[str, Any]:
+    return _telemetry_for_id(
+        target_id=rule_id,
+        id_field="rule_id",
+        injections_path=LOGIGRAPH_INJECTIONS,
+        acks_path=LOGIGRAPH_ACKS,
+        days=days,
+    )
+
+
+def telemetry_for_node(node_id: str, days: int = 7) -> dict[str, Any]:
+    return _telemetry_for_id(
+        target_id=node_id,
+        id_field="node_id",
+        injections_path=DEPGRAPH_INJECTIONS,
+        acks_path=DEPGRAPH_ACKS,
+        days=days,
+    )
