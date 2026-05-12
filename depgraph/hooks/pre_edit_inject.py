@@ -57,18 +57,33 @@ DEPENDENTS_PER_DEPTH_CAP = 30
 NODE_SCHEMA_VERSION = 1
 
 
+_SCRIPT_SUFFIXES = (".py", ".ts", ".tsx", ".js", ".mjs", ".sh")
+
+
 def expected_extractor_stems() -> list[str]:
     """Manifest stems we expect to exist after a clean regen, derived from
-    each [repos.<key>].extractor command (basename of its last token)."""
+    each [repos.<key>].extractor command. Heuristic: find the FIRST token
+    in the command that resolves to a script-shaped filename (suffix in
+    _SCRIPT_SUFFIXES); the stem of that filename is the expected manifest
+    name.
+
+    For multi-repo extractors (one script serving N repos with different
+    args), this returns one stem matching the script name; the actual
+    manifests are typically named `<stem>_<repo>` per repo. We accept any
+    manifest whose name STARTS WITH the derived stem, so multi-repo
+    extractors don't false-positive."""
     out: list[str] = []
     for info in project_repos(DEPGRAPH).values():
         ext = info.get("extractor")
         if not ext:
             continue
-        last = ext[-1].format(data_dir=str(DEPGRAPH), path=str(info["path"]))
-        stem = Path(last).stem
-        if stem and stem not in out:
-            out.append(stem)
+        rendered = [t.format(data_dir=str(DEPGRAPH), path=str(info["path"])) for t in ext]
+        for tok in rendered:
+            if any(tok.endswith(s) for s in _SCRIPT_SUFFIXES):
+                stem = Path(tok).stem
+                if stem and stem not in out:
+                    out.append(stem)
+                break
     return out
 
 
@@ -118,9 +133,15 @@ def load_meta_and_status() -> tuple[dict, list[str]]:
         banners.append("> ⚠ Corpus metadata missing (`nodes/_meta.json`). Run `bin/depgraph regen`.")
 
     # Defect #5: if any expected extractor's manifest is missing, surface it.
+    # Accept manifests whose name STARTS WITH the derived stem so multi-repo
+    # extractors (one script writing <stem>_<repo>.json per repo) don't
+    # false-positive.
     if MANIFESTS_DIR.exists():
         present = {f.stem for f in MANIFESTS_DIR.glob("*.json")}
-        missing = [e for e in expected_extractor_stems() if e not in present]
+        missing = []
+        for expected in expected_extractor_stems():
+            if not any(p == expected or p.startswith(expected + "_") for p in present):
+                missing.append(expected)
         if missing:
             banners.append(
                 "> ⚠ Missing extractor manifest(s): " + ", ".join(missing) +
