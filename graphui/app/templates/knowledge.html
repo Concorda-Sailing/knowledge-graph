@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}knowledge{% endblock %}
+{% block content %}
+
+<div class="repo-header">
+  <div class="breadcrumb">
+    <a href="/graph/">graphui</a> &nbsp;/&nbsp; knowledge
+  </div>
+  <h1>Knowledge</h1>
+  <div class="repo-meta">{{ items|length }} node{{ '' if items|length == 1 else 's' }}{% if kind_filter or state_filter or subkind_filter %} matching filter{% endif %}</div>
+</div>
+
+{# Query-string preserver: any chip emits the OTHER selected filters in the link #}
+{% macro qs(extra={}) %}
+  {%- set parts = [] -%}
+  {%- if sort and sort != 'id' %}{% set _ = parts.append('sort=' ~ sort) %}{% endif -%}
+  {%- if kind_filter %}{% set _ = parts.append('kind=' ~ kind_filter) %}{% endif -%}
+  {%- if subkind_filter %}{% set _ = parts.append('subkind=' ~ subkind_filter) %}{% endif -%}
+  {%- if state_filter %}{% set _ = parts.append('state=' ~ state_filter) %}{% endif -%}
+  {%- for k, v in extra.items() %}{% set _ = parts.append(k ~ '=' ~ v) %}{% endfor -%}
+  {%- if parts %}?{{ parts|join('&') }}{% endif -%}
+{% endmacro %}
+
+<div class="filter-row">
+  <span class="filter-label">Kind</span>
+  <a href="/graph/knowledge{{ qs({}) | replace('kind=' ~ (kind_filter or ''), '') | replace('&&', '&') }}"
+     class="chip{% if not kind_filter %} chip-active{% endif %}">all</a>
+  {% for k in filters.kinds %}
+  <a href="/graph/knowledge?kind={{ k }}{% if sort and sort != 'id' %}&sort={{ sort }}{% endif %}{% if state_filter %}&state={{ state_filter }}{% endif %}"
+     class="chip{% if kind_filter == k %} chip-active{% endif %}">{{ k }}</a>
+  {% endfor %}
+</div>
+
+{% if kind_filter == 'domain' and filters.subkinds %}
+<div class="filter-row">
+  <span class="filter-label">Subkind</span>
+  <a href="/graph/knowledge?kind=domain{% if sort and sort != 'id' %}&sort={{ sort }}{% endif %}{% if state_filter %}&state={{ state_filter }}{% endif %}"
+     class="chip{% if not subkind_filter %} chip-active{% endif %}">all</a>
+  {% for s in filters.subkinds %}
+  <a href="/graph/knowledge?kind=domain&subkind={{ s }}{% if sort and sort != 'id' %}&sort={{ sort }}{% endif %}{% if state_filter %}&state={{ state_filter }}{% endif %}"
+     class="chip{% if subkind_filter == s %} chip-active{% endif %}">{{ s }}</a>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="filter-row">
+  <span class="filter-label">State</span>
+  <a href="/graph/knowledge{% if kind_filter %}?kind={{ kind_filter }}{% endif %}{% if subkind_filter %}{% if kind_filter %}&{% else %}?{% endif %}subkind={{ subkind_filter }}{% endif %}{% if sort and sort != 'id' %}{% if kind_filter or subkind_filter %}&{% else %}?{% endif %}sort={{ sort }}{% endif %}"
+     class="chip{% if not state_filter %} chip-active{% endif %}">all</a>
+  {% for st in filters.states %}
+  <a href="/graph/knowledge?state={{ st }}{% if kind_filter %}&kind={{ kind_filter }}{% endif %}{% if subkind_filter %}&subkind={{ subkind_filter }}{% endif %}{% if sort and sort != 'id' %}&sort={{ sort }}{% endif %}"
+     class="chip chip-state-{{ st }}{% if state_filter == st %} chip-active{% endif %}">{{ st }}</a>
+  {% endfor %}
+</div>
+
+<div class="filter-row">
+  <span class="filter-label">Sort</span>
+  {% for s in ['id', 'title', 'fan_out', 'state'] %}
+  <a href="/graph/knowledge?sort={{ s }}{% if kind_filter %}&kind={{ kind_filter }}{% endif %}{% if subkind_filter %}&subkind={{ subkind_filter }}{% endif %}{% if state_filter %}&state={{ state_filter }}{% endif %}"
+     class="chip{% if sort == s %} chip-active{% endif %}">{{ s }}</a>
+  {% endfor %}
+</div>
+
+{% if items %}
+<div class="knowledge-table-wrap scroll-x">
+  <table class="knowledge-table">
+    <thead>
+      <tr>
+        <th class="col-sel"><input type="checkbox" id="select-all"></th>
+        <th>Title</th>
+        <th>Kind</th>
+        <th class="numeric">Deps</th>
+        <th>State</th>
+        <th>ID</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for n in items %}
+      <tr class="knowledge-row">
+        <td><input type="checkbox" class="row-sel" data-id="{{ n.id }}" data-kind="{{ n.kind }}" data-state="{{ n.state }}"></td>
+        <td><a href="{{ n.href }}" class="knowledge-title">{{ n.title }}</a>
+          {% if n.summary %}<div class="knowledge-summary">{{ n.summary }}</div>{% endif %}
+        </td>
+        <td class="knowledge-kind">{{ n.subkind or n.kind }}</td>
+        <td class="numeric">{{ n.fan_out }}</td>
+        <td><span class="state-chip state-chip-{{ n.state }}">{{ '⚠ ' if n.state == 'stale' else '' }}{{ n.state }}</span></td>
+        <td class="src"><code>{{ n.id }}</code></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="knowledge-bulk" id="bulk-bar" style="display: none;">
+  <span id="bulk-count">0 selected</span>
+  <button id="bulk-approve" class="flag-action-btn">Promote llm_drafted → current</button>
+  <span id="bulk-status" class="flag-action-status"></span>
+</div>
+{% else %}
+<p class="empty">No nodes match the current filters.</p>
+{% endif %}
+
+<script>
+const selAll = document.getElementById('select-all');
+const rows = document.querySelectorAll('.row-sel');
+const bar = document.getElementById('bulk-bar');
+const countEl = document.getElementById('bulk-count');
+
+function refreshBulkBar() {
+  const selected = [...rows].filter(c => c.checked);
+  if (selected.length) {
+    bar.style.display = '';
+    countEl.textContent = `${selected.length} selected`;
+  } else {
+    bar.style.display = 'none';
+  }
+}
+selAll?.addEventListener('change', () => {
+  rows.forEach(c => c.checked = selAll.checked);
+  refreshBulkBar();
+});
+rows.forEach(c => c.addEventListener('change', refreshBulkBar));
+
+document.getElementById('bulk-approve')?.addEventListener('click', async () => {
+  const targets = [...rows].filter(c => c.checked && c.dataset.state === 'llm_drafted');
+  if (!targets.length) {
+    document.getElementById('bulk-status').textContent = 'no llm_drafted nodes selected';
+    return;
+  }
+  document.getElementById('bulk-status').textContent = `promoting ${targets.length}…`;
+  let ok = 0, fail = 0;
+  for (const t of targets) {
+    try {
+      const res = await fetch('/graph/api/bump', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({node_id: t.dataset.id, status: 'current'}),
+      });
+      const body = await res.json();
+      if (res.ok && body.ok) ok++; else fail++;
+    } catch (e) {
+      fail++;
+    }
+  }
+  document.getElementById('bulk-status').textContent = `✓ ${ok} promoted` + (fail ? ` · ✗ ${fail} failed` : '');
+  setTimeout(() => location.reload(), 600);
+});
+</script>
+{% endblock %}

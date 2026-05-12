@@ -428,8 +428,8 @@ def warnings_for(node_id: str) -> list[dict]:
 
 def kind_summary() -> list[dict]:
     """One entry per logigraph kind (rules / domain / processes).
-    Returns the same shape as repo_summary so the gallery template can
-    render both uniformly."""
+    Same shape as repo_summary plus total_deps = sum of fan_out across
+    nodes in that kind, so gallery cards can show dependency-weight."""
     lg = load_logigraph_nodes()
     out = []
     for kind, label in (("rules", "Rules"), ("domain", "Domain"), ("processes", "Processes")):
@@ -443,15 +443,86 @@ def kind_summary() -> list[dict]:
                 sc[s] = 0
             sc[s] += 1
         total = len(nodes)
+        total_deps = sum(n.get("fan_out", 0) for n in nodes)
         out.append({
             "kind": kind,
             "label": label,
             "node_count": total,
+            "total_deps": total_deps,
             "state_counts": sc,
             "current_pct": round(100 * sc.get("current", 0) / total) if total else 0,
             "has_stale": sc.get("stale", 0) > 0,
         })
     return out
+
+
+# ---------------------------------------------------------------------------
+# Knowledge list page — unified rules + domain + processes with sort/filter
+# ---------------------------------------------------------------------------
+
+_KNOWLEDGE_HREF = {
+    "rules": "/graph/rule/",
+    "domain": "/graph/domain/",
+    "processes": "/graph/process/",
+}
+
+
+def all_knowledge_nodes(
+    sort: str = "id",
+    kind_filter: str | None = None,
+    state_filter: str | None = None,
+    subkind_filter: str | None = None,
+) -> list[dict]:
+    """Flat list of all rules + domain + processes for the /graph/knowledge
+    page. Filters: kind (rule|domain|process), state, subkind (domain).
+    Sort: id (default), title, fan_out, state."""
+    lg = load_logigraph_nodes()
+    items: list[dict] = []
+    for plural in ("rules", "domain", "processes"):
+        singular = plural.rstrip("s")
+        if kind_filter and kind_filter not in (plural, singular):
+            continue
+        for n in lg.get(plural, []):
+            if state_filter and n.get("dossier_state") != state_filter:
+                continue
+            if subkind_filter and n.get("subkind") != subkind_filter:
+                continue
+            href_prefix = _KNOWLEDGE_HREF.get(plural, "/graph/node/")
+            items.append({
+                "id": n["id"],
+                "title": n.get("title") or n["id"],
+                "kind": singular,
+                "subkind": n.get("subkind"),
+                "state": n.get("dossier_state", "current"),
+                "fan_out": n.get("fan_out", 0),
+                "summary": (n.get("summary") or n.get("statement") or "")[:240],
+                "href": f"{href_prefix}{n['id']}",
+            })
+    if sort == "fan_out":
+        items.sort(key=lambda x: (-x["fan_out"], x["id"]))
+    elif sort == "title":
+        items.sort(key=lambda x: x["title"].lower())
+    elif sort == "state":
+        order = {"llm_drafted": 0, "stale": 1, "missing": 2, "unreviewed": 3, "current": 4}
+        items.sort(key=lambda x: (order.get(x["state"], 5), x["id"]))
+    else:
+        items.sort(key=lambda x: x["id"])
+    return items
+
+
+def knowledge_filters() -> dict:
+    """Available filter values for the /graph/knowledge UI."""
+    lg = load_logigraph_nodes()
+    subkinds = sorted({n.get("subkind") for n in lg.get("domain", []) if n.get("subkind")})
+    states = set()
+    for plural in ("rules", "domain", "processes"):
+        for n in lg.get(plural, []):
+            states.add(n.get("dossier_state") or "current")
+    return {
+        "kinds": ["rule", "domain", "process"],
+        "subkinds": subkinds,
+        "states": sorted(states),
+    }
 
 
 def nodes_for_repo(basename: str, kind: str | None = None, state: str | None = None) -> list[dict]:

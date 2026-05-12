@@ -91,6 +91,46 @@ def index(request: Request) -> HTMLResponse:
     )
 
 
+@app.get("/graph/issues", response_class=HTMLResponse)
+def issues_page(request: Request) -> HTMLResponse:
+    """Full-page view of corpus flags — what the Needs-attention banner
+    summarizes on the dashboard. Same kind-grouping + Track action."""
+    return TEMPLATES.TemplateResponse(
+        request,
+        "issues.html",
+        {
+            "flags": loader.corpus_flags(),
+            "meta": loader.load_meta(),
+        },
+    )
+
+
+@app.get("/graph/knowledge", response_class=HTMLResponse)
+def knowledge_page(
+    request: Request,
+    sort: str = "id",
+    kind: str | None = None,
+    state: str | None = None,
+    subkind: str | None = None,
+) -> HTMLResponse:
+    """Unified knowledge list: rules + domain + processes. Filter by kind,
+    state, subkind; sort by id / title / fan_out / state. Each row carries
+    a checkbox for bulk selection (currently bulk-promote drafts)."""
+    return TEMPLATES.TemplateResponse(
+        request,
+        "knowledge.html",
+        {
+            "items": loader.all_knowledge_nodes(sort=sort, kind_filter=kind, state_filter=state, subkind_filter=subkind),
+            "filters": loader.knowledge_filters(),
+            "sort": sort,
+            "kind_filter": kind,
+            "state_filter": state,
+            "subkind_filter": subkind,
+            "meta": loader.load_meta(),
+        },
+    )
+
+
 @app.get("/graph/repo/{basename}", response_class=HTMLResponse)
 def repo_detail(
     request: Request,
