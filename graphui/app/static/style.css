@@ -1021,3 +1021,34 @@ h2 {
   padding: 40px 20px;
   font-size: 13px;
 }
+
+/* Process flow block — definition list */
+.flow-block {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 4px 12px;
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--r-md);
+}
+.flow-block dt {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--fg-faint);
+  font-weight: 600;
+  padding-top: 3px;
+}
+.flow-block dd {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--fg);
+  word-break: break-word;
+}
+.flow-block dd code {
+  font-size: 11.5px;
+  color: var(--accent);
+}

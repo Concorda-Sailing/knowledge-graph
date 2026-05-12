@@ -24,8 +24,19 @@
       <p>{{ proc.summary }}</p>
       {% endif %}
 
-      <h2>Trigger</h2>
-      <p><a class="idref" href="/graph/node/{{ proc.trigger }}"><code>{{ proc.trigger }}</code></a></p>
+      <h2>Flow</h2>
+      <dl class="flow-block">
+        <dt>Entry</dt>
+        <dd>{{ proc.flow.action }}</dd>
+        {% if proc.flow.ui_surface %}
+        <dt>UI</dt>
+        <dd><a class="idref" href="/graph/node/{{ proc.flow.ui_surface }}"><code>{{ proc.flow.ui_surface }}</code></a></dd>
+        {% endif %}
+        {% if proc.flow.endpoint %}
+        <dt>Endpoint</dt>
+        <dd><a class="idref" href="/graph/node/{{ proc.flow.endpoint }}"><code>{{ proc.flow.endpoint }}</code></a></dd>
+        {% endif %}
+      </dl>
 
       <h2>Steps</h2>
       <ol class="process-steps">
