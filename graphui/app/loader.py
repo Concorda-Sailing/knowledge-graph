@@ -280,9 +280,10 @@ def load_depgraph_nodes() -> list[dict]:
 
 
 def load_logigraph_nodes() -> dict[str, list[dict]]:
-    """Returns {'rules': [...], 'domain': [...]} with derived dossier_state."""
-    out: dict[str, list[dict]] = {"rules": [], "domain": []}
-    for kind, sub in (("rules", "rules"), ("domain", "domain")):
+    """Returns {'rules': [...], 'domain': [...], 'processes': [...]} with
+    derived dossier_state."""
+    out: dict[str, list[dict]] = {"rules": [], "domain": [], "processes": []}
+    for kind, sub in (("rules", "rules"), ("domain", "domain"), ("processes", "processes")):
         d = LOGIGRAPH_NODES / sub
         if not d.is_dir():
             continue
@@ -294,9 +295,157 @@ def load_logigraph_nodes() -> dict[str, list[dict]]:
             node["dossier_state"] = _dossier_state(node, LOGIGRAPH)
             node["_node_file"] = str(nf.relative_to(LOGIGRAPH))
             # Logigraph rules carry their own fan_out (claims count); use it.
+            # Processes use total claim count across all steps + ui_surfaces.
             if "fan_out" not in node:
-                node["fan_out"] = len(node.get("claims_code") or [])
+                if kind == "processes":
+                    total = sum(len(s.get("claims_code") or []) for s in node.get("steps", []))
+                    total += len(node.get("ui_surfaces") or [])
+                    node["fan_out"] = total
+                else:
+                    node["fan_out"] = len(node.get("claims_code") or [])
             out[kind].append(node)
+    return out
+
+
+def load_process_by_id(process_id: str) -> dict | None:
+    for n in load_logigraph_nodes()["processes"]:
+        if n["id"] == process_id:
+            return n
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Repo + kind summaries (for the gallery UI)
+# ---------------------------------------------------------------------------
+
+_STATES = ("current", "llm_drafted", "unreviewed", "stale", "missing")
+
+
+def _empty_state_counts() -> dict[str, int]:
+    return {s: 0 for s in _STATES}
+
+
+def repo_summary() -> list[dict]:
+    """One entry per source repo seen in depgraph nodes' source.repo field.
+    Returns: [{basename, node_count, state_counts: {current: n, ...},
+               current_pct, has_stale, kinds: [{kind, count}, ...]}]
+    Sorted by node_count desc."""
+    by_repo: dict[str, dict] = {}
+    for n in load_depgraph_nodes():
+        src = n.get("source") or {}
+        basename = src.get("repo") or "(unrooted)"
+        bucket = by_repo.setdefault(basename, {
+            "basename": basename,
+            "node_count": 0,
+            "state_counts": _empty_state_counts(),
+            "kinds": {},
+        })
+        bucket["node_count"] += 1
+        state = n.get("dossier_state") or "current"
+        if state not in bucket["state_counts"]:
+            bucket["state_counts"][state] = 0
+        bucket["state_counts"][state] += 1
+        kind = n.get("kind") or "—"
+        bucket["kinds"][kind] = bucket["kinds"].get(kind, 0) + 1
+
+    out = []
+    for r in by_repo.values():
+        sc = r["state_counts"]
+        current = sc.get("current", 0)
+        total = r["node_count"]
+        r["current_pct"] = round(100 * current / total) if total else 0
+        r["has_stale"] = sc.get("stale", 0) > 0
+        r["kinds"] = sorted(
+            [{"kind": k, "count": v} for k, v in r["kinds"].items()],
+            key=lambda x: -x["count"],
+        )
+        out.append(r)
+    out.sort(key=lambda r: -r["node_count"])
+    return out
+
+
+def kind_summary() -> list[dict]:
+    """One entry per logigraph kind (rules / domain / processes).
+    Returns the same shape as repo_summary so the gallery template can
+    render both uniformly."""
+    lg = load_logigraph_nodes()
+    out = []
+    for kind, label in (("rules", "Rules"), ("domain", "Domain"), ("processes", "Processes")):
+        nodes = lg.get(kind, [])
+        if not nodes:
+            continue
+        sc = _empty_state_counts()
+        for n in nodes:
+            s = n.get("dossier_state") or "current"
+            if s not in sc:
+                sc[s] = 0
+            sc[s] += 1
+        total = len(nodes)
+        out.append({
+            "kind": kind,
+            "label": label,
+            "node_count": total,
+            "state_counts": sc,
+            "current_pct": round(100 * sc.get("current", 0) / total) if total else 0,
+            "has_stale": sc.get("stale", 0) > 0,
+        })
+    return out
+
+
+def nodes_for_repo(basename: str, kind: str | None = None, state: str | None = None) -> list[dict]:
+    """Depgraph nodes for one source repo, optionally filtered by kind/state.
+    Returns a flat list of dicts with the fields the card template renders."""
+    out = []
+    for n in load_depgraph_nodes():
+        src = n.get("source") or {}
+        if (src.get("repo") or "(unrooted)") != basename:
+            continue
+        if kind and n.get("kind") != kind:
+            continue
+        if state and n.get("dossier_state") != state:
+            continue
+        out.append({
+            "id": n["id"],
+            "title": n.get("title") or n["id"].rsplit("::", 1)[-1],
+            "kind": n.get("kind", "—"),
+            "state": n.get("dossier_state", "current"),
+            "fan_out": n.get("fan_out", 0),
+            "href": f"/graph/node/{n['id']}",
+            "src": f"{src.get('repo','')}/{src.get('path','')}" if src.get("path") else "",
+        })
+    out.sort(key=lambda x: (-x["fan_out"], x["id"]))
+    return out
+
+
+def nodes_for_kind(kind_name: str, subkind: str | None = None, state: str | None = None) -> list[dict]:
+    """Logigraph nodes of one kind (rules / domain / processes). Subkind
+    filter applies to domain (role / resource / attribute / relationship)."""
+    lg = load_logigraph_nodes()
+    nodes = lg.get(kind_name, [])
+    out = []
+    for n in nodes:
+        if subkind and n.get("subkind") != subkind:
+            continue
+        if state and n.get("dossier_state") != state:
+            continue
+        # Route per kind.
+        if kind_name == "rules":
+            href = f"/graph/rule/{n['id']}"
+        elif kind_name == "processes":
+            href = f"/graph/process/{n['id']}"
+        else:
+            href = f"/graph/domain/{n['id']}"
+        out.append({
+            "id": n["id"],
+            "title": n.get("title") or n["id"],
+            "kind": kind_name.rstrip("s"),
+            "subkind": n.get("subkind"),
+            "state": n.get("dossier_state", "current"),
+            "fan_out": n.get("fan_out", 0),
+            "href": href,
+            "summary": n.get("summary", "") or n.get("statement", ""),
+        })
+    out.sort(key=lambda x: (-x["fan_out"], x["id"]))
     return out
 
 

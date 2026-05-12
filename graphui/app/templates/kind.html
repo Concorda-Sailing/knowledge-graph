@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}{{ summary.label if summary else kind_name }}{% endblock %}
+{% block content %}
+
+<div class="repo-header">
+  <div class="breadcrumb">
+    <a href="/graph/">index</a> &nbsp;/&nbsp; {{ kind_name }}
+  </div>
+  <h1>{{ summary.label if summary else kind_name }}</h1>
+  {% if summary %}
+  <div class="repo-meta">
+    {{ summary.node_count }} node{{ '' if summary.node_count == 1 else 's' }} ·
+    {{ summary.current_pct }}% current
+    {% if summary.has_stale %} · <span class="stale-flag">⚠ {{ summary.state_counts.stale }} stale</span>{% endif %}
+  </div>
+  {% endif %}
+</div>
+
+{% if subkinds %}
+<div class="filter-row">
+  <span class="filter-label">Subkind</span>
+  <a href="/graph/kind/{{ kind_name }}{% if state_filter %}?state={{ state_filter }}{% endif %}"
+     class="chip{% if not subkind_filter %} chip-active{% endif %}">all</a>
+  {% for sk in subkinds %}
+  <a href="/graph/kind/{{ kind_name }}?subkind={{ sk }}{% if state_filter %}&state={{ state_filter }}{% endif %}"
+     class="chip{% if subkind_filter == sk %} chip-active{% endif %}">{{ sk }}</a>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="filter-row">
+  <span class="filter-label">State</span>
+  <a href="/graph/kind/{{ kind_name }}{% if subkind_filter %}?subkind={{ subkind_filter }}{% endif %}"
+     class="chip{% if not state_filter %} chip-active{% endif %}">all</a>
+  {% if summary %}
+    {% for state_key in ['current', 'llm_drafted', 'stale', 'unreviewed', 'missing'] %}
+      {% set n = summary.state_counts.get(state_key, 0) %}
+      {% if n > 0 %}
+      <a href="/graph/kind/{{ kind_name }}?state={{ state_key }}{% if subkind_filter %}&subkind={{ subkind_filter }}{% endif %}"
+         class="chip chip-state-{{ state_key }}{% if state_filter == state_key %} chip-active{% endif %}">{{ state_key }} <span class="chip-count">{{ n }}</span></a>
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+</div>
+
+{% if nodes %}
+<div class="node-cards">
+  {% for n in nodes %}
+  <a href="{{ n.href }}" class="node-card">
+    <div class="node-card-title">{{ n.title }}</div>
+    <div class="node-card-meta">
+      <span class="node-card-kind">{{ n.subkind or n.kind }}</span>
+      {% if n.fan_out %}<span class="node-card-deps">{{ n.fan_out }} claim{{ '' if n.fan_out == 1 else 's' }}</span>{% endif %}
+    </div>
+    {% if n.summary %}
+    <div class="node-card-summary">{{ n.summary[:200] }}{% if n.summary|length > 200 %}…{% endif %}</div>
+    {% endif %}
+    <div class="node-card-foot">
+      <span class="state-chip state-chip-{{ n.state }}">{{ '⚠ ' if n.state == 'stale' else '' }}{{ n.state }}</span>
+      <span class="node-card-id">{{ n.id }}</span>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<p class="empty">No nodes match the current filters.</p>
+{% endif %}
+
+{% endblock %}

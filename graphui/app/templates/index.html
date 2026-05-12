@@ -2,212 +2,67 @@
 {% block title %}index{% endblock %}
 {% block content %}
 
-<section class="summary">
-  <div class="stat"><span class="num">{{ depgraph_node_count }}</span><span class="lbl">depgraph nodes</span></div>
-  <div class="stat"><span class="num">{{ rule_count }}</span><span class="lbl">rules</span></div>
-  <div class="stat"><span class="num">{{ domain_count }}</span><span class="lbl">domain</span></div>
-</section>
+{% if review_pending %}
+<a href="/graph/review" class="review-banner">
+  <span class="review-banner-title">📋 Review queue</span>
+  <span class="review-banner-count">{{ review_pending }} pending</span>
+  <span class="review-banner-go">→</span>
+</a>
+{% endif %}
 
-<section class="coverage">
-  <h2>Coverage matrix</h2>
-  <div class="scroll-x">
-  <table class="cov">
-    <thead>
-      <tr>
-        <th>kind</th>
-        {% for tier in tier_order %}
-          <th>tier {{ tier }}</th>
-        {% endfor %}
-      </tr>
-    </thead>
-    <tbody>
-    {% for row in matrix_rows %}
-      <tr>
-        <td class="kind">{{ row.kind }}</td>
-        {% for tier in tier_order %}
-          {% set cell = row.tiers.get(tier) %}
-          {% if cell %}
-            <td class="cell pct-{{ (cell.pct // 20) * 20 }}">
-              <a href="?kind={{ row.kind }}&tier={{ tier }}">
-                <span class="pct">{{ cell.pct }}%</span>
-                <span class="counts">{{ cell.current + cell.llm_drafted }}/{{ cell.total }}</span>
-                {% if cell.stale %}<span class="badge stale" title="stale">{{ cell.stale }}⌛</span>{% endif %}
-                {% if cell.unreviewed %}<span class="badge unreviewed" title="unreviewed">{{ cell.unreviewed }}?</span>{% endif %}
-              </a>
-            </td>
-          {% else %}
-            <td class="cell empty">—</td>
+<section class="gallery-section">
+  <h2 class="section-title">Source repos</h2>
+  <div class="gallery-grid">
+    {% for r in repos %}
+    <a href="/graph/repo/{{ r.basename }}" class="gallery-card">
+      <div class="card-head">
+        <span class="card-title">{{ r.basename }}</span>
+      </div>
+      <div class="card-count">{{ r.node_count }} node{{ '' if r.node_count == 1 else 's' }}</div>
+      <div class="state-bar">
+        {% for state_key in ['current', 'llm_drafted', 'unreviewed', 'stale', 'missing'] %}
+          {% set n = r.state_counts.get(state_key, 0) %}
+          {% if n > 0 %}
+          <span class="state-bar-seg state-bar-{{ state_key }}" style="flex: {{ n }};" title="{{ n }} {{ state_key }}"></span>
           {% endif %}
         {% endfor %}
-      </tr>
+      </div>
+      <div class="card-meta">
+        <span class="state-pct">{{ r.current_pct }}% current</span>
+        {% if r.has_stale %}<span class="stale-flag">⚠ {{ r.state_counts.stale }} stale</span>{% endif %}
+      </div>
+    </a>
     {% endfor %}
-    </tbody>
-  </table>
-  </div>
-  <p class="legend">
-    cell = <em>(current+drafted) / total</em> · color = % covered ·
-    <span class="badge stale">⌛</span> stale · <span class="badge unreviewed">?</span> unreviewed
-  </p>
-
-  <details class="glossary">
-    <summary>What do these terms mean?</summary>
-    <dl>
-      <dt><strong>Tier A</strong> <span class="muted">(10+ dependents)</span></dt>
-      <dd>Hot nodes — heavily depended-on. Editing one ripples through 10+ call sites. Hand-author dossiers; assume any edit here is high-blast-radius.</dd>
-
-      <dt><strong>Tier B</strong> <span class="muted">(3–9 dependents)</span></dt>
-      <dd>Mid-traffic wrappers, models, schemas. LLM-drafted dossiers acceptable; review-via-graphui ratifies them.</dd>
-
-      <dt><strong>Tier C</strong> <span class="muted">(1–2 dependents)</span></dt>
-      <dd>The long tail — one-off endpoints, narrow helpers. Drafted by local models in bulk; review-via-graphui as a sweep, not per-node.</dd>
-
-      <dt><strong>Tier *</strong></dt>
-      <dd>Logigraph rules and domain nodes — tier-independent because they describe invariants, not code. Always hand-curated.</dd>
-
-      <dt><strong>Dependents</strong> <span class="muted">(a.k.a. fan-out)</span></dt>
-      <dd>Number of distinct callers, importers, or referencers the node has — i.e. how many other places in the code touch it. Derived from <code>nodes/_index/dependents.json</code>. Drives tier assignment. Higher = bigger blast radius if you change the contract.</dd>
-
-      <dt><strong>Kind</strong></dt>
-      <dd>What the node is: <code>model</code> (SQLAlchemy class), <code>service</code> (function/wrapper), <code>endpoint</code> (HTTP route handler), <code>schema</code> (Pydantic class), <code>component</code> (React component), <code>hook</code> (React hook), <code>test</code> (Playwright spec), <code>rule</code> / <code>domain</code> (logigraph nodes).</dd>
-
-      <dt><strong>Dossier states</strong></dt>
-      <dd>
-        <code>current</code> — human-reviewed, hash matches the live code &middot;
-        <code>llm_drafted</code> — written by an LLM agent, not yet reviewed &middot;
-        <code>unreviewed</code> — has a frontmatter but flagged as not-yet-reviewed &middot;
-        <code>stale</code> — the code's <code>structural_hash</code> has shifted since <code>last_reviewed_against_hash</code> was pinned &middot;
-        <code>missing</code> — node exists, no dossier file yet.
-      </dd>
-    </dl>
-  </details>
-</section>
-
-<section class="nodes">
-  <h2>Nodes</h2>
-  <div class="filters">
-    <input id="q" type="search" placeholder="filter by id, title, src…" autofocus>
-    <select id="f-kind">
-      <option value="">any kind</option>
-      <option value="model">model</option>
-      <option value="service">service</option>
-      <option value="endpoint">endpoint</option>
-      <option value="schema">schema</option>
-      <option value="component">component</option>
-      <option value="hook">hook</option>
-      <option value="test">test</option>
-      <option value="rule">rule</option>
-      <option value="domain">domain</option>
-    </select>
-    <select id="f-tier">
-      <option value="">any tier</option>
-      <option value="A">A</option>
-      <option value="B">B</option>
-      <option value="C">C</option>
-      <option value="*">* (rules/domain)</option>
-    </select>
-    <select id="f-state">
-      <option value="">any state</option>
-      <option value="current">current</option>
-      <option value="llm_drafted">llm_drafted</option>
-      <option value="unreviewed">unreviewed</option>
-      <option value="stale">stale</option>
-      <option value="missing">missing</option>
-    </select>
-    <span id="count" class="count"></span>
-  </div>
-  <div class="scroll-x">
-  <table class="nodes-tbl">
-    <thead>
-      <tr>
-        <th data-sort="kind">kind</th>
-        <th data-sort="tier">tier</th>
-        <th data-sort="fan_out" class="numeric" title="number of distinct callers/dependents">deps</th>
-        <th data-sort="state">state</th>
-        <th data-sort="title">title</th>
-        <th data-sort="src">src</th>
-      </tr>
-    </thead>
-    <tbody id="rows"></tbody>
-  </table>
   </div>
 </section>
 
-<script>
-const params = new URLSearchParams(location.search);
-const initial = {
-  kind: params.get('kind') || '',
-  tier: params.get('tier') || '',
-  state: params.get('state') || '',
-  q:    params.get('q')    || '',
-};
-let DATA = [];
-let SORT = { key: 'fan_out', desc: true };
+<section class="gallery-section">
+  <h2 class="section-title">Knowledge</h2>
+  <div class="gallery-grid">
+    {% for k in kinds %}
+    <a href="/graph/kind/{{ k.kind }}" class="gallery-card">
+      <div class="card-head">
+        <span class="card-title">{{ k.label }}</span>
+      </div>
+      <div class="card-count">{{ k.node_count }} {{ k.kind }}</div>
+      <div class="state-bar">
+        {% for state_key in ['current', 'llm_drafted', 'unreviewed', 'stale', 'missing'] %}
+          {% set n = k.state_counts.get(state_key, 0) %}
+          {% if n > 0 %}
+          <span class="state-bar-seg state-bar-{{ state_key }}" style="flex: {{ n }};" title="{{ n }} {{ state_key }}"></span>
+          {% endif %}
+        {% endfor %}
+      </div>
+      <div class="card-meta">
+        {% set drafted = k.state_counts.get('llm_drafted', 0) %}
+        {% set reviewed = k.state_counts.get('current', 0) %}
+        {% if drafted %}<span class="state-pct">{{ drafted }} drafted</span>
+        {% else %}<span class="state-pct">{{ reviewed }} reviewed</span>{% endif %}
+        {% if k.has_stale %}<span class="stale-flag">⚠ {{ k.state_counts.stale }} stale</span>{% endif %}
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</section>
 
-const $ = (id) => document.getElementById(id);
-const rowsEl = $('rows');
-const countEl = $('count');
-
-function applyFilters() {
-  const q = $('q').value.trim().toLowerCase();
-  const k = $('f-kind').value;
-  const t = $('f-tier').value;
-  const s = $('f-state').value;
-  let rows = DATA.filter(r =>
-    (!k || r.kind === k) &&
-    (!t || r.tier === t) &&
-    (!s || r.state === s) &&
-    (!q || (r.id + ' ' + r.title + ' ' + r.src).toLowerCase().includes(q))
-  );
-  rows.sort((a, b) => {
-    const av = a[SORT.key], bv = b[SORT.key];
-    if (typeof av === 'number') return SORT.desc ? bv - av : av - bv;
-    return SORT.desc
-      ? String(bv).localeCompare(String(av))
-      : String(av).localeCompare(String(bv));
-  });
-  countEl.textContent = `${rows.length} of ${DATA.length}`;
-  rowsEl.innerHTML = rows.slice(0, 500).map(r => `
-    <tr class="state-${r.state}">
-      <td class="kind">${r.kind}</td>
-      <td class="tier tier-${r.tier === '*' ? 'star' : r.tier}">${r.tier}</td>
-      <td class="numeric">${r.fan_out || ''}</td>
-      <td class="state">${r.state}</td>
-      <td><a href="${r.href}">${escapeHtml(r.title)}</a></td>
-      <td class="src">${escapeHtml(r.src)}</td>
-    </tr>
-  `).join('') + (rows.length > 500 ? `<tr><td colspan="6" class="more">+ ${rows.length - 500} more (refine filters)</td></tr>` : '');
-}
-
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({
-    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-  }[c]));
-}
-
-document.querySelectorAll('th[data-sort]').forEach(th => {
-  th.addEventListener('click', () => {
-    const key = th.dataset.sort;
-    if (SORT.key === key) SORT.desc = !SORT.desc;
-    else { SORT.key = key; SORT.desc = (key === 'fan_out'); }
-    document.querySelectorAll('th').forEach(t => t.classList.remove('asc','desc'));
-    th.classList.add(SORT.desc ? 'desc' : 'asc');
-    applyFilters();
-  });
-});
-
-['q','f-kind','f-tier','f-state'].forEach(id => {
-  $(id).addEventListener('input', applyFilters);
-});
-
-fetch('/graph/api/nodes.json')
-  .then(r => r.json())
-  .then(j => {
-    DATA = j;
-    $('q').value = initial.q;
-    $('f-kind').value = initial.kind;
-    $('f-tier').value = initial.tier;
-    $('f-state').value = initial.state;
-    applyFilters();
-  });
-</script>
 {% endblock %}

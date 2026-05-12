@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}{{ basename }}{% endblock %}
+{% block content %}
+
+<div class="repo-header">
+  <div class="breadcrumb">
+    <a href="/graph/">index</a> &nbsp;/&nbsp; repo
+  </div>
+  <h1>{{ basename }}</h1>
+  <div class="repo-meta">
+    {{ summary.node_count }} node{{ '' if summary.node_count == 1 else 's' }} ·
+    {{ summary.current_pct }}% current
+    {% if summary.has_stale %} · <span class="stale-flag">⚠ {{ summary.state_counts.stale }} stale</span>{% endif %}
+  </div>
+</div>
+
+<div class="filter-row">
+  <span class="filter-label">Kind</span>
+  <a href="/graph/repo/{{ basename }}{% if state_filter %}?state={{ state_filter }}{% endif %}"
+     class="chip{% if not kind_filter %} chip-active{% endif %}">all</a>
+  {% for k in summary.kinds %}
+  <a href="/graph/repo/{{ basename }}?kind={{ k.kind }}{% if state_filter %}&state={{ state_filter }}{% endif %}"
+     class="chip{% if kind_filter == k.kind %} chip-active{% endif %}">{{ k.kind }} <span class="chip-count">{{ k.count }}</span></a>
+  {% endfor %}
+</div>
+
+<div class="filter-row">
+  <span class="filter-label">State</span>
+  <a href="/graph/repo/{{ basename }}{% if kind_filter %}?kind={{ kind_filter }}{% endif %}"
+     class="chip{% if not state_filter %} chip-active{% endif %}">all</a>
+  {% for state_key in ['current', 'llm_drafted', 'stale', 'unreviewed', 'missing'] %}
+    {% set n = summary.state_counts.get(state_key, 0) %}
+    {% if n > 0 %}
+    <a href="/graph/repo/{{ basename }}?state={{ state_key }}{% if kind_filter %}&kind={{ kind_filter }}{% endif %}"
+       class="chip chip-state-{{ state_key }}{% if state_filter == state_key %} chip-active{% endif %}">{{ state_key }} <span class="chip-count">{{ n }}</span></a>
+    {% endif %}
+  {% endfor %}
+</div>
+
+{% if nodes %}
+<div class="node-cards">
+  {% for n in nodes %}
+  <a href="{{ n.href }}" class="node-card">
+    <div class="node-card-title">{{ n.title }}</div>
+    <div class="node-card-meta">
+      <span class="node-card-kind">{{ n.kind }}</span>
+      {% if n.fan_out %}<span class="node-card-deps">{{ n.fan_out }} dep{{ '' if n.fan_out == 1 else 's' }}</span>{% endif %}
+    </div>
+    <div class="node-card-foot">
+      <span class="state-chip state-chip-{{ n.state }}">{{ '⚠ ' if n.state == 'stale' else '' }}{{ n.state }}</span>
+      <span class="node-card-id">{{ n.id }}</span>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<p class="empty">No nodes match the current filters.</p>
+{% endif %}
+
+{% endblock %}

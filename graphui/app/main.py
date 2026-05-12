@@ -65,40 +65,78 @@ def _kind_sort(k: str) -> int:
 @app.get("/graph/", response_class=HTMLResponse)
 @app.get("/graph", response_class=HTMLResponse)
 def index(request: Request) -> HTMLResponse:
-    nodes = loader.load_depgraph_nodes()
-    lg = loader.load_logigraph_nodes()
-    matrix = loader.coverage_matrix()
-    meta = loader.load_meta()
-    # Stable kind order for matrix
-    matrix_rows = []
-    for kind in sorted(matrix.keys(), key=_kind_sort):
-        row = {"kind": kind, "tiers": {}}
-        for tier in TIER_ORDER:
-            cell = matrix[kind].get(tier)
-            if cell is None:
-                continue
-            total = sum(cell.values())
-            current = cell.get("current", 0) + cell.get("llm_drafted", 0)
-            row["tiers"][tier] = {
-                "total": total,
-                "current": cell.get("current", 0),
-                "llm_drafted": cell.get("llm_drafted", 0),
-                "unreviewed": cell.get("unreviewed", 0),
-                "stale": cell.get("stale", 0),
-                "missing": cell.get("missing", 0),
-                "pct": int(round(100 * current / total)) if total else 0,
-            }
-        matrix_rows.append(row)
+    """Top-level gallery: one card per source repo + one per logigraph kind."""
     return TEMPLATES.TemplateResponse(
         request,
         "index.html",
         {
-            "matrix_rows": matrix_rows,
-            "tier_order": TIER_ORDER,
-            "depgraph_node_count": len(nodes),
-            "rule_count": len(lg["rules"]),
-            "domain_count": len(lg["domain"]),
-            "meta": meta,
+            "repos": loader.repo_summary(),
+            "kinds": loader.kind_summary(),
+            "review_pending": len(_review_queue()),
+            "meta": loader.load_meta(),
+        },
+    )
+
+
+@app.get("/graph/repo/{basename}", response_class=HTMLResponse)
+def repo_detail(
+    request: Request,
+    basename: str,
+    kind: str | None = None,
+    state: str | None = None,
+) -> HTMLResponse:
+    """One source repo, optionally filtered by kind + state. Cards, not table."""
+    nodes = loader.nodes_for_repo(basename, kind=kind, state=state)
+    summary_entry = next(
+        (r for r in loader.repo_summary() if r["basename"] == basename),
+        None,
+    )
+    if summary_entry is None:
+        raise HTTPException(404, f"repo not found in any tracked node: {basename}")
+    return TEMPLATES.TemplateResponse(
+        request,
+        "repo.html",
+        {
+            "basename": basename,
+            "summary": summary_entry,
+            "nodes": nodes,
+            "kind_filter": kind,
+            "state_filter": state,
+            "meta": loader.load_meta(),
+        },
+    )
+
+
+@app.get("/graph/kind/{kind_name}", response_class=HTMLResponse)
+def kind_detail(
+    request: Request,
+    kind_name: str,
+    subkind: str | None = None,
+    state: str | None = None,
+) -> HTMLResponse:
+    """One logigraph kind (rules | domain | processes). Cards."""
+    if kind_name not in ("rules", "domain", "processes"):
+        raise HTTPException(404, f"unknown logigraph kind: {kind_name}")
+    nodes = loader.nodes_for_kind(kind_name, subkind=subkind, state=state)
+    summary_entry = next(
+        (k for k in loader.kind_summary() if k["kind"] == kind_name),
+        None,
+    )
+    # Available subkinds for the filter row (domain only).
+    subkinds: list[str] = []
+    if kind_name == "domain":
+        subkinds = sorted({n.get("subkind") for n in loader.load_logigraph_nodes()["domain"] if n.get("subkind")})
+    return TEMPLATES.TemplateResponse(
+        request,
+        "kind.html",
+        {
+            "kind_name": kind_name,
+            "summary": summary_entry,
+            "nodes": nodes,
+            "subkind_filter": subkind,
+            "state_filter": state,
+            "subkinds": subkinds,
+            "meta": loader.load_meta(),
         },
     )
 
@@ -200,6 +238,21 @@ def _review_queue(tier: str | None = None, kind: str | None = None) -> list[dict
             "tier": "*",
             "fan_out": 0,
             "href": f"/graph/domain/{o['id']}",
+        })
+    for p in lg.get("processes", []):
+        if p.get("dossier_state") != "llm_drafted":
+            continue
+        if tier:
+            continue
+        if kind and kind != "process":
+            continue
+        rows.append({
+            "id": p["id"],
+            "kind": "process",
+            "title": p.get("title", p["id"]),
+            "tier": "*",
+            "fan_out": p.get("fan_out", 0),
+            "href": f"/graph/process/{p['id']}",
         })
     rows.sort(key=lambda r: (-r.get("fan_out", 0), r["id"]))
     return rows
@@ -311,6 +364,30 @@ def rule_detail(request: Request, rule_id: str) -> HTMLResponse:
             "rule": rule,
             "dossier_html": dossier_html,
             "telemetry": telemetry,
+            "history": history,
+            **qctx,
+        },
+    )
+
+
+@app.get("/graph/process/{process_id:path}", response_class=HTMLResponse)
+def process_detail(request: Request, process_id: str) -> HTMLResponse:
+    proc = loader.load_process_by_id(process_id)
+    if not proc:
+        raise HTTPException(404, f"process not found: {process_id}")
+    dossier_text = loader.read_dossier(proc.get("dossier"), loader.LOGIGRAPH)
+    dossier_html = markdown_render.render(dossier_text) if dossier_text else None
+    history = loader.commit_history(
+        loader.LOGIGRAPH,
+        [p for p in (proc.get("_node_file"), proc.get("dossier")) if p],
+    )
+    qctx = _queue_context(process_id, proc.get("dossier_state"), kind="processes")
+    return TEMPLATES.TemplateResponse(
+        request,
+        "process.html",
+        {
+            "proc": proc,
+            "dossier_html": dossier_html,
             "history": history,
             **qctx,
         },
