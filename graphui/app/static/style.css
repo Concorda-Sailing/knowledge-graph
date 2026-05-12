@@ -1013,7 +1013,9 @@ h2 {
 .role-post_effect     { background: rgba(200, 156, 255, 0.14); color: var(--rule);      padding: 1px 5px; border-radius: 3px; font-size: 11px; font-family: var(--mono); }
 .role-error_surface   { background: rgba(255, 133, 129, 0.14); color: var(--bad);       padding: 1px 5px; border-radius: 3px; font-size: 11px; font-family: var(--mono); }
 
+.state-mods li,
 .side-effects li { margin-bottom: 5px; font-size: 12.5px; color: var(--fg-mute); }
+.side-effects li { color: var(--accent-2); }
 
 .empty {
   text-align: center;

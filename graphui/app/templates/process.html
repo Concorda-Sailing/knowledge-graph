@@ -122,6 +122,15 @@
       </div>
       {% endif %}
 
+      {% if proc.state_modifications %}
+      <div class="card">
+        <h3>State modifications</h3>
+        <ul class="state-mods">
+        {% for s in proc.state_modifications %}<li>{{ s }}</li>{% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
       {% if proc.side_effects %}
       <div class="card">
         <h3>Side effects</h3>
