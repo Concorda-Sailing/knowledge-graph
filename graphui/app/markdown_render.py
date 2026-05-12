@@ -13,8 +13,13 @@ except ImportError:
 
 
 _FRONTMATTER_RE = re.compile(r"\A---\s*\n.*?\n---\s*\n", re.DOTALL)
+# Repo basename pattern is permissive ([a-z][\w-]*) so the framework
+# linkifies node ids from any project, not just one with a fixed repo
+# naming scheme. False positives ("something::foo::bar" in a dossier
+# that doesn't correspond to a real node) just render as a broken
+# link — minor cost for project-agnostic linkification.
 _NODE_ID_RE = re.compile(
-    r"`(concorda-(?:api|web|test|expo)::[^\s`]+::[^\s`]+|"
+    r"`((?:[a-z][\w-]*)::[^\s`]+::[^\s`]+|"
     r"(?:GET|POST|PUT|DELETE|PATCH)::/[^\s`]+|"
     r"rule::[a-zA-Z0-9_:]+|"
     r"resource::[a-zA-Z0-9_:]+|"
@@ -39,7 +44,7 @@ def _link_ids(html_text: str) -> str:
         return f'<a class="idref" href="{href}"><code>{html.escape(nid)}</code></a>'
     # Match within already-rendered <code>X</code> spans
     code_re = re.compile(
-        r"<code>(concorda-(?:api|web|test|expo)::[^<]+::[^<]+|"
+        r"<code>((?:[a-z][\w-]*)::[^<]+::[^<]+|"
         r"(?:GET|POST|PUT|DELETE|PATCH)::/[^<]+|"
         r"rule::[a-zA-Z0-9_:]+|"
         r"resource::[a-zA-Z0-9_:]+|"

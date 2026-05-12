@@ -1,8 +1,9 @@
 """Load depgraph + logigraph indexes into in-memory dicts.
 
-Single source of truth: the JSON files on disk under ~/concorda/depgraph and
-~/concorda/logigraph. We re-read on each request so the UI tracks regen
-output without restart. At ~1500 nodes the cost is negligible (~50ms cold).
+Single source of truth: the JSON files on disk at the data dirs pointed
+at by DEPGRAPH_DATA_DIR and LOGIGRAPH_DATA_DIR. We re-read on each
+request so the UI tracks regen output without restart. At ~1500 nodes
+the cost is negligible (~50ms cold).
 """
 from __future__ import annotations
 
@@ -10,24 +11,29 @@ import json
 import re
 import subprocess
 import os
+import sys
 import time
 from pathlib import Path
 from typing import Any
 
 HOME = Path.home()
-# Data dirs are env-var-driven so graphui can serve any project, not just
-# Concorda. Source priority: DEPGRAPH_DATA_DIR / LOGIGRAPH_DATA_DIR (new),
-# CONCORDA_*_PATH (legacy), then the original in-place default.
-DEPGRAPH = Path(
-    os.environ.get("DEPGRAPH_DATA_DIR")
-    or os.environ.get("CONCORDA_DEPGRAPH_PATH")
-    or (HOME / "concorda" / "depgraph")
-).resolve()
-LOGIGRAPH = Path(
-    os.environ.get("LOGIGRAPH_DATA_DIR")
-    or os.environ.get("CONCORDA_LOGIGRAPH_PATH")
-    or (HOME / "concorda" / "logigraph")
-).resolve()
+
+
+def _resolve(env_var: str) -> Path:
+    """Resolve a graph data dir from env var, else fail loud. Graphui
+    is meant to be run as a systemd service that sets the env vars
+    explicitly (see install.sh)."""
+    val = os.environ.get(env_var)
+    if not val:
+        sys.exit(
+            f"{env_var} is not set — graphui needs both DEPGRAPH_DATA_DIR "
+            f"and LOGIGRAPH_DATA_DIR pointing at the project's data dirs."
+        )
+    return Path(val).expanduser().resolve()
+
+
+DEPGRAPH = _resolve("DEPGRAPH_DATA_DIR")
+LOGIGRAPH = _resolve("LOGIGRAPH_DATA_DIR")
 
 DEPGRAPH_NODES = DEPGRAPH / "nodes"
 LOGIGRAPH_NODES = LOGIGRAPH / "nodes"

@@ -42,11 +42,14 @@ installer:
 
 ## Environment
 
-| Var | Default | What |
+| Var | Required? | What |
 |---|---|---|
-| `DEPGRAPH_DATA_DIR` | `~/concorda/depgraph` | Where depgraph nodes / dossiers / telemetry live. |
-| `LOGIGRAPH_DATA_DIR` | `~/concorda/logigraph` | Where logigraph nodes / dossiers / telemetry live. |
-| `DEPGRAPH_BIN` | `~/concorda/depgraph/bin/depgraph` | Path to the depgraph CLI (invoked by the Approve button). |
+| `DEPGRAPH_DATA_DIR` | required | Path to the project's depgraph data dir (the dir containing `project.toml` + `nodes/`). |
+| `LOGIGRAPH_DATA_DIR` | required | Path to the project's logigraph data dir. |
+| `DEPGRAPH_BIN` | optional (default: `~/tools/depgraph/bin/depgraph`) | Path to the depgraph CLI (invoked by the Approve button). |
+| `LOGIGRAPH_BIN` | optional (default: `~/tools/logigraph/bin/logigraph`) | Path to the logigraph CLI (invoked by the Approve button for rule / domain nodes). |
+
+Graphui fails loud at startup if the required data-dir env vars are unset. The systemd unit shipped by `install.sh` sets all four.
 
 ## License
 
