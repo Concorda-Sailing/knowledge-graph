@@ -205,6 +205,38 @@ def _review_queue(tier: str | None = None, kind: str | None = None) -> list[dict
     return rows
 
 
+def _queue_context(node_id: str, dossier_state: str, tier: str | None = None, kind: str | None = None) -> dict:
+    """If `node_id` is an llm_drafted entry in the review queue, return the
+    context vars the _review_strip partial expects: queue_position,
+    queue_total, prev_node, next_node, queue_back_href, target_node_id,
+    approve_next_href. Returns dict with None values when the node isn't
+    in the queue (the partial then renders nothing)."""
+    out = {
+        "queue_position": None, "queue_total": None,
+        "prev_node": None, "next_node": None,
+        "queue_back_href": "/graph/review",
+        "target_node_id": node_id,
+        "approve_next_href": "/graph/review",
+    }
+    if dossier_state != "llm_drafted":
+        return out
+    queue = _review_queue(tier=tier, kind=kind)
+    ids = [n["id"] for n in queue]
+    if node_id not in ids:
+        return out
+    i = ids.index(node_id)
+    out["queue_position"] = i + 1
+    out["queue_total"] = len(ids)
+    if i > 0:
+        out["prev_node"] = queue[i - 1]
+    if i < len(queue) - 1:
+        out["next_node"] = queue[i + 1]
+    if tier:
+        out["queue_back_href"] = f"/graph/review?tier={tier}"
+    out["approve_next_href"] = out["next_node"]["href"] if out["next_node"] else out["queue_back_href"]
+    return out
+
+
 @app.get("/graph/review", response_class=HTMLResponse)
 def review_queue(request: Request, tier: str | None = None, kind: str | None = None) -> HTMLResponse:
     rows = _review_queue(tier=tier, kind=kind)
@@ -241,20 +273,7 @@ def node_detail(request: Request, node_id: str) -> HTMLResponse:
         [p for p in (node.get("_node_file"), node.get("dossier")) if p],
     )
     telemetry = loader.telemetry_for_node(node_id)
-    # If this node is in the review queue, compute prev/next siblings.
-    prev_node = next_node = None
-    queue_position = queue_total = None
-    if node.get("dossier_state") == "llm_drafted":
-        queue = _review_queue(tier=node["tier"], kind=node.get("kind"))
-        ids = [n["id"] for n in queue]
-        if node_id in ids:
-            i = ids.index(node_id)
-            queue_position = i + 1
-            queue_total = len(ids)
-            if i > 0:
-                prev_node = queue[i - 1]
-            if i < len(queue) - 1:
-                next_node = queue[i + 1]
+    qctx = _queue_context(node_id, node.get("dossier_state"), tier=node.get("tier"), kind=node.get("kind"))
     return TEMPLATES.TemplateResponse(
         request,
         "node.html",
@@ -265,12 +284,9 @@ def node_detail(request: Request, node_id: str) -> HTMLResponse:
             "dossier_html": dossier_html,
             "src": src,
             "commits_30d": commits_30d,
-            "prev_node": prev_node,
-            "next_node": next_node,
-            "queue_position": queue_position,
-            "queue_total": queue_total,
             "history": history,
             "telemetry": telemetry,
+            **qctx,
         },
     )
 
@@ -287,6 +303,7 @@ def rule_detail(request: Request, rule_id: str) -> HTMLResponse:
         loader.LOGIGRAPH,
         [p for p in (rule.get("_node_file"), rule.get("dossier")) if p],
     )
+    qctx = _queue_context(rule_id, rule.get("dossier_state"), kind="rule")
     return TEMPLATES.TemplateResponse(
         request,
         "rule.html",
@@ -295,6 +312,7 @@ def rule_detail(request: Request, rule_id: str) -> HTMLResponse:
             "dossier_html": dossier_html,
             "telemetry": telemetry,
             "history": history,
+            **qctx,
         },
     )
 
@@ -315,6 +333,7 @@ def domain_detail(request: Request, ont_id: str) -> HTMLResponse:
         loader.collisions_for_relationship(ont_id)
         if ont.get("subkind") == "relationship" else []
     )
+    qctx = _queue_context(ont_id, ont.get("dossier_state"), kind="domain")
     return TEMPLATES.TemplateResponse(
         request,
         "domain.html",
@@ -324,6 +343,7 @@ def domain_detail(request: Request, ont_id: str) -> HTMLResponse:
             "history": history,
             "relationships": relationships,
             "collisions": collisions,
+            **qctx,
         },
     )
 

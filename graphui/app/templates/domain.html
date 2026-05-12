@@ -13,6 +13,8 @@
     <span class="pill">state: <span class="state-{{ ont.dossier_state }}">{{ ont.dossier_state }}</span></span>
   </div>
 
+  {% include "_review_strip.html" %}
+
   {% if collisions %}
   <div class="collision-banner">
     <strong>⚠ Mediation collision</strong> —

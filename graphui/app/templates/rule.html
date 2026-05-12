@@ -15,6 +15,8 @@
     <span class="pill">state: <span class="state-{{ rule.dossier_state }}">{{ rule.dossier_state }}</span></span>
   </div>
 
+  {% include "_review_strip.html" %}
+
   {% if rule.statement %}
   <div class="dossier" style="margin-bottom: 14px;">
     <h2>Statement</h2>
