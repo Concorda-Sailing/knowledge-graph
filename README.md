@@ -35,7 +35,7 @@ Other useful asks (Claude follows the runbook in the next section):
 Optional ergonomics:
 
 ```bash
-echo 'export PATH="$HOME/tools/depgraph/bin:$HOME/tools/logigraph/bin:$PATH"' >> ~/.bashrc
+echo 'export PATH="$HOME/tools/knowledge-graph/depgraph/bin:$HOME/tools/knowledge-graph/logigraph/bin:$PATH"' >> ~/.bashrc
 source ~/.bashrc
 # now `depgraph regen` / `logigraph validate` work from any cwd
 ```
@@ -81,12 +81,12 @@ This section is the source of truth for what to do when a user asks for knowledg
    ```bash
    ~/tools/knowledge-graph/install.sh bootstrap <project_path>
    ```
-   This clones `depgraph`, `logigraph`, `graphui` into `~/tools/`, scaffolds `<project_path>/depgraph/` and `<project_path>/logigraph/`, writes `~/.claude/settings.json` hook entries (with `DEPGRAPH_DATA_DIR` and `LOGIGRAPH_DATA_DIR` set explicitly to the project paths), and registers the graphui systemd `--user` service.
+   This clones `depgraph`, `logigraph`, `graphui` into `~/tools/knowledge-graph/`, scaffolds `<project_path>/knowledge-graph/{depgraph,logigraph}/`, writes `~/.claude/settings.json` hook entries (with `DEPGRAPH_DATA_DIR` and `LOGIGRAPH_DATA_DIR` set explicitly to the bundled project paths), and registers the graphui systemd `--user` service. If you have an older flat install (`~/tools/{depgraph,logigraph,graphui}/` or `<project>/{depgraph,logigraph}/`), `bootstrap` (or the standalone `migrate <project>`) moves them into the bundle and rewrites every dependent path.
 4. Verify; all three should pass:
    ```bash
-   DEPGRAPH_DATA_DIR=<project_path>/depgraph ~/tools/depgraph/bin/depgraph self-check
-   DEPGRAPH_DATA_DIR=<project_path>/depgraph ~/tools/depgraph/bin/depgraph validate
-   LOGIGRAPH_DATA_DIR=<project_path>/logigraph DEPGRAPH_DATA_DIR=<project_path>/depgraph ~/tools/logigraph/bin/logigraph validate
+   DEPGRAPH_DATA_DIR=<project_path>/knowledge-graph/depgraph ~/tools/knowledge-graph/depgraph/bin/depgraph self-check
+   DEPGRAPH_DATA_DIR=<project_path>/knowledge-graph/depgraph ~/tools/knowledge-graph/depgraph/bin/depgraph validate
+   LOGIGRAPH_DATA_DIR=<project_path>/knowledge-graph/logigraph DEPGRAPH_DATA_DIR=<project_path>/knowledge-graph/depgraph ~/tools/knowledge-graph/logigraph/bin/logigraph validate
    systemctl --user is-active graphui
    ```
 5. Tell the user the graphui URL: `http://localhost:8081/graph/` (or LAN IP).
@@ -101,7 +101,7 @@ This section is the source of truth for what to do when a user asks for knowledg
 
 ### When the user asks: "Author a rule / process / domain entity"
 
-1. Read the relevant schema first: `~/tools/logigraph/schema/{rule,process,domain}.schema.json`. Each defines required fields and `$defs.warning`.
+1. Read the relevant schema first: `~/tools/knowledge-graph/logigraph/schema/{rule,process,domain}.schema.json`. Each defines required fields and `$defs.warning`.
 2. Use the naming convention: `<kind>::<category>::<short_name>` (lowercase, underscores). The filename mirrors the id with `::` → `__`.
 3. Required fields by kind:
    - **Rule**: `statement` (one-sentence), `claims_code` (≥1; each pinned via `depgraph_id` + `remote_hash`), `references_domain` (≥1).
@@ -145,18 +145,18 @@ Each entry in `~/.claude/settings.json` prefixes its command with the env vars:
     "matcher": "Edit|Write|MultiEdit",
     "hooks": [{
       "type": "command",
-      "command": "DEPGRAPH_DATA_DIR=/path/to/<project>/depgraph python3 ~/tools/depgraph/hooks/pre_edit_inject.py",
+      "command": "DEPGRAPH_DATA_DIR=/path/to/<project>/knowledge-graph/depgraph python3 ~/tools/knowledge-graph/depgraph/hooks/pre_edit_inject.py",
       "timeout": 5
     }, {
       "type": "command",
-      "command": "LOGIGRAPH_DATA_DIR=/path/to/<project>/logigraph DEPGRAPH_DATA_DIR=/path/to/<project>/depgraph python3 ~/tools/logigraph/hooks/pre_edit_inject.py",
+      "command": "LOGIGRAPH_DATA_DIR=/path/to/<project>/knowledge-graph/logigraph DEPGRAPH_DATA_DIR=/path/to/<project>/knowledge-graph/depgraph python3 ~/tools/knowledge-graph/logigraph/hooks/pre_edit_inject.py",
       "timeout": 5
     }]
   }],
   "Stop": [{
     "hooks": [{
       "type": "command",
-      "command": "DEPGRAPH_DATA_DIR=/path/to/<project>/depgraph python3 ~/tools/depgraph/hooks/post_edit_regen.py",
+      "command": "DEPGRAPH_DATA_DIR=/path/to/<project>/knowledge-graph/depgraph python3 ~/tools/knowledge-graph/depgraph/hooks/post_edit_regen.py",
       "timeout": 60
     }]
   }]
@@ -192,7 +192,7 @@ If a regen crashes mid-flight, `_meta.regen_status` stays `in_progress` and the 
 
 ### Framework self-tracking (advanced)
 
-The framework can track itself: `~/knowledge-graph-meta/` is a data dir whose `project.toml` lists `~/tools/depgraph`, `~/tools/logigraph`, `~/tools/graphui` as tracked repos. Authored rules (`rule::config::no_hardcoded_project_strings`, `rule::warnings::use_universal_object_shape`) fire on framework edits, so when extending the framework Claude sees its own invariants. Not required for normal project use; a useful dogfood when contributing to the framework itself.
+The framework can track itself: `~/knowledge-graph-meta/` is a data dir whose `project.toml` lists `~/tools/knowledge-graph/depgraph`, `~/tools/knowledge-graph/logigraph`, `~/tools/knowledge-graph/graphui` as tracked repos. Authored rules (`rule::config::no_hardcoded_project_strings`, `rule::warnings::use_universal_object_shape`) fire on framework edits, so when extending the framework Claude sees its own invariants. Not required for normal project use; a useful dogfood when contributing to the framework itself.
 
 ## License
 
