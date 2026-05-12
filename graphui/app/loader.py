@@ -364,30 +364,50 @@ def repo_summary() -> list[dict]:
     return out
 
 
+_KIND_ORDER_FLAGS = ["defect", "drift", "gap", "review_due", "incident"]
+
+
+def _group_flags_by_kind(items: list[dict]) -> list[dict]:
+    """Group warning objects by `kind`, preserving severity sort within each
+    group. Returns list of {kind, count, items} in canonical kind order so the
+    dashboard renders sections consistently."""
+    severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
+    by_kind: dict[str, list[dict]] = {}
+    for f in items:
+        k = f.get("kind", "other")
+        by_kind.setdefault(k, []).append(f)
+    out = []
+    for k in _KIND_ORDER_FLAGS + [k for k in by_kind if k not in _KIND_ORDER_FLAGS]:
+        if k not in by_kind:
+            continue
+        flags = sorted(by_kind[k], key=lambda f: (severity_order.get(f.get("severity", "low"), 5), f.get("code", "")))
+        out.append({"kind": k, "count": len(flags), "items": flags})
+    return out
+
+
 def corpus_flags() -> dict:
     """Return the logigraph corpus's flags partitioned by tracked/fresh and
-    sorted by severity. Reads _meta.json::flags written by reconcile.
+    grouped by kind within each. Reads _meta.json::flags written by reconcile.
 
-    Shape: {"fresh": [...], "tracked": [...], "count_fresh": N, "count_tracked": N}
+    Shape:
+      {
+        "fresh":   [{kind, count, items}, ...],
+        "tracked": [{kind, count, items}, ...],
+        "count_fresh": N,
+        "count_tracked": N,
+      }
     """
-    severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
     meta = load_meta()
     flags = (meta.get("logigraph") or {}).get("flags") or []
     if not isinstance(flags, list):
         flags = []
-    fresh = sorted(
-        [f for f in flags if not f.get("tracked")],
-        key=lambda f: (severity_order.get(f.get("severity", "low"), 5), f.get("code", "")),
-    )
-    tracked = sorted(
-        [f for f in flags if f.get("tracked")],
-        key=lambda f: (severity_order.get(f.get("severity", "low"), 5), f.get("code", "")),
-    )
+    fresh_flat = [f for f in flags if not f.get("tracked")]
+    tracked_flat = [f for f in flags if f.get("tracked")]
     return {
-        "fresh": fresh,
-        "tracked": tracked,
-        "count_fresh": len(fresh),
-        "count_tracked": len(tracked),
+        "fresh": _group_flags_by_kind(fresh_flat),
+        "tracked": _group_flags_by_kind(tracked_flat),
+        "count_fresh": len(fresh_flat),
+        "count_tracked": len(tracked_flat),
     }
 
 

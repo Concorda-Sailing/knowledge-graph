@@ -8,6 +8,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+import datetime
+import json
 import os
 import subprocess
 
@@ -340,6 +342,7 @@ def node_detail(request: Request, node_id: str) -> HTMLResponse:
             "commits_30d": commits_30d,
             "history": history,
             "telemetry": telemetry,
+            "warnings": loader.warnings_for(node_id),
             **qctx,
         },
     )
@@ -469,6 +472,91 @@ async def bump_dossier(request: Request) -> JSONResponse:
             status_code=500,
         )
     return JSONResponse({"ok": True, "stdout": result.stdout.strip()[:500]})
+
+
+@app.post("/graph/api/flags/track")
+async def track_flag(request: Request) -> JSONResponse:
+    """Flip a fresh flag to tracked by writing/updating a warning entry on
+    the affected logigraph node.
+
+    Body: { node_id: "<rule::|role::|resource::|... node id>",
+            code: "<warning code>",
+            tracking_ref: "<plan path / sha / ticket / free text>" }
+
+    Behavior:
+      1. Find the logigraph node JSON for node_id.
+      2. Find the warning entry by `code` in its `warnings: []` array; if
+         not present, append one (for reconcile-auto warnings the user is
+         formalizing for the first time).
+      3. Set tracked=true + tracking_ref + discovered_by='author';
+         preserve original `discovered_at` and other fields when possible.
+      4. Write the node JSON back (canonical pretty-print).
+      5. Trigger `bin/logigraph regen` so _meta.json::flags refreshes.
+      6. Return ok or stderr."""
+    payload = await request.json()
+    node_id = payload.get("node_id")
+    code = payload.get("code")
+    tracking_ref = (payload.get("tracking_ref") or "").strip()
+    if not node_id or not code:
+        raise HTTPException(400, "missing node_id or code")
+
+    # Resolve node JSON path within the logigraph data dir.
+    target_path: Path | None = None
+    for sub in ("rules", "domain", "processes"):
+        d = loader.LOGIGRAPH_NODES / sub
+        if not d.is_dir():
+            continue
+        for nf in d.glob("*.json"):
+            try:
+                data = json.loads(nf.read_text())
+            except (OSError, json.JSONDecodeError):
+                continue
+            if data.get("id") == node_id:
+                target_path = nf
+                break
+        if target_path:
+            break
+    if target_path is None:
+        raise HTTPException(404, f"node not found in logigraph corpus: {node_id}")
+
+    node = json.loads(target_path.read_text())
+    warnings = list(node.get("warnings") or [])
+    today = datetime.date.today().isoformat()
+    found_idx = next((i for i, w in enumerate(warnings) if w.get("code") == code), None)
+    if found_idx is not None:
+        w = warnings[found_idx]
+        w["tracked"] = True
+        if tracking_ref:
+            w["tracking_ref"] = tracking_ref
+        warnings[found_idx] = w
+    else:
+        # Authoring a new structured warning from a reconcile-derived flag.
+        # Use sensible defaults; the user can refine later by editing the node.
+        warnings.append({
+            "code": code,
+            "kind": "defect",
+            "severity": "medium",
+            "message": f"Tracked via graphui Track action (code: {code})",
+            "tracked": True,
+            "tracking_ref": tracking_ref or None,
+            "affected": [node_id],
+            "discovered_at": today,
+            "discovered_by": "author",
+        })
+    node["warnings"] = warnings
+
+    new_text = json.dumps(node, indent=2) + "\n"
+    tmp = target_path.with_suffix(target_path.suffix + ".tmp")
+    tmp.write_text(new_text)
+    tmp.replace(target_path)
+
+    # Refresh _meta.json::flags so the dashboard sees the move.
+    try:
+        subprocess.run([str(LOGIGRAPH_BIN), "regen"], capture_output=True, text=True, timeout=30)
+    except subprocess.SubprocessError:
+        pass  # non-fatal; the JSON edit is the truth, regen catches up next time
+
+    return JSONResponse({"ok": True, "node": str(target_path.relative_to(loader.LOGIGRAPH))})
 
 
 @app.get("/graph/healthz")

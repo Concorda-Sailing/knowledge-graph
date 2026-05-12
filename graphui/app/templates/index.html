@@ -11,10 +11,9 @@
 {% endif %}
 
 {% if flags.count_fresh or flags.count_tracked %}
-{% macro flag_li(f, tracked_class='') %}
-  <li class="flag flag-{{ f.severity }} flag-{{ f.kind }} {{ tracked_class }}">
+{% macro flag_li(f, is_tracked) %}
+  <li class="flag flag-{{ f.severity }} flag-{{ f.kind }} {{ 'flag-tracked' if is_tracked else '' }}">
     <span class="flag-pills">
-      <span class="flag-pill flag-pill-kind">{{ f.kind }}</span>
       <span class="flag-pill flag-pill-sev flag-pill-sev-{{ f.severity }}">{{ f.severity }}</span>
       <code class="flag-code">{{ f.code }}</code>
     </span>
@@ -31,27 +30,93 @@
       {% endfor %}
     </div>
     {% endif %}
+    {% if not is_tracked and f.affected %}
+    <div class="flag-actions">
+      <button class="flag-action-btn flag-action-track"
+              data-node="{{ f.affected[0] }}"
+              data-code="{{ f.code }}">Track…</button>
+      <span class="flag-action-status"></span>
+    </div>
+    {% endif %}
   </li>
 {% endmacro %}
 <section class="flags-card">
-  <h2 class="section-title">⚠ Needs attention</h2>
+  <div class="flags-card-head">
+    <h2 class="section-title">⚠ Needs attention</h2>
+    <span class="flags-card-counts">
+      {% if flags.count_fresh %}<span class="flags-count-fresh">{{ flags.count_fresh }} fresh</span>{% endif %}
+      {% if flags.count_tracked %}<span class="flags-count-tracked">{{ flags.count_tracked }} tracked</span>{% endif %}
+    </span>
+  </div>
+
   {% if flags.fresh %}
   <div class="flags-bucket">
     <div class="flags-bucket-label">Fresh ({{ flags.count_fresh }})</div>
-    <ul class="flags-list">
-      {% for f in flags.fresh %}{{ flag_li(f) }}{% endfor %}
-    </ul>
+    {% for group in flags.fresh %}
+    <details class="flag-kind-group" {% if loop.index <= 2 %}open{% endif %}>
+      <summary class="flag-kind-summary">
+        <span class="flag-kind-name">{{ group.kind }}</span>
+        <span class="flag-kind-count">{{ group.count }}</span>
+      </summary>
+      <ul class="flags-list">
+        {% for f in group.flags %}{{ flag_li(f, false) }}{% endfor %}
+      </ul>
+    </details>
+    {% endfor %}
   </div>
   {% endif %}
+
   {% if flags.tracked %}
   <div class="flags-bucket flags-bucket-tracked">
     <div class="flags-bucket-label">Tracked ({{ flags.count_tracked }})</div>
-    <ul class="flags-list">
-      {% for f in flags.tracked %}{{ flag_li(f, 'flag-tracked') }}{% endfor %}
-    </ul>
+    {% for group in flags.tracked %}
+    <details class="flag-kind-group">
+      <summary class="flag-kind-summary">
+        <span class="flag-kind-name">{{ group.kind }}</span>
+        <span class="flag-kind-count">{{ group.count }}</span>
+      </summary>
+      <ul class="flags-list">
+        {% for f in group.flags %}{{ flag_li(f, true) }}{% endfor %}
+      </ul>
+    </details>
+    {% endfor %}
   </div>
   {% endif %}
 </section>
+
+<script>
+document.querySelectorAll('.flag-action-track').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const node = btn.dataset.node;
+    const code = btn.dataset.code;
+    const tracking_ref = prompt(
+      `Track this flag on ${node}.\n\nTracking ref (plan path, ticket id, free text — used to look it up later):`,
+      ''
+    );
+    if (tracking_ref === null) return; // cancelled
+    const statusEl = btn.nextElementSibling;
+    btn.disabled = true;
+    statusEl.textContent = 'tracking…';
+    statusEl.className = 'flag-action-status pending';
+    try {
+      const res = await fetch('/graph/api/flags/track', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({node_id: node, code: code, tracking_ref: tracking_ref}),
+      });
+      const body = await res.json();
+      if (!res.ok || !body.ok) throw new Error(body.stderr || `HTTP ${res.status}`);
+      statusEl.textContent = '✓ tracked';
+      statusEl.className = 'flag-action-status ok';
+      setTimeout(() => location.reload(), 400);
+    } catch (e) {
+      statusEl.textContent = `✗ ${e.message}`;
+      statusEl.className = 'flag-action-status err';
+      btn.disabled = false;
+    }
+  });
+});
+</script>
 {% endif %}
 
 <section class="gallery-section">
