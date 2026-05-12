@@ -425,10 +425,17 @@ h2 {
   background: rgba(122, 183, 255, 0.20);
 }
 
-/* ===== two-column detail layout ========================================== */
+/* ===== detail layout — main content full-width, sidebar cards stack below */
 .cols {
-  display: grid; grid-template-columns: minmax(0, 1fr) 380px;
-  gap: 24px; align-items: start; margin-top: 14px;
+  display: block;
+  margin-top: 14px;
+}
+.cols .side {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 28px;
+  position: static;
 }
 .cols .side { display: flex; flex-direction: column; gap: 16px; position: sticky; top: 70px; }
 .side .card {
