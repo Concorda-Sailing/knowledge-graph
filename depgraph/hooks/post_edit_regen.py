@@ -46,6 +46,7 @@ from lib.config import (  # noqa: E402
     render_extractor,
     repo_basenames,
     repo_for_basename,
+    path_to_repo_relative,
 )
 
 DEPGRAPH = resolve_data_dir("DEPGRAPH_DATA_DIR")
@@ -63,17 +64,10 @@ def emit_message(msg: str) -> None:
 
 
 def repo_for_path(abs_path: str) -> str | None:
-    p = Path(abs_path).resolve()
-    parts = p.parts
-    home_parts = HOME.parts
-    if len(parts) <= len(home_parts):
-        return None
-    if parts[: len(home_parts)] != home_parts:
-        return None
-    seg = parts[len(home_parts)]
-    if seg in repo_basenames(DEPGRAPH):
-        return seg
-    return None
+    """Return the repo basename for an absolute path that lives under one
+    of the configured [repos.*].path checkouts. Works for any layout."""
+    rr = path_to_repo_relative(abs_path, DEPGRAPH)
+    return rr[0] if rr else None
 
 
 def collect_touched_files(payload: dict) -> dict[str, list[str]]:

@@ -34,6 +34,8 @@ from lib.config import (  # noqa: E402
     render_extractor,
     repo_basenames,
     repo_for_basename,
+    path_to_repo_relative,
+    basename_path_map,
 )
 
 # Project data location. Resolved from DEPGRAPH_DATA_DIR or by walking
@@ -204,6 +206,7 @@ def cmd_dependents(args: argparse.Namespace) -> int:
 
 def cmd_orphans(args: argparse.Namespace) -> int:
     orphans = []
+    basename_to_path = basename_path_map(DEPGRAPH)
     for node_file in NODES.rglob("*.json"):
         if node_file.name.startswith("_") or any(p.startswith("_") for p in node_file.parts):
             continue
@@ -216,7 +219,10 @@ def cmd_orphans(args: argparse.Namespace) -> int:
         # No source path at all → not an orphan, just an abstract node (rare).
         if not repo or not rel:
             continue
-        if not (Path.home() / repo / rel).exists():
+        repo_path = basename_to_path.get(repo)
+        if repo_path is None:
+            continue  # Unknown repo — don't claim it's orphan.
+        if not (repo_path / rel).exists():
             orphans.append((node_file, data["id"]))
     if not orphans:
         print("no orphans")
@@ -307,23 +313,25 @@ def cmd_commit_summary(args: argparse.Namespace) -> int:
 
     deps_index = load_dependents_index()
 
-    known_basenames = repo_basenames(DEPGRAPH)
+    repos = list(project_repos(DEPGRAPH).values())
 
     def _repo_relative(p: str) -> tuple[str, str] | None:
-        ap = Path(p).expanduser().resolve()
-        parts = ap.parts
-        home_parts = home.parts
-        if len(parts) <= len(home_parts) or parts[: len(home_parts)] != home_parts:
-            # Likely already a repo-relative path — try each configured repo.
-            for repo_name in known_basenames:
-                cand = home / repo_name / p
-                if cand.exists():
-                    return repo_name, p
+        """Path → (basename, rel) by consulting [repos.*].path. Works for both
+        absolute paths and already-repo-relative paths regardless of layout."""
+        # If `p` is already a repo-relative path like "models/foo.py", probe
+        # each configured checkout for the file.
+        if not Path(p).is_absolute():
+            for info in repos:
+                if (info["path"] / p).exists():
+                    return info["basename"], p
+            # Also tolerate "<basename>/<rel>" style by checking the prefix.
+            for info in repos:
+                bn = info["basename"]
+                if p == bn or p.startswith(bn + "/"):
+                    return bn, p[len(bn) + 1:] if p != bn else ""
             return None
-        seg = parts[len(home_parts)]
-        if seg not in known_basenames:
-            return None
-        return seg, "/".join(parts[len(home_parts) + 1 :])
+        rr = path_to_repo_relative(p, DEPGRAPH)
+        return rr
 
     # Group nodes by source file so a 274-method api.ts shows once, not 274 times.
     by_file: dict[str, list[str]] = {}
@@ -567,8 +575,12 @@ def _dossier_state(node: dict) -> str:
 def _commits_touching(rel_path: str, repo: str, days: int = 30) -> int:
     """Count commits in the last `days` that touched this file. Uses git log
     in the source repo. Returns 0 if anything goes wrong (no repo, file
-    untracked, etc.)."""
-    repo_root = Path.home() / repo
+    untracked, etc.). Resolves repo basename → checkout path via
+    project.toml."""
+    info = repo_for_basename(DEPGRAPH, repo)
+    if info is None:
+        return 0
+    repo_root = info["path"]
     if not (repo_root / ".git").exists():
         return 0
     try:
@@ -685,8 +697,9 @@ def cmd_dossier_draft(args: argparse.Namespace) -> int:
 
     # Source excerpt — ~80 lines centered on the symbol's line
     src_excerpt = "(unavailable)"
-    if repo and rel:
-        full = Path.home() / repo / rel
+    repo_info = repo_for_basename(DEPGRAPH, repo) if repo else None
+    if repo_info and rel:
+        full = repo_info["path"] / rel
         if full.exists():
             try:
                 lines = full.read_text().splitlines()
@@ -708,11 +721,11 @@ def cmd_dossier_draft(args: argparse.Namespace) -> int:
 
     # Recent git history
     git_log = "(unavailable)"
-    if repo and rel:
+    if repo_info and rel:
         try:
             out = subprocess.run(
                 ["git", "log", "-15", "--oneline", "--", rel],
-                cwd=str(Path.home() / repo),
+                cwd=str(repo_info["path"]),
                 capture_output=True, text=True, timeout=10,
             )
             git_log = out.stdout.strip() or "(no recent commits)"

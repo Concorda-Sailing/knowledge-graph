@@ -32,7 +32,7 @@ from pathlib import Path
 
 TOOL_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(TOOL_ROOT))
-from lib.config import resolve_data_dir, primary_repo_path  # noqa: E402
+from lib.config import resolve_data_dir, primary_repo_path, basename_path_map  # noqa: E402
 
 DEPGRAPH = resolve_data_dir("DEPGRAPH_DATA_DIR")
 NODES = DEPGRAPH / "nodes"
@@ -216,7 +216,19 @@ def detect_orphans(nodes: dict[str, tuple[Path, dict]]) -> list[str]:
     """Return ids of nodes whose source.path no longer exists. This catches
     the case where a whole file was deleted; defect #5's domain orphan check
     catches the finer case where the file remains but a symbol within it was
-    removed."""
+    removed.
+
+    Resolves each node's source.repo basename to its actual checkout path
+    via project.toml so projects with non-flat layouts (e.g.
+    ~/projects/<group>/<repo>/) don't have every node falsely classified
+    as orphan — that bug previously archived the entire corpus on first
+    regen for any such project.
+
+    Safety: if a node's source.repo isn't in [repos.*], the node is
+    LEFT ALONE (not orphaned). Better to keep an uncertainly-classified
+    node than to destroy a real one.
+    """
+    basename_to_path = basename_path_map(DEPGRAPH)
     orphans = []
     for nid, (_, data) in nodes.items():
         src = data.get("source", {})
@@ -224,7 +236,10 @@ def detect_orphans(nodes: dict[str, tuple[Path, dict]]) -> list[str]:
         rel = src.get("path")
         if not repo or not rel:
             continue
-        repo_path = Path.home() / repo
+        repo_path = basename_to_path.get(repo)
+        if repo_path is None:
+            # Unknown repo — skip, don't archive on an unverifiable check.
+            continue
         if not (repo_path / rel).exists():
             orphans.append(nid)
     return orphans

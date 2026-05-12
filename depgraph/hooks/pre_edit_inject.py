@@ -36,7 +36,13 @@ from pathlib import Path
 # Framework code lives one level up from this script.
 TOOL_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(TOOL_ROOT))
-from lib.config import resolve_data_dir, load_project_config, project_repos, repo_basenames  # noqa: E402
+from lib.config import (  # noqa: E402
+    resolve_data_dir,
+    load_project_config,
+    project_repos,
+    repo_basenames,
+    path_to_repo_relative,
+)
 
 DEPGRAPH = resolve_data_dir("DEPGRAPH_DATA_DIR")
 NODES = DEPGRAPH / "nodes"
@@ -156,19 +162,10 @@ def target_files(tool_name: str, tool_input: dict) -> list[str]:
 
 
 def repo_relative(abs_path: str) -> tuple[str, str] | None:
-    home = str(Path.home())
-    p = Path(abs_path).resolve()
-    parts = p.parts
-    home_parts = Path(home).parts
-    if len(parts) <= len(home_parts):
-        return None
-    if parts[: len(home_parts)] != home_parts:
-        return None
-    seg = parts[len(home_parts)]
-    if seg not in repo_basenames(DEPGRAPH):
-        return None
-    rel = "/".join(parts[len(home_parts) + 1 :])
-    return seg, rel
+    """Resolve an absolute filesystem path to (repo_basename, repo_relative_path)
+    by consulting [repos.*].path. Works for both flat (~/<basename>/) and
+    nested (~/projects/<group>/<basename>/) checkouts."""
+    return path_to_repo_relative(abs_path, DEPGRAPH)
 
 
 def load_corpus() -> tuple[
