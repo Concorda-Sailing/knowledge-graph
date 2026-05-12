@@ -15,6 +15,12 @@
 #                                             ~/.claude/settings.json hook snippet
 #   ./install.sh systemd [--project <dir>] [--apply]
 #                                             print (or write) graphui systemd unit
+#   ./install.sh path [--rcfile <file>] [--apply] [--force]
+#                                             print (or write) the shell PATH
+#                                             snippet that puts depgraph and
+#                                             logigraph CLIs on $PATH. Also
+#                                             rewrites a stale block left over
+#                                             from the old flat tools layout.
 #
 #   ./install.sh migrate <project-dir>        retrofit an old flat
 #                                             <project>/{depgraph,logigraph}
@@ -192,6 +198,36 @@ migrate_tools_layout() {
 
     warn "tools layout migrated. Existing ~/.claude/settings.json hooks and graphui systemd unit reference the OLD paths and will fail until regenerated."
     warn "Re-run with 'hooks --project <project-dir> --apply --force' and 'systemd --project <project-dir> --apply' to fix, or use 'bootstrap <project-dir>' to handle both at once."
+
+    # Shell PATH blocks added by an earlier install reference the OLD
+    # flat layout (e.g. `$HOME/tools/depgraph/bin`). Those directories no
+    # longer exist after the move, so `depgraph`/`logigraph` will resolve
+    # to "command not found" until the rcfile is fixed. Surface this
+    # explicitly so the user (or an LLM agent) doesn't silently work
+    # around it by skipping the discovery step.
+    detect_stale_path_blocks "$target"
+}
+
+# Look for shell rcfiles whose PATH export references the old flat tools
+# layout (anything under $target/{depgraph,logigraph}/bin that isn't
+# under $BUNDLE_DIR). Print a per-file warning + the recovery command.
+# Pure side-effect: never edits files.
+detect_stale_path_blocks() {
+    local target="$1"
+    local stale=0
+    local f
+    for f in "$HOME/.profile" "$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.zprofile"; do
+        [[ -f "$f" ]] || continue
+        # Match `tools/depgraph/bin` or `tools/logigraph/bin` not preceded
+        # by `$BUNDLE_DIR/`. Tilde-form and $HOME-form both covered.
+        if grep -E "(tools|\\\$HOME/tools|~/tools)/(depgraph|logigraph)/bin" "$f" \
+            | grep -vE "/$BUNDLE_DIR/(depgraph|logigraph)/bin" >/dev/null 2>&1; then
+            warn "$f references the old flat tools layout in PATH (e.g. \$HOME/tools/depgraph/bin)."
+            warn "  Those paths no longer exist. Fix with:  $0 path --rcfile $f --apply --force"
+            stale=1
+        fi
+    done
+    [[ "$stale" -eq 1 ]] || return 0
 }
 
 # Move flat $project/{depgraph,logigraph} → $project/$BUNDLE_DIR/{...} and
@@ -329,6 +365,9 @@ cmd_install() {
         cat <<NEXT
 $(color_yellow "Next:")
 
+  Add depgraph + logigraph CLIs to your shell PATH:
+    $0 path --apply
+
   Apply Claude Code hooks pointing at your project data dir:
     $0 hooks --project <project-dir> --apply
 
@@ -341,8 +380,9 @@ NEXT
 $(color_yellow "Next:")
 
   1. Scaffold a project data dir:           $0 init ~/your-project
-  2. Print the hook snippet:                $0 hooks
-  3. (Optional) Register graphui daemon:    $0 systemd
+  2. Add CLIs to your shell PATH:           $0 path --apply
+  3. Print the hook snippet:                $0 hooks
+  4. (Optional) Register graphui daemon:    $0 systemd
 
   Or one-shot:                              $0 bootstrap ~/your-project
 NEXT
@@ -670,6 +710,148 @@ HEADER
     fi
 }
 
+# ----- path: print or apply the shell PATH snippet -------------------------
+#
+# The hooks block puts the framework on Claude Code's invocation surface,
+# but interactive shells (and the LLM's Bash tool) need `depgraph` /
+# `logigraph` resolvable on $PATH too. This subcommand emits a sentinel-
+# guarded block that can be appended to ~/.profile (default) or any other
+# rcfile. Re-applying is idempotent; if a block from an OLD flat install
+# is detected (no $BUNDLE_DIR segment), --apply --force replaces it after
+# a backup.
+
+# Sentinel comment — used as the marker to find/replace the block on
+# re-apply. Do not change without bumping a migration; an existing
+# install's rcfile uses the literal string to identify the block.
+PATH_BLOCK_MARKER="# Knowledge-graph framework CLIs (depgraph, logigraph) — managed by install.sh"
+
+generate_path_snippet() {
+    local target="$1"
+    local bundle="$target/$BUNDLE_DIR"
+    cat <<SNIPPET
+$PATH_BLOCK_MARKER
+if [ -d "$bundle/depgraph/bin" ] ; then
+    PATH="$bundle/depgraph/bin:\$PATH"
+fi
+if [ -d "$bundle/logigraph/bin" ] ; then
+    PATH="$bundle/logigraph/bin:\$PATH"
+fi
+export PATH
+SNIPPET
+}
+
+cmd_path() {
+    local target="$DEFAULT_TARGET"
+    local rcfile=""
+    local apply=0
+    local force=0
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --target)  target="$2"; shift 2 ;;
+            --rcfile)  rcfile="$2"; shift 2 ;;
+            --apply)   apply=1; shift ;;
+            --force)   force=1; shift ;;
+            --help|-h) usage; exit 0 ;;
+            *)         die "unknown flag: $1" ;;
+        esac
+    done
+
+    # Default to ~/.profile: it's sourced by login shells AND by
+    # non-interactive bash (`bash -c`, agent harnesses) where ~/.bashrc's
+    # standard "early-return when non-interactive" guard would skip it.
+    [[ -n "$rcfile" ]] || rcfile="$HOME/.profile"
+
+    local snippet
+    snippet=$(generate_path_snippet "$target")
+
+    if [[ "$apply" -eq 0 ]]; then
+        cat <<HEADER
+# Append the following to $rcfile (or re-run with --apply to write it
+# automatically; --apply --force replaces a stale block from the old
+# flat tools layout).
+
+HEADER
+        echo "$snippet"
+        return
+    fi
+
+    require python3
+    mkdir -p "$(dirname "$rcfile")"
+    touch "$rcfile"
+
+    # Idempotent merge driven by the sentinel marker. Three cases:
+    #   1. No marker present                 → append block.
+    #   2. Marker present, current target    → no-op.
+    #   3. Marker present, different target  → require --force; rewrite.
+    python3 - "$rcfile" "$target" "$BUNDLE_DIR" "$PATH_BLOCK_MARKER" "$force" <<'PY'
+import os, sys, time
+from pathlib import Path
+
+rcfile, target, bundle, marker, force = sys.argv[1:6]
+force = force == "1"
+p = Path(rcfile)
+text = p.read_text() if p.exists() else ""
+
+new_block = f"""{marker}
+if [ -d "{target}/{bundle}/depgraph/bin" ] ; then
+    PATH="{target}/{bundle}/depgraph/bin:$PATH"
+fi
+if [ -d "{target}/{bundle}/logigraph/bin" ] ; then
+    PATH="{target}/{bundle}/logigraph/bin:$PATH"
+fi
+export PATH"""
+
+lines = text.splitlines()
+try:
+    start = next(i for i, ln in enumerate(lines) if marker in ln)
+except StopIteration:
+    # Case 1: no existing block — append.
+    sep = "" if text.endswith("\n") or text == "" else "\n"
+    p.write_text(text + sep + "\n" + new_block + "\n")
+    print(f"✓ appended PATH block to {rcfile}")
+    sys.exit(0)
+
+# Find end of block: walk forward over PATH-block-shaped lines until
+# something else appears. Conservative — bails on the first unfamiliar
+# line so a hand-edited rcfile never has unrelated content eaten.
+end = start + 1
+while end < len(lines):
+    ln = lines[end].lstrip()
+    if (ln.startswith(("if ", "PATH=", "fi", "export PATH", "    PATH="))
+            or ln == ""):
+        end += 1
+        # Stop one line past `fi` followed by `export PATH` followed by blank
+        if (lines[end-1].strip() == ""
+                and end >= 2 and lines[end-2].strip() == "export PATH"):
+            break
+    else:
+        break
+
+existing = "\n".join(lines[start:end]).rstrip()
+if existing == new_block:
+    print(f"✓ PATH block already current in {rcfile} — no-op")
+    sys.exit(0)
+
+if not force:
+    print(f"⚠ {rcfile} has a managed PATH block pointing at a different target.",
+          file=sys.stderr)
+    print(f"  Existing first line: {lines[start+1] if start+1 < len(lines) else '(empty)'}",
+          file=sys.stderr)
+    print("  Re-run with '--apply --force' to replace it (a backup will be made).",
+          file=sys.stderr)
+    sys.exit(2)
+
+# Backup before rewrite.
+bak = p.with_suffix(p.suffix + f".bak.{int(time.time())}")
+bak.write_bytes(p.read_bytes())
+print(f"· backed up to {bak}")
+
+new_lines = lines[:start] + new_block.splitlines() + lines[end:]
+p.write_text("\n".join(new_lines).rstrip() + "\n")
+print(f"✓ rewrote PATH block in {rcfile}")
+PY
+}
+
 # ----- migrate: retrofit an old flat project layout into the bundle -------
 
 cmd_migrate() {
@@ -704,14 +886,22 @@ cmd_migrate() {
         log "applying systemd unit for graphui"
         cmd_systemd --target "$target" --project "$project" --apply
         echo
+        # Migrate scenario implies the user previously ran a flat-layout
+        # install — their shell rcfile almost certainly has a stale PATH
+        # block. --force replaces it after a backup.
+        log "applying PATH block to ~/.profile"
+        cmd_path --target "$target" --apply --force \
+            || warn "PATH apply skipped or failed; run '$0 path' to inspect"
+        echo
     else
         cat <<NEXT
-$(color_yellow "Next:") regenerate hooks + systemd so they reference the bundled paths:
+$(color_yellow "Next:") regenerate hooks + systemd + PATH so they reference the bundled paths:
 
   $0 hooks   --target $target --project $project --apply --force
   $0 systemd --target $target --project $project --apply
+  $0 path    --target $target --apply --force
 
-Or re-run with --apply to do both automatically.
+Or re-run with --apply to do all three automatically.
 NEXT
     fi
     ok "migrate complete"
@@ -764,6 +954,17 @@ cmd_bootstrap() {
     cmd_systemd --project "$project" --apply
     echo
 
+    # PATH for interactive shells + the LLM's Bash tool. Without this,
+    # `depgraph` and `logigraph` resolve only inside Claude Code's hook
+    # environment — manual lookups (and any agent tasked to "run depgraph
+    # context X") break with command-not-found, which historically led
+    # the agent to skip the discovery step entirely.
+    log "applying PATH block to ~/.profile"
+    # bootstrap implies a clean slate — replace any stale block that an
+    # earlier flat-layout install wrote.
+    cmd_path --apply --force || warn "PATH apply skipped or failed; run '$0 path' to inspect"
+    echo
+
     ok "bootstrap complete"
     cat <<DONE
 
@@ -772,6 +973,7 @@ cmd_bootstrap() {
   Claude Code hooks:           $SETTINGS_FILE
   Graphui daemon:              $SYSTEMD_DIR/$SYSTEMD_UNIT
   Graphui URL:                 http://localhost:$GRAPHUI_PORT/graph/
+  Shell PATH:                  ~/.profile (run 'source ~/.profile' to pick up depgraph/logigraph in this shell)
 
   Note: Claude Code reads settings.json at session start. Restart any
   open sessions to pick up the new hooks.
@@ -792,6 +994,7 @@ main() {
         init)                   shift; cmd_init "$@" ;;
         hooks)                  shift; cmd_hooks "$@" ;;
         systemd)                shift; cmd_systemd "$@" ;;
+        path)                   shift; cmd_path "$@" ;;
         install)                shift; cmd_install "$@" ;;
         migrate)                shift; cmd_migrate "$@" ;;
         bootstrap)              shift; cmd_bootstrap "$@" ;;
