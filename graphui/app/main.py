@@ -42,7 +42,7 @@ APP_ROOT = Path(__file__).parent
 TEMPLATES = Jinja2Templates(directory=str(APP_ROOT / "templates"))
 STATIC = APP_ROOT / "static"
 
-app = FastAPI(title="Concorda graphui", openapi_url=None, docs_url=None)
+app = FastAPI(title="graphui", openapi_url=None, docs_url=None)
 app.mount("/graph/static", StaticFiles(directory=str(STATIC)), name="static")
 
 
