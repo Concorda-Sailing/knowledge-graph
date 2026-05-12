@@ -17,15 +17,13 @@
 
   {% include "_review_strip.html" %}
 
-  {% if proc.summary %}
-  <div class="dossier" style="margin-bottom: 14px;">
-    <h2>Summary</h2>
-    <p>{{ proc.summary }}</p>
-  </div>
-  {% endif %}
-
   <div class="cols">
     <div class="dossier">
+      {% if proc.summary %}
+      <h2>Summary</h2>
+      <p>{{ proc.summary }}</p>
+      {% endif %}
+
       <h2>Trigger</h2>
       <p><a class="idref" href="/graph/node/{{ proc.trigger }}"><code>{{ proc.trigger }}</code></a></p>
 

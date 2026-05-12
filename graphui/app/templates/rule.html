@@ -17,15 +17,13 @@
 
   {% include "_review_strip.html" %}
 
-  {% if rule.statement %}
-  <div class="dossier" style="margin-bottom: 14px;">
-    <h2>Statement</h2>
-    <p>{{ rule.statement }}</p>
-  </div>
-  {% endif %}
-
   <div class="cols">
     <div class="dossier">
+      {% if rule.statement %}
+      <h2>Statement</h2>
+      <p>{{ rule.statement }}</p>
+      {% endif %}
+
       {% if dossier_html %}
         {{ dossier_html | safe }}
       {% else %}

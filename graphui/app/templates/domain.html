@@ -52,15 +52,13 @@
   </div>
   {% endif %}
 
-  {% if ont.summary %}
-  <div class="dossier" style="margin-bottom: 14px;">
-    <h2>Summary</h2>
-    <p>{{ ont.summary }}</p>
-  </div>
-  {% endif %}
-
   <div class="cols">
     <div class="dossier">
+      {% if ont.summary %}
+      <h2>Summary</h2>
+      <p>{{ ont.summary }}</p>
+      {% endif %}
+
       {% if dossier_html %}
         {{ dossier_html | safe }}
       {% else %}
