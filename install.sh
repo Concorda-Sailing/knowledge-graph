@@ -592,9 +592,52 @@ else:
     settings = {}
 new_hooks = $hooks_json
 existing = settings.get("hooks")
+
+# Flatten {top_key: [{matcher, hooks: [{type, command, timeout}, ...]}, ...]}
+# into a set of (top_key, matcher_or_None, command) tuples. The command
+# string captures everything we care about preserving (data-dir paths,
+# script paths) without locking on cosmetic differences like timeout.
+def flatten(h):
+    out = set()
+    for top_key, blocks in (h or {}).items():
+        if not isinstance(blocks, list):
+            continue
+        for block in blocks:
+            matcher = block.get("matcher")
+            for entry in block.get("hooks", []) or []:
+                out.add((top_key, matcher, entry.get("command", "")))
+    return out
+
 if existing == new_hooks:
     print(f"✓ hooks already match in {p} — no-op")
     sys.exit(0)
+
+# Entries in existing that this command would not regenerate. Even under
+# --force, refuse to clobber these — the previous bug was that --force
+# replaced the entire hooks dict, silently dropping user hooks and
+# other-project hooks. Force is for *path migrations* (same install.sh-
+# generated commands, different bundle dir), not for blowing away
+# information the script can't reproduce.
+new_flat = flatten(new_hooks)
+existing_flat = flatten(existing)
+extras = sorted(existing_flat - new_flat)
+
+if extras:
+    print("⚠ refusing to write: settings.json has hook entries beyond what install.sh would generate.",
+          file=sys.stderr)
+    print("  --force will NOT bypass this check; these entries can't be reproduced from install.sh args.",
+          file=sys.stderr)
+    print("  Entries that would be lost:", file=sys.stderr)
+    for top, matcher, cmd in extras:
+        loc = top + (f" / {matcher}" if matcher else "")
+        print(f"    [{loc}] {cmd}", file=sys.stderr)
+    print("", file=sys.stderr)
+    print("  To proceed: back up settings.json, remove the conflicting entries (or the entire 'hooks' key),",
+          file=sys.stderr)
+    print("  and re-run. Run without --apply to see the snippet install.sh would write.",
+          file=sys.stderr)
+    sys.exit(2)
+
 if existing and not force:
     print("⚠ settings.json has a different 'hooks' section.", file=sys.stderr)
     print("  Existing keys:", list(existing.keys()), file=sys.stderr)
@@ -630,6 +673,7 @@ Environment=PATH=$bundle/graphui/.venv/bin:/usr/local/bin:/usr/bin:/bin
 Environment=DEPGRAPH_DATA_DIR=$depg
 Environment=LOGIGRAPH_DATA_DIR=$logg
 Environment=DEPGRAPH_BIN=$bundle/depgraph/bin/depgraph
+Environment=LOGIGRAPH_BIN=$bundle/logigraph/bin/logigraph
 ExecStart=$bundle/graphui/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port $GRAPHUI_PORT
 Restart=on-failure
 RestartSec=3
