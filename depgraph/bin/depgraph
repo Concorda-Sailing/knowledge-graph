@@ -18,6 +18,7 @@ import json
 import os
 import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 # Tool location (where this script lives) — schemas, framework code.
@@ -543,6 +544,43 @@ def cmd_memory_sync(args: argparse.Namespace) -> int:
         print(f"removed stale (no longer in canonical): {len(stale)}")
         for f in stale[:5]:
             print(f"  - {f.name}")
+
+    # Auto-commit the mirror so memory history is versioned end-to-end.
+    # Skip silently if the mirror isn't a git repo (legitimate config).
+    if (mirror / ".git").exists():
+        status = subprocess.run(
+            ["git", "-C", str(mirror), "status", "--porcelain"],
+            capture_output=True, text=True,
+        )
+        if status.returncode != 0:
+            print(
+                f"memory-sync: git status failed in mirror: {status.stderr.strip()}",
+                file=sys.stderr,
+            )
+        elif status.stdout.strip():
+            timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+            msg = f"auto-snapshot {timestamp}"
+            add = subprocess.run(
+                ["git", "-C", str(mirror), "add", "-A"],
+                capture_output=True, text=True,
+            )
+            if add.returncode != 0:
+                print(
+                    f"memory-sync: git add failed: {add.stderr.strip()}",
+                    file=sys.stderr,
+                )
+            else:
+                commit = subprocess.run(
+                    ["git", "-C", str(mirror), "commit", "-m", msg],
+                    capture_output=True, text=True,
+                )
+                if commit.returncode != 0:
+                    print(
+                        f"memory-sync: git commit failed: {commit.stderr.strip()}",
+                        file=sys.stderr,
+                    )
+                else:
+                    print(f"memory-sync: committed {msg}")
     return 0
 
 
