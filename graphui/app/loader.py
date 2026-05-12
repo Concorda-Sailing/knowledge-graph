@@ -381,7 +381,7 @@ def _group_flags_by_kind(items: list[dict]) -> list[dict]:
         if k not in by_kind:
             continue
         flags = sorted(by_kind[k], key=lambda f: (severity_order.get(f.get("severity", "low"), 5), f.get("code", "")))
-        out.append({"kind": k, "count": len(flags), "items": flags})
+        out.append({"kind": k, "count": len(flags), "flags": flags})
     return out
 
 

@@ -52,6 +52,14 @@ def _review_pending_count() -> int:
 
 
 TEMPLATES.env.globals["review_pending_count"] = _review_pending_count
+
+
+def _issues_fresh_count() -> int:
+    """Lazy helper for the Issues nav badge — counts fresh (untracked) flags."""
+    return loader.corpus_flags().get("count_fresh", 0)
+
+
+TEMPLATES.env.globals["issues_fresh_count"] = _issues_fresh_count
 STATIC = APP_ROOT / "static"
 
 app = FastAPI(title="graphui", openapi_url=None, docs_url=None)
