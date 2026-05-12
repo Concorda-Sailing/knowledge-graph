@@ -73,6 +73,7 @@ def index(request: Request) -> HTMLResponse:
             "repos": loader.repo_summary(),
             "kinds": loader.kind_summary(),
             "review_pending": len(_review_queue()),
+            "flags": loader.corpus_flags(),
             "meta": loader.load_meta(),
         },
     )

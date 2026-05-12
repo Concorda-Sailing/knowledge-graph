@@ -10,6 +10,50 @@
 </a>
 {% endif %}
 
+{% if flags.count_fresh or flags.count_tracked %}
+{% macro flag_li(f, tracked_class='') %}
+  <li class="flag flag-{{ f.severity }} flag-{{ f.kind }} {{ tracked_class }}">
+    <span class="flag-pills">
+      <span class="flag-pill flag-pill-kind">{{ f.kind }}</span>
+      <span class="flag-pill flag-pill-sev flag-pill-sev-{{ f.severity }}">{{ f.severity }}</span>
+      <code class="flag-code">{{ f.code }}</code>
+    </span>
+    <div class="flag-message">{{ f.message }}</div>
+    {% if f.tracking_ref %}<div class="flag-tracking">↳ {{ f.tracking_ref }}</div>{% endif %}
+    {% if f.affected %}
+    <div class="flag-affected">
+      {% for a in f.affected %}
+        {% if a.startswith('rule::') %}<a href="/graph/rule/{{ a }}"><code>{{ a }}</code></a>
+        {% elif a.startswith('role::') or a.startswith('resource::') or a.startswith('attribute::') or a.startswith('relationship::') or a.startswith('action::') %}<a href="/graph/domain/{{ a }}"><code>{{ a }}</code></a>
+        {% elif a.startswith('process::') %}<a href="/graph/process/{{ a }}"><code>{{ a }}</code></a>
+        {% else %}<a href="/graph/node/{{ a }}"><code>{{ a }}</code></a>{% endif %}
+        {%- if not loop.last %} · {% endif %}
+      {% endfor %}
+    </div>
+    {% endif %}
+  </li>
+{% endmacro %}
+<section class="flags-card">
+  <h2 class="section-title">⚠ Needs attention</h2>
+  {% if flags.fresh %}
+  <div class="flags-bucket">
+    <div class="flags-bucket-label">Fresh ({{ flags.count_fresh }})</div>
+    <ul class="flags-list">
+      {% for f in flags.fresh %}{{ flag_li(f) }}{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+  {% if flags.tracked %}
+  <div class="flags-bucket flags-bucket-tracked">
+    <div class="flags-bucket-label">Tracked ({{ flags.count_tracked }})</div>
+    <ul class="flags-list">
+      {% for f in flags.tracked %}{{ flag_li(f, 'flag-tracked') }}{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+</section>
+{% endif %}
+
 <section class="gallery-section">
   <h2 class="section-title">Source repos</h2>
   <div class="gallery-grid">

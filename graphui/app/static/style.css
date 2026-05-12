@@ -1054,3 +1054,68 @@ h2 {
   font-size: 11.5px;
   color: var(--accent);
 }
+
+/* =========================================================================
+   Flags card — Needs attention section on the index
+   ========================================================================= */
+.flags-card {
+  margin-bottom: 28px;
+  padding: 16px 18px;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  border-left: 3px solid var(--accent-2);
+}
+.flags-card .section-title { margin-top: 0; }
+.flags-bucket { margin-top: 8px; }
+.flags-bucket + .flags-bucket { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border); }
+.flags-bucket-label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--fg-faint);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.flags-bucket-tracked .flags-bucket-label { color: var(--fg-mute); }
+.flags-list { list-style: none; padding: 0; margin: 0; }
+.flag {
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  background: var(--bg);
+  border-left: 3px solid var(--border-hi);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+}
+.flag-critical { border-left-color: var(--bad); }
+.flag-high     { border-left-color: var(--accent-2); }
+.flag-medium   { border-left-color: var(--warn); }
+.flag-low      { border-left-color: var(--fg-faint); }
+.flag-info     { border-left-color: var(--accent); }
+.flag.flag-tracked { opacity: 0.78; }
+
+.flag-pills { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 6px; }
+.flag-pill {
+  display: inline-block;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: var(--r-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+.flag-pill-kind { background: var(--bg-3); color: var(--fg-mute); }
+.flag-pill-sev-critical { background: rgba(255,133,129,0.18); color: var(--bad); }
+.flag-pill-sev-high     { background: rgba(255,176,105,0.18); color: var(--accent-2); }
+.flag-pill-sev-medium   { background: rgba(240,198,116,0.18); color: var(--warn); }
+.flag-pill-sev-low      { background: var(--bg-3); color: var(--fg-mute); }
+.flag-pill-sev-info     { background: rgba(122,183,255,0.14); color: var(--accent); }
+.flag-code {
+  font-size: 11px;
+  color: var(--fg-mute);
+  background: transparent;
+  padding: 0;
+}
+.flag-message { font-size: 13px; color: var(--fg); line-height: 1.45; }
+.flag-tracking { font-size: 12px; color: var(--fg-mute); margin-top: 4px; font-style: italic; }
+.flag-affected { font-size: 11.5px; color: var(--fg-faint); margin-top: 6px; }
+.flag-affected code { font-size: 10.5px; }

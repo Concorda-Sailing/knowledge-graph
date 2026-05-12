@@ -364,6 +364,48 @@ def repo_summary() -> list[dict]:
     return out
 
 
+def corpus_flags() -> dict:
+    """Return the logigraph corpus's flags partitioned by tracked/fresh and
+    sorted by severity. Reads _meta.json::flags written by reconcile.
+
+    Shape: {"fresh": [...], "tracked": [...], "count_fresh": N, "count_tracked": N}
+    """
+    severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
+    meta = load_meta()
+    flags = (meta.get("logigraph") or {}).get("flags") or []
+    if not isinstance(flags, list):
+        flags = []
+    fresh = sorted(
+        [f for f in flags if not f.get("tracked")],
+        key=lambda f: (severity_order.get(f.get("severity", "low"), 5), f.get("code", "")),
+    )
+    tracked = sorted(
+        [f for f in flags if f.get("tracked")],
+        key=lambda f: (severity_order.get(f.get("severity", "low"), 5), f.get("code", "")),
+    )
+    return {
+        "fresh": fresh,
+        "tracked": tracked,
+        "count_fresh": len(fresh),
+        "count_tracked": len(tracked),
+    }
+
+
+def warnings_for(node_id: str) -> list[dict]:
+    """All flags from the corpus that mention `node_id` in their `affected`
+    list. Used by detail-page renderers to surface warnings attached to or
+    referencing this node."""
+    meta = load_meta()
+    flags = (meta.get("logigraph") or {}).get("flags") or []
+    out = []
+    severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
+    for f in flags:
+        if node_id in (f.get("affected") or []):
+            out.append(f)
+    out.sort(key=lambda f: (severity_order.get(f.get("severity", "low"), 5), f.get("code", "")))
+    return out
+
+
 def kind_summary() -> list[dict]:
     """One entry per logigraph kind (rules / domain / processes).
     Returns the same shape as repo_summary so the gallery template can
