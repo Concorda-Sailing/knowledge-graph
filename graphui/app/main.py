@@ -42,6 +42,16 @@ _LOGIGRAPH_DOMAIN_PREFIXES = (
 
 APP_ROOT = Path(__file__).parent
 TEMPLATES = Jinja2Templates(directory=str(APP_ROOT / "templates"))
+
+
+def _review_pending_count() -> int:
+    """Lazy helper for templates — counts current llm_drafted dossiers.
+    Exposed as a Jinja global so the top-nav badge works on every page
+    without each route having to thread the count through context."""
+    return len(_review_queue())
+
+
+TEMPLATES.env.globals["review_pending_count"] = _review_pending_count
 STATIC = APP_ROOT / "static"
 
 app = FastAPI(title="graphui", openapi_url=None, docs_url=None)

@@ -16,11 +16,12 @@
       <span class="brand-text">graphui</span>
     </a>
     <nav>
-      <a href="/graph/">index</a>
-      <a href="/graph/review">review</a>
-      <a href="/graph/kind/rules">rules</a>
-      <a href="/graph/kind/domain">domain</a>
-      <a href="/graph/kind/processes">processes</a>
+      <a href="/graph/">graphui</a>
+      <a href="/graph/review" class="nav-review">
+        review
+        {% set _pending = review_pending_count() %}
+        {% if _pending %}<span class="nav-count-badge">{{ _pending }}</span>{% endif %}
+      </a>
     </nav>
     <span class="meta-stamp">
       {% if meta and meta.depgraph %}

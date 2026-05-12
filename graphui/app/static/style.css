@@ -1228,3 +1228,47 @@ h2 {
   color: var(--fg-mute);
   font-family: var(--mono);
 }
+
+/* Top-nav review-count badge */
+.nav-review { display: inline-flex; align-items: center; gap: 6px; }
+.nav-count-badge {
+  background: var(--accent-2);
+  color: var(--bg);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  min-width: 16px;
+  text-align: center;
+  font-family: var(--mono);
+}
+
+/* Collapsible flags-card (one-line on the index) */
+.flags-card-collapsible { padding: 0; }
+.flags-card-collapsible[open] { padding: 16px 18px; }
+.flags-card-summary {
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 18px;
+}
+.flags-card-summary::-webkit-details-marker { display: none; }
+.flags-card-collapsible[open] .flags-card-summary { padding: 0 0 12px; }
+.flags-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--fg);
+  flex: 1 1 auto;
+}
+.flags-card-chevron {
+  color: var(--fg-faint);
+  font-size: 11px;
+  transition: transform 0.15s;
+}
+.flags-card-collapsible[open] .flags-card-chevron { transform: rotate(90deg); }
+.flags-card-body { padding-top: 4px; }

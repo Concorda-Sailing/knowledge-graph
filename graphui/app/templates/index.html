@@ -40,49 +40,52 @@
     {% endif %}
   </li>
 {% endmacro %}
-<section class="flags-card">
-  <div class="flags-card-head">
-    <h2 class="section-title">⚠ Needs attention</h2>
+<details class="flags-card flags-card-collapsible">
+  <summary class="flags-card-summary">
+    <span class="flags-card-title">⚠ Needs attention</span>
     <span class="flags-card-counts">
       {% if flags.count_fresh %}<span class="flags-count-fresh">{{ flags.count_fresh }} fresh</span>{% endif %}
       {% if flags.count_tracked %}<span class="flags-count-tracked">{{ flags.count_tracked }} tracked</span>{% endif %}
     </span>
-  </div>
+    <span class="flags-card-chevron">▸</span>
+  </summary>
 
-  {% if flags.fresh %}
-  <div class="flags-bucket">
-    <div class="flags-bucket-label">Fresh ({{ flags.count_fresh }})</div>
-    {% for group in flags.fresh %}
-    <details class="flag-kind-group" {% if loop.index <= 2 %}open{% endif %}>
-      <summary class="flag-kind-summary">
-        <span class="flag-kind-name">{{ group.kind }}</span>
-        <span class="flag-kind-count">{{ group.count }}</span>
-      </summary>
-      <ul class="flags-list">
-        {% for f in group.flags %}{{ flag_li(f, false) }}{% endfor %}
-      </ul>
-    </details>
-    {% endfor %}
-  </div>
-  {% endif %}
+  <div class="flags-card-body">
+    {% if flags.fresh %}
+    <div class="flags-bucket">
+      <div class="flags-bucket-label">Fresh ({{ flags.count_fresh }})</div>
+      {% for group in flags.fresh %}
+      <details class="flag-kind-group" {% if loop.index <= 2 %}open{% endif %}>
+        <summary class="flag-kind-summary">
+          <span class="flag-kind-name">{{ group.kind }}</span>
+          <span class="flag-kind-count">{{ group.count }}</span>
+        </summary>
+        <ul class="flags-list">
+          {% for f in group.flags %}{{ flag_li(f, false) }}{% endfor %}
+        </ul>
+      </details>
+      {% endfor %}
+    </div>
+    {% endif %}
 
-  {% if flags.tracked %}
-  <div class="flags-bucket flags-bucket-tracked">
-    <div class="flags-bucket-label">Tracked ({{ flags.count_tracked }})</div>
-    {% for group in flags.tracked %}
-    <details class="flag-kind-group">
-      <summary class="flag-kind-summary">
-        <span class="flag-kind-name">{{ group.kind }}</span>
-        <span class="flag-kind-count">{{ group.count }}</span>
-      </summary>
-      <ul class="flags-list">
-        {% for f in group.flags %}{{ flag_li(f, true) }}{% endfor %}
-      </ul>
-    </details>
-    {% endfor %}
+    {% if flags.tracked %}
+    <div class="flags-bucket flags-bucket-tracked">
+      <div class="flags-bucket-label">Tracked ({{ flags.count_tracked }})</div>
+      {% for group in flags.tracked %}
+      <details class="flag-kind-group">
+        <summary class="flag-kind-summary">
+          <span class="flag-kind-name">{{ group.kind }}</span>
+          <span class="flag-kind-count">{{ group.count }}</span>
+        </summary>
+        <ul class="flags-list">
+          {% for f in group.flags %}{{ flag_li(f, true) }}{% endfor %}
+        </ul>
+      </details>
+      {% endfor %}
+    </div>
+    {% endif %}
   </div>
-  {% endif %}
-</section>
+</details>
 
 <script>
 document.querySelectorAll('.flag-action-track').forEach(btn => {
