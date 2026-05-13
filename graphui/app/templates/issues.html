@@ -42,6 +42,31 @@
   </li>
 {% endmacro %}
 
+{% if flagged_nodes %}
+<section class="flagged-section">
+  <h2>Flagged <span class="count">({{ flagged_nodes|length }})</span></h2>
+  <p class="lede">Nodes marked as documenting a known deficiency, not an invariant to preserve. Click in to read why.</p>
+  {% set kinds = flagged_nodes|groupby("kind") %}
+  {% for kind, rows in kinds %}
+  <div class="flagged-group">
+    <h3>{{ kind|capitalize }} <span class="count">({{ rows|length }})</span></h3>
+    <ul class="flagged-list">
+      {% for row in rows %}
+      <li>
+        <a href="{{ row.href }}">{{ row.title }}</a>
+        <code class="symbol-id">{{ row.id }}</code>
+        <span class="flagged-meta">
+          by {{ row.flagged_by }}{% if row.flagged_at %} · {{ row.flagged_at }}{% endif %}
+          {% if row.flagged_reason %} — {{ row.flagged_reason }}{% endif %}
+        </span>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endfor %}
+</section>
+{% endif %}
+
 {% if flags.fresh %}
 <section>
   <h2 class="section-title">Fresh ({{ flags.count_fresh }})</h2>

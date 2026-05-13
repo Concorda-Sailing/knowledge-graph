@@ -1523,3 +1523,15 @@ h2 {
 .history-card .action-label { font-size: 0.85em; }
 .history-card .action-body { width: 100%; padding-left: 7em; font-size: 0.8em; color: var(--fg-mute); }
 .history-card .action-regen-collapsed { color: var(--fg-mute); font-style: italic; }
+
+/* Flagged section — /graph/issues */
+.flagged-section { margin: 1rem 0 2rem 0; border-left: 4px solid var(--warn); padding-left: 1rem; }
+.flagged-section h2 { font-size: 1.1rem; margin: 0.25rem 0; }
+.flagged-section .count { color: var(--fg-mute); font-weight: normal; }
+.flagged-section .lede { font-size: 0.9em; color: var(--fg-mute); margin: 0.25rem 0 0.75rem 0; }
+.flagged-group { margin-top: 0.75rem; }
+.flagged-group h3 { font-size: 0.95rem; margin: 0.25rem 0; }
+.flagged-list { list-style: none; padding-left: 0; margin: 0.25rem 0; }
+.flagged-list li { padding: 0.2rem 0; display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: baseline; }
+.flagged-list .symbol-id { font-size: 0.8em; color: var(--fg-mute); user-select: all; }
+.flagged-list .flagged-meta { font-size: 0.8em; color: var(--fg-mute); }

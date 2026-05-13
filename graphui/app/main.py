@@ -109,6 +109,7 @@ def issues_page(request: Request) -> HTMLResponse:
         "issues.html",
         {
             "flags": loader.corpus_flags(),
+            "flagged_nodes": loader.flagged_nodes(),
             "meta": loader.load_meta(),
         },
     )
