@@ -40,6 +40,7 @@ from lib.config import (  # noqa: E402
     resolve_data_dir,
     load_project_config,
     project_repos,
+    render_extractor,
     repo_basenames,
     path_to_repo_relative,
 )
@@ -74,10 +75,9 @@ def expected_extractor_stems() -> list[str]:
     extractors don't false-positive."""
     out: list[str] = []
     for info in project_repos(DEPGRAPH).values():
-        ext = info.get("extractor")
-        if not ext:
+        rendered = render_extractor(info, DEPGRAPH)
+        if not rendered:
             continue
-        rendered = [t.format(data_dir=str(DEPGRAPH), path=str(info["path"])) for t in ext]
         for tok in rendered:
             if any(tok.endswith(s) for s in _SCRIPT_SUFFIXES):
                 stem = Path(tok).stem
