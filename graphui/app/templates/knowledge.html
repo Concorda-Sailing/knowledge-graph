@@ -61,47 +61,21 @@
   {% endfor %}
 </div>
 
-{% if items %}
-<div class="knowledge-table-wrap scroll-x">
-  <table class="knowledge-table">
-    <thead>
-      <tr>
-        <th class="col-sel"><input type="checkbox" id="select-all"></th>
-        <th>Title</th>
-        <th>Kind</th>
-        <th class="numeric">Deps</th>
-        <th>State</th>
-        <th>ID</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for n in items %}
-      <tr class="knowledge-row">
-        <td>{% if n.state == "llm_drafted" %}<input type="checkbox" class="row-sel" data-id="{{ n.id }}" data-kind="{{ n.kind }}" data-state="{{ n.state }}">{% endif %}</td>
-        <td><a href="{{ n.href }}" class="knowledge-title">{{ n.title }}</a>
-          {% if n.summary %}<div class="knowledge-summary">{{ n.summary }}</div>{% endif %}
-        </td>
-        <td class="knowledge-kind">{{ n.subkind or n.kind }}</td>
-        <td class="numeric">{{ n.fan_out }}</td>
-        <td><span class="state-chip state-chip-{{ n.state }}">{{ '⚠ ' if n.state == 'stale' else '' }}{{ n.state }}</span></td>
-        <td class="src"><code>{{ n.id }}</code></td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
+{% set columns = ['title', 'kind', 'fan_in', 'state', 'id'] %}
+{% with nodes=items, columns=columns %}
+  {% include '_node_list.html' %}
+{% endwith %}
 
+{% if items %}
 <div class="knowledge-bulk" id="bulk-bar" style="display: none;">
   <span id="bulk-count">0 selected</span>
   <button id="bulk-approve" class="flag-action-btn">Promote llm_drafted → current</button>
   <span id="bulk-status" class="flag-action-status"></span>
 </div>
-{% else %}
-<p class="empty">No nodes match the current filters.</p>
 {% endif %}
 
 <script>
-const selAll = document.getElementById('select-all');
+const selAll = document.querySelector('.select-all');
 const rows = document.querySelectorAll('.row-sel');
 const bar = document.getElementById('bulk-bar');
 const countEl = document.getElementById('bulk-count');
