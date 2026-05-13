@@ -14,6 +14,8 @@ import subprocess
 import os
 import sys
 import time
+import tomllib  # stdlib 3.11+
+import hashlib
 from pathlib import Path
 from typing import Any
 
@@ -1854,4 +1856,95 @@ def repo_dead_code(basename: str) -> list[dict]:
             "href": f"/graph/node/{nid}",
         })
     out.sort(key=lambda r: (r["fan_out"], r["area"], r["title"].lower()))
+    return out
+
+
+def read_project_toml() -> dict:
+    """Parse the depgraph project.toml. Returns the raw dict; callers
+    interpret `repos.*`, `[project]`, etc."""
+    path = DEPGRAPH / "project.toml"
+    if not path.exists():
+        return {}
+    try:
+        return tomllib.loads(path.read_text())
+    except (OSError, tomllib.TOMLDecodeError):
+        return {}
+
+
+def tracked_repos_settings() -> list[dict]:
+    """One row per [repos.*] in project.toml. Each row carries enough
+    detail for the Settings page: key, basename, resolved filesystem path,
+    git remote URL, extractor command, extractor file (resolved abs), and
+    files_arg if any."""
+    cfg = read_project_toml()
+    repos = cfg.get("repos") or {}
+    out: list[dict] = []
+    for key, info in repos.items():
+        raw_path = info.get("path") or ""
+        path = Path(raw_path).expanduser() if raw_path else None
+        extractor_cmd = list(info.get("extractor") or [])
+        # Resolve {data_dir} in the extractor command to locate the file.
+        extractor_file = None
+        for part in extractor_cmd:
+            if isinstance(part, str) and "{data_dir}" in part:
+                resolved = part.replace("{data_dir}", str(DEPGRAPH))
+                if Path(resolved).exists():
+                    extractor_file = resolved
+                    break
+        git_remote = git_remote_url(path) if path and (path / ".git").exists() else None
+        out.append({
+            "key": key,
+            "basename": path.name if path else "—",
+            "path": str(path) if path else "—",
+            "path_exists": bool(path and path.exists()),
+            "git_remote": git_remote,
+            "extractor_cmd": extractor_cmd,
+            "extractor_file": extractor_file,
+            "files_arg": info.get("files_arg"),
+        })
+    return out
+
+
+_EXTRACTOR_VERSION_RE = re.compile(r"""__extractor_version__\s*=\s*["']([^"']+)["']""")
+
+
+def _scan_extractor_file(path: Path, scope: str) -> dict:
+    """Build the per-file row for the inventory."""
+    raw = path.read_bytes() if path.exists() else b""
+    text = ""
+    try:
+        text = raw.decode("utf-8", errors="ignore")
+    except UnicodeDecodeError:
+        pass
+    m = _EXTRACTOR_VERSION_RE.search(text)
+    return {
+        "filename": path.name,
+        "path": str(path),
+        "size_bytes": len(raw),
+        "mtime_iso": dt.datetime.fromtimestamp(
+            path.stat().st_mtime, dt.timezone.utc
+        ).isoformat(timespec="seconds") if path.exists() else None,
+        "sha256_prefix": hashlib.sha256(raw).hexdigest()[:12],
+        "scope": scope,
+        "declared_version": m.group(1) if m else None,
+    }
+
+
+def extractor_inventory() -> list[dict]:
+    """Walk the project-custom extractor dir AND the framework-generic
+    extractor dir. Returns one row per file with size, mtime, sha256
+    prefix, and scope (`project` or `generic`)."""
+    out: list[dict] = []
+    project_dir = DEPGRAPH / "extractors"
+    if project_dir.exists():
+        for p in sorted(project_dir.iterdir()):
+            if p.is_file() and not p.name.startswith("."):
+                out.append(_scan_extractor_file(p, "project"))
+    # Framework-generic location — empty for now, will populate when Layer 3 ships.
+    framework_dir = _DEPGRAPH_TOOL_ROOT / "extractors" / "generic"
+    if framework_dir.exists():
+        for p in sorted(framework_dir.rglob("*.py")):
+            out.append(_scan_extractor_file(p, "generic"))
+        for p in sorted(framework_dir.rglob("*.ts")):
+            out.append(_scan_extractor_file(p, "generic"))
     return out
