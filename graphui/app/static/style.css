@@ -1555,3 +1555,23 @@ h2 {
 .activity-strip .spark-bar { width: 10px; background: #3b82f6; border-radius: 1px; }
 .activity-strip .activity-link { margin-left: auto; color: #60a5fa; text-decoration: none; }
 .activity-strip .activity-link:hover { text-decoration: underline; }
+
+/* _graph_health */
+.health-tile { background: #0f172a; border: 1px solid #1e293b; border-radius: 6px; padding: 12px 14px; margin-bottom: 18px; }
+.health-header { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+.health-label { color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; font-size: 11px; }
+.health-status.health-ok { color: #34d399; font-size: 11px; }
+.health-status.health-warn { color: #fbbf24; font-size: 11px; }
+.health-meta { color: #94a3b8; font-size: 11px; }
+.health-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.health-sub { background: #0b1220; border: 1px solid #1e293b; border-radius: 4px; padding: 10px 12px; }
+.health-sub h4 { margin: 0 0 6px; color: #a78bfa; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+.health-big { margin: 0; color: #e5e7eb; font-size: 18px; font-weight: 600; }
+.health-sub-meta { margin: 4px 0 0; color: #94a3b8; font-size: 11px; }
+.health-sub-foot { margin: 6px 0 0; padding-top: 6px; border-top: 1px dashed #1e293b; color: #94a3b8; font-size: 11px; }
+.health-empty { color: #94a3b8; font-size: 12px; margin: 4px 0 0; }
+.trend-up { color: #34d399; } .trend-down { color: #f87171; } .trend-flat { color: #94a3b8; }
+.warn { color: #fbbf24; }
+.hottest-list { list-style: none; padding: 0; margin: 4px 0 0; color: #e5e7eb; font-size: 11px; }
+.hottest-list li { padding: 1px 0; }
+.hot-count { color: #60a5fa; }
