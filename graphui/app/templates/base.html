@@ -36,5 +36,41 @@
     </span>
   </header>
   <main>{% block content %}{% endblock %}</main>
+  <script>
+  document.addEventListener("click", async (e) => {
+    const btn = e.target.closest(".flag-action");
+    if (!btn) return;
+    const action = btn.dataset.action;
+    const nodeId = btn.dataset.nodeId;
+    if (!nodeId) return;
+    let reason = null;
+    if (action === "flag") {
+      reason = window.prompt("Reason for flag (one line, recorded in the commit and the banner):", "");
+      if (reason === null) return;  // cancelled
+    }
+    btn.disabled = true;
+    try {
+      const resp = await fetch("/graph/api/flag", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          node_id: nodeId,
+          flagged: (action === "flag"),
+          reason: reason || undefined,
+        }),
+      });
+      if (resp.ok) {
+        window.location.reload();
+      } else {
+        const data = await resp.json().catch(() => ({}));
+        alert("Flag action failed: " + (data.stderr || resp.statusText));
+        btn.disabled = false;
+      }
+    } catch (err) {
+      alert("Network error: " + err);
+      btn.disabled = false;
+    }
+  });
+  </script>
 </body>
 </html>
