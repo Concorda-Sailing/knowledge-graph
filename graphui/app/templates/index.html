@@ -2,25 +2,6 @@
 {% block title %}graphui{% endblock %}
 {% block content %}
 
-{% if review_pending %}
-<a href="/graph/review" class="review-banner">
-  <span class="review-banner-title">📋 Review queue</span>
-  <span class="review-banner-count">{{ review_pending }} pending</span>
-  <span class="review-banner-go">→</span>
-</a>
-{% endif %}
-
-{% if flags.count_fresh or flags.count_tracked %}
-<a href="/graph/issues" class="flags-banner">
-  <span class="flags-banner-title">⚠ Needs attention</span>
-  <span class="flags-banner-counts">
-    {% if flags.count_fresh %}<span class="flags-count-fresh">{{ flags.count_fresh }} fresh</span>{% endif %}
-    {% if flags.count_tracked %}<span class="flags-count-tracked">{{ flags.count_tracked }} tracked</span>{% endif %}
-  </span>
-  <span class="flags-banner-go">→</span>
-</a>
-{% endif %}
-
 {% include '_activity_strip.html' %}
 {% include '_graph_health.html' %}
 {% include '_cross_cutting.html' %}
