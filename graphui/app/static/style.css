@@ -1389,3 +1389,14 @@ h2 {
 .rollup-list li .marker.direct { font-weight: bold; font-size: 0.8em; }
 .rollup-list li .marker.via { color: var(--fg-mute); font-size: 0.8em; }
 .rollup-list li.more { color: var(--fg-mute); font-style: italic; }
+
+/* ── Rollup drill-in page (/graph/domain/<id>/rollup) ───────────────── */
+.rollup-page .rollup-controls { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; margin: 0.75rem 0; }
+.rollup-page .rollup-controls .label { color: var(--fg-mute); font-size: 0.85em; margin-left: 0.5rem; }
+.rollup-page .rollup-controls .label:first-child { margin-left: 0; }
+.rollup-page .chip { padding: 0.15rem 0.5rem; border: 1px solid var(--border); border-radius: 999px; font-size: 0.8em; text-decoration: none; }
+.rollup-page .chip.active { background: var(--accent); border-color: var(--accent); }
+.rollup-page .rollup-kind-full { margin-top: 1rem; }
+.rollup-page .rollup-list-dense { list-style: none; padding-left: 0; margin: 0.25rem 0; }
+.rollup-page .rollup-list-dense li { padding: 0.15rem 0; display: flex; gap: 0.75rem; align-items: baseline; flex-wrap: wrap; }
+.rollup-page .warning { padding: 0.5rem; border-left: 3px solid var(--warn); margin: 1rem 0; }

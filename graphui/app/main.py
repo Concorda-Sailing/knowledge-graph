@@ -468,6 +468,36 @@ def process_detail(request: Request, process_id: str) -> HTMLResponse:
     )
 
 
+@app.get("/graph/domain/{ont_id:path}/rollup", response_class=HTMLResponse)
+def domain_rollup(
+    request: Request,
+    ont_id: str,
+    kind: str | None = None,
+    depth: int = 3,
+) -> HTMLResponse:
+    """Full drill-in rollup for a domain entity. Designed for one-pass
+    scanning by the agent — dense rows, all groups expanded, no collapse
+    toggles. URL params kind= and depth= are bookmarkable."""
+    if depth not in (1, 2, 3):
+        raise HTTPException(400, f"depth must be 1, 2, or 3 (got {depth})")
+    ont = loader.load_domain_by_id(ont_id)
+    if not ont:
+        raise HTTPException(404, f"domain node not found: {ont_id}")
+    code_rollup = loader.compute_code_rollup(ont, depth=depth)
+    kind_filter = set(kind.split(",")) if kind else None
+    return TEMPLATES.TemplateResponse(
+        request,
+        "rollup.html",
+        {
+            "ont": ont,
+            "code_rollup": code_rollup,
+            "kind_filter": kind_filter,
+            "depth": depth,
+            "all_kinds": ["model", "service", "endpoint", "component", "test", "hook", "schema"],
+        },
+    )
+
+
 @app.get("/graph/domain/{ont_id:path}", response_class=HTMLResponse)
 def domain_detail(request: Request, ont_id: str) -> HTMLResponse:
     ont = loader.load_domain_by_id(ont_id)
