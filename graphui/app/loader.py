@@ -38,6 +38,26 @@ LOGIGRAPH = _resolve("LOGIGRAPH_DATA_DIR")
 DEPGRAPH_NODES = DEPGRAPH / "nodes"
 LOGIGRAPH_NODES = LOGIGRAPH / "nodes"
 
+# Rollup logic is shared with depgraph + logigraph; import from the
+# sibling depgraph repo. Graphui has no `lib` package of its own, so a
+# plain sys.path.insert is sufficient (unlike logigraph, which has
+# lib.config and needs lib.__path__ extension instead).
+#
+# Anchor to __file__ (not Path.home()) so the path stays valid even
+# when graphui is checked out somewhere other than ~/tools/knowledge-graph/
+# — the three-level parent walks app/loader.py → app/ → graphui/ → kg/,
+# then steps into the sibling depgraph/ directory.
+_GRAPHUI_TOOL_ROOT = Path(__file__).resolve().parent.parent
+_DEPGRAPH_TOOL_ROOT = _GRAPHUI_TOOL_ROOT.parent / "depgraph"
+if str(_DEPGRAPH_TOOL_ROOT) not in sys.path:
+    sys.path.insert(0, str(_DEPGRAPH_TOOL_ROOT))
+from lib.rollup import (  # noqa: E402
+    resolve_anchor,
+    compute_rollup,
+    Rollup,
+    AnchorResult,
+)
+
 
 def _tier_of(fan_out: int) -> str:
     if fan_out >= 10:
@@ -798,4 +818,29 @@ def telemetry_for_node(node_id: str, days: int = 7) -> dict[str, Any]:
         injections_path=DEPGRAPH_INJECTIONS,
         acks_path=DEPGRAPH_ACKS,
         days=days,
+    )
+
+
+def compute_code_rollup(domain_node: dict, depth: int = 3) -> Rollup:
+    """Build the rollup for a logigraph domain entity using the existing
+    in-memory depgraph node + dependents indexes. Per-request cost is
+    fine at the corpus size graphui targets.
+
+    Returns a Rollup whose anchor is None when no model can be matched
+    — the template renders a one-line "no anchor" signal in that case.
+    """
+    depgraph_nodes = load_depgraph_nodes()
+    depgraph_index = {n["id"]: n for n in depgraph_nodes}
+    dependents_index = load_dependents()
+
+    lg = load_logigraph_nodes()
+    logigraph_index = {n["id"]: n for n in lg["domain"]}
+
+    anchor = resolve_anchor(domain_node, depgraph_index, logigraph_index=logigraph_index)
+    return compute_rollup(
+        anchor_id=anchor.model_id or "",
+        depgraph_index=depgraph_index,
+        dependents_index=dependents_index,
+        depth=depth,
+        anchor_result=anchor,
     )
