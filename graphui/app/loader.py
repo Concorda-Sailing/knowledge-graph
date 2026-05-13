@@ -1388,3 +1388,102 @@ def cross_cutting_summary() -> dict:
             "spans_repos": _spans_repos_for_processes(procs),
         },
     }
+
+
+# ---------------------------------------------------------------------------
+# Repo activity (commits, sparkline, classification)
+# ---------------------------------------------------------------------------
+
+
+def _repo_path(basename: str) -> Path | None:
+    """Resolve a tracked-repo basename to its filesystem path.
+    Convention: HOME/<basename> (matches `commits_30d` below)."""
+    p = HOME / basename
+    return p if (p / ".git").exists() else None
+
+
+def _git_log_dates(repo: Path, since: str) -> list[str]:
+    """Run `git log --since=<since> --format=%cd --date=format:%Y-%m-%d`. Best-effort."""
+    try:
+        out = subprocess.run(
+            ["git", "log", f"--since={since}", "--format=%cd", "--date=format:%Y-%m-%d"],
+            cwd=str(repo), capture_output=True, text=True, timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return []
+    return [l.strip() for l in out.stdout.splitlines() if l.strip()]
+
+
+def _git_last_push_age_days(repo: Path) -> int | None:
+    try:
+        out = subprocess.run(
+            ["git", "log", "-1", "--format=%ct"],
+            cwd=str(repo), capture_output=True, text=True, timeout=5,
+        )
+        ts = int(out.stdout.strip() or 0)
+    except (OSError, subprocess.SubprocessError, ValueError):
+        return None
+    if not ts:
+        return None
+    return int((dt.datetime.now(dt.timezone.utc).timestamp() - ts) // 86400)
+
+
+def _classify(last_push_age: int | None, has_inbound_deps: bool) -> str:
+    if last_push_age is None:
+        return "unknown"
+    if last_push_age <= 7:
+        return "active"
+    if last_push_age >= 180 and not has_inbound_deps:
+        return "dead-candidate"
+    return "dormant"
+
+
+def _today_node_delta_for_repo(basename: str) -> int:
+    today_start = _start_of_day_utc(0)
+    n = 0
+    for p in DEPGRAPH_NODES.rglob("*.json"):
+        if "_index" in p.parts or p.name == "_meta.json":
+            continue
+        if p.stat().st_mtime < today_start:
+            continue
+        try:
+            row = json.loads(p.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        src = (row.get("source") or {}).get("repo")
+        if src == basename:
+            n += 1
+    return n
+
+
+def repo_activity(basename: str) -> dict:
+    repo = _repo_path(basename)
+    if repo is None:
+        return {
+            "commits_7d": 0,
+            "commits_30d": 0,
+            "sparkline": [0] * 7,
+            "today_node_delta": 0,
+            "classification": "unknown",
+            "last_push_age_days": None,
+        }
+    dates = _git_log_dates(repo, "30 days ago")
+    # 7-day sparkline (oldest first)
+    today = dt.datetime.now(dt.timezone.utc).date()
+    spark = []
+    for d in range(6, -1, -1):
+        target = (today - dt.timedelta(days=d)).isoformat()
+        spark.append(sum(1 for x in dates if x == target))
+    commits_7d = sum(spark)
+    commits_30d = len(dates)
+    age = _git_last_push_age_days(repo)
+    # Inbound deps gate is filled in by repo_summary; default False here.
+    classification = _classify(age, has_inbound_deps=False)
+    return {
+        "commits_7d": commits_7d,
+        "commits_30d": commits_30d,
+        "sparkline": spark,
+        "today_node_delta": _today_node_delta_for_repo(basename),
+        "classification": classification,
+        "last_push_age_days": age,
+    }
