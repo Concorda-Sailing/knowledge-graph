@@ -317,7 +317,7 @@ def _review_queue(tier: str | None = None, kind: str | None = None) -> list[dict
             continue
         if tier:
             continue
-        if kind and kind != "process":
+        if kind and kind not in ("process", "processes"):
             continue
         rows.append({
             "id": p["id"],
