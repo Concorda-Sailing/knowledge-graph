@@ -27,3 +27,15 @@ def test_dep_detail_skips_self_references(loader):
     assert all(r["from_repo"] != "concorda-web" for r in inbound)
     outbound = loader.repo_outbound_deps_detail("concorda-web")
     assert all(r["to_repo"] != "concorda-web" for r in outbound)
+
+
+def test_repo_external_pkgs_shape(loader):
+    pkgs = loader.repo_external_pkgs("concorda-web")
+    assert isinstance(pkgs, list)
+    for entry in pkgs:
+        assert set(entry.keys()) >= {"name", "source"}
+        assert entry["source"] in ("npm", "python")
+
+
+def test_repo_external_pkgs_unknown_is_empty(loader):
+    assert loader.repo_external_pkgs("ghost") == []

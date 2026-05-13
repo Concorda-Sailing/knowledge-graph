@@ -1779,3 +1779,51 @@ def repo_outbound_deps_detail(basename: str) -> list[dict]:
             })
     out.sort(key=lambda r: (r["to_repo"], r["to_id"]))
     return out
+
+
+def repo_external_pkgs(basename: str) -> list[dict]:
+    """List external packages declared by `basename`. Each row:
+    {name, source} where source is 'npm' or 'python'. Sorted by name."""
+    repo = _repo_path(basename)
+    if repo is None:
+        return []
+    out: list[dict] = []
+    pkg = repo / "package.json"
+    if pkg.exists():
+        try:
+            row = json.loads(pkg.read_text())
+            for name in (row.get("dependencies") or {}):
+                out.append({"name": name, "source": "npm"})
+            for name in (row.get("devDependencies") or {}):
+                out.append({"name": name, "source": "npm"})
+        except (OSError, json.JSONDecodeError):
+            pass
+    reqs = repo / "requirements.txt"
+    if reqs.exists():
+        for line in reqs.read_text(errors="ignore").splitlines():
+            s = line.strip()
+            if not s or s.startswith("#"):
+                continue
+            # strip pin syntax: package>=1.0,<2 → package
+            name = s.split("=", 1)[0].split("<", 1)[0].split(">", 1)[0].split("[", 1)[0].strip()
+            if name:
+                out.append({"name": name, "source": "python"})
+    pyproj = repo / "pyproject.toml"
+    if pyproj.exists():
+        txt = pyproj.read_text(errors="ignore")
+        in_deps = False
+        for line in txt.splitlines():
+            s = line.strip()
+            if s.startswith("dependencies"):
+                in_deps = True
+                continue
+            if in_deps:
+                if s.startswith("]"):
+                    in_deps = False
+                    continue
+                if s.startswith('"') or s.startswith("'"):
+                    name = s.strip("\"',").split("=", 1)[0].split("<", 1)[0].split(">", 1)[0].split("[", 1)[0].strip()
+                    if name:
+                        out.append({"name": name, "source": "python"})
+    out.sort(key=lambda r: r["name"].lower())
+    return out
