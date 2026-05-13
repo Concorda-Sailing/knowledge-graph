@@ -61,3 +61,14 @@ def test_repo_cross_cuts_shape(loader):
 def test_repo_cross_cuts_empty_for_unknown(loader):
     c = loader.repo_cross_cuts("ghost-repo")
     assert c["rules"] == [] and c["processes"] == [] and c["domain"] == []
+
+
+def test_repo_summary_has_enriched_fields(loader):
+    rows = loader.repo_summary()
+    assert rows, "fixture should yield at least one repo"
+    r = rows[0]
+    for k in ("basename", "node_count", "state_counts", "activity",
+              "languages", "areas", "dep_counts", "cross_cuts",
+              "dead_code_score"):
+        assert k in r, f"missing key: {k}"
+    assert isinstance(r["dead_code_score"], (int, float))

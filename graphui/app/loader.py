@@ -381,6 +381,21 @@ def repo_summary() -> list[dict]:
             [{"kind": k, "count": v} for k, v in r["kinds"].items()],
             key=lambda x: -x["count"],
         )
+        # --- enrichments added in Plan A ---
+        r["activity"] = repo_activity(r["basename"])
+        r["languages"] = repo_languages(r["basename"])
+        r["areas"] = repo_areas(r["basename"])
+        r["dep_counts"] = repo_dep_counts(r["basename"])
+        r["cross_cuts"] = repo_cross_cuts(r["basename"])
+        # dead_code_score: low push frequency + zero inbound + many stale claims.
+        age = r["activity"]["last_push_age_days"] or 0
+        inbound = r["dep_counts"]["inbound_repos"]
+        stale = r["state_counts"].get("stale", 0)
+        score = (age // 30) + (10 if inbound == 0 else 0) + stale
+        r["dead_code_score"] = score
+        # refine classification with inbound-deps signal.
+        if r["activity"]["classification"] == "dormant" and age >= 180 and inbound == 0:
+            r["activity"]["classification"] = "dead-candidate"
         out.append(r)
     out.sort(key=lambda r: -r["node_count"])
     return out
