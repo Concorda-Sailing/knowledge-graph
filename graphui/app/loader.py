@@ -1450,13 +1450,15 @@ def _git_last_push_age_days(repo: Path) -> int | None:
     return int((dt.datetime.now(dt.timezone.utc).timestamp() - ts) // 86400)
 
 
-def _classify(last_push_age: int | None, has_inbound_deps: bool) -> str:
+def _classify(last_push_age: int | None) -> str:
+    """Coarse activity classification by age only. dead-candidate is intentionally
+    not produced here — that gate requires BOTH age and the inbound-deps signal,
+    which is only available at repo_summary level. repo_summary upgrades
+    dormant → dead-candidate when the second condition holds."""
     if last_push_age is None:
         return "unknown"
     if last_push_age <= 7:
         return "active"
-    if last_push_age >= 180 and not has_inbound_deps:
-        return "dead-candidate"
     return "dormant"
 
 
@@ -1499,8 +1501,9 @@ def repo_activity(basename: str) -> dict:
     commits_7d = sum(spark)
     commits_30d = len(dates)
     age = _git_last_push_age_days(repo)
-    # Inbound deps gate is filled in by repo_summary; default False here.
-    classification = _classify(age, has_inbound_deps=False)
+    # Coarse classification by age only. repo_summary refines dormant →
+    # dead-candidate by AND-ing in the inbound-deps signal it has access to.
+    classification = _classify(age)
     return {
         "commits_7d": commits_7d,
         "commits_30d": commits_30d,

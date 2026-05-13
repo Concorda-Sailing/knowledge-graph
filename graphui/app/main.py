@@ -145,6 +145,21 @@ def activity_page(request: Request) -> HTMLResponse:
     )
 
 
+@app.get("/graph/telemetry", response_class=HTMLResponse)
+def telemetry_page(request: Request) -> HTMLResponse:
+    """Telemetry rollup. Full per-rule + per-dossier injection breakdown is
+    deferred to a follow-up plan; this surfaces the same numbers the dashboard
+    health tile uses so the 'see all telemetry →' link is not a dead end."""
+    return TEMPLATES.TemplateResponse(
+        request,
+        "telemetry.html",
+        {
+            "health": loader.graph_health(),
+            "meta": loader.load_meta(),
+        },
+    )
+
+
 @app.get("/graph/issues", response_class=HTMLResponse)
 def issues_page(request: Request) -> HTMLResponse:
     """Full-page view of corpus flags — what the Needs-attention banner

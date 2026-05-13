@@ -1578,7 +1578,8 @@ h2 {
 
 /* _cross_cutting */
 .cross-cutting { margin-bottom: 18px; }
-.section-title { color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; font-size: 11px; margin: 0 0 8px; }
+.cross-cutting .section-title,
+.repos-section .section-title { color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; font-size: 11px; margin: 0 0 8px; font-weight: normal; }
 .cross-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
 .cross-card { background: #0f172a; border: 1px solid #1e293b; border-radius: 6px; padding: 10px 12px; color: #e5e7eb; text-decoration: none; }
 .cross-card header { display: flex; justify-content: space-between; align-items: baseline; }
