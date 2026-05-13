@@ -1172,3 +1172,148 @@ def activity_summary() -> dict:
         "drift_events": _drift_events_since(thirty_start),
     }
     return {"today": today, "week_sparkline": spark, "thirty_day": thirty_day}
+
+
+def _read_jsonl(path: Path):
+    if not path.exists():
+        return
+    for line in path.read_text(errors="ignore").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            yield json.loads(line)
+        except json.JSONDecodeError:
+            continue
+
+
+def _telemetry_stats(window_days: int = 30) -> dict:
+    since = _start_of_day_utc(window_days)
+    prev_since = _start_of_day_utc(window_days * 2)
+    inj_count = 0
+    prev_inj_count = 0
+    ack_count = 0
+    rule_fires: dict[str, int] = {}
+    acked_keys: set[tuple[str, str]] = set()
+    inj_keys_total: set[tuple[str, str]] = set()
+
+    for src in (DEPGRAPH / "telemetry" / "injections.jsonl",
+                LOGIGRAPH / "telemetry" / "injections.jsonl"):
+        for row in _read_jsonl(src):
+            ts_raw = row.get("ts")
+            try:
+                ts = dt.datetime.fromisoformat(ts_raw.replace("Z", "+00:00")).timestamp()
+            except (TypeError, AttributeError, ValueError):
+                continue
+            rid = row.get("rule_id")
+            nid = row.get("node_id")
+            if ts >= since:
+                inj_count += 1
+                if rid:
+                    rule_fires[rid] = rule_fires.get(rid, 0) + 1
+                if nid and rid:
+                    inj_keys_total.add((nid, rid))
+            elif prev_since <= ts < since:
+                prev_inj_count += 1
+
+    for src in (DEPGRAPH / "telemetry" / "acknowledgments.jsonl",
+                LOGIGRAPH / "telemetry" / "acknowledgments.jsonl"):
+        for row in _read_jsonl(src):
+            ts_raw = row.get("ts")
+            try:
+                ts = dt.datetime.fromisoformat(ts_raw.replace("Z", "+00:00")).timestamp()
+            except (TypeError, AttributeError, ValueError):
+                continue
+            if ts < since:
+                continue
+            ack_count += 1
+            nid, rid = row.get("node_id"), row.get("rule_id")
+            if nid and rid:
+                acked_keys.add((nid, rid))
+
+    ack_rate = round((ack_count / inj_count) * 100) if inj_count else 0
+    trend = round(((inj_count - prev_inj_count) / prev_inj_count) * 100) if prev_inj_count else 0
+
+    # Dead rules: rule node files that never fired in the window.
+    rules_dir = LOGIGRAPH_NODES / "rules"
+    dead = 0
+    if rules_dir.exists():
+        for p in rules_dir.glob("*.json"):
+            try:
+                rid = json.loads(p.read_text()).get("id")
+            except (OSError, json.JSONDecodeError):
+                continue
+            if rid and rid not in rule_fires:
+                dead += 1
+
+    # Never-acknowledged dossiers: nodes that have a dossier but never appear in acks.
+    never_acked = 0
+    acked_nids = {nid for (nid, _r) in acked_keys}
+    for n in load_depgraph_nodes():
+        if n.get("dossier") and n["id"] not in acked_nids:
+            never_acked += 1
+
+    hottest = sorted(rule_fires.items(), key=lambda kv: kv[1], reverse=True)[:3]
+    return {
+        "injections_30d": inj_count,
+        "ack_rate_pct": ack_rate,
+        "trend_pct": trend,
+        "dead_rules": dead,
+        "never_acked_dossiers": never_acked,
+        "rule_fires": rule_fires,
+        "hottest": [{"id": rid, "count": n} for rid, n in hottest],
+    }
+
+
+def _calibration_summary() -> dict:
+    """Read the most-recent calibration run dir under LOGIGRAPH/calibration/runs/.
+    Returns accuracy %, pass/fail counts, drifted rule ids, prev-run delta."""
+    runs_dir = LOGIGRAPH / "calibration" / "runs"
+    if not runs_dir.exists():
+        return {"accuracy_pct": None, "regressions": 0, "last_run_id": None, "drifted_rules": [], "prev_delta_pp": 0}
+    runs = sorted([p for p in runs_dir.iterdir() if p.is_dir()], reverse=True)
+    if not runs:
+        return {"accuracy_pct": None, "regressions": 0, "last_run_id": None, "drifted_rules": [], "prev_delta_pp": 0}
+
+    def _score(run_dir: Path) -> tuple[int, int, list[str]]:
+        passes = fails = 0
+        drifted: list[str] = []
+        for result_path in run_dir.glob("*/result.json"):
+            try:
+                row = json.loads(result_path.read_text())
+            except (OSError, json.JSONDecodeError):
+                continue
+            if row.get("overall") == "pass":
+                passes += 1
+            else:
+                fails += 1
+                pid = row.get("prompt_id")
+                if pid:
+                    drifted.append(pid)
+        return passes, fails, drifted
+
+    p, f, drifted = _score(runs[0])
+    total = p + f
+    acc = round((p / total) * 100) if total else 0
+    prev_acc = None
+    if len(runs) > 1:
+        pp, pf, _ = _score(runs[1])
+        prev_total = pp + pf
+        if prev_total:
+            prev_acc = round((pp / prev_total) * 100)
+    return {
+        "accuracy_pct": acc,
+        "regressions": f,
+        "last_run_id": runs[0].name,
+        "drifted_rules": drifted,
+        "prev_delta_pp": (acc - prev_acc) if prev_acc is not None else 0,
+    }
+
+
+def graph_health() -> dict:
+    t = _telemetry_stats(30)
+    return {
+        "telemetry": {k: t[k] for k in ("injections_30d", "ack_rate_pct", "trend_pct", "dead_rules", "never_acked_dossiers")},
+        "calibration": _calibration_summary(),
+        "hottest_rules": t["hottest"],
+    }
