@@ -14,7 +14,7 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class AnchorResult:
     model_id: str | None
-    reason: str  # "table_match" | "class_name_match" | "defined_in" | "via_mediated_by" | "not_found"
+    reason: str  # "table_match" | "class_name_match" | "defined_in" | "via_mediated_by" | "unresolved" | "not_found"
 
 
 def resolve_anchor(
@@ -185,7 +185,7 @@ def compute_rollup(
 
     return Rollup(
         anchor=anchor_result or AnchorResult(anchor_id if anchor_node else None,
-                                             "table_match" if anchor_node else "not_found"),
+                                             "unresolved" if anchor_node else "not_found"),
         by_kind=by_kind,
         total=sum(len(v) for v in by_kind.values()),
     )

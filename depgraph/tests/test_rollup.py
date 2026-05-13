@@ -265,3 +265,36 @@ def test_compute_rollup_groups_sorted_alpha_within_kind():
     # accept_invite < create_invite alphabetically — should be sorted.
     service_titles = [e.title for e in rollup.by_kind["service"]]
     assert service_titles == sorted(service_titles)
+
+
+def test_compute_rollup_handles_cycle_in_dependents_index():
+    # A → B → A cycle. BFS must terminate via `seen`, not loop forever.
+    a = {
+        "id": "concorda-api::models/a.py::A",
+        "kind": "model",
+        "signature": {"kind": "model", "name": "A"},
+        "source": {"repo": "concorda-api", "path": "models/a.py"},
+        "title": "A",
+    }
+    b = {
+        "id": "concorda-api::services/b.py::B",
+        "kind": "service",
+        "signature": {"kind": "service", "name": "B"},
+        "source": {"repo": "concorda-api", "path": "services/b.py"},
+        "title": "B",
+    }
+    depgraph = {a["id"]: a, b["id"]: b}
+    deps = {
+        a["id"]: [{"source": b["id"], "via": "import"}],
+        b["id"]: [{"source": a["id"], "via": "import"}],  # cycle back
+    }
+    rollup = compute_rollup(
+        anchor_id=a["id"],
+        depgraph_index=depgraph,
+        dependents_index=deps,
+        depth=3,
+    )
+    # Anchor A + dependent B == 2 entries, no infinite loop.
+    assert rollup.total == 2
+    assert any(e.id == a["id"] for e in rollup.by_kind["model"])
+    assert any(e.id == b["id"] for e in rollup.by_kind["service"])
