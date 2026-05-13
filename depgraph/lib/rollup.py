@@ -228,6 +228,34 @@ def format_rollup_text(rollup: Rollup, summary: bool = False) -> str:
     return "\n".join(lines)
 
 
+def format_rollup_json(rollup: Rollup) -> dict:
+    """Render a rollup as a JSON-serializable dict. Schema is the durable
+    contract for `bin/logigraph rollup --format json` consumers."""
+    return {
+        "anchor": {
+            "model_id": rollup.anchor.model_id,
+            "reason": rollup.anchor.reason,
+        },
+        "by_kind": {
+            kind: [
+                {
+                    "id": e.id,
+                    "title": e.title,
+                    "path": e.path,
+                    "repo": e.repo,
+                    "kind": e.kind,
+                    "direct": e.direct,
+                    "via": list(e.via),
+                }
+                for e in entries
+            ]
+            for kind, entries in rollup.by_kind.items()
+            if entries  # drop empty kinds for cleaner output
+        },
+        "total": rollup.total,
+    }
+
+
 def _entry_from_node(node: dict, *, direct: bool, via: tuple[str, ...]) -> Entry:
     src = node.get("source") or {}
     repo = src.get("repo", "")

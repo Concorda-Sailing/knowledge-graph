@@ -363,3 +363,27 @@ def test_format_rollup_text_no_anchor_renders_one_line_signal():
     assert "no anchor" in out.lower()
     # Should not render empty kind headers.
     assert "Service" not in out
+
+
+import json
+from lib.rollup import format_rollup_json
+
+
+def test_format_rollup_json_round_trips_through_json_module():
+    rollup = compute_rollup(
+        "concorda-api::models/boat_crew.py::BoatCrew",
+        _full_index(),
+        DEPENDENTS_INDEX_FIXTURE,
+        depth=1,
+    )
+    data = format_rollup_json(rollup)
+    # Round-trippable.
+    s = json.dumps(data)
+    restored = json.loads(s)
+    assert restored["anchor"]["model_id"] == "concorda-api::models/boat_crew.py::BoatCrew"
+    assert restored["total"] == 4  # 1 model + 2 services + 1 endpoint
+    assert "service" in restored["by_kind"]
+    assert len(restored["by_kind"]["service"]) == 2
+    entry = restored["by_kind"]["service"][0]
+    for k in ("id", "title", "path", "repo", "kind", "direct", "via"):
+        assert k in entry
