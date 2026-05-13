@@ -8,6 +8,8 @@ Pure functions; no I/O except reading already-loaded indexes.
 from __future__ import annotations
 
 from collections import deque
+import json
+from pathlib import Path
 from dataclasses import dataclass
 
 
@@ -256,10 +258,6 @@ def format_rollup_json(rollup: Rollup) -> dict:
     }
 
 
-import json as _json
-from pathlib import Path as _Path
-
-
 @dataclass(frozen=True)
 class RollupInputs:
     depgraph_index: dict[str, dict]
@@ -274,7 +272,7 @@ def load_rollup_inputs(depgraph_data_dir) -> RollupInputs:
     reverse-dependents index hasn't been built. Returning empty would
     silently produce false-empty rollups (anti-pattern from feedback_knowledge_graph_zero_defects).
     """
-    root = _Path(depgraph_data_dir)
+    root = Path(depgraph_data_dir)
     nodes_dir = root / "nodes"
     deps_path = nodes_dir / "_index" / "dependents.json"
     if not deps_path.exists():
@@ -283,8 +281,8 @@ def load_rollup_inputs(depgraph_data_dir) -> RollupInputs:
             f"Run `bin/depgraph regen` to rebuild it."
         )
     try:
-        deps_raw = _json.loads(deps_path.read_text())
-    except _json.JSONDecodeError as e:
+        deps_raw = json.loads(deps_path.read_text())
+    except json.JSONDecodeError as e:
         raise FileNotFoundError(
             f"reverse-dependents index unreadable: {deps_path}: {e}. "
             f"Run `bin/depgraph regen` to rebuild it."
@@ -296,8 +294,8 @@ def load_rollup_inputs(depgraph_data_dir) -> RollupInputs:
         if nf.name.startswith("_") or any(p.startswith("_") for p in nf.parts):
             continue
         try:
-            d = _json.loads(nf.read_text())
-        except (OSError, _json.JSONDecodeError):
+            d = json.loads(nf.read_text())
+        except (OSError, json.JSONDecodeError):
             continue
         nid = d.get("id")
         if nid:
