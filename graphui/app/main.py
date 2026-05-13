@@ -130,6 +130,21 @@ def index(request: Request, sort: str = "activity", activity: str | None = None)
     )
 
 
+@app.get("/graph/activity", response_class=HTMLResponse)
+def activity_page(request: Request) -> HTMLResponse:
+    """Activity rollup. Full event chronology (per-commit, per-fire, per-draft)
+    is deferred to a follow-up plan; for now this surfaces the same today/30-day
+    numbers the dashboard strip uses so the link is not a dead end."""
+    return TEMPLATES.TemplateResponse(
+        request,
+        "activity.html",
+        {
+            "activity": loader.activity_summary(),
+            "meta": loader.load_meta(),
+        },
+    )
+
+
 @app.get("/graph/issues", response_class=HTMLResponse)
 def issues_page(request: Request) -> HTMLResponse:
     """Full-page view of corpus flags — what the Needs-attention banner

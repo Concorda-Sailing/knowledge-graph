@@ -1168,16 +1168,23 @@ def activity_summary() -> dict:
         "drift_events": _drift_events_since(today_start),
         "rules_authored": _rules_authored_since(today_start),
     }
-    spark: list[int] = []
-    for d in range(6, -1, -1):  # oldest first
-        start = _start_of_day_utc(d)
-        end = _start_of_day_utc(d - 1) if d > 0 else dt.datetime.now(dt.timezone.utc).timestamp() + 1
-        n = sum(
-            1 for p in DEPGRAPH_NODES.rglob("*.json")
-            if "_index" not in p.parts and p.name != "_meta.json"
-            and start <= p.stat().st_mtime < end
-        )
-        spark.append(n)
+    # 7-day sparkline: bucket telemetry injections per day. mtimes were a poor
+    # proxy because every regen rewrites every node file with the same timestamp,
+    # masking real user/agent activity. Injections are written when Claude actually
+    # edits a tracked file, so they reflect work.
+    spark: list[int] = [0] * 7  # oldest first
+    today_date = dt.datetime.now(dt.timezone.utc).date()
+    for src in (DEPGRAPH / "telemetry" / "injections.jsonl",
+                LOGIGRAPH / "telemetry" / "injections.jsonl"):
+        for row in _read_jsonl(src):
+            ts_raw = row.get("ts")
+            try:
+                day = dt.datetime.fromisoformat(ts_raw.replace("Z", "+00:00")).date()
+            except (TypeError, AttributeError, ValueError):
+                continue
+            delta = (today_date - day).days
+            if 0 <= delta <= 6:
+                spark[6 - delta] += 1
     thirty_start = _start_of_day_utc(30)
     thirty_day = {
         "nodes_added": _count_node_files_since(DEPGRAPH_NODES, thirty_start),
