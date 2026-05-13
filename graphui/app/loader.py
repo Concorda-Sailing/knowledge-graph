@@ -562,15 +562,32 @@ def knowledge_filters() -> dict:
     }
 
 
-def nodes_for_repo(basename: str, kind: str | None = None, state: str | None = None) -> list[dict]:
-    """Depgraph nodes for one source repo, optionally filtered by kind/state.
-    Returns a flat list of dicts with the fields the card template renders."""
-    out = []
+def nodes_for_repo(
+    basename: str,
+    kind: str | None = None,
+    area: str | None = None,
+    tier: str | None = None,
+    state: str | None = None,
+    sort: str = "fan_out",
+) -> list[dict]:
+    """Flat node list for a repo, ready to feed the universal `_node_list.html`
+    partial. Each row carries the keys the partial reads (`id`, `title`, `kind`,
+    `fan_out`, `state`, `href`, `id`, plus `area` and `tier`).
+
+    Filters: kind, area (top-level directory), tier (A/B/C), state, sort (fan_out|title|state).
+    """
+    out: list[dict] = []
     for n in load_depgraph_nodes():
         src = n.get("source") or {}
-        if (src.get("repo") or "(unrooted)") != basename:
+        if src.get("repo") != basename:
             continue
+        path = src.get("path") or ""
+        area_val = path.split("/", 1)[0] if "/" in path else path
         if kind and n.get("kind") != kind:
+            continue
+        if area and area_val != area:
+            continue
+        if tier and n.get("tier") != tier:
             continue
         if state and n.get("dossier_state") != state:
             continue
@@ -578,12 +595,20 @@ def nodes_for_repo(basename: str, kind: str | None = None, state: str | None = N
             "id": n["id"],
             "title": n.get("title") or n["id"].rsplit("::", 1)[-1],
             "kind": n.get("kind", "—"),
-            "state": n.get("dossier_state", "current"),
+            "subkind": n.get("subkind"),
             "fan_out": n.get("fan_out", 0),
+            "state": n.get("dossier_state", "current"),
+            "tier": n.get("tier"),
+            "area": area_val,
             "href": f"/graph/node/{n['id']}",
             "src": f"{src.get('repo','')}/{src.get('path','')}" if src.get("path") else "",
         })
-    out.sort(key=lambda x: (-x["fan_out"], x["id"]))
+    if sort == "title":
+        out.sort(key=lambda r: r["title"].lower())
+    elif sort == "state":
+        out.sort(key=lambda r: r["state"])
+    else:  # fan_out (default)
+        out.sort(key=lambda r: r["fan_out"], reverse=True)
     return out
 
 
