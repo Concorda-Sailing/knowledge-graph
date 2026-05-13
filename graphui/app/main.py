@@ -585,6 +585,46 @@ async def bump_dossier(request: Request) -> JSONResponse:
     return JSONResponse({"ok": True, "stdout": result.stdout.strip()[:500]})
 
 
+@app.post("/graph/api/flag")
+async def flag_node(request: Request) -> JSONResponse:
+    """Set or clear flagged on a node. Body: {node_id, flagged: bool, reason?: string}.
+    Dispatches to bin/logigraph or bin/depgraph by node-id prefix.
+
+    Mirrors the existing /graph/api/bump shape — the CLI does the commit;
+    graphui just wires the HTTP call to the right binary."""
+    payload = await request.json()
+    node_id = payload.get("node_id")
+    flagged = bool(payload.get("flagged"))
+    reason = payload.get("reason") or None
+    if not node_id:
+        raise HTTPException(400, "missing node_id")
+
+    is_logigraph = (
+        node_id.startswith(_LOGIGRAPH_RULE_PREFIX)
+        or any(node_id.startswith(p) for p in _LOGIGRAPH_DOMAIN_PREFIXES)
+        or node_id.startswith(_LOGIGRAPH_PROCESS_PREFIX)
+    )
+    bin_path = LOGIGRAPH_BIN if is_logigraph else DEPGRAPH_BIN
+
+    if flagged:
+        cmd = [str(bin_path), "flag", node_id]
+        if reason:
+            cmd += ["--reason", reason]
+    else:
+        cmd = [str(bin_path), "unflag", node_id]
+
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+    except subprocess.TimeoutExpired:
+        raise HTTPException(504, "flag timed out")
+    if result.returncode != 0:
+        return JSONResponse(
+            {"ok": False, "stderr": result.stderr.strip()[:500], "cmd": cmd[0]},
+            status_code=500,
+        )
+    return JSONResponse({"ok": True, "stdout": result.stdout.strip()[:500]})
+
+
 @app.post("/graph/api/flags/track")
 async def track_flag(request: Request) -> JSONResponse:
     """Flip a fresh flag to tracked by writing/updating a warning entry on
