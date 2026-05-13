@@ -1,28 +1,35 @@
-{# Shared "History" sidebar card — expects `history` in context (list of
-   {sha, short, date, author, model, subject, url}). Safe to include in any
-   detail template even when the list is empty. #}
-{% if history is defined %}
 <div class="card history-card">
-  <h3>History ({{ history|length }})</h3>
-  {% if history %}
-    <ul class="history">
-    {% for c in history %}
-      <li>
-        <div class="row">
-          {% if c.url %}
-            <a class="sha" href="{{ c.url }}" target="_blank" rel="noopener">{{ c.short }}</a>
-          {% else %}
-            <span class="sha">{{ c.short }}</span>
-          {% endif %}
-          <span class="date">{{ c.date }}</span>
-          <span class="model" title="{{ c.author }}">{{ c.model }}</span>
-        </div>
-        <div class="subject">{{ c.subject }}</div>
-      </li>
-    {% endfor %}
-    </ul>
+  <h3>History</h3>
+  {% if not timeline %}
+    <div class="empty">No commits yet.</div>
   {% else %}
-    <p class="empty">No commits tracked for this node yet.</p>
+    <ul class="action-timeline">
+      {% set ns = namespace(regen_count=0) %}
+      {% for row in timeline %}
+        {% if row.action == "chore" and "regen" in row.subject %}
+          {% set ns.regen_count = ns.regen_count + 1 %}
+        {% else %}
+          <li class="action-row action-{{ row.action }}">
+            <span class="action-date">{{ row.date }}</span>
+            <span class="action-glyph">
+              {% if row.action == "feat" %}✨{% elif row.action == "fix" %}✏️{% elif row.action == "review" %}📝{% elif row.action == "flag" %}⚑{% elif row.action == "unflag" %}⚑̸{% else %}·{% endif %}
+            </span>
+            <span class="action-label">
+              {% if row.action == "feat" %}Drafted{% elif row.action == "fix" %}Edited{% elif row.action == "review" %}Reviewed{% elif row.action == "flag" %}Flagged{% elif row.action == "unflag" %}Unflagged{% else %}{{ row.action|capitalize }}{% endif %}
+              by {{ row.actor }}
+            </span>
+            {% if row.action == "flag" and row.body %}
+              <div class="action-body">{{ row.body.split("\n")[0] }}</div>
+            {% endif %}
+          </li>
+        {% endif %}
+      {% endfor %}
+      {% if ns.regen_count > 0 %}
+        <li class="action-row action-regen-collapsed">
+          <span class="action-glyph">⟳</span>
+          <span class="action-label">Regen · {{ ns.regen_count }} time{{ "s" if ns.regen_count != 1 else "" }}</span>
+        </li>
+      {% endif %}
+    </ul>
   {% endif %}
 </div>
-{% endif %}

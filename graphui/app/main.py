@@ -400,6 +400,7 @@ def node_detail(request: Request, node_id: str) -> HTMLResponse:
         loader.DEPGRAPH,
         [p for p in (node.get("_node_file"), node.get("dossier")) if p],
     )
+    timeline = loader.parse_action_timeline(history)
     telemetry = loader.telemetry_for_node(node_id)
     siblings = loader.siblings_in_file(node_id)
     qctx = _queue_context(node_id, node.get("dossier_state"), tier=node.get("tier"), kind=node.get("kind"))
@@ -416,6 +417,7 @@ def node_detail(request: Request, node_id: str) -> HTMLResponse:
             "src": src,
             "commits_30d": commits_30d,
             "history": history,
+            "timeline": timeline,
             "telemetry": telemetry,
             "siblings": siblings,
             "warnings": loader.warnings_for(node_id),
@@ -439,6 +441,7 @@ def rule_detail(request: Request, rule_id: str) -> HTMLResponse:
         loader.LOGIGRAPH,
         [p for p in (rule.get("_node_file"), rule.get("dossier")) if p],
     )
+    timeline = loader.parse_action_timeline(history)
     qctx = _queue_context(rule_id, rule.get("dossier_state"), kind="rule")
     flag = loader.flagged_state(rule)
     auth = loader.authorship(dossier_text)
@@ -450,6 +453,7 @@ def rule_detail(request: Request, rule_id: str) -> HTMLResponse:
             "dossier_html": dossier_html,
             "telemetry": telemetry,
             "history": history,
+            "timeline": timeline,
             "node_id": rule_id,
             "flag": flag,
             "authorship": auth,
@@ -469,6 +473,7 @@ def process_detail(request: Request, process_id: str) -> HTMLResponse:
         loader.LOGIGRAPH,
         [p for p in (proc.get("_node_file"), proc.get("dossier")) if p],
     )
+    timeline = loader.parse_action_timeline(history)
     qctx = _queue_context(process_id, proc.get("dossier_state"), kind="processes")
     flag = loader.flagged_state(proc)
     auth = loader.authorship(dossier_text)
@@ -479,6 +484,7 @@ def process_detail(request: Request, process_id: str) -> HTMLResponse:
             "proc": proc,
             "dossier_html": dossier_html,
             "history": history,
+            "timeline": timeline,
             "node_id": process_id,
             "flag": flag,
             "authorship": auth,
@@ -528,6 +534,7 @@ def domain_detail(request: Request, ont_id: str) -> HTMLResponse:
         loader.LOGIGRAPH,
         [p for p in (ont.get("_node_file"), ont.get("dossier")) if p],
     )
+    timeline = loader.parse_action_timeline(history)
     relationships = loader.relationships_for(ont_id)
     collisions = (
         loader.collisions_for_relationship(ont_id)
@@ -544,6 +551,7 @@ def domain_detail(request: Request, ont_id: str) -> HTMLResponse:
             "ont": ont,
             "dossier_html": dossier_html,
             "history": history,
+            "timeline": timeline,
             "relationships": relationships,
             "collisions": collisions,
             "code_rollup": code_rollup,
