@@ -1,0 +1,85 @@
+<aside class="repo-rail">
+
+  <div class="rail-card">
+    <h4 class="rail-title">Areas</h4>
+    {% if repo.areas %}
+      <ul class="rail-list">
+        {% for a in repo.areas %}
+          <li>
+            <a href="/graph/repo/{{ repo.basename }}?tab=nodes&area={{ a.dir }}"
+               class="rail-row{% if area_filter == a.dir %} rail-row-active{% endif %}">
+              <span class="rail-row-label">📁 {{ a.dir }}/</span>
+              <span class="rail-row-count">{{ a.node_count }}</span>
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="rail-empty">No tracked areas.</p>
+    {% endif %}
+  </div>
+
+  <div class="rail-card">
+    <h4 class="rail-title">Kinds</h4>
+    {% if repo.kinds %}
+      <ul class="rail-list">
+        {% for k in repo.kinds %}
+          <li>
+            <a href="/graph/repo/{{ repo.basename }}?tab=nodes&kind={{ k.kind }}"
+               class="rail-row{% if kind_filter == k.kind %} rail-row-active{% endif %}">
+              <span class="rail-row-label">{{ k.kind }}</span>
+              <span class="rail-row-count">{{ k.count }}</span>
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="rail-empty">No tracked kinds.</p>
+    {% endif %}
+    {% if tier_counts %}
+      <div class="rail-subtitle">Tier</div>
+      <div class="rail-tier-row">
+        {% for t in ['A', 'B', 'C'] %}
+          {% set n = tier_counts.get(t, 0) %}
+          <a href="/graph/repo/{{ repo.basename }}?tab=nodes&tier={{ t }}"
+             class="rail-tier-chip{% if tier_filter == t %} rail-tier-chip-active{% endif %}">{{ t }} · {{ n }}</a>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="rail-card">
+    <h4 class="rail-title">Cross-cuts</h4>
+    {% if repo.cross_cuts.rules %}
+      <div class="rail-cross-head rail-cross-rules">🧷 {{ repo.cross_cuts.rules|length }} rule{{ '' if repo.cross_cuts.rules|length == 1 else 's' }}</div>
+      <ul class="rail-list rail-list-tight">
+        {% for rid in repo.cross_cuts.rules[:8] %}
+          <li><a href="/graph/rule/{{ rid }}" class="rail-row-link">{{ rid.split('::')[-1] }}</a></li>
+        {% endfor %}
+        {% if repo.cross_cuts.rules|length > 8 %}<li class="rail-row-more">+{{ repo.cross_cuts.rules|length - 8 }} more</li>{% endif %}
+      </ul>
+    {% endif %}
+    {% if repo.cross_cuts.processes %}
+      <div class="rail-cross-head rail-cross-procs">⤳ {{ repo.cross_cuts.processes|length }} process{{ '' if repo.cross_cuts.processes|length == 1 else 'es' }}</div>
+      <ul class="rail-list rail-list-tight">
+        {% for pid in repo.cross_cuts.processes[:6] %}
+          <li><a href="/graph/process/{{ pid }}" class="rail-row-link">{{ pid.split('::')[-1] }}</a></li>
+        {% endfor %}
+        {% if repo.cross_cuts.processes|length > 6 %}<li class="rail-row-more">+{{ repo.cross_cuts.processes|length - 6 }} more</li>{% endif %}
+      </ul>
+    {% endif %}
+    {% if repo.cross_cuts.domain %}
+      <div class="rail-cross-head rail-cross-domain">⊙ {{ repo.cross_cuts.domain|length }} domain entit{{ 'y' if repo.cross_cuts.domain|length == 1 else 'ies' }} referenced</div>
+      <ul class="rail-list rail-list-tight">
+        {% for did in repo.cross_cuts.domain[:6] %}
+          <li><a href="/graph/domain/{{ did }}" class="rail-row-link">{{ did.split('::')[-1] }}</a></li>
+        {% endfor %}
+        {% if repo.cross_cuts.domain|length > 6 %}<li class="rail-row-more">+{{ repo.cross_cuts.domain|length - 6 }} more</li>{% endif %}
+      </ul>
+    {% endif %}
+    {% if not (repo.cross_cuts.rules or repo.cross_cuts.processes or repo.cross_cuts.domain) %}
+      <p class="rail-empty">No rules, processes, or domain entities reference this repo.</p>
+    {% endif %}
+  </div>
+
+</aside>
