@@ -7,6 +7,7 @@ the cost is negligible (~50ms cold).
 """
 from __future__ import annotations
 
+import datetime as dt
 import json
 import re
 import subprocess
@@ -1053,3 +1054,121 @@ def flagged_nodes() -> list[dict]:
         })
     rows.sort(key=lambda r: (r["kind"], r["id"]))
     return rows
+
+
+def _start_of_day_utc(days_ago: int = 0) -> float:
+    now = dt.datetime.now(dt.timezone.utc)
+    start = dt.datetime(now.year, now.month, now.day, tzinfo=dt.timezone.utc)
+    start -= dt.timedelta(days=days_ago)
+    return start.timestamp()
+
+
+def _count_node_files_since(root: Path, since_ts: float) -> int:
+    """Count *.json node files under root with mtime >= since_ts."""
+    if not root.exists():
+        return 0
+    return sum(
+        1 for p in root.rglob("*.json")
+        if "_index" not in p.parts and "_meta.json" != p.name and p.stat().st_mtime >= since_ts
+    )
+
+
+def _count_jsonl_since(path: Path, since_ts: float, predicate=None) -> int:
+    if not path.exists():
+        return 0
+    n = 0
+    for line in path.read_text(errors="ignore").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        ts_raw = row.get("ts")
+        if not ts_raw:
+            continue
+        try:
+            ts = dt.datetime.fromisoformat(ts_raw.replace("Z", "+00:00")).timestamp()
+        except (TypeError, ValueError):
+            continue
+        if ts < since_ts:
+            continue
+        if predicate and not predicate(row):
+            continue
+        n += 1
+    return n
+
+
+def _drafts_authored_since(since_ts: float) -> int:
+    """Dossiers whose status==llm_drafted whose file mtime is in window."""
+    n = 0
+    for kind_dir in (DEPGRAPH / "dossiers", LOGIGRAPH / "dossiers"):
+        if not kind_dir.exists():
+            continue
+        for p in kind_dir.rglob("*.md"):
+            if p.stat().st_mtime < since_ts:
+                continue
+            text = p.read_text(errors="ignore")[:512]
+            if "llm_drafted" in text or "definition_status: llm_drafted" in text:
+                n += 1
+    return n
+
+
+def _drift_events_since(since_ts: float) -> int:
+    """Read _meta.json flags; count entries with discovered_at >= since_ts
+    and kind in {drift, defect}."""
+    meta = load_meta()
+    n = 0
+    for label in ("depgraph", "logigraph"):
+        flags = meta.get(label, {}).get("flags") or []
+        for f in flags:
+            kind = f.get("kind")
+            if kind not in ("drift", "defect"):
+                continue
+            ts_raw = f.get("discovered_at")
+            if not ts_raw:
+                continue
+            try:
+                ts = dt.datetime.fromisoformat(ts_raw.replace("Z", "+00:00")).timestamp()
+            except (TypeError, ValueError):
+                continue
+            if ts >= since_ts:
+                n += 1
+    return n
+
+
+def _rules_authored_since(since_ts: float) -> int:
+    """Rule node files (kind=rule) with mtime in window."""
+    rule_dir = LOGIGRAPH_NODES / "rules"
+    return _count_node_files_since(rule_dir, since_ts)
+
+
+def activity_summary() -> dict:
+    """Today / 7-day sparkline / 30-day rollup for the dashboard activity strip."""
+    today_start = _start_of_day_utc(0)
+    today = {
+        "nodes_added": _count_node_files_since(DEPGRAPH_NODES, today_start),
+        "drafts_authored": _drafts_authored_since(today_start),
+        "drift_events": _drift_events_since(today_start),
+        "rules_authored": _rules_authored_since(today_start),
+    }
+    spark: list[int] = []
+    for d in range(6, -1, -1):  # oldest first
+        start = _start_of_day_utc(d)
+        end = _start_of_day_utc(d - 1) if d > 0 else dt.datetime.now(dt.timezone.utc).timestamp() + 1
+        n = sum(
+            1 for p in DEPGRAPH_NODES.rglob("*.json")
+            if "_index" not in p.parts and p.name != "_meta.json"
+            and start <= p.stat().st_mtime < end
+        )
+        spark.append(n)
+    thirty_start = _start_of_day_utc(30)
+    thirty_day = {
+        "nodes_added": _count_node_files_since(DEPGRAPH_NODES, thirty_start),
+        "drafts_reviewed": _count_jsonl_since(
+            LOGIGRAPH / "telemetry" / "acknowledgments.jsonl", thirty_start
+        ),
+        "drift_events": _drift_events_since(thirty_start),
+    }
+    return {"today": today, "week_sparkline": spark, "thirty_day": thirty_day}
