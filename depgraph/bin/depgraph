@@ -26,6 +26,12 @@ from pathlib import Path
 # Tool location (where this script lives) — schemas, framework code.
 TOOL_ROOT = Path(__file__).resolve().parent.parent
 
+# Prefer the framework's own .venv python for subprocess calls that need
+# fastembed / numpy (reconcile.py runs the embedding pass). Fall back to
+# bare "python3" so the script still works on fresh checkouts without a venv.
+_VENV_PYTHON = TOOL_ROOT / ".venv" / "bin" / "python3"
+FRAMEWORK_PYTHON = str(_VENV_PYTHON) if _VENV_PYTHON.exists() else "python3"
+
 # Make the shared config helpers importable.
 sys.path.insert(0, str(TOOL_ROOT))
 from lib.config import (  # noqa: E402
@@ -110,7 +116,7 @@ def cmd_regen(args: argparse.Namespace) -> int:
         if rc != 0:
             failed.append(key)
     print("--- reconcile")
-    rc = subprocess.call(["python3", str(TOOL_ROOT / "extractors" / "reconcile.py")])
+    rc = subprocess.call([FRAMEWORK_PYTHON, str(TOOL_ROOT / "extractors" / "reconcile.py")])
     if rc != 0:
         failed.append("reconcile")
     if failed:

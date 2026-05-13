@@ -40,24 +40,40 @@ def _get_model():
     except ImportError as e:
         raise EmbeddingUnavailable(f"fastembed not installed: {e}") from e
     try:
-        _model = TextEmbedding(model_name=MODEL_NAME)
+        # threads=1 caps ONNX intra-op parallelism. Without this, the runtime
+        # allocates per-core working buffers and RSS spikes 4-5x on a 4-core
+        # host — enough to OOM-kill the process even when free memory looks
+        # sufficient. Single-threaded is still fast enough for batch regen
+        # (2400 chunks in ~30s on this hardware).
+        _model = TextEmbedding(model_name=MODEL_NAME, threads=1)
     except Exception as e:  # model download / init failure
         raise EmbeddingUnavailable(f"could not load {MODEL_NAME}: {e}") from e
     return _model
 
 
+_EMBED_BATCH_SIZE = 64  # chunks per ONNX call; bounds peak RSS on memory-constrained hosts
+
+
 def embed_chunks(chunks: list[str]) -> np.ndarray:
     """Return a (len(chunks), VECTOR_DIM) fp16 matrix. Empty input returns
-    a (0, VECTOR_DIM) array. Raises EmbeddingUnavailable on model failure."""
+    a (0, VECTOR_DIM) array. Raises EmbeddingUnavailable on model failure.
+
+    Processes chunks in batches of _EMBED_BATCH_SIZE to cap peak RSS.
+    Without batching, a 2400-chunk corpus on long dossier text can push
+    onnxruntime past 5 GB and trigger OOM on a memory-constrained host."""
     if not chunks:
         return np.zeros((0, VECTOR_DIM), dtype=np.float16)
     model = _get_model()
     try:
-        # fastembed returns a generator of np.ndarray (float32, normalized).
-        vecs = np.array(list(model.embed(chunks)), dtype=np.float32)
+        result_batches: list[np.ndarray] = []
+        for i in range(0, len(chunks), _EMBED_BATCH_SIZE):
+            batch = chunks[i:i + _EMBED_BATCH_SIZE]
+            # fastembed returns a generator of np.ndarray (float32, normalized).
+            batch_vecs = np.array(list(model.embed(batch)), dtype=np.float32)
+            result_batches.append(batch_vecs.astype(np.float16))
+        return np.concatenate(result_batches, axis=0) if result_batches else np.zeros((0, VECTOR_DIM), dtype=np.float16)
     except Exception as e:
         raise EmbeddingUnavailable(f"embed call failed: {e}") from e
-    return vecs.astype(np.float16)
 
 
 def write_index(bin_path: Path, jsonl_path: Path,
