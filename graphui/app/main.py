@@ -85,14 +85,44 @@ def _kind_sort(k: str) -> int:
 
 @app.get("/graph/", response_class=HTMLResponse)
 @app.get("/graph", response_class=HTMLResponse)
-def index(request: Request) -> HTMLResponse:
-    """Top-level gallery: one card per source repo + one per logigraph kind."""
+def index(request: Request, sort: str = "activity", activity: str | None = None) -> HTMLResponse:
+    """Top-level dashboard: activity strip, graph health, cross-cuts, then repos
+    filtered by activity classification and sorted per `sort` param."""
+    repos_all = loader.repo_summary()
+    counts = {"active": 0, "dormant": 0, "dead-candidate": 0, "all": len(repos_all)}
+    for r in repos_all:
+        cls = r["activity"]["classification"]
+        if cls in counts:
+            counts[cls] += 1
+
+    if activity and activity != "all":
+        repos = [r for r in repos_all if r["activity"]["classification"] == activity]
+    else:
+        repos = repos_all
+
+    if sort == "alpha":
+        repos = sorted(repos, key=lambda r: r["basename"])
+    elif sort == "inbound":
+        repos = sorted(repos, key=lambda r: r["dep_counts"]["inbound_repos"], reverse=True)
+    elif sort == "dead":
+        repos = sorted(repos, key=lambda r: r["dead_code_score"], reverse=True)
+    else:  # activity (default)
+        repos = sorted(repos, key=lambda r: r["activity"]["commits_7d"], reverse=True)
+
+    today_date = datetime.datetime.now().strftime("%a %b %d")
+
     return TEMPLATES.TemplateResponse(
         request,
         "index.html",
         {
-            "repos": loader.repo_summary(),
-            "kinds": loader.kind_summary(),
+            "repos": repos,
+            "filter_counts": counts,
+            "sort": sort,
+            "activity_filter": activity,
+            "today_date": today_date,
+            "activity": loader.activity_summary(),
+            "health": loader.graph_health(),
+            "cross": loader.cross_cutting_summary(),
             "review_pending": len(_review_queue()),
             "flags": loader.corpus_flags(),
             "meta": loader.load_meta(),
