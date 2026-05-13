@@ -1,0 +1,25 @@
+<section class="cross-cutting" aria-label="Cross-cutting knowledge">
+  <h3 class="section-title">Cross-cutting knowledge</h3>
+  <div class="cross-grid">
+    <a href="/graph/kind/rules" class="cross-card cross-rules">
+      <header><span class="cross-title">Rules · {{ cross.rules.count }}</span><span class="cross-side">claims {{ cross.rules.claimed_repos }} repo{{ '' if cross.rules.claimed_repos == 1 else 's' }}</span></header>
+      <p class="cross-line">
+        {% for ns in cross.rules.namespaces[:7] %}{{ ns }}{% if not loop.last %} · {% endif %}{% endfor %}
+        {% if cross.rules.namespaces|length > 7 %} · +{{ cross.rules.namespaces|length - 7 }} more{% endif %}
+      </p>
+    </a>
+    <a href="/graph/kind/domain" class="cross-card cross-domain">
+      <header><span class="cross-title">Domain · {{ cross.domain.count }}</span><span class="cross-side">referenced by {{ cross.domain.referenced_by }}</span></header>
+      <p class="cross-line">
+        {% for sk, n in cross.domain.subkinds.items() %}{{ sk }} · {{ n }}{% if not loop.last %} · {% endif %}{% endfor %}
+      </p>
+    </a>
+    <a href="/graph/kind/processes" class="cross-card cross-processes">
+      <header><span class="cross-title">Processes · {{ cross.processes.count }}</span><span class="cross-side">spans {{ cross.processes.spans_repos }} repo{{ '' if cross.processes.spans_repos == 1 else 's' }}</span></header>
+      <p class="cross-line">
+        {% for name in cross.processes.names %}{{ name }}{% if not loop.last %} · {% endif %}{% endfor %}
+        {% if cross.processes.count > cross.processes.names|length %} · +{{ cross.processes.count - cross.processes.names|length }} more{% endif %}
+      </p>
+    </a>
+  </div>
+</section>

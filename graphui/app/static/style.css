@@ -1575,3 +1575,15 @@ h2 {
 .hottest-list { list-style: none; padding: 0; margin: 4px 0 0; color: #e5e7eb; font-size: 11px; }
 .hottest-list li { padding: 1px 0; }
 .hot-count { color: #60a5fa; }
+
+/* _cross_cutting */
+.cross-cutting { margin-bottom: 18px; }
+.section-title { color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; font-size: 11px; margin: 0 0 8px; }
+.cross-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.cross-card { background: #0f172a; border: 1px solid #1e293b; border-radius: 6px; padding: 10px 12px; color: #e5e7eb; text-decoration: none; }
+.cross-card header { display: flex; justify-content: space-between; align-items: baseline; }
+.cross-rules .cross-title { color: #a78bfa; font-weight: 600; }
+.cross-domain .cross-title { color: #34d399; font-weight: 600; }
+.cross-processes .cross-title { color: #34d399; font-weight: 600; }
+.cross-side { color: #94a3b8; font-size: 11px; }
+.cross-line { color: #94a3b8; font-size: 11px; margin: 4px 0 0; }
