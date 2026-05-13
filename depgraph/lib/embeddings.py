@@ -98,5 +98,8 @@ def read_index(bin_path: Path, jsonl_path: Path) -> tuple[list[dict], np.ndarray
     if len(raw) != expected_bytes:
         # Mismatch — treat as missing rather than silently misaligned.
         return [], np.zeros((0, VECTOR_DIM), dtype=np.float16)
-    vecs = np.frombuffer(raw, dtype=np.float16).reshape(len(rows), VECTOR_DIM)
+    # .copy() because np.frombuffer returns a read-only view tied to the
+    # bytes object; downstream callers (Plan F search path) cast to float32
+    # in place, which would fail on a read-only array.
+    vecs = np.frombuffer(raw, dtype=np.float16).reshape(len(rows), VECTOR_DIM).copy()
     return rows, vecs
