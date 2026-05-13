@@ -26,11 +26,11 @@ from . import markdown_render
 # the current ~/tools/ install.
 DEPGRAPH_BIN = Path(
     os.environ.get("DEPGRAPH_BIN")
-    or (Path.home() / "tools" / "depgraph" / "bin" / "depgraph")
+    or (Path.home() / "tools" / "knowledge-graph" / "depgraph" / "bin" / "depgraph")
 )
 LOGIGRAPH_BIN = Path(
     os.environ.get("LOGIGRAPH_BIN")
-    or (Path.home() / "tools" / "logigraph" / "bin" / "logigraph")
+    or (Path.home() / "tools" / "knowledge-graph" / "logigraph" / "bin" / "logigraph")
 )
 
 
