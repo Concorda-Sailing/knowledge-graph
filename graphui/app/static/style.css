@@ -1693,7 +1693,7 @@ h2 {
 .stat-chip-warn { border-color: #422006; color: #fbbf24; }
 .stat-chip-cross { color: #a78bfa; }
 .repo-detail-body { display: grid; grid-template-columns: 30% 1fr; gap: 14px; }
-.repo-detail-main { min-width: 0; }
+.repo-detail-main { min-width: 0; overflow-x: auto; }
 .repo-detail-note { color: #94a3b8; font-size: 12px; margin: 8px 0 12px; }
 .deps-section h3.deps-h { color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; font-size: 11px; margin: 14px 0 6px; }
 .deps-table { width: 100%; border-collapse: collapse; font-size: 12px; }
