@@ -235,6 +235,7 @@ def commit_history(repo_root: Path, rel_paths: list[str], limit: int = 20) -> li
             "author": author,
             "model": _model_from_commit(author, body),
             "subject": subject,
+            "body": body,
             "url": f"{remote}/commit/{sha}" if remote else None,
         })
     _HISTORY_CACHE[key] = (now, out_rows)
@@ -895,3 +896,160 @@ def compute_code_rollup(domain_node: dict, depth: int = 3) -> Rollup:
         depth=depth,
         anchor_result=anchor,
     )
+
+
+# ----- Flag + attribution helpers (Tasks 12-14 templates) ---------------------
+
+def flagged_state(node: dict) -> dict:
+    """Extract flag fields from a node dict. Returns a uniform shape even
+    when the node isn't flagged — templates can read `.flagged` reliably."""
+    return {
+        "flagged": bool(node.get("flagged")),
+        "flagged_by": node.get("flagged_by"),
+        "flagged_at": node.get("flagged_at"),
+        "flagged_reason": node.get("flagged_reason"),
+    }
+
+
+def _parse_frontmatter(text: str) -> dict:
+    """Minimal YAML-ish frontmatter parser. Handles the shape we write:
+    scalar values and one-level lists (used for authored_by). Returns {}
+    if no frontmatter."""
+    if not text.startswith("---"):
+        return {}
+    try:
+        end = text.index("\n---\n", 4)
+    except ValueError:
+        return {}
+    fm = text[4:end]
+    out: dict = {}
+    current_list_key: str | None = None
+    for raw in fm.splitlines():
+        line = raw.rstrip()
+        if not line:
+            current_list_key = None
+            continue
+        if line.startswith("  - ") and current_list_key:
+            out.setdefault(current_list_key, []).append(line[4:].strip())
+            continue
+        if ":" not in line:
+            continue
+        key, _, val = line.partition(":")
+        key = key.strip()
+        val = val.strip()
+        if not val:
+            # Could be a list-start.
+            current_list_key = key
+            out[key] = []
+        else:
+            current_list_key = None
+            out[key] = val
+    return out
+
+
+def authorship(dossier_text: str | None) -> dict:
+    """Extract authored_by / reviewed_by / reviewed_at from dossier
+    frontmatter. Returns a uniform dict even when fields are missing —
+    empty list / None — so templates render without conditionals."""
+    if not dossier_text:
+        return {"authored_by": [], "reviewed_by": None, "reviewed_at": None}
+    fm = _parse_frontmatter(dossier_text)
+    authored = fm.get("authored_by", [])
+    if isinstance(authored, str):
+        authored = [authored]
+    return {
+        "authored_by": authored,
+        "reviewed_by": fm.get("reviewed_by"),
+        "reviewed_at": fm.get("reviewed_at"),
+    }
+
+
+_ACTION_PREFIX_RE = re.compile(
+    r"^(feat|fix|review|flag|unflag|chore|docs|refactor)(?:\(([^)]*)\))?:\s*(.*)$"
+)
+_CO_AUTHOR_RE = re.compile(r"^Co-Authored-By:\s*(.+?)\s*<", re.M | re.I)
+
+
+def parse_action_timeline(commits: list[dict]) -> list[dict]:
+    """Classify each commit (output of commit_history) into an action row.
+    Output is ordered newest-first (same order as input). Each row carries
+    {action, actor, date, subject, body, sha}.
+
+    Action is the commit-message prefix; 'edit' for unprefixed commits.
+    Actor is the Co-Authored-By trailer when present, else the git author.
+    """
+    out: list[dict] = []
+    for c in commits:
+        subject = c.get("subject", "")
+        body = c.get("body", "")
+        m = _ACTION_PREFIX_RE.match(subject)
+        action = m.group(1) if m else "edit"
+        co = _CO_AUTHOR_RE.search(body or "")
+        actor = co.group(1) if co else c.get("author", "—")
+        out.append({
+            "action": action,
+            "actor": actor,
+            "date": c.get("date"),
+            "subject": subject,
+            "body": body,
+            "sha": c.get("sha", ""),
+        })
+    return out
+
+
+def flagged_nodes() -> list[dict]:
+    """Return every flagged node across depgraph + logigraph. Each row has
+    {id, kind, title, flagged_by, flagged_at, flagged_reason, href}. Used
+    by the Issues page Flagged section."""
+    rows: list[dict] = []
+    for n in load_depgraph_nodes():
+        if not n.get("flagged"):
+            continue
+        rows.append({
+            "id": n["id"],
+            "kind": n.get("kind", "—"),
+            "title": n.get("title") or n["id"].rsplit("::", 1)[-1],
+            "flagged_by": n.get("flagged_by"),
+            "flagged_at": n.get("flagged_at"),
+            "flagged_reason": n.get("flagged_reason"),
+            "href": f"/graph/node/{n['id']}",
+        })
+    lg = load_logigraph_nodes()
+    for r in lg["rules"]:
+        if not r.get("flagged"):
+            continue
+        rows.append({
+            "id": r["id"],
+            "kind": "rule",
+            "title": r.get("title", r["id"]),
+            "flagged_by": r.get("flagged_by"),
+            "flagged_at": r.get("flagged_at"),
+            "flagged_reason": r.get("flagged_reason"),
+            "href": f"/graph/rule/{r['id']}",
+        })
+    for o in lg["domain"]:
+        if not o.get("flagged"):
+            continue
+        rows.append({
+            "id": o["id"],
+            "kind": "domain",
+            "title": o.get("title", o["id"]),
+            "flagged_by": o.get("flagged_by"),
+            "flagged_at": o.get("flagged_at"),
+            "flagged_reason": o.get("flagged_reason"),
+            "href": f"/graph/domain/{o['id']}",
+        })
+    for p in lg.get("processes", []):
+        if not p.get("flagged"):
+            continue
+        rows.append({
+            "id": p["id"],
+            "kind": "process",
+            "title": p.get("title", p["id"]),
+            "flagged_by": p.get("flagged_by"),
+            "flagged_at": p.get("flagged_at"),
+            "flagged_reason": p.get("flagged_reason"),
+            "href": f"/graph/process/{p['id']}",
+        })
+    rows.sort(key=lambda r: (r["kind"], r["id"]))
+    return rows
