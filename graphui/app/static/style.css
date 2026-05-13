@@ -1653,4 +1653,35 @@ h2 {
 .repo-tab-active { background: #1e3a8a; color: #bfdbfe; }
 .repo-tab-count { color: inherit; opacity: 0.7; margin-left: 4px; }
 .repo-tab-warn { color: #fbbf24; }
+
+/* repo-detail (T7) */
+.repo-detail-breadcrumb { color: #94a3b8; font-size: 11px; margin-bottom: 8px; }
+.repo-detail-breadcrumb a { color: #60a5fa; text-decoration: none; }
+.repo-detail-header { margin-bottom: 14px; }
+.repo-detail-title-row { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.repo-detail-name { margin: 0; font-size: 22px; color: #e5e7eb; }
+.repo-detail-langs { color: #94a3b8; font-size: 11px; }
+.repo-detail-today { color: #34d399; font-size: 11px; }
+.repo-detail-sparkline { display: inline-flex; gap: 2px; align-items: flex-end; height: 14px; }
+.repo-detail-sparkline .spark-cell { width: 6px; background: #60a5fa; border-radius: 1px; }
+.repo-detail-meta { color: #94a3b8; font-size: 11px; margin-left: auto; }
+.repo-detail-stats { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; font-size: 11px; }
+.stat-chip { background: #0f172a; border: 1px solid #1e293b; padding: 3px 10px; border-radius: 3px; color: #e5e7eb; }
+.stat-chip-warn { border-color: #422006; color: #fbbf24; }
+.stat-chip-cross { color: #a78bfa; }
+.repo-detail-body { display: grid; grid-template-columns: 30% 1fr; gap: 14px; }
+.repo-detail-main { min-width: 0; }
+.repo-detail-note { color: #94a3b8; font-size: 12px; margin: 8px 0 12px; }
+.deps-section h3.deps-h { color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; font-size: 11px; margin: 14px 0 6px; }
+.deps-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.deps-table th { text-align: left; padding: 6px 8px; background: #1e293b; color: #94a3b8; font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+.deps-table td { padding: 4px 8px; border-bottom: 1px solid #1e293b; color: #e5e7eb; }
+.deps-table a { color: #60a5fa; text-decoration: none; }
+.deps-pkgs { display: flex; flex-wrap: wrap; gap: 4px; }
+.dep-pkg { background: #1e293b; color: #e5e7eb; padding: 2px 8px; border-radius: 3px; font-size: 11px; }
+.dep-pkg-npm { border-left: 2px solid #fb923c; }
+.dep-pkg-python { border-left: 2px solid #60a5fa; }
+@media (max-width: 900px) {
+  .repo-detail-body { grid-template-columns: 1fr; }
+}
 .repo-tab-warn.repo-tab-active { background: #422006; color: #fde68a; }

@@ -1,68 +1,135 @@
 {% extends "base.html" %}
-{% block title %}{{ basename }}{% endblock %}
+{% block title %}{{ repo.basename }}{% endblock %}
 {% block content %}
 
-<div class="repo-header">
-  <div class="breadcrumb">
-    <a href="/graph/">index</a> &nbsp;/&nbsp; repo
-  </div>
-  <h1>{{ basename }}</h1>
-  <div class="repo-meta">
-    {{ summary.node_count }} node{{ '' if summary.node_count == 1 else 's' }} ·
-    {{ summary.current_pct }}% current
-    {% if summary.has_stale %} · <span class="stale-flag">⚠ {{ summary.state_counts.stale }} stale</span>{% endif %}
-  </div>
+<div class="repo-detail-breadcrumb">
+  <a href="/graph/">graphui</a> &nbsp;/&nbsp; <a href="/graph/">repos</a> &nbsp;/&nbsp; <span>{{ repo.basename }}</span>
 </div>
 
-<div class="filter-row">
-  <span class="filter-label">Kind</span>
-  <a href="/graph/repo/{{ basename }}{% if state_filter %}?state={{ state_filter }}{% endif %}"
-     class="chip{% if not kind_filter %} chip-active{% endif %}">all</a>
-  {% for k in summary.kinds %}
-  <a href="/graph/repo/{{ basename }}?kind={{ k.kind }}{% if state_filter %}&state={{ state_filter }}{% endif %}"
-     class="chip{% if kind_filter == k.kind %} chip-active{% endif %}">{{ k.kind }} <span class="chip-count">{{ k.count }}</span></a>
-  {% endfor %}
-</div>
-
-<div class="filter-row">
-  <span class="filter-label">State</span>
-  <a href="/graph/repo/{{ basename }}{% if kind_filter %}?kind={{ kind_filter }}{% endif %}"
-     class="chip{% if not state_filter %} chip-active{% endif %}">all</a>
-  {% for state_key in ['current', 'llm_drafted', 'stale', 'unreviewed', 'missing'] %}
-    {% set n = summary.state_counts.get(state_key, 0) %}
-    {% if n > 0 %}
-    <a href="/graph/repo/{{ basename }}?state={{ state_key }}{% if kind_filter %}&kind={{ kind_filter }}{% endif %}"
-       class="chip chip-state-{{ state_key }}{% if state_filter == state_key %} chip-active{% endif %}">{{ state_key }} <span class="chip-count">{{ n }}</span></a>
+<section class="repo-detail-header">
+  <div class="repo-detail-title-row">
+    <h1 class="repo-detail-name">{{ repo.basename }}</h1>
+    <span class="repo-detail-langs">
+      {% for l in repo.languages %}{{ l.label }}{% if not loop.last %} · {% endif %}{% endfor %}
+    </span>
+    {% if repo.activity.today_node_delta %}
+      <span class="repo-detail-today">+{{ repo.activity.today_node_delta }} today</span>
     {% endif %}
-  {% endfor %}
-</div>
-
-{% if groups %}
-{% for g in groups %}
-<div class="repo-file-group">
-  <h3 class="repo-file-header">
-    <code>{{ g.path }}</code>
-    <span class="repo-file-count">{{ g.nodes|length }}</span>
-  </h3>
-  <div class="node-cards">
-    {% for n in g.nodes %}
-    <a href="{{ n.href }}" class="node-card">
-      <div class="node-card-title">{{ n.title }}</div>
-      <div class="node-card-meta">
-        <span class="node-card-kind">{{ n.kind }}</span>
-        {% if n.fan_out %}<span class="node-card-deps">{{ n.fan_out }} dep{{ '' if n.fan_out == 1 else 's' }}</span>{% endif %}
-      </div>
-      <div class="node-card-foot">
-        <span class="state-chip state-chip-{{ n.state }}">{{ '⚠ ' if n.state == 'stale' else '' }}{{ n.state }}</span>
-        <span class="node-card-id">{{ n.id }}</span>
-      </div>
-    </a>
-    {% endfor %}
+    <span class="repo-detail-sparkline" aria-hidden="true">
+      {% set m = (repo.activity.sparkline | max) or 1 %}
+      {% for v in repo.activity.sparkline %}<span class="spark-cell" style="height:{{ (v / m * 14) | round(0,'ceil') }}px;"></span>{% endfor %}
+    </span>
+    <span class="repo-detail-meta">
+      {{ repo.activity.commits_7d }} commits / 7d
+      {% if repo.activity.last_push_age_days is not none %} · last push {{ repo.activity.last_push_age_days }}d ago{% endif %}
+    </span>
   </div>
+
+  <div class="repo-detail-stats">
+    <span class="stat-chip">{{ repo.node_count }} nodes</span>
+    <span class="stat-chip">{{ repo.current_pct }}% current</span>
+    <span class="stat-chip">↑ {{ repo.dep_counts.inbound_repos }} inbound</span>
+    <span class="stat-chip">↓ {{ repo.dep_counts.outbound_repos }} outbound</span>
+    <span class="stat-chip">⊕ {{ repo.dep_counts.external_pkgs }} ext pkgs</span>
+    {% if tab_counts.dead %}<span class="stat-chip stat-chip-warn">⚠ {{ tab_counts.dead }} dead-code</span>{% endif %}
+    <span class="stat-chip stat-chip-cross">🧷 {{ repo.cross_cuts.rules|length }} rules · {{ repo.cross_cuts.processes|length }} processes</span>
+  </div>
+</section>
+
+<div class="repo-detail-body">
+
+  {% include '_repo_left_rail.html' %}
+
+  <main class="repo-detail-main">
+
+    {% set basename = repo.basename %}
+    {% include '_repo_tabs.html' %}
+
+    {% if active_tab == 'nodes' %}
+      <div class="filter-row">
+        <span class="filter-label">State</span>
+        <a href="/graph/repo/{{ repo.basename }}?tab=nodes{% if kind_filter %}&kind={{ kind_filter }}{% endif %}{% if area_filter %}&area={{ area_filter }}{% endif %}{% if tier_filter %}&tier={{ tier_filter }}{% endif %}" class="chip{% if not state_filter %} chip-active{% endif %}">all</a>
+        {% for st in ['current', 'llm_drafted', 'unreviewed', 'stale', 'missing'] %}
+          {% set n = repo.state_counts.get(st, 0) %}
+          {% if n > 0 %}
+          <a href="/graph/repo/{{ repo.basename }}?tab=nodes&state={{ st }}{% if kind_filter %}&kind={{ kind_filter }}{% endif %}{% if area_filter %}&area={{ area_filter }}{% endif %}{% if tier_filter %}&tier={{ tier_filter }}{% endif %}" class="chip chip-state-{{ st }}{% if state_filter == st %} chip-active{% endif %}">{{ st }} <span class="chip-count">{{ n }}</span></a>
+          {% endif %}
+        {% endfor %}
+      </div>
+      {% set columns = ['title', 'area', 'kind', 'tier', 'fan_in', 'state'] %}
+      {% with nodes=nodes, columns=columns %}
+        {% include '_node_list.html' %}
+      {% endwith %}
+
+    {% elif active_tab == 'deps' %}
+      <div class="deps-section">
+        <h3 class="deps-h">Inbound · {{ inbound_deps|length }}</h3>
+        {% if inbound_deps %}
+        <table class="deps-table">
+          <thead><tr><th>From repo</th><th>From symbol</th><th>To symbol (in {{ repo.basename }})</th></tr></thead>
+          <tbody>
+            {% for r in inbound_deps %}
+            <tr>
+              <td><a href="/graph/repo/{{ r.from_repo }}">{{ r.from_repo }}</a></td>
+              <td><a href="/graph/node/{{ r.from_id }}">{{ r.from_title }}</a></td>
+              <td><a href="/graph/node/{{ r.to_id }}">{{ r.to_title }}</a></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <p class="empty">No inbound dependencies from other tracked repos.</p>
+        {% endif %}
+
+        <h3 class="deps-h">Outbound · {{ outbound_deps|length }}</h3>
+        {% if outbound_deps %}
+        <table class="deps-table">
+          <thead><tr><th>From symbol (in {{ repo.basename }})</th><th>To repo</th><th>To symbol</th></tr></thead>
+          <tbody>
+            {% for r in outbound_deps %}
+            <tr>
+              <td><a href="/graph/node/{{ r.from_id }}">{{ r.from_title }}</a></td>
+              <td><a href="/graph/repo/{{ r.to_repo }}">{{ r.to_repo }}</a></td>
+              <td><a href="/graph/node/{{ r.to_id }}">{{ r.to_title }}</a></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <p class="empty">This repo references no other tracked repos.</p>
+        {% endif %}
+
+        <h3 class="deps-h">External · {{ external_pkgs|length }}</h3>
+        {% if external_pkgs %}
+        <div class="deps-pkgs">
+          {% for pkg in external_pkgs %}
+            <span class="dep-pkg dep-pkg-{{ pkg.source }}">{{ pkg.name }}</span>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="empty">No external package declarations found.</p>
+        {% endif %}
+      </div>
+
+    {% elif active_tab == 'dead' %}
+      {% if dead_code %}
+        <p class="repo-detail-note">Nodes in <code>{{ repo.basename }}</code> with zero inbound references. Sorted by fan-out asc.</p>
+        {% set columns = ['title', 'area', 'kind', 'fan_in', 'state'] %}
+        {% with nodes=dead_code, columns=columns %}
+          {% include '_node_list.html' %}
+        {% endwith %}
+      {% else %}
+        <p class="empty">No dead-code candidates in this repo — every node has at least one inbound reference.</p>
+      {% endif %}
+
+    {% elif active_tab == 'telemetry' %}
+      <p class="repo-detail-note">Per-repo telemetry will land in a follow-up plan. For now, see the <a href="/graph/telemetry">global telemetry rollup</a>.</p>
+
+    {% elif active_tab == 'activity' %}
+      <p class="repo-detail-note">Per-repo activity timeline will land in a follow-up plan. For now, see the <a href="/graph/activity">global activity rollup</a>.</p>
+    {% endif %}
+
+  </main>
 </div>
-{% endfor %}
-{% else %}
-<p class="empty">No nodes match the current filters.</p>
-{% endif %}
 
 {% endblock %}
