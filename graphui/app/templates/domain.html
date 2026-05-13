@@ -118,5 +118,46 @@
       {% include "_history_card.html" %}
     </aside>
   </div>
+
+  {% if code_rollup %}
+  <section class="code-rollup">
+    {% if not code_rollup.anchor.model_id %}
+      <h2>Code rollup <span class="muted">· ⚠ no anchor model — {{ code_rollup.anchor.reason }}</span></h2>
+    {% elif code_rollup.total == 1 %}
+      <h2>Code rollup <span class="muted">· 1 node (model only) — nothing else depends on this entity</span></h2>
+    {% else %}
+      <h2>Code rollup <span class="muted">· anchor <code>{{ code_rollup.anchor.model_id }}</code></span></h2>
+      {% for kind in ["model","service","endpoint","component","test","hook","schema"] %}
+        {% set entries = code_rollup.by_kind.get(kind, []) %}
+        {% if entries %}
+        <div class="rollup-kind">
+          <h3>
+            {{ kind|capitalize }} <span class="count">({{ entries|length }})</span>
+            {% if entries|length > rollup_summary_cap %}
+              <a class="see-all" href="/graph/domain/{{ ont.id }}/rollup?kind={{ kind }}">see all →</a>
+            {% endif %}
+          </h3>
+          <ul class="rollup-list">
+            {% for e in entries[:rollup_summary_cap] %}
+            <li>
+              <a href="/graph/node/{{ e.id }}">{{ e.title }}</a>
+              <code class="symbol-id">{{ e.id }}</code>
+              {% if e.direct %}
+                <span class="marker direct">direct</span>
+              {% else %}
+                <span class="marker via">via {{ e.via|join(' → ') }}</span>
+              {% endif %}
+            </li>
+            {% endfor %}
+            {% if entries|length > rollup_summary_cap %}
+              <li class="more">+ {{ entries|length - rollup_summary_cap }} more</li>
+            {% endif %}
+          </ul>
+        </div>
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+  </section>
+  {% endif %}
 </div>
 {% endblock %}

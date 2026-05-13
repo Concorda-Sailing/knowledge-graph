@@ -484,6 +484,7 @@ def domain_detail(request: Request, ont_id: str) -> HTMLResponse:
         loader.collisions_for_relationship(ont_id)
         if ont.get("subkind") == "relationship" else []
     )
+    code_rollup = loader.compute_code_rollup(ont)
     qctx = _queue_context(ont_id, ont.get("dossier_state"), kind="domain")
     return TEMPLATES.TemplateResponse(
         request,
@@ -494,6 +495,8 @@ def domain_detail(request: Request, ont_id: str) -> HTMLResponse:
             "history": history,
             "relationships": relationships,
             "collisions": collisions,
+            "code_rollup": code_rollup,
+            "rollup_summary_cap": 5,  # spec § "Graphui surface": top 5 per kind on summary
             **qctx,
         },
     )

@@ -1374,3 +1374,18 @@ h2 {
 
 /* Numeric column heading right-aligns too */
 .knowledge-table th.numeric { text-align: right; }
+
+/* ── Code rollup section (domain detail page) ───────────────────────── */
+.code-rollup { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+.code-rollup h2 { font-size: 1.05rem; margin-bottom: 0.5rem; }
+.code-rollup h2 .muted { color: var(--fg-mute); font-weight: normal; font-size: 0.9em; }
+.rollup-kind { margin: 0.75rem 0; }
+.rollup-kind h3 { font-size: 0.95rem; margin: 0.25rem 0; display: flex; align-items: baseline; gap: 0.5rem; }
+.rollup-kind h3 .count { color: var(--fg-mute); font-weight: normal; }
+.rollup-kind h3 .see-all { font-size: 0.85em; font-weight: normal; }
+.rollup-list { list-style: none; padding-left: 0.5rem; margin: 0.25rem 0; }
+.rollup-list li { padding: 0.2rem 0; display: flex; gap: 0.75rem; align-items: baseline; flex-wrap: wrap; }
+.rollup-list li .symbol-id { font-size: 0.8em; color: var(--fg-mute); user-select: all; }
+.rollup-list li .marker.direct { font-weight: bold; font-size: 0.8em; }
+.rollup-list li .marker.via { color: var(--fg-mute); font-size: 0.8em; }
+.rollup-list li.more { color: var(--fg-mute); font-style: italic; }
