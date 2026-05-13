@@ -15,8 +15,9 @@ Schema (per-repo tables, mandatory):
     files_arg = "--only"                                  # optional str
 
 Substitutions available in `extractor` tokens:
-    {data_dir}  — the framework data dir (e.g. ~/<project>/depgraph)
-    {path}      — the repo's resolved path
+    {data_dir}      — the framework data dir (e.g. ~/<project>/depgraph)
+    {path}          — the repo's resolved path
+    {framework_dir} — the depgraph framework root (parent of lib/)
 """
 
 from __future__ import annotations
@@ -150,14 +151,21 @@ def primary_repo_path(data_dir: Path) -> Optional[Path]:
 
 
 def render_extractor(repo_info: dict, data_dir: Path) -> Optional[list[str]]:
-    """Apply {data_dir}/{path} substitutions to the extractor token list.
-    Returns None if the repo has no extractor configured."""
+    """Apply {data_dir}/{path}/{framework_dir} substitutions to the extractor token list.
+    Returns None if the repo has no extractor configured.
+
+    Available substitutions:
+        {data_dir}      — the project data dir (e.g. ~/project/depgraph)
+        {path}          — the repo's resolved filesystem path
+        {framework_dir} — the depgraph framework root (parent of lib/)
+    """
     extractor = repo_info.get("extractor")
     if not extractor:
         return None
     subs = {
         "data_dir": str(data_dir),
         "path": str(repo_info["path"]),
+        "framework_dir": str(Path(__file__).resolve().parent.parent),
     }
     return [token.format(**subs) for token in extractor]
 
