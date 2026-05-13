@@ -20,6 +20,7 @@ from fastapi.templating import Jinja2Templates
 
 from . import loader
 from . import markdown_render
+from . import search as search_module
 
 # Where the framework CLIs live. Env vars let us point at the tool
 # repos without coupling graphui to a specific layout. Defaults match
@@ -140,6 +141,31 @@ def activity_page(request: Request) -> HTMLResponse:
         "activity.html",
         {
             "activity": loader.activity_summary(),
+            "meta": loader.load_meta(),
+        },
+    )
+
+
+@app.get("/graph/search", response_class=HTMLResponse)
+def search_page(
+    request: Request,
+    q: str = "",
+    scope: list[str] | None = None,
+    limit: int = 30,
+) -> HTMLResponse:
+    """Hybrid search results page. `q` is the query; `scope` may be repeated
+    (e.g. ?scope=rules&scope=code) to narrow."""
+    scope_list = scope if scope else None
+    hits = search_module.search(q, scopes=scope_list, limit=limit) if q else []
+    return TEMPLATES.TemplateResponse(
+        request,
+        "search.html",
+        {
+            "q": q,
+            "scopes_selected": set(scope_list or []),
+            "all_scopes": ["rules", "domain", "processes", "code", "dossiers"],
+            "hits": hits,
+            "limit": limit,
             "meta": loader.load_meta(),
         },
     )

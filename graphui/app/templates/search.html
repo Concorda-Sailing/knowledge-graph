@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}search{% endblock %}
+{% block content %}
+
+<div class="repo-detail-breadcrumb">
+  <a href="/graph/">graphui</a> &nbsp;/&nbsp; <span>search</span>
+</div>
+
+<section class="search-page">
+  <form action="/graph/search" method="get" class="search-form">
+    <input class="search-input" type="text" name="q" value="{{ q }}" placeholder="rules, components, processes, dossiers…" autofocus>
+    <button type="submit" class="search-submit">Search</button>
+  </form>
+
+  <div class="search-scopes">
+    <span class="search-scopes-label">scope:</span>
+    <a href="/graph/search?q={{ q }}" class="search-scope-chip{% if not scopes_selected %} search-scope-active{% endif %}">all</a>
+    {% for s in all_scopes %}
+      <a href="/graph/search?q={{ q }}&scope={{ s }}" class="search-scope-chip{% if s in scopes_selected %} search-scope-active{% endif %}">{{ s }}</a>
+    {% endfor %}
+  </div>
+
+  {% if q and hits %}
+    <p class="search-meta">{{ hits|length }} result{{ '' if hits|length == 1 else 's' }} for <code>{{ q }}</code></p>
+    <ul class="search-results">
+      {% for h in hits %}
+      <li class="search-hit">
+        <a href="{{ h.href }}" class="search-hit-title">
+          <span class="search-hit-kind kind-{{ h.kind_hint }}">{{ h.kind_hint }}</span>
+          <code class="search-hit-id">{{ h.node_id }}</code>
+          <span class="search-hit-score">{{ "%.2f"|format(h.score) }}</span>
+        </a>
+        <p class="search-hit-preview">{{ h.text_preview }}</p>
+      </li>
+      {% endfor %}
+    </ul>
+  {% elif q %}
+    <p class="empty">No matches for <code>{{ q }}</code>{% if scopes_selected %} in scope{{ '' if scopes_selected|length == 1 else 's' }} {{ scopes_selected|join(', ') }}{% endif %}.</p>
+  {% else %}
+    <p class="search-empty">Enter a query above. Search runs against rule statements, domain summaries, process steps, and component/service dossiers.</p>
+  {% endif %}
+</section>
+
+{% endblock %}

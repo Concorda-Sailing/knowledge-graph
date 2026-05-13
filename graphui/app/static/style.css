@@ -1737,3 +1737,28 @@ h2 {
 @media (max-width: 900px) {
   .settings-fw-grid { grid-template-columns: 1fr; }
 }
+
+/* ── Search page ─────────────────────────────────────────────────────────── */
+.search-page { max-width: 900px; }
+.search-form { display: flex; gap: 6px; margin: 14px 0 8px; }
+.search-input { flex: 1; background: #0f172a; border: 1px solid #1e293b; color: #e5e7eb; padding: 8px 12px; border-radius: 4px; font-size: 14px; font-family: inherit; }
+.search-input:focus { outline: none; border-color: #3b82f6; }
+.search-submit { background: #1e3a8a; color: #bfdbfe; border: 1px solid #1e3a8a; padding: 8px 16px; border-radius: 4px; font-size: 12px; cursor: pointer; }
+.search-submit:hover { background: #1e40af; }
+.search-scopes { display: flex; gap: 6px; align-items: center; margin-bottom: 14px; }
+.search-scopes-label { color: #94a3b8; font-size: 11px; }
+.search-scope-chip { background: #0f172a; border: 1px solid #1e293b; color: #94a3b8; padding: 3px 10px; border-radius: 12px; font-size: 11px; text-decoration: none; }
+.search-scope-active { background: #1e3a8a; color: #bfdbfe; border-color: #1e3a8a; }
+.search-meta { color: #94a3b8; font-size: 12px; margin-bottom: 8px; }
+.search-results { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.search-hit { background: #0f172a; border: 1px solid #1e293b; border-radius: 6px; padding: 10px 12px; }
+.search-hit-title { display: flex; align-items: baseline; gap: 10px; text-decoration: none; }
+.search-hit-kind { padding: 1px 8px; border-radius: 3px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+.kind-rule { background: #581c87; color: #e9d5ff; }
+.kind-domain { background: #14532d; color: #bbf7d0; }
+.kind-process { background: #1e3a8a; color: #bfdbfe; }
+.kind-code { background: #0c4a6e; color: #bae6fd; }
+.search-hit-id { color: #e5e7eb; font-size: 12px; flex: 1; }
+.search-hit-score { color: #94a3b8; font-size: 11px; }
+.search-hit-preview { color: #94a3b8; font-size: 12px; margin: 4px 0 0; font-style: italic; padding-left: 4px; border-left: 2px solid #3b82f6; }
+.search-empty { color: #94a3b8; font-size: 12px; margin-top: 16px; }
