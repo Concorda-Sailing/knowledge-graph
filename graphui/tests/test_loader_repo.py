@@ -26,3 +26,12 @@ def test_repo_languages_shape(loader):
     assert len(langs) <= 4
     for entry in langs:
         assert set(entry.keys()) >= {"label", "hint"}
+
+
+def test_repo_areas_includes_node_counts(loader):
+    areas = loader.repo_areas("concorda-web")
+    assert isinstance(areas, list)
+    if areas:
+        for entry in areas:
+            assert set(entry.keys()) >= {"dir", "node_count"}
+            assert isinstance(entry["node_count"], int)

@@ -1555,3 +1555,22 @@ def repo_languages(basename: str) -> list[dict]:
     for h in _framework_hints(repo)[:4 - len(out)]:
         out.append({"label": h, "hint": "framework"})
     return out
+
+
+def repo_areas(basename: str) -> list[dict]:
+    """Return top-level directories in `basename` that contain at least one
+    tracked node, ordered by node_count desc. Each entry: {dir, node_count}."""
+    counts: dict[str, int] = {}
+    for n in load_depgraph_nodes():
+        src = (n.get("source") or {})
+        if src.get("repo") != basename:
+            continue
+        path = src.get("path") or ""
+        head = path.split("/", 1)[0] if "/" in path else path
+        if not head:
+            continue
+        counts[head] = counts.get(head, 0) + 1
+    return [
+        {"dir": d, "node_count": c}
+        for d, c in sorted(counts.items(), key=lambda kv: kv[1], reverse=True)
+    ]
