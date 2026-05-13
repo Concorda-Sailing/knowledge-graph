@@ -25,6 +25,7 @@ Responsibilities, in order:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -34,6 +35,19 @@ from pathlib import Path
 TOOL_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(TOOL_ROOT))
 from lib.config import resolve_data_dir, primary_repo_path, basename_path_map  # noqa: E402
+
+# Embedding lib lives alongside lib.config in lib/. ImportError is the trigger
+# for "skipped" status — fastembed not installed, numpy absent, etc. The
+# sys.path insertion above must happen first so lib.chunker / lib.embeddings
+# are resolvable when reconcile.py is invoked as a subprocess.
+try:
+    from lib.chunker import chunk_text
+    from lib.embeddings import (
+        EmbeddingUnavailable, embed_chunks, read_index, write_index,
+    )
+    _EMBEDDING_AVAILABLE = True
+except ImportError:
+    _EMBEDDING_AVAILABLE = False
 
 # `_normalize_url_pattern` collapses each variable segment in a URL path to the
 # literal token `<var>`. This is the join key between route_call signature.url_pattern
@@ -66,6 +80,111 @@ def _normalize_url_pattern(url):
     if url.endswith("<var>") and not url.endswith("/<var>"):
         url = url[:-len("<var>")]
     return _URL_VAR_RE.sub("<var>", url)
+
+
+def _dossier_body_text(node: dict, data_dir: Path) -> str | None:
+    """Read the dossier body for a node. Returns markdown content past the
+    YAML frontmatter, or None if no dossier file exists."""
+    rel = node.get("dossier")
+    if not rel:
+        return None
+    full = data_dir / rel
+    if not full.exists():
+        return None
+    text = full.read_text()
+    # Strip leading YAML frontmatter (between "---\n" lines).
+    if text.startswith("---\n"):
+        end = text.find("\n---\n", 4)
+        if end != -1:
+            text = text[end + 5:]
+    return text.strip() or None
+
+
+def _chunk_hash(text: str) -> str:
+    return "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _run_embedding_pass(nodes: list[dict], data_dir: Path) -> str:
+    """Build / refresh the embedding index over dossier bodies.
+
+    Returns "ok" | "failed" | "skipped":
+      - "skipped" if fastembed / numpy isn't importable
+      - "failed"  if embed_chunks raises EmbeddingUnavailable mid-run
+      - "ok"      on success
+
+    Incremental: chunks whose sha256(text) matches the prior index carry
+    forward without re-embedding. Block-only failure semantics — never
+    raises out to reconcile's main().
+    """
+    if not _EMBEDDING_AVAILABLE:
+        return "skipped"
+    import numpy as np
+
+    index_dir = data_dir / "nodes" / "_index"
+    bin_path = index_dir / "embeddings.bin"
+    jsonl_path = index_dir / "embeddings.jsonl"
+    prior_rows, prior_vecs = read_index(bin_path, jsonl_path)
+    prior_by_hash = {r["content_hash"]: (r, prior_vecs[r["row"]])
+                     for r in prior_rows if "content_hash" in r}
+
+    new_rows: list[dict] = []
+    chunks_to_embed: list[str] = []
+    embed_targets: list[int] = []  # indices into new_rows for chunks that need fresh embeds
+
+    for n in nodes:
+        body = _dossier_body_text(n, data_dir)
+        if not body:
+            continue
+        chunks = chunk_text(body)
+        for i, ch in enumerate(chunks):
+            h = _chunk_hash(ch)
+            meta = {
+                "node_id": n.get("id"),
+                "chunk_index": i,
+                "content_hash": h,
+                "text_preview": ch[:120].replace("\n", " "),
+                "source_field": "dossier_body",
+            }
+            row_idx = len(new_rows)
+            new_rows.append(meta)
+            if h not in prior_by_hash:
+                chunks_to_embed.append(ch)
+                embed_targets.append(row_idx)
+
+    try:
+        new_vecs = embed_chunks(chunks_to_embed)
+    except EmbeddingUnavailable:
+        return "failed"
+
+    vecs = np.zeros((len(new_rows), 384), dtype=np.float16)
+    fresh_idx = 0
+    for i, meta in enumerate(new_rows):
+        meta["row"] = i
+        h = meta["content_hash"]
+        if h in prior_by_hash:
+            vecs[i] = prior_by_hash[h][1]
+        else:
+            vecs[i] = new_vecs[fresh_idx]
+            fresh_idx += 1
+
+    write_index(bin_path, jsonl_path, vecs, new_rows)
+    return "ok"
+
+
+def _write_embedding_status(data_dir: Path, status: str) -> None:
+    """Stamp _meta.json::embedding_status without disturbing other keys."""
+    meta_path = data_dir / "nodes" / "_meta.json"
+    if not meta_path.exists():
+        return
+    try:
+        meta = json.loads(meta_path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return
+    meta["embedding_status"] = status
+    try:
+        meta_path.write_text(json.dumps(meta, indent=2) + "\n")
+    except OSError:
+        pass
 
 
 DEPGRAPH = resolve_data_dir("DEPGRAPH_DATA_DIR")
@@ -549,6 +668,14 @@ def main() -> int:
         print(f"index:           {'updated' if changed else 'unchanged'} ({idx_path.relative_to(DEPGRAPH)})")
         meta_changed, meta_path = write_corpus_meta(len(nodes), edge_count)
         print(f"meta:            {'updated' if meta_changed else 'unchanged'} ({meta_path.relative_to(DEPGRAPH)})")
+
+        # Embedding pass — block-only failure semantics. Dep-index above is
+        # already persisted; this either succeeds, fails, or is skipped.
+        # nodes values are (path, data) tuples; extract just the data dicts.
+        node_list = [data for _, data in nodes.values()]
+        embedding_status = _run_embedding_pass(node_list, DEPGRAPH)
+        _write_embedding_status(DEPGRAPH, embedding_status)
+        print(f"embeddings:      {embedding_status}")
     return 0
 
 

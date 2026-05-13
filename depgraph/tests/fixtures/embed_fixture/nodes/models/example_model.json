@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "id": "embed-fixture-api::models/example.py::Example",
+  "kind": "model",
+  "title": "Example",
+  "source": {"repo": "embed-fixture-api", "path": "models/example.py"},
+  "signature": {},
+  "structural_hash": "h1",
+  "extractor": "noop",
+  "depends_on": [],
+  "dossier": "dossiers/models/example_model.md"
+}

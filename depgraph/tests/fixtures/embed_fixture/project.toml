@@ -1,0 +1,6 @@
+[project]
+name = "embed-fixture"
+
+[repos.api]
+path = "/tmp/embed-fixture-api"
+extractor = ["noop"]
