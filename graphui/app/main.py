@@ -205,27 +205,58 @@ def knowledge_page(
 def repo_detail(
     request: Request,
     basename: str,
+    tab: str = "nodes",
     kind: str | None = None,
+    area: str | None = None,
+    tier: str | None = None,
     state: str | None = None,
 ) -> HTMLResponse:
-    """One source repo, optionally filtered by kind + state. Cards, not table."""
-    groups = loader.nodes_for_repo_grouped(basename, kind=kind, state=state)
-    node_count = sum(len(g["nodes"]) for g in groups)
-    summary_entry = next(
+    """One source repo with header + left rail + tabbed main pane."""
+    repo = next(
         (r for r in loader.repo_summary() if r["basename"] == basename),
         None,
     )
-    if summary_entry is None:
+    if repo is None:
         raise HTTPException(404, f"repo not found in any tracked node: {basename}")
+
+    nodes = loader.nodes_for_repo(basename, kind=kind, area=area, tier=tier, state=state)
+    dead_code = loader.repo_dead_code(basename)
+    inbound = loader.repo_inbound_deps_detail(basename)
+    outbound = loader.repo_outbound_deps_detail(basename)
+    external = loader.repo_external_pkgs(basename)
+
+    # Tier breakdown for the left rail (across all nodes in this repo, no filters).
+    tier_counts: dict[str, int] = {}
+    for n in loader.nodes_for_repo(basename):
+        t = n.get("tier")
+        if t:
+            tier_counts[t] = tier_counts.get(t, 0) + 1
+
+    tab_counts = {
+        "nodes": repo["node_count"],
+        "dead": len(dead_code),
+        "deps": len(inbound) + len(outbound) + len(external),
+    }
+
+    if tab not in ("nodes", "dead", "deps", "telemetry", "activity"):
+        tab = "nodes"
+
     return TEMPLATES.TemplateResponse(
         request,
         "repo.html",
         {
-            "basename": basename,
-            "summary": summary_entry,
-            "groups": groups,
-            "node_count": node_count,
+            "repo": repo,
+            "active_tab": tab,
+            "nodes": nodes,
+            "dead_code": dead_code,
+            "inbound_deps": inbound,
+            "outbound_deps": outbound,
+            "external_pkgs": external,
+            "tab_counts": tab_counts,
+            "tier_counts": tier_counts,
             "kind_filter": kind,
+            "area_filter": area,
+            "tier_filter": tier,
             "state_filter": state,
             "meta": loader.load_meta(),
         },
