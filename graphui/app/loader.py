@@ -1827,3 +1827,31 @@ def repo_external_pkgs(basename: str) -> list[dict]:
                         out.append({"name": name, "source": "python"})
     out.sort(key=lambda r: r["name"].lower())
     return out
+
+
+def repo_dead_code(basename: str) -> list[dict]:
+    """Nodes belonging to `basename` with zero inbound dep references.
+    Sorted by fan_out asc (least-connected first)."""
+    dependents = load_dependents()
+    incoming_count: dict[str, int] = {tid: len(d) for tid, d in dependents.items()}
+    out: list[dict] = []
+    for n in load_depgraph_nodes():
+        src = n.get("source") or {}
+        if src.get("repo") != basename:
+            continue
+        nid = n["id"]
+        if incoming_count.get(nid, 0) > 0:
+            continue
+        path = src.get("path") or ""
+        area = path.split("/", 1)[0] if "/" in path else path
+        out.append({
+            "id": nid,
+            "title": n.get("title") or nid.rsplit("::", 1)[-1],
+            "kind": n.get("kind", "—"),
+            "area": area,
+            "fan_out": n.get("fan_out", 0),
+            "state": n["dossier_state"],
+            "href": f"/graph/node/{nid}",
+        })
+    out.sort(key=lambda r: (r["fan_out"], r["area"], r["title"].lower()))
+    return out
