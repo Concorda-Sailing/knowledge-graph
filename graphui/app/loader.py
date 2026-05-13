@@ -1645,7 +1645,7 @@ def repo_dep_counts(basename: str) -> dict:
     for target_id, dependers in dependents.items():
         target_repo = target_id.split("::", 1)[0]
         for d in dependers:
-            dep_repo = (d.get("id") or "").split("::", 1)[0]
+            dep_repo = (d.get("source") or "").split("::", 1)[0]
             if not dep_repo or dep_repo == target_repo:
                 continue
             if target_repo == basename and dep_repo != basename:
