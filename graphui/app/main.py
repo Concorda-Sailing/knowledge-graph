@@ -239,9 +239,11 @@ def repo_detail(
 
     nodes = loader.nodes_for_repo(basename, kind=kind, area=area, tier=tier, state=state)
     dead_code = loader.repo_dead_code(basename)
-    inbound = loader.repo_inbound_deps_detail(basename)
-    outbound = loader.repo_outbound_deps_detail(basename)
+    inbound_rollup = loader.repo_inbound_deps_rollup(basename)
+    outbound_rollup = loader.repo_outbound_deps_rollup(basename)
     external = loader.repo_external_pkgs(basename)
+    inbound_edge_total = sum(r["edge_count"] for r in inbound_rollup)
+    outbound_edge_total = sum(r["edge_count"] for r in outbound_rollup)
 
     # Tier breakdown for the left rail (across all nodes in this repo, no filters).
     tier_counts: dict[str, int] = {}
@@ -253,7 +255,7 @@ def repo_detail(
     tab_counts = {
         "nodes": repo["node_count"],
         "dead": len(dead_code),
-        "deps": len(inbound) + len(outbound) + len(external),
+        "deps": inbound_edge_total + outbound_edge_total + len(external),
     }
 
     if tab not in ("nodes", "dead", "deps", "telemetry", "activity"):
@@ -267,8 +269,10 @@ def repo_detail(
             "active_tab": tab,
             "nodes": nodes,
             "dead_code": dead_code,
-            "inbound_deps": inbound,
-            "outbound_deps": outbound,
+            "inbound_rollup": inbound_rollup,
+            "outbound_rollup": outbound_rollup,
+            "inbound_edge_total": inbound_edge_total,
+            "outbound_edge_total": outbound_edge_total,
             "external_pkgs": external,
             "tab_counts": tab_counts,
             "tier_counts": tier_counts,

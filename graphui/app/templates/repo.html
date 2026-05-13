@@ -63,16 +63,15 @@
 
     {% elif active_tab == 'deps' %}
       <div class="deps-section">
-        <h3 class="deps-h">Inbound · {{ inbound_deps|length }}</h3>
-        {% if inbound_deps %}
+        <h3 class="deps-h">Inbound · {{ inbound_edge_total }} edge{{ '' if inbound_edge_total == 1 else 's' }} from {{ inbound_rollup|length }} repo{{ '' if inbound_rollup|length == 1 else 's' }}</h3>
+        {% if inbound_rollup %}
         <table class="deps-table">
-          <thead><tr><th>From repo</th><th>From symbol</th><th>To symbol (in {{ repo.basename }})</th></tr></thead>
+          <thead><tr><th>From repo</th><th class="numeric">Edges into {{ repo.basename }}</th></tr></thead>
           <tbody>
-            {% for r in inbound_deps %}
+            {% for r in inbound_rollup %}
             <tr>
               <td><a href="/graph/repo/{{ r.from_repo }}">{{ r.from_repo }}</a></td>
-              <td><a href="/graph/node/{{ r.from_id }}">{{ r.from_title }}</a></td>
-              <td><a href="/graph/node/{{ r.to_id }}">{{ r.to_title }}</a></td>
+              <td class="numeric">{{ r.edge_count }}</td>
             </tr>
             {% endfor %}
           </tbody>
@@ -81,16 +80,15 @@
         <p class="empty">No inbound dependencies from other tracked repos.</p>
         {% endif %}
 
-        <h3 class="deps-h">Outbound · {{ outbound_deps|length }}</h3>
-        {% if outbound_deps %}
+        <h3 class="deps-h">Outbound · {{ outbound_edge_total }} edge{{ '' if outbound_edge_total == 1 else 's' }} to {{ outbound_rollup|length }} repo{{ '' if outbound_rollup|length == 1 else 's' }}</h3>
+        {% if outbound_rollup %}
         <table class="deps-table">
-          <thead><tr><th>From symbol (in {{ repo.basename }})</th><th>To repo</th><th>To symbol</th></tr></thead>
+          <thead><tr><th>To repo</th><th class="numeric">Edges from {{ repo.basename }}</th></tr></thead>
           <tbody>
-            {% for r in outbound_deps %}
+            {% for r in outbound_rollup %}
             <tr>
-              <td><a href="/graph/node/{{ r.from_id }}">{{ r.from_title }}</a></td>
               <td><a href="/graph/repo/{{ r.to_repo }}">{{ r.to_repo }}</a></td>
-              <td><a href="/graph/node/{{ r.to_id }}">{{ r.to_title }}</a></td>
+              <td class="numeric">{{ r.edge_count }}</td>
             </tr>
             {% endfor %}
           </tbody>

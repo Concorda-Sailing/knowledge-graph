@@ -2022,3 +2022,41 @@ def framework_settings() -> dict:
             "node_count": (meta.get("logigraph") or {}).get("node_count"),
         },
     }
+
+
+def repo_inbound_deps_rollup(basename: str) -> list[dict]:
+    """Cross-repo inbound edges rolled up by source repo. Each row:
+    {from_repo, edge_count}. Sorted by edge_count desc. Human-grade summary
+    of the per-edge view in repo_inbound_deps_detail."""
+    _, repos = _titles_and_repos_by_id()
+    counts: dict[str, int] = {}
+    for target_id, dependers in load_dependents().items():
+        if repos.get(target_id) != basename:
+            continue
+        for d in dependers:
+            dep_repo = repos.get(d.get("source") or "")
+            if not dep_repo or dep_repo == basename:
+                continue
+            counts[dep_repo] = counts.get(dep_repo, 0) + 1
+    return [
+        {"from_repo": r, "edge_count": c}
+        for r, c in sorted(counts.items(), key=lambda kv: kv[1], reverse=True)
+    ]
+
+
+def repo_outbound_deps_rollup(basename: str) -> list[dict]:
+    """Cross-repo outbound edges rolled up by target repo. Each row:
+    {to_repo, edge_count}. Symmetric to repo_inbound_deps_rollup."""
+    _, repos = _titles_and_repos_by_id()
+    counts: dict[str, int] = {}
+    for target_id, dependers in load_dependents().items():
+        target_repo = repos.get(target_id)
+        if not target_repo or target_repo == basename:
+            continue
+        for d in dependers:
+            if repos.get(d.get("source") or "") == basename:
+                counts[target_repo] = counts.get(target_repo, 0) + 1
+    return [
+        {"to_repo": r, "edge_count": c}
+        for r, c in sorted(counts.items(), key=lambda kv: kv[1], reverse=True)
+    ]
