@@ -16,17 +16,17 @@
       <span class="brand-text">graphui</span>
     </a>
     <nav>
-      <a href="/graph/review" class="nav-review">
-        Review
-        {% set _pending = review_pending_count() %}
-        {% if _pending %}<span class="nav-count-badge">{{ _pending }}</span>{% endif %}
-      </a>
+      <a href="/graph/knowledge">Knowledge</a>
       <a href="/graph/issues" class="nav-issues">
         Issues
         {% set _issues = issues_fresh_count() %}
         {% if _issues %}<span class="nav-count-badge">{{ _issues }}</span>{% endif %}
       </a>
-      <a href="/graph/knowledge">Knowledge</a>
+      <a href="/graph/review" class="nav-review">
+        Review
+        {% set _pending = review_pending_count() %}
+        {% if _pending %}<span class="nav-count-badge">{{ _pending }}</span>{% endif %}
+      </a>
     </nav>
     <span class="meta-stamp">
       {% if meta and meta.depgraph %}
