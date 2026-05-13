@@ -27,12 +27,35 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
 TOOL_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(TOOL_ROOT))
 from lib.config import resolve_data_dir, primary_repo_path, basename_path_map  # noqa: E402
+
+# `_normalize_url_pattern` collapses each variable segment in a URL path to the
+# literal token `<var>`. This is the join key between route_call signature.url_pattern
+# (emitted by JS extractors) and endpoint signature.path (emitted by Python/FastAPI
+# extractors). Both forms — `{name}`, `{name:type}`, `:name` — collapse to `<var>`.
+_URL_VAR_RE = re.compile(
+    r"""
+    \{[^}]+\}        # FastAPI/Starlette/OpenAPI:  {id} or {id:int} or {path:path}
+    |
+    :[A-Za-z_][A-Za-z0-9_]*   # Express/Vue/Rails: :id (must follow / not [a-z])
+""",
+    re.VERBOSE,
+)
+
+
+def _normalize_url_pattern(url):
+    if url is None:
+        return None
+    if not url:
+        return ""
+    return _URL_VAR_RE.sub("<var>", url)
+
 
 DEPGRAPH = resolve_data_dir("DEPGRAPH_DATA_DIR")
 NODES = DEPGRAPH / "nodes"
