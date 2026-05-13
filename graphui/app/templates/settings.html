@@ -11,6 +11,28 @@
 </div>
 
 <section class="settings-section">
+  <h3 class="section-title">Framework</h3>
+  <div class="settings-fw-grid">
+    {% for name, fw in [('depgraph', framework.depgraph), ('logigraph', framework.logigraph)] %}
+    <div class="settings-fw-card">
+      <div class="settings-fw-name">{{ name }}</div>
+      <table class="settings-table settings-fw-table">
+        <tbody>
+          <tr><th>Tool root</th><td><code class="settings-path{% if not fw.tool_exists %} settings-path-missing{% endif %}">{{ fw.tool_root }}</code>{% if not fw.tool_exists %}<span class="settings-warn">⚠ missing</span>{% endif %}</td></tr>
+          <tr><th>Framework SHA</th><td>{% if fw.framework_git_sha %}<code>{{ fw.framework_git_sha }}</code>{% else %}<span class="settings-mute">— not a git checkout</span>{% endif %}</td></tr>
+          <tr><th>CLI binary</th><td><code class="settings-cmd">{{ fw.cli_bin }}</code></td></tr>
+          <tr><th>Data dir</th><td><code>{{ fw.data_dir }}</code></td></tr>
+          <tr><th>Corpus commit</th><td>{% if fw.corpus_commit %}<code>{{ fw.corpus_commit[:12] }}</code>{% else %}<span class="settings-mute">—</span>{% endif %}</td></tr>
+          <tr><th>Nodes</th><td>{{ fw.node_count or 0 }}</td></tr>
+          <tr><th>Last regen</th><td>{% if fw.regen_at %}<code class="settings-mute">{{ fw.regen_at }}</code>{% if fw.regen_status and fw.regen_status != 'complete' %} <span class="settings-warn">{{ fw.regen_status }}</span>{% endif %}{% else %}<span class="settings-mute">never</span>{% endif %}</td></tr>
+        </tbody>
+      </table>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="settings-section">
   <h3 class="section-title">Project</h3>
   {% if project %}
   <table class="settings-table">

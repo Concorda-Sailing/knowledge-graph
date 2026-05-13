@@ -1948,3 +1948,58 @@ def extractor_inventory() -> list[dict]:
         for p in sorted(framework_dir.rglob("*.ts")):
             out.append(_scan_extractor_file(p, "generic"))
     return out
+
+
+_LOGIGRAPH_TOOL_ROOT = _GRAPHUI_TOOL_ROOT.parent / "logigraph"
+
+
+def _framework_git_sha(repo_root: Path) -> str | None:
+    """Short SHA of HEAD in the given framework tool repo. None if not a git
+    checkout (e.g. installed via package manager, vendored, etc.)."""
+    if not (repo_root / ".git").exists():
+        return None
+    try:
+        out = subprocess.run(
+            ["git", "rev-parse", "--short=12", "HEAD"],
+            cwd=str(repo_root), capture_output=True, text=True, timeout=5,
+        )
+        return out.stdout.strip() or None
+    except (OSError, subprocess.SubprocessError):
+        return None
+
+
+def framework_settings() -> dict:
+    """Surface the depgraph + logigraph framework + data-dir state for the
+    Settings page. Pulls from module constants, env-resolved bins (in main.py),
+    git HEAD of the tool repos, and the corpus _meta.json files."""
+    meta = load_meta()
+    depgraph_cli = os.environ.get("DEPGRAPH_BIN") or str(
+        _DEPGRAPH_TOOL_ROOT / "bin" / "depgraph"
+    )
+    logigraph_cli = os.environ.get("LOGIGRAPH_BIN") or str(
+        _LOGIGRAPH_TOOL_ROOT / "bin" / "logigraph"
+    )
+    return {
+        "depgraph": {
+            "tool_root": str(_DEPGRAPH_TOOL_ROOT),
+            "tool_exists": _DEPGRAPH_TOOL_ROOT.exists(),
+            "cli_bin": depgraph_cli,
+            "data_dir": str(DEPGRAPH),
+            "framework_git_sha": _framework_git_sha(_DEPGRAPH_TOOL_ROOT),
+            "corpus_commit": (meta.get("depgraph") or {}).get("git_commit"),
+            "regen_at": (meta.get("depgraph") or {}).get("regen_at"),
+            "regen_status": (meta.get("depgraph") or {}).get("regen_status"),
+            "node_count": (meta.get("depgraph") or {}).get("node_count"),
+        },
+        "logigraph": {
+            "tool_root": str(_LOGIGRAPH_TOOL_ROOT),
+            "tool_exists": _LOGIGRAPH_TOOL_ROOT.exists(),
+            "cli_bin": logigraph_cli,
+            "data_dir": str(LOGIGRAPH),
+            "framework_git_sha": _framework_git_sha(_LOGIGRAPH_TOOL_ROOT),
+            "corpus_commit": (meta.get("logigraph") or {}).get("git_commit"),
+            "regen_at": (meta.get("logigraph") or {}).get("regen_at"),
+            "regen_status": (meta.get("logigraph") or {}).get("regen_status"),
+            "node_count": (meta.get("logigraph") or {}).get("node_count"),
+        },
+    }

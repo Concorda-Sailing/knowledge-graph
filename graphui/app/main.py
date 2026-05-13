@@ -153,6 +153,7 @@ def settings_page(request: Request) -> HTMLResponse:
         request,
         "settings.html",
         {
+            "framework": loader.framework_settings(),
             "project": loader.read_project_toml(),
             "repos": loader.tracked_repos_settings(),
             "extractors": loader.extractor_inventory(),
