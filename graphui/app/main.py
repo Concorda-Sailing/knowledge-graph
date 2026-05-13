@@ -145,6 +145,23 @@ def activity_page(request: Request) -> HTMLResponse:
     )
 
 
+@app.get("/graph/settings", response_class=HTMLResponse)
+def settings_page(request: Request) -> HTMLResponse:
+    """Read-only view of project.toml, tracked repos with git remotes, and the
+    extractor file inventory. v1 is informational only — no editing."""
+    return TEMPLATES.TemplateResponse(
+        request,
+        "settings.html",
+        {
+            "project": loader.read_project_toml(),
+            "repos": loader.tracked_repos_settings(),
+            "extractors": loader.extractor_inventory(),
+            "project_toml_path": str(loader.DEPGRAPH / "project.toml"),
+            "meta": loader.load_meta(),
+        },
+    )
+
+
 @app.get("/graph/telemetry", response_class=HTMLResponse)
 def telemetry_page(request: Request) -> HTMLResponse:
     """Telemetry rollup. Full per-rule + per-dossier injection breakdown is
