@@ -17,3 +17,12 @@ def test_search_scope_chip_param_accepted(client):
     for s in ("rules", "domain", "processes", "code", "dossiers"):
         r = client.get(f"/graph/search?q=example&scope={s}")
         assert r.status_code == 200, f"scope={s} failed: {r.status_code}"
+
+
+def test_search_mode_param_accepted(client):
+    for m in ("semantic", "dep", "knowledge"):
+        r = client.get(f"/graph/search?q=example&mode={m}")
+        assert r.status_code == 200, f"mode={m} failed: {r.status_code}"
+        body = r.text
+        # The active tab class should appear for the requested mode.
+        assert "search-tab-active" in body

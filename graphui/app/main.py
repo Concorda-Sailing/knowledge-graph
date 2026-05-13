@@ -150,20 +150,32 @@ def activity_page(request: Request) -> HTMLResponse:
 def search_page(
     request: Request,
     q: str = "",
+    mode: str = "semantic",
     scope: list[str] | None = None,
     limit: int = 30,
 ) -> HTMLResponse:
-    """Hybrid search results page. `q` is the query; `scope` may be repeated
-    (e.g. ?scope=rules&scope=code) to narrow."""
+    """Hybrid search results. `mode` is the primary tab (semantic/dep/
+    knowledge); `scope` may be repeated to narrow further within the mode."""
+    if mode not in ("semantic", "dep", "knowledge"):
+        mode = "semantic"
     scope_list = scope if scope else None
-    hits = search_module.search(q, scopes=scope_list, limit=limit) if q else []
+    hits = (search_module.search(q, scopes=scope_list, mode=mode, limit=limit)
+            if q else [])
+    # Granular chips visible under the active tab depend on mode.
+    chips_by_mode = {
+        "semantic": ["rules", "domain", "processes", "code", "dossiers"],
+        "dep": ["code", "dossiers"],
+        "knowledge": ["rules", "domain", "processes"],
+    }
     return TEMPLATES.TemplateResponse(
         request,
         "search.html",
         {
             "q": q,
+            "mode": mode,
+            "all_modes": ["semantic", "dep", "knowledge"],
             "scopes_selected": set(scope_list or []),
-            "all_scopes": ["rules", "domain", "processes", "code", "dossiers"],
+            "scope_chips": chips_by_mode.get(mode, chips_by_mode["semantic"]),
             "hits": hits,
             "limit": limit,
             "meta": loader.load_meta(),

@@ -100,6 +100,16 @@ def _scope_to_source_fields(scope: str) -> set[str]:
     }.get(scope, set())
 
 
+# Primary mode tabs: each maps to the source_fields covered.
+MODE_FIELDS: dict[str, set[str]] = {
+    "semantic": {"dossier_body", "rule_statement", "domain_summary",
+                 "process_summary", "process_step"},
+    "dep": {"dossier_body"},
+    "knowledge": {"rule_statement", "domain_summary",
+                  "process_summary", "process_step"},
+}
+
+
 def _load_corpus(label: str, base: Path) -> dict:
     bin_p = base / "_index" / "embeddings.bin"
     jl_p = base / "_index" / "embeddings.jsonl"
@@ -154,26 +164,34 @@ def _href_for(node_id: str, source_field: str) -> str:
     return f"/graph/node/{node_id}"
 
 
-def search(query: str, scopes: list[str] | None, limit: int = 20) -> list[dict]:
+def search(query: str, scopes: list[str] | None,
+           mode: str = "semantic", limit: int = 20) -> list[dict]:
     """Hybrid BM25 + cosine search across both corpora.
 
-    `scopes` is a list of UI scope chips (`rules`, `domain`, `processes`,
-    `code`, `dossiers`) or None for all-on. Returns up to `limit` hits
-    sorted by blended score desc. Each hit is a dict with keys
-    `node_id`, `score`, `kind_hint`, `source_field`, `text_preview`, `href`.
+    `mode` is the primary tab: "semantic" (all sources), "dep" (depgraph
+    dossiers only), or "knowledge" (logigraph rules/domain/processes).
+    `scopes` is an optional list of granular chips (rules/domain/processes/
+    code/dossiers) that further narrows WITHIN the mode.
+
+    Returns up to `limit` hits sorted by blended score desc. Each hit is a
+    dict with keys `node_id`, `score`, `kind_hint`, `source_field`,
+    `text_preview`, `href`.
     """
     q = (query or "").strip()
     if not q:
         return []
 
-    idx = load_search_index()
-    allowed_fields: set[str] | None = None
+    # Compute allowed source_fields: intersect mode + scopes (if any).
+    allowed_fields = MODE_FIELDS.get(mode, MODE_FIELDS["semantic"])
     if scopes:
-        allowed_fields = set()
+        scope_fields: set[str] = set()
         for s in scopes:
-            allowed_fields.update(_scope_to_source_fields(s))
-        if not allowed_fields:
-            return []
+            scope_fields.update(_scope_to_source_fields(s))
+        allowed_fields = allowed_fields & scope_fields if scope_fields else allowed_fields
+    if not allowed_fields:
+        return []
+
+    idx = load_search_index()
 
     candidates: list[dict] = []
     vec_chunks: list[np.ndarray] = []
@@ -184,7 +202,7 @@ def search(query: str, scopes: list[str] | None, limit: int = 20) -> list[dict]:
         if not rows or vecs.size == 0:
             continue
         for r in rows:
-            if allowed_fields and r.get("source_field") not in allowed_fields:
+            if r.get("source_field") not in allowed_fields:
                 continue
             candidates.append(r)
             vec_chunks.append(vecs[r["row"]:r["row"] + 1])

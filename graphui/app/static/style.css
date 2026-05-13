@@ -1767,3 +1767,18 @@ h2 {
 .topbar-search { flex: 1; max-width: 360px; margin: 0 12px; }
 .topbar-search-input { width: 100%; background: #0f172a; border: 1px solid #1e293b; color: #e5e7eb; padding: 5px 10px; border-radius: 3px; font-size: 12px; }
 .topbar-search-input:focus { outline: none; border-color: #3b82f6; }
+
+/* Search v2: tabs + hero state + examples */
+.search-tabs { display: flex; gap: 4px; border-bottom: 1px solid #1e293b; margin-bottom: 8px; }
+.search-tab { padding: 6px 16px; color: #94a3b8; text-decoration: none; border-radius: 3px 3px 0 0; font-size: 13px; font-weight: 500; }
+.search-tab:hover { color: #e5e7eb; background: #0f172a; }
+.search-tab-active { background: #1e3a8a; color: #bfdbfe; }
+.search-page-hero { text-align: center; padding-top: 40px; }
+.search-page-hero .search-form { max-width: 600px; margin: 0 auto 16px; }
+.search-page-hero .search-tabs { justify-content: center; max-width: 600px; margin: 0 auto 8px; }
+.search-page-hero .search-scopes { justify-content: center; max-width: 600px; margin: 0 auto 24px; }
+.search-hero-tagline { color: #94a3b8; font-size: 14px; margin: 16px auto 24px; max-width: 600px; }
+.search-examples { display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+.search-examples-label { color: #64748b; font-size: 11px; }
+.search-example { background: #0f172a; border: 1px solid #1e293b; color: #94a3b8; padding: 4px 12px; border-radius: 12px; font-size: 11px; text-decoration: none; font-family: var(--mono); }
+.search-example:hover { background: #1e293b; color: #e5e7eb; }

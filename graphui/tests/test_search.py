@@ -79,3 +79,22 @@ def test_search_scope_filter_excludes_other_corpora(loader):
 def test_search_handles_empty_query(loader):
     assert search("", scopes=None, limit=5) == []
     assert search("   ", scopes=None, limit=5) == []
+
+
+def test_search_mode_dep_excludes_logigraph(loader):
+    import app.search as search_mod
+    search_mod._index_cache = None
+    hits = search_mod.search("example", scopes=None, mode="dep", limit=10)
+    for h in hits:
+        assert h["source_field"] == "dossier_body", \
+            f"dep mode should only return code hits; got {h['source_field']}"
+
+
+def test_search_mode_knowledge_excludes_depgraph(loader):
+    import app.search as search_mod
+    search_mod._index_cache = None
+    hits = search_mod.search("example", scopes=None, mode="knowledge", limit=10)
+    for h in hits:
+        assert h["source_field"] in (
+            "rule_statement", "domain_summary", "process_summary", "process_step"
+        ), f"knowledge mode shouldn't include code; got {h['source_field']}"

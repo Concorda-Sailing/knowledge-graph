@@ -29,6 +29,7 @@
         {% set _pending = review_pending_count() %}
         {% if _pending %}<span class="nav-count-badge">{{ _pending }}</span>{% endif %}
       </a>
+      <a href="/graph/search" class="nav-search{% if request.url.path.startswith('/graph/search') %} nav-active{% endif %}">Search</a>
       <a href="/graph/settings" class="nav-settings{% if request.url.path.startswith('/graph/settings') %} nav-active{% endif %}">Settings</a>
     </nav>
     <span class="meta-stamp">
