@@ -1587,3 +1587,28 @@ h2 {
 .cross-processes .cross-title { color: #34d399; font-weight: 600; }
 .cross-side { color: #94a3b8; font-size: 11px; }
 .cross-line { color: #94a3b8; font-size: 11px; margin: 4px 0 0; }
+
+/* _repo_card */
+.repo-card { display: block; background: #0f172a; border: 1px solid #1e293b; border-radius: 6px; padding: 12px 14px; margin-bottom: 10px; color: #e5e7eb; text-decoration: none; }
+.repo-card:hover { border-color: #334155; }
+.repo-card-dormant { opacity: 0.85; }
+.repo-card-dead-candidate { border-color: #422006; background: #1c1917; }
+.repo-card-head { display: flex; align-items: baseline; gap: 10px; }
+.repo-card-name { font-weight: 600; font-size: 14px; color: #e5e7eb; }
+.repo-card-langs { color: #94a3b8; font-size: 11px; }
+.repo-card-today { margin-left: auto; color: #34d399; font-size: 11px; }
+.repo-card-quiet { margin-left: auto; color: #94a3b8; font-size: 11px; }
+.repo-card-activity { display: flex; gap: 12px; align-items: center; margin-top: 8px; }
+.repo-card-meta { color: #94a3b8; font-size: 11px; }
+.sparkline-inline { display: inline-flex; gap: 2px; align-items: flex-end; height: 14px; }
+.sparkline-inline .spark-cell { width: 6px; background: #60a5fa; border-radius: 1px; }
+.repo-card-states { height: 6px; margin: 8px 0; border-radius: 3px; overflow: hidden; }
+.repo-card-areas { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.repo-card-areas .area-chip { background: #0b1220; border: 1px solid #1e293b; padding: 2px 8px; border-radius: 3px; font-size: 11px; color: #94a3b8; }
+.repo-card-areas .area-more { color: #64748b; }
+.repo-card-foot { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-top: 10px; padding-top: 8px; border-top: 1px dashed #1e293b; font-size: 11px; }
+.dep-stat { color: #94a3b8; } .dep-stat b { color: #e5e7eb; font-weight: 600; }
+.dep-sep { color: #475569; }
+.cross-rules-tag { color: #a78bfa; }
+.cross-proc-tag { color: #34d399; }
+.repo-card-stale { margin-left: auto; color: #f87171; }
