@@ -11,26 +11,26 @@
 </head>
 <body>
   <header class="topbar">
-    <a href="/graph/" class="brand">
+    <a href="/graph/" class="brand{% if request.url.path in ['/graph/', '/graph'] %} brand-active{% endif %}">
       <span class="brand-mark">◆</span>
       <span class="brand-text">graphui</span>
     </a>
     <nav>
-      <a href="/graph/knowledge">Knowledge</a>
-      <a href="/graph/issues" class="nav-issues">
+      <a href="/graph/issues" class="nav-issues{% if request.url.path.startswith('/graph/issues') %} nav-active{% endif %}">
         Issues
         {% set _issues = issues_fresh_count() %}
         {% if _issues %}<span class="nav-count-badge">{{ _issues }}</span>{% endif %}
       </a>
-      <a href="/graph/review" class="nav-review">
+      <a href="/graph/review" class="nav-review{% if request.url.path.startswith('/graph/review') %} nav-active{% endif %}">
         Review
         {% set _pending = review_pending_count() %}
         {% if _pending %}<span class="nav-count-badge">{{ _pending }}</span>{% endif %}
       </a>
-      <a href="/graph/settings" class="nav-settings">Settings</a>
+      <a href="/graph/settings" class="nav-settings{% if request.url.path.startswith('/graph/settings') %} nav-active{% endif %}">Settings</a>
     </nav>
     <span class="meta-stamp">
       {% if meta and meta.depgraph %}
+        <span class="meta-label">commit</span>
         <span class="commit-pill">{{ meta.depgraph.git_commit[:8] }}</span>
         <span class="node-count">{{ meta.depgraph.node_count }} nodes</span>
       {% endif %}

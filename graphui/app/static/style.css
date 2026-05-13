@@ -66,9 +66,17 @@ code, pre { font-family: var(--mono); font-size: 0.92em; }
   display: flex; align-items: center; gap: 8px;
   color: var(--fg); font-weight: 600;
   font-family: var(--mono); font-size: 14px;
+  padding: 6px 12px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
+.brand:hover { background: var(--bg-3, #1e293b); border-color: #475569; color: var(--fg); }
 .brand-mark { color: var(--accent); font-size: 12px; }
-.brand:hover { color: var(--fg); }
+.brand.brand-active { color: #f8fafc; font-weight: 700; }
+.brand.brand-active .brand-mark { color: #f8fafc; }
 .topbar nav { display: flex; gap: 4px; }
 .topbar nav a {
   color: var(--fg-mute);
@@ -76,13 +84,25 @@ code, pre { font-family: var(--mono); font-size: 0.92em; }
   border-radius: var(--r-sm);
   transition: background 0.15s, color 0.15s;
   font-weight: 500;
+  text-decoration: none;
 }
 .topbar nav a:hover { background: var(--bg-2); color: var(--fg); }
+.topbar nav a.nav-active { color: #f8fafc; font-weight: 700; background: var(--bg-2); }
 
 .topbar .meta-stamp {
   margin-left: auto;
   display: flex; align-items: center; gap: 10px;
   font-family: var(--mono); font-size: 11.5px;
+}
+.topbar .meta-label {
+  color: var(--fg-faint);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: none;
+}
+@media (min-width: 768px) {
+  .topbar .meta-label { display: inline; }
 }
 .topbar .commit-pill {
   background: var(--bg-2);
