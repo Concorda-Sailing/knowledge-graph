@@ -73,7 +73,7 @@ STATE_ORDER = ["current", "llm_drafted", "unreviewed", "stale", "missing"]
 TIER_ORDER = ["A", "B", "C", "*"]
 KIND_ORDER = [
     "model", "service", "endpoint", "schema",
-    "component", "hook", "test", "rule", "domain",
+    "component", "hook", "test", "rule", "process", "domain",
 ]
 
 
