@@ -401,6 +401,7 @@ def node_detail(request: Request, node_id: str) -> HTMLResponse:
         [p for p in (node.get("_node_file"), node.get("dossier")) if p],
     )
     telemetry = loader.telemetry_for_node(node_id)
+    siblings = loader.siblings_in_file(node_id)
     qctx = _queue_context(node_id, node.get("dossier_state"), tier=node.get("tier"), kind=node.get("kind"))
     return TEMPLATES.TemplateResponse(
         request,
@@ -414,6 +415,7 @@ def node_detail(request: Request, node_id: str) -> HTMLResponse:
             "commits_30d": commits_30d,
             "history": history,
             "telemetry": telemetry,
+            "siblings": siblings,
             "warnings": loader.warnings_for(node_id),
             **qctx,
         },

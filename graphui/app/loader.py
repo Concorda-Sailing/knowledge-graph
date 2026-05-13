@@ -629,6 +629,37 @@ def load_node_by_id(node_id: str) -> dict | None:
     return None
 
 
+def siblings_in_file(node_id: str) -> list[dict]:
+    """All other depgraph nodes whose source.path matches this node's,
+    sorted by id. Excludes the node itself. Returns the same flat-shape
+    dicts as nodes_for_repo so templates can reuse the node-card markup."""
+    target = load_node_by_id(node_id)
+    if not target:
+        return []
+    src = target.get("source") or {}
+    path = src.get("path")
+    repo = src.get("repo")
+    if not path or not repo:
+        return []
+    out = []
+    for n in load_depgraph_nodes():
+        if n["id"] == node_id:
+            continue
+        s = n.get("source") or {}
+        if s.get("path") != path or s.get("repo") != repo:
+            continue
+        out.append({
+            "id": n["id"],
+            "title": n.get("title") or n["id"].rsplit("::", 1)[-1],
+            "kind": n.get("kind", "—"),
+            "state": n.get("dossier_state", "current"),
+            "fan_out": n.get("fan_out", 0),
+            "href": f"/graph/node/{n['id']}",
+        })
+    out.sort(key=lambda x: x["id"])
+    return out
+
+
 def load_rule_by_id(rule_id: str) -> dict | None:
     for n in load_logigraph_nodes()["rules"]:
         if n["id"] == rule_id:
