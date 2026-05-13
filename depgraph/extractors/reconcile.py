@@ -235,6 +235,49 @@ def _git_head_primary() -> str | None:
         return None
 
 
+def _join_route_calls(nodes: dict[str, tuple[Path, dict]], by_target: dict[str, list[dict]]) -> int:
+    """For every route_call node, find endpoint nodes whose
+    (method, normalized_path) matches its (method, normalized_url_pattern)
+    and emit an edge endpoint <- route_call.
+
+    Mutates by_target in place. Returns the count of edges added.
+
+    This pass is what produces cross-repo dependents — a JS fetch call
+    site referencing a Python FastAPI route becomes a dependent on that
+    route.
+    """
+    endpoints_by_key: dict[tuple[str, str], list[dict]] = {}
+    route_calls: list[dict] = []
+
+    for _, (_, data) in nodes.items():
+        kind = data.get("kind")
+        sig = data.get("signature") or {}
+        if kind == "endpoint":
+            method = (sig.get("method") or "").upper()
+            path = _normalize_url_pattern(sig.get("path"))
+            if not method or not path:
+                continue
+            endpoints_by_key.setdefault((method, path), []).append(data)
+        elif kind == "route_call":
+            route_calls.append(data)
+
+    added = 0
+    for rc in route_calls:
+        sig = rc.get("signature") or {}
+        method = (sig.get("method") or "").upper()
+        url = _normalize_url_pattern(sig.get("url_pattern"))
+        if not method or not url:
+            continue
+        for ep in endpoints_by_key.get((method, url), []):
+            target_id = ep["id"]
+            dep_entry = {"id": rc["id"], "kind": "route_call"}
+            existing = by_target.setdefault(target_id, [])
+            if dep_entry not in existing:
+                existing.append(dep_entry)
+                added += 1
+    return added
+
+
 def detect_orphans(nodes: dict[str, tuple[Path, dict]]) -> list[str]:
     """Return ids of nodes whose source.path no longer exists. This catches
     the case where a whole file was deleted; defect #5's domain orphan check
@@ -262,6 +305,11 @@ def detect_orphans(nodes: dict[str, tuple[Path, dict]]) -> list[str]:
         repo_path = basename_to_path.get(repo)
         if repo_path is None:
             # Unknown repo — skip, don't archive on an unverifiable check.
+            continue
+        if not repo_path.exists():
+            # Repo configured but checkout not present on this machine (e.g.
+            # a remote repo in a distributed team, or a fixture with no real
+            # checkout). Skip — cannot verify file existence.
             continue
         if not (repo_path / rel).exists():
             orphans.append(nid)
@@ -452,6 +500,11 @@ def main() -> int:
     # Re-run after archiving so the index reflects the live set.
     if archived > 0:
         by_target, edge_count = build_reverse_index(nodes)
+
+    # Cross-repo join: route_call sites → endpoint nodes. Mutates by_target.
+    rc_edges = _join_route_calls(nodes, by_target)
+    if rc_edges:
+        edge_count += rc_edges
 
     stubbed = stub_missing_dossiers(nodes) if not args.report_only else 0
     stale = detect_stale_dossiers(nodes)

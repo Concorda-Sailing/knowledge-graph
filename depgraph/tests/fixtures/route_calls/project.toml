@@ -1,0 +1,10 @@
+[project]
+name = "rc-fixture"
+
+[repos.api]
+path = "/tmp/rc-api"
+extractor = ["python3", "noop.py"]
+
+[repos.web]
+path = "/tmp/rc-web"
+extractor = ["npx", "tsx", "noop.ts"]

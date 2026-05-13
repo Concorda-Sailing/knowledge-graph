@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "id": "rc-web::src/lib/api.ts:42::importEvent",
+  "kind": "route_call",
+  "title": "fetch POST /api/events/<var>/import",
+  "source": {"repo": "rc-web", "path": "src/lib/api.ts", "line": 42},
+  "signature": {"method": "POST", "url_pattern": "/api/events/<var>/import"},
+  "structural_hash": "h2",
+  "extractor": "noop",
+  "depends_on": []
+}
