@@ -1721,3 +1721,61 @@ def repo_cross_cuts(basename: str) -> dict:
         "processes": sorted(proc_ids),
         "domain": sorted(domain_ids),
     }
+
+
+def _titles_by_id() -> dict[str, str]:
+    """One-pass title lookup. Computed per-call, not cached."""
+    titles: dict[str, str] = {}
+    for n in load_depgraph_nodes():
+        nid = n.get("id")
+        if nid:
+            titles[nid] = n.get("title") or nid.rsplit("::", 1)[-1]
+    return titles
+
+
+def repo_inbound_deps_detail(basename: str) -> list[dict]:
+    """Rows of {from_repo, from_id, from_title, to_id, to_title} — one per
+    cross-repo dependent edge pointing INTO a node in `basename`."""
+    out: list[dict] = []
+    titles = _titles_by_id()
+    for target_id, dependers in load_dependents().items():
+        target_repo = target_id.split("::", 1)[0]
+        if target_repo != basename:
+            continue
+        for d in dependers:
+            dep_id = d.get("id") or ""
+            dep_repo = dep_id.split("::", 1)[0]
+            if not dep_repo or dep_repo == basename:
+                continue
+            out.append({
+                "from_repo": dep_repo,
+                "from_id": dep_id,
+                "from_title": titles.get(dep_id, dep_id.rsplit("::", 1)[-1]),
+                "to_id": target_id,
+                "to_title": titles.get(target_id, target_id.rsplit("::", 1)[-1]),
+            })
+    out.sort(key=lambda r: (r["from_repo"], r["from_id"]))
+    return out
+
+
+def repo_outbound_deps_detail(basename: str) -> list[dict]:
+    """Rows of {to_repo, from_id, from_title, to_id, to_title} — one per
+    cross-repo dependent edge pointing OUT of a node in `basename`."""
+    out: list[dict] = []
+    titles = _titles_by_id()
+    for target_id, dependers in load_dependents().items():
+        target_repo = target_id.split("::", 1)[0]
+        for d in dependers:
+            dep_id = d.get("id") or ""
+            dep_repo = dep_id.split("::", 1)[0]
+            if dep_repo != basename or target_repo == basename:
+                continue
+            out.append({
+                "to_repo": target_repo,
+                "from_id": dep_id,
+                "from_title": titles.get(dep_id, dep_id.rsplit("::", 1)[-1]),
+                "to_id": target_id,
+                "to_title": titles.get(target_id, target_id.rsplit("::", 1)[-1]),
+            })
+    out.sort(key=lambda r: (r["to_repo"], r["to_id"]))
+    return out
