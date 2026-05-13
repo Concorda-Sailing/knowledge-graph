@@ -12,3 +12,17 @@ def test_repo_activity_unknown_repo(loader):
     a = loader.repo_activity("nonexistent-repo")
     assert a["classification"] == "unknown"
     assert a["commits_7d"] == 0
+
+
+def test_repo_languages_unknown(loader):
+    langs = loader.repo_languages("nonexistent-repo")
+    assert langs == []
+
+
+def test_repo_languages_shape(loader):
+    # The shape contract: list of {label, hint} dicts, length 0..4.
+    langs = loader.repo_languages("concorda-web")
+    assert isinstance(langs, list)
+    assert len(langs) <= 4
+    for entry in langs:
+        assert set(entry.keys()) >= {"label", "hint"}

@@ -1487,3 +1487,71 @@ def repo_activity(basename: str) -> dict:
         "classification": classification,
         "last_push_age_days": age,
     }
+
+
+_EXT_TO_LANG = {
+    ".ts": "TypeScript", ".tsx": "TypeScript",
+    ".js": "JavaScript", ".jsx": "JavaScript",
+    ".py": "Python",
+    ".go": "Go",
+    ".rs": "Rust",
+    ".rb": "Ruby",
+    ".java": "Java",
+    ".kt": "Kotlin",
+    ".swift": "Swift",
+    ".cs": "C#",
+    ".php": "PHP",
+}
+
+
+def _framework_hints(repo: Path) -> list[str]:
+    hints: list[str] = []
+    pkg = repo / "package.json"
+    if pkg.exists():
+        try:
+            row = json.loads(pkg.read_text())
+        except (OSError, json.JSONDecodeError):
+            row = {}
+        deps = {**(row.get("dependencies") or {}), **(row.get("devDependencies") or {})}
+        if "next" in deps:
+            hints.append("Next")
+        if "react" in deps:
+            hints.append("React")
+        if "vitest" in deps:
+            hints.append("Vitest")
+        if "@playwright/test" in deps or "playwright" in deps:
+            hints.append("Playwright")
+    pyproj = repo / "pyproject.toml"
+    reqs = repo / "requirements.txt"
+    py_text = ""
+    if pyproj.exists():
+        py_text += pyproj.read_text(errors="ignore")
+    if reqs.exists():
+        py_text += reqs.read_text(errors="ignore")
+    if "fastapi" in py_text.lower():
+        hints.append("FastAPI")
+    if "sqlalchemy" in py_text.lower():
+        hints.append("SQLAlchemy")
+    if "pytest" in py_text.lower():
+        hints.append("pytest")
+    return hints
+
+
+def repo_languages(basename: str) -> list[dict]:
+    repo = _repo_path(basename)
+    if repo is None:
+        return []
+    counts: dict[str, int] = {}
+    for p in repo.rglob("*"):
+        if not p.is_file():
+            continue
+        if any(part.startswith(".") or part == "node_modules" for part in p.parts):
+            continue
+        lang = _EXT_TO_LANG.get(p.suffix)
+        if lang:
+            counts[lang] = counts.get(lang, 0) + 1
+    primary = sorted(counts.items(), key=lambda kv: kv[1], reverse=True)[:2]
+    out = [{"label": lang, "hint": "primary"} for lang, _ in primary]
+    for h in _framework_hints(repo)[:4 - len(out)]:
+        out.append({"label": h, "hint": "framework"})
+    return out
