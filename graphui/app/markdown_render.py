@@ -13,6 +13,10 @@ except ImportError:
 
 
 _FRONTMATTER_RE = re.compile(r"\A---\s*\n.*?\n---\s*\n", re.DOTALL)
+# The page chrome already renders the node title above the dossier body;
+# a leading `# Title` in the markdown would duplicate it. Strip exactly
+# one leading H1 if present. H2+ are untouched.
+_LEADING_H1_RE = re.compile(r"\A\s*#\s+[^\n]+\n+")
 # Repo basename pattern is permissive ([a-z][\w-]*) so the framework
 # linkifies node ids from any project, not just one with a fixed repo
 # naming scheme. False positives ("something::foo::bar" in a dossier
@@ -29,6 +33,10 @@ _NODE_ID_RE = re.compile(
 
 def strip_frontmatter(text: str) -> str:
     return _FRONTMATTER_RE.sub("", text, count=1)
+
+
+def strip_leading_h1(text: str) -> str:
+    return _LEADING_H1_RE.sub("", text, count=1)
 
 
 def _link_ids(html_text: str) -> str:
@@ -67,7 +75,7 @@ def _wrap_tables(html_text: str) -> str:
 
 
 def render(text: str) -> str:
-    body = strip_frontmatter(text)
+    body = strip_leading_h1(strip_frontmatter(text))
     if _MD_AVAILABLE:
         out = _md.markdown(
             body,
