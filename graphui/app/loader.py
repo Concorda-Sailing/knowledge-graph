@@ -1317,3 +1317,74 @@ def graph_health() -> dict:
         "calibration": _calibration_summary(),
         "hottest_rules": t["hottest"],
     }
+
+
+def _namespaces_from_ids(ids: list[str]) -> list[str]:
+    """For ids of the form `kind::namespace::name`, return unique namespaces."""
+    out: set[str] = set()
+    for i in ids:
+        parts = i.split("::")
+        if len(parts) >= 3:
+            out.add(parts[1])
+    return sorted(out)
+
+
+def _claimed_repos_for_rules(rules: list[dict]) -> int:
+    """Count unique repos appearing in any rule's claims_code list."""
+    repos: set[str] = set()
+    for r in rules:
+        for c in r.get("claims_code", []) or []:
+            did = c.get("depgraph_id") or ""
+            head = did.split("::", 1)[0]
+            if head:
+                repos.add(head)
+    return len(repos)
+
+
+def _spans_repos_for_processes(procs: list[dict]) -> int:
+    """Count unique repos appearing in any process step's claims_code list."""
+    repos: set[str] = set()
+    for p in procs:
+        for step in p.get("steps", []) or []:
+            for c in step.get("claims_code", []) or []:
+                did = c.get("depgraph_id") or ""
+                head = did.split("::", 1)[0]
+                if head:
+                    repos.add(head)
+    return len(repos)
+
+
+def cross_cutting_summary() -> dict:
+    lg = load_logigraph_nodes()
+    rules = lg["rules"]
+    domain = lg["domain"]
+    procs = lg["processes"]
+    referenced_by = 0
+    for r in rules:
+        if r.get("references_domain"):
+            referenced_by += len(r["references_domain"])
+    for p in procs:
+        for step in p.get("steps", []) or []:
+            if step.get("references_domain"):
+                referenced_by += len(step["references_domain"])
+    subkinds: dict[str, int] = {}
+    for o in domain:
+        sk = o.get("subkind") or "—"
+        subkinds[sk] = subkinds.get(sk, 0) + 1
+    return {
+        "rules": {
+            "count": len(rules),
+            "claimed_repos": _claimed_repos_for_rules(rules),
+            "namespaces": _namespaces_from_ids([r["id"] for r in rules]),
+        },
+        "domain": {
+            "count": len(domain),
+            "subkinds": subkinds,
+            "referenced_by": referenced_by,
+        },
+        "processes": {
+            "count": len(procs),
+            "names": [p.get("title") or p["id"].rsplit("::", 1)[-1] for p in procs[:6]],
+            "spans_repos": _spans_repos_for_processes(procs),
+        },
+    }
