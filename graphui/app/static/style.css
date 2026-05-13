@@ -1435,7 +1435,8 @@ h2 {
   background: var(--bg-1);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   margin-top: 14px;
 }
 .knowledge-table {
@@ -1763,11 +1764,6 @@ h2 {
 .search-hit-preview { color: #94a3b8; font-size: 12px; margin: 4px 0 0; font-style: italic; padding-left: 4px; border-left: 2px solid #3b82f6; }
 .search-empty { color: #94a3b8; font-size: 12px; margin-top: 16px; }
 
-/* ── Topbar search ───────────────────────────────────────────────────────── */
-.topbar-search { flex: 1; max-width: 360px; margin: 0 12px; }
-.topbar-search-input { width: 100%; background: #0f172a; border: 1px solid #1e293b; color: #e5e7eb; padding: 5px 10px; border-radius: 3px; font-size: 12px; }
-.topbar-search-input:focus { outline: none; border-color: #3b82f6; }
-
 /* Search v2: tabs + hero state + examples */
 .search-tabs { display: flex; gap: 4px; border-bottom: 1px solid #1e293b; margin-bottom: 8px; }
 .search-tab { padding: 6px 16px; color: #94a3b8; text-decoration: none; border-radius: 3px 3px 0 0; font-size: 13px; font-weight: 500; }
@@ -1782,3 +1778,16 @@ h2 {
 .search-examples-label { color: #64748b; font-size: 11px; }
 .search-example { background: #0f172a; border: 1px solid #1e293b; color: #94a3b8; padding: 4px 12px; border-radius: 12px; font-size: 11px; text-decoration: none; font-family: var(--mono); }
 .search-example:hover { background: #1e293b; color: #e5e7eb; }
+
+/* ── Settings wide tables: scroll horizontally on mobile ─────────────────── */
+.settings-table-wide {
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Mobile collapses: 3-col grids → 1-col at ≤700px ────────────────────── */
+@media (max-width: 700px) {
+  .health-grid { grid-template-columns: 1fr; }
+  .cross-grid  { grid-template-columns: 1fr; }
+}

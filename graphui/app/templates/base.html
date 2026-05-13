@@ -15,9 +15,6 @@
       <span class="brand-mark">◆</span>
       <span class="brand-text">graphui</span>
     </a>
-    <form action="/graph/search" method="get" class="topbar-search">
-      <input type="text" name="q" value="{{ request.query_params.get('q', '') }}" placeholder="search…" class="topbar-search-input">
-    </form>
     <nav>
       <a href="/graph/issues" class="nav-issues{% if request.url.path.startswith('/graph/issues') %} nav-active{% endif %}">
         Issues
