@@ -1,0 +1,11 @@
+{
+  "id": "rule::category::example",
+  "kind": "rule",
+  "title": "Example rule",
+  "statement": "Always do the right thing.",
+  "claims_code": [{"depgraph_id": "concorda-web::app/page.tsx::Page", "remote_hash": "h1"}],
+  "references_domain": ["resource::example"],
+  "dossier": "dossiers/rules/rule__category__example.md",
+  "structural_hash": "rh1",
+  "definition_status": "human_reviewed"
+}
