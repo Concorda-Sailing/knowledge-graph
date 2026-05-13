@@ -27,6 +27,7 @@
         {% set _pending = review_pending_count() %}
         {% if _pending %}<span class="nav-count-badge">{{ _pending }}</span>{% endif %}
       </a>
+      <a href="/graph/settings" class="nav-settings">Settings</a>
     </nav>
     <span class="meta-stamp">
       {% if meta and meta.depgraph %}
