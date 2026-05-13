@@ -21,59 +21,31 @@
 </a>
 {% endif %}
 
-<section class="gallery-section">
-  <h2 class="section-title">Knowledge</h2>
-  <div class="gallery-grid">
-    {% for k in kinds %}
-    <a href="/graph/kind/{{ k.kind }}" class="gallery-card">
-      <div class="card-head">
-        <span class="card-title">{{ k.label }}</span>
-      </div>
-      <div class="card-count">{{ k.node_count }} {{ k.kind }} · {{ k.total_deps }} dep{{ '' if k.total_deps == 1 else 's' }}</div>
-      <div class="state-bar">
-        {% for state_key in ['current', 'llm_drafted', 'unreviewed', 'stale', 'missing'] %}
-          {% set n = k.state_counts.get(state_key, 0) %}
-          {% if n > 0 %}
-          <span class="state-bar-seg state-bar-{{ state_key }}" style="flex: {{ n }};" title="{{ n }} {{ state_key }}"></span>
-          {% endif %}
-        {% endfor %}
-      </div>
-      <div class="card-meta">
-        {% set drafted = k.state_counts.get('llm_drafted', 0) %}
-        {% set reviewed = k.state_counts.get('current', 0) %}
-        {% if drafted %}<span class="state-pct">{{ drafted }} drafted</span>
-        {% else %}<span class="state-pct">{{ reviewed }} reviewed</span>{% endif %}
-        {% if k.has_stale %}<span class="stale-flag">⚠ {{ k.state_counts.stale }} stale</span>{% endif %}
-      </div>
-    </a>
-    {% endfor %}
-  </div>
-</section>
+{% include '_activity_strip.html' %}
+{% include '_graph_health.html' %}
+{% include '_cross_cutting.html' %}
 
-<section class="gallery-section">
-  <h2 class="section-title">Source repos</h2>
-  <div class="gallery-grid">
-    {% for r in repos %}
-    <a href="/graph/repo/{{ r.basename }}" class="gallery-card">
-      <div class="card-head">
-        <span class="card-title">{{ r.basename }}</span>
-      </div>
-      <div class="card-count">{{ r.node_count }} node{{ '' if r.node_count == 1 else 's' }}</div>
-      <div class="state-bar">
-        {% for state_key in ['current', 'llm_drafted', 'unreviewed', 'stale', 'missing'] %}
-          {% set n = r.state_counts.get(state_key, 0) %}
-          {% if n > 0 %}
-          <span class="state-bar-seg state-bar-{{ state_key }}" style="flex: {{ n }};" title="{{ n }} {{ state_key }}"></span>
-          {% endif %}
-        {% endfor %}
-      </div>
-      <div class="card-meta">
-        <span class="state-pct">{{ r.current_pct }}% current</span>
-        {% if r.has_stale %}<span class="stale-flag">⚠ {{ r.state_counts.stale }} stale</span>{% endif %}
-      </div>
-    </a>
+<section class="repos-section">
+  <header class="repos-header">
+    <h3 class="section-title">Tracked repos · {{ repos|length }}</h3>
+    <span class="repos-sort">
+      sort:
+      {% for s in ['activity', 'alpha', 'inbound', 'dead'] %}
+        <a href="/graph/?sort={{ s }}{% if activity_filter %}&activity={{ activity_filter }}{% endif %}" class="repos-sort-link{% if sort == s %} repos-sort-active{% endif %}">{{ s }}</a>
+        {% if not loop.last %}·{% endif %}
+      {% endfor %}
+    </span>
+  </header>
+  <div class="repos-filter">
+    {% for f in ['active', 'dormant', 'dead-candidate', 'all'] %}
+      <a href="/graph/?activity={{ f }}{% if sort %}&sort={{ sort }}{% endif %}" class="repos-filter-chip{% if activity_filter == f or (f == 'all' and not activity_filter) %} repos-filter-active{% endif %}">{{ f }} · {{ filter_counts[f] }}</a>
     {% endfor %}
   </div>
+  {% for repo in repos %}
+    {% include '_repo_card.html' %}
+  {% else %}
+    <p class="empty">No repos match the current filters.</p>
+  {% endfor %}
 </section>
 
 {% endblock %}

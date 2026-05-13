@@ -1612,3 +1612,11 @@ h2 {
 .cross-rules-tag { color: #a78bfa; }
 .cross-proc-tag { color: #34d399; }
 .repo-card-stale { margin-left: auto; color: #f87171; }
+
+.repos-header { display: flex; justify-content: space-between; align-items: center; margin: 4px 0 8px; }
+.repos-sort { color: #94a3b8; font-size: 11px; }
+.repos-sort-link { color: #94a3b8; text-decoration: none; margin: 0 4px; }
+.repos-sort-link.repos-sort-active { color: #60a5fa; text-decoration: underline; }
+.repos-filter { display: flex; gap: 6px; margin-bottom: 12px; }
+.repos-filter-chip { background: #0f172a; border: 1px solid #1e293b; color: #94a3b8; padding: 3px 10px; border-radius: 12px; font-size: 11px; text-decoration: none; }
+.repos-filter-chip.repos-filter-active { background: #1e3a8a; color: #bfdbfe; border-color: #1e3a8a; }
