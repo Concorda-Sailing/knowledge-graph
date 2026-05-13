@@ -1687,3 +1687,23 @@ h2 {
   .repo-detail-body { grid-template-columns: 1fr; }
 }
 .repo-tab-warn.repo-tab-active { background: #422006; color: #fde68a; }
+
+/* ---- Settings page ---- */
+.settings-header { margin-bottom: 16px; }
+.settings-header h1 { margin: 0 0 4px; font-size: 22px; color: #e5e7eb; }
+.settings-note { color: #94a3b8; font-size: 12px; margin: 4px 0 12px; }
+.settings-section { margin-bottom: 20px; }
+.settings-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.settings-table-wide { table-layout: auto; }
+.settings-table th { text-align: left; padding: 6px 8px; background: #1e293b; color: #94a3b8; font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+.settings-table td { padding: 4px 8px; border-bottom: 1px solid #1e293b; color: #e5e7eb; vertical-align: top; }
+.settings-table td.numeric { text-align: right; font-family: var(--mono); }
+.settings-table a { color: #60a5fa; text-decoration: none; }
+.settings-path { color: #e5e7eb; }
+.settings-path-missing { color: #f87171; }
+.settings-warn { color: #fbbf24; font-size: 11px; margin-left: 6px; }
+.settings-mute { color: #64748b; }
+.settings-cmd { color: #94a3b8; font-size: 11px; word-break: break-all; }
+.settings-scope { padding: 1px 8px; border-radius: 3px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+.settings-scope-project { background: #1e3a8a; color: #bfdbfe; }
+.settings-scope-generic { background: #14532d; color: #bbf7d0; }
