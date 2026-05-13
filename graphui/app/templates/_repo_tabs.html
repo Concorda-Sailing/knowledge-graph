@@ -1,0 +1,22 @@
+{# Caller passes:
+   - basename: repo basename (string)
+   - active_tab: one of 'nodes', 'dead', 'deps', 'telemetry', 'activity'
+   - tab_counts: {nodes: int, dead: int, deps: int}  (telemetry/activity uncountable here)
+#}
+<nav class="repo-tabs" aria-label="Repo detail tabs">
+  <a href="/graph/repo/{{ basename }}?tab=nodes" class="repo-tab{% if active_tab == 'nodes' %} repo-tab-active{% endif %}">
+    Nodes <span class="repo-tab-count">{{ tab_counts.nodes }}</span>
+  </a>
+  <a href="/graph/repo/{{ basename }}?tab=deps" class="repo-tab{% if active_tab == 'deps' %} repo-tab-active{% endif %}">
+    Dependencies <span class="repo-tab-count">{{ tab_counts.deps }}</span>
+  </a>
+  <a href="/graph/repo/{{ basename }}?tab=dead" class="repo-tab{% if active_tab == 'dead' %} repo-tab-active repo-tab-warn{% elif tab_counts.dead > 0 %} repo-tab-warn{% endif %}">
+    Dead code <span class="repo-tab-count">{{ tab_counts.dead }}</span>
+  </a>
+  <a href="/graph/repo/{{ basename }}?tab=telemetry" class="repo-tab{% if active_tab == 'telemetry' %} repo-tab-active{% endif %}">
+    Telemetry
+  </a>
+  <a href="/graph/repo/{{ basename }}?tab=activity" class="repo-tab{% if active_tab == 'activity' %} repo-tab-active{% endif %}">
+    Activity
+  </a>
+</nav>

@@ -1645,3 +1645,12 @@ h2 {
 .rail-cross-rules { color: #a78bfa; }
 .rail-cross-procs { color: #34d399; }
 .rail-cross-domain { color: #34d399; }
+
+/* _repo_tabs */
+.repo-tabs { display: flex; gap: 4px; border-bottom: 1px solid #1e293b; margin-bottom: 12px; }
+.repo-tab { padding: 6px 12px; color: #94a3b8; text-decoration: none; border-radius: 3px 3px 0 0; font-size: 12px; }
+.repo-tab:hover { color: #e5e7eb; }
+.repo-tab-active { background: #1e3a8a; color: #bfdbfe; }
+.repo-tab-count { color: inherit; opacity: 0.7; margin-left: 4px; }
+.repo-tab-warn { color: #fbbf24; }
+.repo-tab-warn.repo-tab-active { background: #422006; color: #fde68a; }
