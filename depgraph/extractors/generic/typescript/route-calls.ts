@@ -76,7 +76,8 @@ function urlFromTemplate(node: ts.TemplateExpression, baseUrlVar: string): strin
   return url || null;
 }
 
-function urlFromArg(arg: ts.Expression, baseUrlVar: string): string | null {
+function urlFromArg(arg: ts.Expression | undefined, baseUrlVar: string): string | null {
+  if (!arg) return null;
   if (ts.isStringLiteral(arg) || ts.isNoSubstitutionTemplateLiteral(arg)) {
     return arg.text;
   }
