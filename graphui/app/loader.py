@@ -1640,12 +1640,21 @@ def repo_dep_counts(basename: str) -> dict:
     inbound: set[str] = set()
     outbound: set[str] = set()
     dependents = load_dependents()  # by_target: target_id -> [dependent dicts]
-    nodes = load_depgraph_nodes()
-    in_my_repo = {n["id"] for n in nodes if (n.get("source") or {}).get("repo") == basename}
+    # Look up each node's actual source.repo, not the id's leading segment.
+    # Endpoint nodes have ids like `GET::/api/foo` (method-prefixed); only the
+    # node's source.repo field has the right answer ("concorda-api" etc.).
+    repo_by_id: dict[str, str] = {}
+    for n in load_depgraph_nodes():
+        nid = n.get("id")
+        r = (n.get("source") or {}).get("repo")
+        if nid and r:
+            repo_by_id[nid] = r
     for target_id, dependers in dependents.items():
-        target_repo = target_id.split("::", 1)[0]
+        target_repo = repo_by_id.get(target_id)
+        if not target_repo:
+            continue
         for d in dependers:
-            dep_repo = (d.get("source") or "").split("::", 1)[0]
+            dep_repo = repo_by_id.get(d.get("source") or "")
             if not dep_repo or dep_repo == target_repo:
                 continue
             if target_repo == basename and dep_repo != basename:
@@ -1725,28 +1734,36 @@ def repo_cross_cuts(basename: str) -> dict:
     }
 
 
-def _titles_by_id() -> dict[str, str]:
-    """One-pass title lookup. Computed per-call, not cached."""
+def _titles_and_repos_by_id() -> tuple[dict[str, str], dict[str, str]]:
+    """One-pass lookup of {id -> title} and {id -> source.repo}. Endpoint
+    node ids are method-prefixed (`GET::/api/...`), so the repo can only
+    be resolved by reading the node's `source.repo` field — not by
+    splitting the id on `::`."""
     titles: dict[str, str] = {}
+    repos: dict[str, str] = {}
     for n in load_depgraph_nodes():
         nid = n.get("id")
-        if nid:
-            titles[nid] = n.get("title") or nid.rsplit("::", 1)[-1]
-    return titles
+        if not nid:
+            continue
+        titles[nid] = n.get("title") or nid.rsplit("::", 1)[-1]
+        r = (n.get("source") or {}).get("repo")
+        if r:
+            repos[nid] = r
+    return titles, repos
 
 
 def repo_inbound_deps_detail(basename: str) -> list[dict]:
     """Rows of {from_repo, from_id, from_title, to_id, to_title} — one per
     cross-repo dependent edge pointing INTO a node in `basename`."""
     out: list[dict] = []
-    titles = _titles_by_id()
+    titles, repos = _titles_and_repos_by_id()
     for target_id, dependers in load_dependents().items():
-        target_repo = target_id.split("::", 1)[0]
+        target_repo = repos.get(target_id)
         if target_repo != basename:
             continue
         for d in dependers:
-            dep_id = d.get("id") or ""
-            dep_repo = dep_id.split("::", 1)[0]
+            dep_id = d.get("source") or ""
+            dep_repo = repos.get(dep_id)
             if not dep_repo or dep_repo == basename:
                 continue
             out.append({
@@ -1764,13 +1781,15 @@ def repo_outbound_deps_detail(basename: str) -> list[dict]:
     """Rows of {to_repo, from_id, from_title, to_id, to_title} — one per
     cross-repo dependent edge pointing OUT of a node in `basename`."""
     out: list[dict] = []
-    titles = _titles_by_id()
+    titles, repos = _titles_and_repos_by_id()
     for target_id, dependers in load_dependents().items():
-        target_repo = target_id.split("::", 1)[0]
+        target_repo = repos.get(target_id)
+        if not target_repo or target_repo == basename:
+            continue
         for d in dependers:
-            dep_id = d.get("id") or ""
-            dep_repo = dep_id.split("::", 1)[0]
-            if dep_repo != basename or target_repo == basename:
+            dep_id = d.get("source") or ""
+            dep_repo = repos.get(dep_id)
+            if dep_repo != basename:
                 continue
             out.append({
                 "to_repo": target_repo,
