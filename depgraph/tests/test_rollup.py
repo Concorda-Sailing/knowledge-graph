@@ -298,3 +298,68 @@ def test_compute_rollup_handles_cycle_in_dependents_index():
     assert rollup.total == 2
     assert any(e.id == a["id"] for e in rollup.by_kind["model"])
     assert any(e.id == b["id"] for e in rollup.by_kind["service"])
+
+
+from lib.rollup import format_rollup_text
+
+
+def test_format_rollup_text_summary_caps_each_kind_at_3():
+    # Build a rollup with 5 services.
+    extra_services = [
+        {
+            "id": f"concorda-api::services/x.py::svc_{name}",
+            "kind": "service",
+            "signature": {"kind": "service", "name": f"svc_{name}"},
+            "source": {"repo": "concorda-api", "path": "services/x.py", "line": 1},
+            "title": f"svc_{name}",
+        }
+        for name in ("alpha", "bravo", "charlie", "delta", "echo")
+    ]
+    deps_idx = {
+        "concorda-api::models/boat_crew.py::BoatCrew": [
+            {"source": s["id"], "via": "import"} for s in extra_services
+        ],
+    }
+    depgraph_index = {n["id"]: n for n in DEPGRAPH_NODES_FIXTURE + extra_services}
+    rollup = compute_rollup(
+        "concorda-api::models/boat_crew.py::BoatCrew",
+        depgraph_index,
+        deps_idx,
+        depth=1,
+    )
+    out = format_rollup_text(rollup, summary=True)
+    # Summary mode caps each kind at 3.
+    assert "Service   (5)" in out
+    assert "top 3 of 5" in out
+    # The first three (alpha, bravo, charlie) appear; later ones do not.
+    assert "svc_alpha" in out
+    assert "svc_bravo" in out
+    assert "svc_charlie" in out
+    assert "svc_delta" not in out
+    assert "svc_echo" not in out
+
+
+def test_format_rollup_text_summary_no_truncation_marker_when_kind_under_cap():
+    rollup = compute_rollup(
+        "concorda-api::models/boat_crew.py::BoatCrew",
+        _full_index(),
+        DEPENDENTS_INDEX_FIXTURE,
+        depth=1,
+    )
+    out = format_rollup_text(rollup, summary=True)
+    # Two services fit under cap (3) — no "top X of Y" marker.
+    assert "Service   (2)" in out
+    assert "top" not in out.split("Service")[1].split("Endpoint")[0]
+
+
+def test_format_rollup_text_no_anchor_renders_one_line_signal():
+    from lib.rollup import _KIND_ORDER
+    rollup = Rollup(
+        anchor=AnchorResult(None, "not_found"),
+        by_kind={k: [] for k in _KIND_ORDER},
+        total=0,
+    )
+    out = format_rollup_text(rollup, summary=True)
+    assert "no anchor" in out.lower()
+    # Should not render empty kind headers.
+    assert "Service" not in out

@@ -191,6 +191,43 @@ def compute_rollup(
     )
 
 
+# Tunables matching spec § "CLI surface":
+#   summary cap = 3 per kind (CLI density)
+#   max total summary lines = ~20 per entity
+_SUMMARY_CAP_PER_KIND = 3
+
+
+def format_rollup_text(rollup: Rollup, summary: bool = False) -> str:
+    """Render a rollup as plain text. Used by `bin/logigraph context`
+    (summary=True, inline in context output) and `bin/logigraph rollup`
+    (summary=False, full output)."""
+    if rollup.anchor.model_id is None:
+        return f"Rollup: ⚠ no anchor model found ({rollup.anchor.reason})"
+
+    lines: list[str] = []
+    lines.append(f"Rollup: anchor {rollup.anchor.model_id}")
+    for kind in _KIND_ORDER:
+        entries = rollup.by_kind.get(kind) or []
+        if not entries:
+            continue
+        total = len(entries)
+        # Column alignment: kind name left-padded to 9 chars (longest is "Endpoint").
+        label = kind.capitalize().ljust(9)
+        if summary and total > _SUMMARY_CAP_PER_KIND:
+            lines.append(
+                f"  {label} ({total})              top {_SUMMARY_CAP_PER_KIND} of {total} — "
+                f"see `logigraph rollup <entity-id>`"
+            )
+            show = entries[:_SUMMARY_CAP_PER_KIND]
+        else:
+            lines.append(f"  {label} ({total})")
+            show = entries
+        for e in show:
+            marker = "direct" if e.direct else f"via {' → '.join(e.via)}"
+            lines.append(f"    {e.id}              {marker}")
+    return "\n".join(lines)
+
+
 def _entry_from_node(node: dict, *, direct: bool, via: tuple[str, ...]) -> Entry:
     src = node.get("source") or {}
     repo = src.get("repo", "")
