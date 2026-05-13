@@ -244,6 +244,17 @@ def nodes_json() -> JSONResponse:
             "src": "",
             "href": f"/graph/domain/{o['id']}",
         })
+    for p in lg["processes"]:
+        out.append({
+            "id": p["id"],
+            "kind": "process",
+            "title": p.get("title", p["id"]),
+            "tier": "*",
+            "fan_out": p.get("fan_out", 0),
+            "state": p["dossier_state"],
+            "src": "",
+            "href": f"/graph/process/{p['id']}",
+        })
     return JSONResponse(out)
 
 
