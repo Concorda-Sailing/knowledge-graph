@@ -270,7 +270,12 @@ def _join_route_calls(nodes: dict[str, tuple[Path, dict]], by_target: dict[str, 
             continue
         for ep in endpoints_by_key.get((method, url), []):
             target_id = ep["id"]
-            dep_entry = {"id": rc["id"], "kind": "route_call"}
+            dep_entry = {
+                "source": rc["id"],
+                "via": "route_call",
+                "where": (rc.get("source") or {}).get("path"),
+                "confidence": "normalized_url",
+            }
             existing = by_target.setdefault(target_id, [])
             if dep_entry not in existing:
                 existing.append(dep_entry)
@@ -305,11 +310,6 @@ def detect_orphans(nodes: dict[str, tuple[Path, dict]]) -> list[str]:
         repo_path = basename_to_path.get(repo)
         if repo_path is None:
             # Unknown repo — skip, don't archive on an unverifiable check.
-            continue
-        if not repo_path.exists():
-            # Repo configured but checkout not present on this machine (e.g.
-            # a remote repo in a distributed team, or a fixture with no real
-            # checkout). Skip — cannot verify file existence.
             continue
         if not (repo_path / rel).exists():
             orphans.append(nid)
