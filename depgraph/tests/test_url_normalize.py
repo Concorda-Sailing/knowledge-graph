@@ -39,3 +39,13 @@ def test_trailing_slash_preserved():
 def test_empty_and_none():
     assert _normalize_url_pattern("") == ""
     assert _normalize_url_pattern(None) is None
+
+
+def test_query_string_stripped():
+    assert _normalize_url_pattern("/api/media/upload?on_duplicate=skip") == "/api/media/upload"
+    # Query string with <var> placeholder (from a ternary in a template literal)
+    assert _normalize_url_pattern("/api/media/upload<var>") == "/api/media/upload"
+    # Real-world case: query string with template substitution
+    assert _normalize_url_pattern("/api/admin/users/import?on_duplicate=<var>") == "/api/admin/users/import"
+    # Already query-free path with path-var stays as-is
+    assert _normalize_url_pattern("/api/events/{id}/import") == "/api/events/<var>/import"

@@ -54,6 +54,17 @@ def _normalize_url_pattern(url):
         return None
     if not url:
         return ""
+    # Strip query string before variable normalization. Endpoint nodes never
+    # carry the query string in their path; route_call nodes may include one
+    # when a fetch template literal appends optional ?... params (often via
+    # a ternary that becomes <var> after AST extraction).
+    if "?" in url:
+        url = url.split("?", 1)[0]
+    # Also strip any trailing <var> token that sits at the very end of the path
+    # after slicing — this handles the case where the path ended in `<var>` that
+    # really represented a query-string suffix.
+    if url.endswith("<var>") and not url.endswith("/<var>"):
+        url = url[:-len("<var>")]
     return _URL_VAR_RE.sub("<var>", url)
 
 
