@@ -139,3 +139,16 @@ def test_resolve_anchor_returns_none_when_nothing_matches():
     result = resolve_anchor(domain_node, _depgraph_index())
     assert result.model_id is None
     assert result.reason == "not_found"
+
+
+import pytest
+
+
+def test_resolve_anchor_relationship_raises_when_logigraph_index_omitted():
+    rel = {
+        "id": "relationship::boat::is_crewed_by",
+        "subkind": "relationship",
+        "mediated_by": "resource::concorda::boat_crew",
+    }
+    with pytest.raises(ValueError, match="logigraph_index is required"):
+        resolve_anchor(rel, _depgraph_index())

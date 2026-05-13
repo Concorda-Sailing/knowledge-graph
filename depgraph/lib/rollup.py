@@ -8,7 +8,7 @@ Pure functions; no I/O except reading already-loaded indexes.
 from __future__ import annotations
 
 from collections import deque
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
@@ -29,8 +29,9 @@ def resolve_anchor(
     Args:
         domain_node: a logigraph domain node dict (must have `subkind`, `source`).
         depgraph_index: { node_id: depgraph_node_dict } for fast lookup.
-        logigraph_index: optional { node_id: domain_node_dict } for relationship
-            recursion. Required only when `subkind == "relationship"`.
+        logigraph_index: { node_id: domain_node_dict } for relationship
+            recursion. REQUIRED when `subkind == "relationship"`; raises
+            ValueError if omitted. Optional otherwise.
 
     Returns:
         AnchorResult.model_id is None when no anchor can be resolved.
@@ -39,8 +40,13 @@ def resolve_anchor(
     source = domain_node.get("source") or {}
 
     if subkind == "relationship":
+        if logigraph_index is None:
+            raise ValueError(
+                "logigraph_index is required when resolving anchor for a "
+                "relationship subkind (mediated_by recursion needs it)"
+            )
         mediated_by = domain_node.get("mediated_by")
-        if not mediated_by or logigraph_index is None:
+        if not mediated_by:
             return AnchorResult(None, "not_found")
         target = logigraph_index.get(mediated_by)
         if not target:
@@ -67,13 +73,15 @@ def resolve_anchor(
                 candidates.append(node)
 
     if subkind == "resource" and table:
-        # Prefer the candidate whose tablename matches.
+        # Prefer a candidate whose tablename also matches.
         for node in candidates:
             if (node.get("signature") or {}).get("tablename") == table:
                 return AnchorResult(node["id"], "table_match")
-        # No tablename match in candidates — try a global tablename scan.
+        # No tablename match in `defined_in` candidates — scan the rest of
+        # the corpus by tablename. Skip the candidates we just rejected.
+        rejected_ids = {n["id"] for n in candidates}
         for node in depgraph_index.values():
-            if node.get("kind") != "model":
+            if node.get("kind") != "model" or node["id"] in rejected_ids:
                 continue
             if (node.get("signature") or {}).get("tablename") == table:
                 return AnchorResult(node["id"], "table_match")
