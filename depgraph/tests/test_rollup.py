@@ -82,8 +82,7 @@ def test_resolve_anchor_role_matches_by_signature_name():
     }
     result = resolve_anchor(domain_node, _depgraph_index())
     assert result.model_id == "concorda-api::models/approval_vote.py::ApprovalVote"
-    # defined_in alone would have matched too; primary signal still wins.
-    assert result.reason in ("class_name_match", "defined_in")
+    assert result.reason == "class_name_match"
 
 
 # --- Attribute subkind: defined_in only --------------------------------------
