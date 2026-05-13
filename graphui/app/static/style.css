@@ -344,6 +344,8 @@ h2 {
 }
 .detail .breadcrumb a { color: var(--fg-mute); }
 .detail .breadcrumb a:hover { color: var(--fg); }
+.detail .breadcrumb a.back-link { color: #60a5fa; font-weight: 500; }
+.detail .breadcrumb a.back-link:hover { color: #93c5fd; }
 .detail .meta-row {
   color: var(--fg-mute); font-size: 12px;
   font-family: var(--mono); margin: 8px 0 18px;

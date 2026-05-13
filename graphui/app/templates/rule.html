@@ -3,8 +3,9 @@
 {% block content %}
 <div class="detail">
   <div class="breadcrumb">
+    <a href="#" onclick="history.back(); return false;" class="back-link">← Back</a> &nbsp;·&nbsp;
     <a href="/graph/">index</a> &nbsp;/&nbsp;
-    rule
+    <a href="/graph/kind/rules">rules</a>
   </div>
   <h1>{{ rule.title or rule.id }}</h1>
   <div class="meta-row">
