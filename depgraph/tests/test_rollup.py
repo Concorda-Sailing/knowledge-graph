@@ -387,3 +387,47 @@ def test_format_rollup_json_round_trips_through_json_module():
     entry = restored["by_kind"]["service"][0]
     for k in ("id", "title", "path", "repo", "kind", "direct", "via"):
         assert k in entry
+
+
+import tempfile
+from pathlib import Path
+
+from lib.rollup import load_rollup_inputs, RollupInputs
+
+
+def test_load_rollup_inputs_raises_when_dependents_index_missing(tmp_path: Path):
+    # Bare data dir with no _index/dependents.json.
+    (tmp_path / "nodes").mkdir()
+    try:
+        load_rollup_inputs(tmp_path)
+    except FileNotFoundError as e:
+        assert "dependents.json" in str(e)
+        assert "bin/depgraph regen" in str(e)
+        return
+    raise AssertionError("expected FileNotFoundError")
+
+
+def test_load_rollup_inputs_returns_indexes_when_present(tmp_path: Path):
+    nodes = tmp_path / "nodes"
+    nodes.mkdir()
+    (nodes / "_index").mkdir()
+    (nodes / "_index" / "dependents.json").write_text(json.dumps({
+        "schema_version": 1,
+        "by_target": {
+            "concorda-api::models/boat_crew.py::BoatCrew": [
+                {"source": "concorda-api::services/x.py::y", "via": "import"}
+            ]
+        },
+    }))
+    (nodes / "models").mkdir()
+    (nodes / "models" / "boat_crew.json").write_text(json.dumps({
+        "id": "concorda-api::models/boat_crew.py::BoatCrew",
+        "kind": "model",
+        "signature": {"kind": "model", "name": "BoatCrew", "tablename": "boat_crew"},
+        "source": {"repo": "concorda-api", "path": "models/boat_crew.py"},
+        "title": "BoatCrew",
+    }))
+    inputs = load_rollup_inputs(tmp_path)
+    assert isinstance(inputs, RollupInputs)
+    assert "concorda-api::models/boat_crew.py::BoatCrew" in inputs.depgraph_index
+    assert "concorda-api::models/boat_crew.py::BoatCrew" in inputs.dependents_index
