@@ -570,6 +570,26 @@ def nodes_for_repo(basename: str, kind: str | None = None, state: str | None = N
     return out
 
 
+def nodes_for_repo_grouped(basename: str, kind: str | None = None, state: str | None = None) -> list[dict]:
+    """Like nodes_for_repo, but cluster by source.path. Returns:
+        [{"path": "<relative path>", "nodes": [<flat-shape dicts>]}, ...]
+    Sorted by path. Nodes within a path keep nodes_for_repo's sort order
+    (highest fan_out first). Nodes without a source.path land under a
+    synthetic "(no path)" group at the end.
+    """
+    flat = nodes_for_repo(basename, kind=kind, state=state)
+    by_path: dict[str, list[dict]] = {}
+    for n in flat:
+        # n["src"] is "<repo>/<path>"; recover just the path tail
+        repo_prefix = f"{basename}/"
+        path = n["src"][len(repo_prefix):] if n["src"].startswith(repo_prefix) else (n["src"] or "(no path)")
+        by_path.setdefault(path, []).append(n)
+    sorted_paths = sorted([p for p in by_path if p != "(no path)"])
+    if "(no path)" in by_path:
+        sorted_paths.append("(no path)")
+    return [{"path": p, "nodes": by_path[p]} for p in sorted_paths]
+
+
 def nodes_for_kind(kind_name: str, subkind: str | None = None, state: str | None = None) -> list[dict]:
     """Logigraph nodes of one kind (rules / domain / processes). Subkind
     filter applies to domain (role / resource / attribute / relationship)."""

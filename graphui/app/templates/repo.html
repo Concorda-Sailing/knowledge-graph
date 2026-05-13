@@ -37,22 +37,30 @@
   {% endfor %}
 </div>
 
-{% if nodes %}
-<div class="node-cards">
-  {% for n in nodes %}
-  <a href="{{ n.href }}" class="node-card">
-    <div class="node-card-title">{{ n.title }}</div>
-    <div class="node-card-meta">
-      <span class="node-card-kind">{{ n.kind }}</span>
-      {% if n.fan_out %}<span class="node-card-deps">{{ n.fan_out }} dep{{ '' if n.fan_out == 1 else 's' }}</span>{% endif %}
-    </div>
-    <div class="node-card-foot">
-      <span class="state-chip state-chip-{{ n.state }}">{{ '⚠ ' if n.state == 'stale' else '' }}{{ n.state }}</span>
-      <span class="node-card-id">{{ n.id }}</span>
-    </div>
-  </a>
-  {% endfor %}
+{% if groups %}
+{% for g in groups %}
+<div class="repo-file-group">
+  <h3 class="repo-file-header">
+    <code>{{ g.path }}</code>
+    <span class="repo-file-count">{{ g.nodes|length }}</span>
+  </h3>
+  <div class="node-cards">
+    {% for n in g.nodes %}
+    <a href="{{ n.href }}" class="node-card">
+      <div class="node-card-title">{{ n.title }}</div>
+      <div class="node-card-meta">
+        <span class="node-card-kind">{{ n.kind }}</span>
+        {% if n.fan_out %}<span class="node-card-deps">{{ n.fan_out }} dep{{ '' if n.fan_out == 1 else 's' }}</span>{% endif %}
+      </div>
+      <div class="node-card-foot">
+        <span class="state-chip state-chip-{{ n.state }}">{{ '⚠ ' if n.state == 'stale' else '' }}{{ n.state }}</span>
+        <span class="node-card-id">{{ n.id }}</span>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
 </div>
+{% endfor %}
 {% else %}
 <p class="empty">No nodes match the current filters.</p>
 {% endif %}

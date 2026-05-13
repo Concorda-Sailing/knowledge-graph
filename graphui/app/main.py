@@ -148,7 +148,8 @@ def repo_detail(
     state: str | None = None,
 ) -> HTMLResponse:
     """One source repo, optionally filtered by kind + state. Cards, not table."""
-    nodes = loader.nodes_for_repo(basename, kind=kind, state=state)
+    groups = loader.nodes_for_repo_grouped(basename, kind=kind, state=state)
+    node_count = sum(len(g["nodes"]) for g in groups)
     summary_entry = next(
         (r for r in loader.repo_summary() if r["basename"] == basename),
         None,
@@ -161,7 +162,8 @@ def repo_detail(
         {
             "basename": basename,
             "summary": summary_entry,
-            "nodes": nodes,
+            "groups": groups,
+            "node_count": node_count,
             "kind_filter": kind,
             "state_filter": state,
             "meta": loader.load_meta(),
