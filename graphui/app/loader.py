@@ -1574,3 +1574,64 @@ def repo_areas(basename: str) -> list[dict]:
         {"dir": d, "node_count": c}
         for d, c in sorted(counts.items(), key=lambda kv: kv[1], reverse=True)
     ]
+
+
+def repo_dep_counts(basename: str) -> dict:
+    """Compute three counts:
+      - inbound_repos: # of other tracked repos with nodes whose dependents
+        index points into a node belonging to `basename`.
+      - outbound_repos: # of other tracked repos whose nodes are referenced
+        by nodes in `basename` (via the by_target dependents index — symmetric).
+      - external_pkgs: # of packages declared in `basename/package.json` deps
+        + `basename/requirements.txt` lines + `basename/pyproject.toml` deps.
+    """
+    inbound: set[str] = set()
+    outbound: set[str] = set()
+    dependents = load_dependents()  # by_target: target_id -> [dependent dicts]
+    nodes = load_depgraph_nodes()
+    in_my_repo = {n["id"] for n in nodes if (n.get("source") or {}).get("repo") == basename}
+    for target_id, dependers in dependents.items():
+        target_repo = target_id.split("::", 1)[0]
+        for d in dependers:
+            dep_repo = (d.get("id") or "").split("::", 1)[0]
+            if not dep_repo or dep_repo == target_repo:
+                continue
+            if target_repo == basename and dep_repo != basename:
+                inbound.add(dep_repo)
+            if dep_repo == basename and target_repo != basename:
+                outbound.add(target_repo)
+
+    ext = 0
+    repo = _repo_path(basename)
+    if repo is not None:
+        pkg = repo / "package.json"
+        if pkg.exists():
+            try:
+                row = json.loads(pkg.read_text())
+                ext += len(row.get("dependencies") or {})
+                ext += len(row.get("devDependencies") or {})
+            except (OSError, json.JSONDecodeError):
+                pass
+        reqs = repo / "requirements.txt"
+        if reqs.exists():
+            ext += sum(
+                1 for l in reqs.read_text(errors="ignore").splitlines()
+                if l.strip() and not l.strip().startswith("#")
+            )
+        pyproj = repo / "pyproject.toml"
+        if pyproj.exists():
+            txt = pyproj.read_text(errors="ignore")
+            # crude: count lines under a [project] dependencies array; good enough for v1.
+            in_deps = False
+            for line in txt.splitlines():
+                s = line.strip()
+                if s.startswith("dependencies"):
+                    in_deps = True
+                    continue
+                if in_deps:
+                    if s.startswith("]"):
+                        in_deps = False
+                        continue
+                    if s.startswith('"') or s.startswith("'"):
+                        ext += 1
+    return {"inbound_repos": len(inbound), "outbound_repos": len(outbound), "external_pkgs": ext}

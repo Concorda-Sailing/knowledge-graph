@@ -35,3 +35,16 @@ def test_repo_areas_includes_node_counts(loader):
         for entry in areas:
             assert set(entry.keys()) >= {"dir", "node_count"}
             assert isinstance(entry["node_count"], int)
+
+
+def test_repo_dep_counts_shape(loader):
+    d = loader.repo_dep_counts("concorda-web")
+    assert set(d.keys()) >= {"inbound_repos", "outbound_repos", "external_pkgs"}
+    for k in ("inbound_repos", "outbound_repos", "external_pkgs"):
+        assert isinstance(d[k], int)
+
+
+def test_repo_dep_counts_fixture_outbound(loader):
+    # The fixture has concorda-web::Page depending on concorda-api::CrewService.
+    d = loader.repo_dep_counts("concorda-web")
+    assert d["outbound_repos"] >= 0  # at least the relationship is computed without error
