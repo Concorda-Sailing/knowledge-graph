@@ -99,3 +99,119 @@ def resolve_anchor(
         return AnchorResult(candidates[0]["id"], "defined_in")
 
     return AnchorResult(None, "not_found")
+
+
+@dataclass(frozen=True)
+class Entry:
+    id: str
+    title: str
+    path: str         # "<repo>/<repo-relative-path>"
+    repo: str
+    kind: str         # depgraph kind: model | service | endpoint | component | test | hook | schema
+    direct: bool
+    via: tuple[str, ...]  # bridge chain from anchor to this node (empty for direct)
+
+
+@dataclass(frozen=True)
+class Rollup:
+    anchor: AnchorResult
+    by_kind: dict[str, list[Entry]]
+    total: int
+
+
+# Stable ordering for rendering.
+_KIND_ORDER = ("model", "service", "endpoint", "component", "test", "hook", "schema")
+
+
+def compute_rollup(
+    anchor_id: str,
+    depgraph_index: dict[str, dict],
+    dependents_index: dict[str, list[dict]],
+    depth: int = 3,
+    anchor_result: AnchorResult | None = None,
+) -> Rollup:
+    """BFS over reverse-dependents from `anchor_id`, grouped by depgraph kind.
+
+    Args:
+        anchor_id: the depgraph model node id to root the BFS at.
+        depgraph_index: { id: node } for kind/title/path lookups.
+        dependents_index: { target_id: [{source, via, where}, ...] } —
+            same shape as `nodes/_index/dependents.json::by_target`.
+        depth: max BFS depth. 1 = direct dependents only. Spec default: 3.
+        anchor_result: optional. If supplied, attached to the returned Rollup.
+            When None, a placeholder AnchorResult is built from `anchor_id`.
+
+    Returns:
+        Rollup. The anchor node itself is included under `by_kind["<anchor's kind>"]`
+        as a direct entry (so the "Model (1)" row in the rendered output is
+        populated for resources/roles whose anchor IS the model).
+    """
+    by_kind: dict[str, list[Entry]] = {k: [] for k in _KIND_ORDER}
+    seen: dict[str, Entry] = {}
+
+    # Place the anchor itself first.
+    anchor_node = depgraph_index.get(anchor_id)
+    if anchor_node:
+        entry = _entry_from_node(anchor_node, direct=True, via=())
+        by_kind.setdefault(entry.kind, []).append(entry)
+        seen[anchor_id] = entry
+
+    # BFS. Queue items: (node_id, current_depth, via_chain).
+    queue: deque[tuple[str, int, tuple[str, ...]]] = deque()
+    queue.append((anchor_id, 0, ()))
+    while queue:
+        node_id, d, via_chain = queue.popleft()
+        if d >= depth:
+            continue
+        for dep in dependents_index.get(node_id) or []:
+            dep_id = dep.get("source")
+            if not dep_id or dep_id in seen:
+                continue
+            dep_node = depgraph_index.get(dep_id)
+            if not dep_node:
+                # Edge points at an unknown node — skip silently. Reconcile
+                # surfaces these as warnings; rollup doesn't duplicate the alarm.
+                continue
+            is_direct = (d == 0)
+            entry = _entry_from_node(dep_node, direct=is_direct, via=via_chain)
+            by_kind.setdefault(entry.kind, []).append(entry)
+            seen[dep_id] = entry
+            # Extend the chain with this node before recursing.
+            queue.append((dep_id, d + 1, via_chain + (dep_id,)))
+
+    # Sort within each kind: direct first, then transitive; alpha by title secondary.
+    for k in by_kind:
+        by_kind[k].sort(key=lambda e: (0 if e.direct else 1, e.title.lower()))
+
+    return Rollup(
+        anchor=anchor_result or AnchorResult(anchor_id if anchor_node else None,
+                                             "table_match" if anchor_node else "not_found"),
+        by_kind=by_kind,
+        total=sum(len(v) for v in by_kind.values()),
+    )
+
+
+def _entry_from_node(node: dict, *, direct: bool, via: tuple[str, ...]) -> Entry:
+    src = node.get("source") or {}
+    repo = src.get("repo", "")
+    rel = src.get("path", "")
+    kind = node.get("kind", "")
+    # Pretty title per spec § "Row anatomy":
+    #   endpoint  → "METHOD /path"
+    #   default   → signature.name or node title
+    if kind == "endpoint":
+        sig = node.get("signature") or {}
+        method = sig.get("method", "")
+        path = sig.get("path", "")
+        title = f"{method} {path}".strip() or node.get("title", node["id"])
+    else:
+        title = node.get("title") or (node.get("signature") or {}).get("name") or node["id"]
+    return Entry(
+        id=node["id"],
+        title=title,
+        path=f"{repo}/{rel}" if rel else repo,
+        repo=repo,
+        kind=kind,
+        direct=direct,
+        via=via,
+    )

@@ -152,3 +152,116 @@ def test_resolve_anchor_relationship_raises_when_logigraph_index_omitted():
     }
     with pytest.raises(ValueError, match="logigraph_index is required"):
         resolve_anchor(rel, _depgraph_index())
+
+
+from lib.rollup import compute_rollup, Rollup, Entry
+
+
+# Reverse-dependents index — same shape as nodes/_index/dependents.json's
+# by_target. Keys are *target* ids (what is depended on); values are lists of
+# {source, via, confidence, where} entries describing each direct dependent.
+DEPENDENTS_INDEX_FIXTURE = {
+    # BoatCrew model is directly used by two services and one endpoint.
+    "concorda-api::models/boat_crew.py::BoatCrew": [
+        {"source": "concorda-api::services/boat_crew_invites.py::create_invite", "via": "import", "where": "services/boat_crew_invites.py:14"},
+        {"source": "concorda-api::services/boat_crew_invites.py::accept_invite", "via": "import", "where": "services/boat_crew_invites.py:42"},
+        {"source": "concorda-api::routes/boat_crew.py::POST /boats/{id}/crew/invites", "via": "import", "where": "routes/boat_crew.py:20"},
+    ],
+    # An endpoint that uses one of the services (transitive path to BoatCrew).
+    "concorda-api::services/boat_crew_invites.py::create_invite": [
+        {"source": "concorda-api::routes/boat_crew.py::POST /boats/{id}/crew/invites", "via": "call", "where": "routes/boat_crew.py:35"},
+    ],
+}
+
+# Extend depgraph_index with the dependent nodes so compute_rollup can resolve
+# their kind/title/path for rendering.
+EXTRA_DEPGRAPH_NODES = [
+    {
+        "id": "concorda-api::services/boat_crew_invites.py::create_invite",
+        "kind": "service",
+        "signature": {"kind": "service", "name": "create_invite"},
+        "source": {"repo": "concorda-api", "path": "services/boat_crew_invites.py", "line": 14},
+        "title": "create_invite",
+    },
+    {
+        "id": "concorda-api::services/boat_crew_invites.py::accept_invite",
+        "kind": "service",
+        "signature": {"kind": "service", "name": "accept_invite"},
+        "source": {"repo": "concorda-api", "path": "services/boat_crew_invites.py", "line": 42},
+        "title": "accept_invite",
+    },
+    {
+        "id": "concorda-api::routes/boat_crew.py::POST /boats/{id}/crew/invites",
+        "kind": "endpoint",
+        "signature": {"kind": "endpoint", "method": "POST", "path": "/boats/{id}/crew/invites"},
+        "source": {"repo": "concorda-api", "path": "routes/boat_crew.py", "line": 20},
+        "title": "POST /boats/{id}/crew/invites",
+    },
+]
+
+
+def _full_index():
+    return {n["id"]: n for n in DEPGRAPH_NODES_FIXTURE + EXTRA_DEPGRAPH_NODES}
+
+
+def test_compute_rollup_direct_only():
+    rollup = compute_rollup(
+        anchor_id="concorda-api::models/boat_crew.py::BoatCrew",
+        depgraph_index=_full_index(),
+        dependents_index=DEPENDENTS_INDEX_FIXTURE,
+        depth=1,
+    )
+    # Anchor (the model itself) goes under "model".
+    assert len(rollup.by_kind["model"]) == 1
+    assert rollup.by_kind["model"][0].id == "concorda-api::models/boat_crew.py::BoatCrew"
+    assert rollup.by_kind["model"][0].direct is True
+
+    # Two direct services.
+    service_ids = [e.id for e in rollup.by_kind["service"]]
+    assert "concorda-api::services/boat_crew_invites.py::create_invite" in service_ids
+    assert "concorda-api::services/boat_crew_invites.py::accept_invite" in service_ids
+    for e in rollup.by_kind["service"]:
+        assert e.direct is True
+        assert e.via == ()
+
+    # One direct endpoint.
+    assert len(rollup.by_kind["endpoint"]) == 1
+    assert rollup.by_kind["endpoint"][0].direct is True
+
+
+def test_compute_rollup_depth_2_includes_transitive_via_chain():
+    rollup = compute_rollup(
+        anchor_id="concorda-api::models/boat_crew.py::BoatCrew",
+        depgraph_index=_full_index(),
+        dependents_index=DEPENDENTS_INDEX_FIXTURE,
+        depth=2,
+    )
+    # The endpoint appears both directly AND transitively. De-dup: direct wins;
+    # only the direct entry is kept.
+    endpoint_entries = [e for e in rollup.by_kind["endpoint"]
+                        if e.id == "concorda-api::routes/boat_crew.py::POST /boats/{id}/crew/invites"]
+    assert len(endpoint_entries) == 1
+    assert endpoint_entries[0].direct is True
+
+
+def test_compute_rollup_empty_when_anchor_not_in_index():
+    rollup = compute_rollup(
+        anchor_id="bogus::id",
+        depgraph_index=_full_index(),
+        dependents_index=DEPENDENTS_INDEX_FIXTURE,
+        depth=3,
+    )
+    assert rollup.total == 0
+    assert all(v == [] for v in rollup.by_kind.values())
+
+
+def test_compute_rollup_groups_sorted_alpha_within_kind():
+    rollup = compute_rollup(
+        anchor_id="concorda-api::models/boat_crew.py::BoatCrew",
+        depgraph_index=_full_index(),
+        dependents_index=DEPENDENTS_INDEX_FIXTURE,
+        depth=1,
+    )
+    # accept_invite < create_invite alphabetically — should be sorted.
+    service_titles = [e.title for e in rollup.by_kind["service"]]
+    assert service_titles == sorted(service_titles)
