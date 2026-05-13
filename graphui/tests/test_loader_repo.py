@@ -48,3 +48,16 @@ def test_repo_dep_counts_fixture_outbound(loader):
     # The fixture has concorda-web::Page depending on concorda-api::CrewService.
     d = loader.repo_dep_counts("concorda-web")
     assert d["outbound_repos"] >= 0  # at least the relationship is computed without error
+
+
+def test_repo_cross_cuts_shape(loader):
+    c = loader.repo_cross_cuts("concorda-web")
+    assert set(c.keys()) >= {"rules", "processes", "domain"}
+    assert isinstance(c["rules"], list)
+    # The fixture has rule::category::example claiming concorda-web::app/page.tsx::Page.
+    assert "rule::category::example" in c["rules"]
+
+
+def test_repo_cross_cuts_empty_for_unknown(loader):
+    c = loader.repo_cross_cuts("ghost-repo")
+    assert c["rules"] == [] and c["processes"] == [] and c["domain"] == []

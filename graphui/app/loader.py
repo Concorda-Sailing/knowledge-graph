@@ -1635,3 +1635,39 @@ def repo_dep_counts(basename: str) -> dict:
                     if s.startswith('"') or s.startswith("'"):
                         ext += 1
     return {"inbound_repos": len(inbound), "outbound_repos": len(outbound), "external_pkgs": ext}
+
+
+def repo_cross_cuts(basename: str) -> dict:
+    """List the rule/process/domain ids that touch any node in `basename`.
+    Returns id-lists (not counts) so the repo card can name a few inline."""
+    lg = load_logigraph_nodes()
+    rule_ids: set[str] = set()
+    proc_ids: set[str] = set()
+    domain_ids: set[str] = set()
+
+    for r in lg["rules"]:
+        for c in r.get("claims_code", []) or []:
+            did = c.get("depgraph_id") or ""
+            if did.startswith(f"{basename}::"):
+                rule_ids.add(r["id"])
+                for ref in (r.get("references_domain") or []):
+                    domain_ids.add(ref)
+                break
+    for p in lg["processes"]:
+        for step in p.get("steps", []) or []:
+            hit = False
+            for c in step.get("claims_code", []) or []:
+                did = c.get("depgraph_id") or ""
+                if did.startswith(f"{basename}::"):
+                    proc_ids.add(p["id"])
+                    for ref in (step.get("references_domain") or []):
+                        domain_ids.add(ref)
+                    hit = True
+                    break
+            if hit:
+                break
+    return {
+        "rules": sorted(rule_ids),
+        "processes": sorted(proc_ids),
+        "domain": sorted(domain_ids),
+    }
