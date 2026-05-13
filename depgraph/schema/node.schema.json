@@ -17,7 +17,7 @@
       "description": "Stable, location-independent identity. For endpoints: METHOD::/path/with/{params}. For components/hooks: package::ExportedName. For models: app::ClassName. Path/file moves do NOT change the id."
     },
     "kind": {
-      "enum": ["endpoint", "component", "hook", "service", "model", "test", "schema"],
+      "enum": ["endpoint", "route_call", "component", "hook", "service", "model", "test", "schema"],
       "description": "The category that picks which dossier folder applies and which extractor owns it."
     },
     "title": {
@@ -45,6 +45,10 @@
       "properties": {
         "method": { "type": ["string", "null"] },
         "path": { "type": ["string", "null"] },
+        "url_pattern": {
+          "type": ["string", "null"],
+          "description": "For route_call nodes: the HTTP URL pattern after stripping any base-URL placeholder. Variable segments use the token <var> (e.g. /api/events/<var>/import). Reconcile normalizes endpoint paths to the same shape for matching."
+        },
         "auth": { "anyOf": [{"enum": ["none", "user", "admin", "agent_token", "internal"]}, {"type": "null"}] },
         "request_schema_ref": { "type": ["string", "null"] },
         "response_schema_ref": { "type": ["string", "null"] },
