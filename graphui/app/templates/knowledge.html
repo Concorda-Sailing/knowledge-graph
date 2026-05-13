@@ -77,7 +77,7 @@
     <tbody>
       {% for n in items %}
       <tr class="knowledge-row">
-        <td><input type="checkbox" class="row-sel" data-id="{{ n.id }}" data-kind="{{ n.kind }}" data-state="{{ n.state }}"></td>
+        <td>{% if n.state == "llm_drafted" %}<input type="checkbox" class="row-sel" data-id="{{ n.id }}" data-kind="{{ n.kind }}" data-state="{{ n.state }}">{% endif %}</td>
         <td><a href="{{ n.href }}" class="knowledge-title">{{ n.title }}</a>
           {% if n.summary %}<div class="knowledge-summary">{{ n.summary }}</div>{% endif %}
         </td>
