@@ -36,6 +36,7 @@ LOGIGRAPH_BIN = Path(
 
 # Node-id prefixes used to route bump requests to the right CLI.
 _LOGIGRAPH_RULE_PREFIX = "rule::"
+_LOGIGRAPH_PROCESS_PREFIX = "process::"
 _LOGIGRAPH_DOMAIN_PREFIXES = (
     "role::", "resource::", "attribute::", "relationship::", "action::",
 )
@@ -508,12 +509,16 @@ async def bump_dossier(request: Request) -> JSONResponse:
         raise HTTPException(400, f"unsupported status: {ui_status}")
 
     is_rule = node_id.startswith(_LOGIGRAPH_RULE_PREFIX)
+    is_process = node_id.startswith(_LOGIGRAPH_PROCESS_PREFIX)
     is_domain = any(node_id.startswith(p) for p in _LOGIGRAPH_DOMAIN_PREFIXES)
 
     if is_rule:
         # Logigraph rule-bump takes the status as a positional-style enum.
         lg_status = "human_reviewed" if ui_status == "current" else ui_status
         cmd = [str(LOGIGRAPH_BIN), "rule-bump", node_id, "--status", lg_status]
+    elif is_process:
+        lg_status = "human_reviewed" if ui_status == "current" else ui_status
+        cmd = [str(LOGIGRAPH_BIN), "process-bump", node_id, "--status", lg_status]
     elif is_domain:
         lg_status = "human_reviewed" if ui_status == "current" else ui_status
         cmd = [str(LOGIGRAPH_BIN), "domain-bump", node_id, "--status", lg_status]
