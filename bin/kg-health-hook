@@ -69,6 +69,51 @@ def check_project(label: str, root: Path) -> tuple[bool, str]:
         if rc != 0:
             any_problem = True
 
+    # ---- cascade issues ----------------------------------------------------
+    # kg-prepush-cascade writes failure events into each corpus's
+    # telemetry/cascade-issues.jsonl when a regen/commit/push step fails.
+    # Surface entries from the last 24h so I can address them with the user.
+    issue_lines: list[str] = []
+    for dir_ in (depgraph_dir, logigraph_dir):
+        log_path = dir_ / "telemetry" / "cascade-issues.jsonl"
+        if not log_path.exists():
+            continue
+        try:
+            content = log_path.read_text()
+        except OSError:
+            continue
+        import datetime as _dt
+        cutoff = _dt.datetime.utcnow() - _dt.timedelta(hours=24)
+        recent = []
+        for raw in content.splitlines():
+            raw = raw.strip()
+            if not raw:
+                continue
+            try:
+                ev = json.loads(raw)
+                ts = _dt.datetime.strptime(ev.get("ts", ""), "%Y-%m-%dT%H:%M:%SZ")
+            except (json.JSONDecodeError, ValueError):
+                continue
+            if ts < cutoff:
+                continue
+            recent.append(ev)
+        if recent:
+            issue_lines.append(f"### Cascade issues in {dir_.name} (last 24h)")
+            for ev in recent[-10:]:  # cap at 10 most recent
+                issue_lines.append(
+                    f"- [{ev.get('ts','?')}] **{ev.get('kind','?')}** "
+                    f"from `{ev.get('target_repo','?')}@{ev.get('target_sha','?')}`: "
+                    f"{ev.get('message','?')}"
+                )
+    if issue_lines:
+        any_problem = True
+        lines.append("\n## ⚠ Unaddressed cascade failures\n")
+        lines.extend(issue_lines)
+        lines.append(
+            "\n_Address with the user: investigate root cause, propose a fix, "
+            "and clear the log when resolved (`> telemetry/cascade-issues.jsonl`)._"
+        )
+
     return any_problem, "\n".join(lines).strip() + "\n"
 
 

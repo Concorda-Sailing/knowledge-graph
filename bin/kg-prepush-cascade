@@ -29,6 +29,39 @@ KG_CASCADE_BRANCH="${KG_CASCADE_BRANCH:-main}"
 err() { printf "  ⚠ kg-cascade: %s\n" "$*" >&2; }
 say() { printf "  ↻ kg-cascade: %s\n" "$*" >&2; }
 
+# Persist failure events so Claude's SessionStart hook can surface them
+# next time the user opens a Claude Code session. Telemetry/ is already
+# gitignored in the corpus repos so these don't pollute commits.
+report_issue() {
+    local kind="$1"
+    local message="$2"
+    local target_repo="${3:-}"
+    local target_sha="${4:-}"
+    local ts
+    ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+    local entry
+    entry=$(python3 -c "
+import json, sys
+print(json.dumps({
+    'ts': sys.argv[1],
+    'kind': sys.argv[2],
+    'message': sys.argv[3],
+    'target_repo': sys.argv[4],
+    'target_sha': sys.argv[5],
+}))
+" "$ts" "$kind" "$message" "$target_repo" "$target_sha" 2>/dev/null) || return 0
+    for KG_DIR in "${KG_DEPGRAPH_DIR:-}" "${KG_LOGIGRAPH_DIR:-}"; do
+        [ -n "$KG_DIR" ] && [ -d "$KG_DIR" ] || continue
+        mkdir -p "$KG_DIR/telemetry"
+        printf '%s\n' "$entry" >>"$KG_DIR/telemetry/cascade-issues.jsonl"
+    done
+    err "$message"
+}
+
+target_repo=$(git rev-parse --show-toplevel 2>/dev/null || echo "?")
+target_sha=$(git rev-parse --short HEAD 2>/dev/null || echo "?")
+target_name=$(basename "$target_repo")
+
 if [ -z "${KG_DEPGRAPH_DIR:-}" ] && [ -z "${KG_LOGIGRAPH_DIR:-}" ]; then
     err "no KG_DEPGRAPH_DIR or KG_LOGIGRAPH_DIR exported; skipping"
     exit 0
@@ -38,9 +71,9 @@ fi
 if [ -n "${KG_DEPGRAPH_DIR:-}" ] && [ -d "$KG_DEPGRAPH_DIR" ]; then
     if command -v depgraph >/dev/null 2>&1; then
         DEPGRAPH_DATA_DIR="$KG_DEPGRAPH_DIR" depgraph regen >/dev/null 2>&1 \
-            || err "depgraph regen failed (continuing)"
+            || report_issue regen_failed "depgraph regen failed on push from $target_name" "$target_name" "$target_sha"
     else
-        err "depgraph CLI not in PATH; skipping"
+        report_issue tool_missing "depgraph CLI not in PATH at push time" "$target_name" "$target_sha"
     fi
 fi
 
@@ -50,9 +83,9 @@ if [ -n "${KG_LOGIGRAPH_DIR:-}" ] && [ -d "$KG_LOGIGRAPH_DIR" ]; then
         LOGIGRAPH_DATA_DIR="$KG_LOGIGRAPH_DIR" \
         DEPGRAPH_DATA_DIR="${KG_DEPGRAPH_DIR:-}" \
             logigraph regen >/dev/null 2>&1 \
-            || err "logigraph regen failed (continuing)"
+            || report_issue regen_failed "logigraph regen failed on push from $target_name" "$target_name" "$target_sha"
     else
-        err "logigraph CLI not in PATH; skipping"
+        report_issue tool_missing "logigraph CLI not in PATH at push time" "$target_name" "$target_sha"
     fi
 fi
 
@@ -63,7 +96,7 @@ for KG_DIR in "${KG_DEPGRAPH_DIR:-}" "${KG_LOGIGRAPH_DIR:-}"; do
         # corpus may be nested under a parent git repo (e.g. concorda/knowledge-graph/)
         # Walk up looking for the enclosing .git.
         if ! git -C "$KG_DIR" rev-parse --git-dir >/dev/null 2>&1; then
-            err "$KG_DIR is not inside a git repo; skipping"
+            report_issue not_a_git_repo "$KG_DIR is not inside a git repo" "$target_name" "$target_sha"
             continue
         fi
     }
@@ -71,7 +104,9 @@ for KG_DIR in "${KG_DEPGRAPH_DIR:-}" "${KG_LOGIGRAPH_DIR:-}"; do
         cd "$KG_DIR" || exit 0
         current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
         if [ "$current_branch" != "$KG_CASCADE_BRANCH" ]; then
-            err "$(basename "$KG_DIR") on branch '$current_branch', not '$KG_CASCADE_BRANCH'; skipping"
+            report_issue branch_mismatch \
+                "$(basename "$KG_DIR") on branch '$current_branch', expected '$KG_CASCADE_BRANCH'; cascade skipped — uncommitted regen output will not be pushed" \
+                "$target_name" "$target_sha"
             exit 0
         fi
         # Stage corpus changes only (avoid sweeping in stray files)
@@ -94,7 +129,9 @@ graph viewer reflects code at the time of push."
                 if git push --quiet 2>/dev/null; then
                     say "pushed regen cascade for $(basename "$KG_DIR")"
                 else
-                    err "push failed for $(basename "$KG_DIR") (continuing)"
+                    report_issue push_failed \
+                        "push of regen cascade failed for $(basename "$KG_DIR"); commit landed locally but remote is behind" \
+                        "$target_name" "$target_sha"
                 fi
             fi
         fi
