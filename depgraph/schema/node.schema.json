@@ -17,8 +17,8 @@
       "description": "Stable, location-independent identity. For endpoints: METHOD::/path/with/{params}. For components/hooks: package::ExportedName. For models: app::ClassName. Path/file moves do NOT change the id."
     },
     "kind": {
-      "enum": ["endpoint", "route_call", "component", "hook", "service", "model", "test", "schema"],
-      "description": "The category that picks which dossier folder applies and which extractor owns it."
+      "enum": ["endpoint", "route_call", "component", "hook", "service", "model", "test", "schema", "module"],
+      "description": "The category that picks which dossier folder applies and which extractor owns it. 'module' is a generic catch-all for framework self-graph files (knowledge-graph-meta) and other corpora where file-level granularity is the right unit."
     },
     "title": {
       "type": "string",
