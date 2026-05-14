@@ -28,6 +28,17 @@
 #                                             and rewrite project.toml paths.
 #                                             Re-runs hooks+systemd if --apply.
 #
+#   ./install.sh cascade <target-repo> \
+#                --depgraph <kg-depgraph-dir> \
+#                [--logigraph <kg-logigraph-dir>] [--apply]
+#                                             write a pre-push hook into
+#                                             <target-repo>/.git/hooks/pre-push
+#                                             that regenerates the KG and
+#                                             commits + pushes any KG changes
+#                                             when the target repo pushes.
+#                                             Run once per project repo
+#                                             tracked in depgraph project.toml.
+#
 #   ./install.sh bootstrap <project-dir>      one-shot: install tools + scaffold
 #                                             project (or use existing data) +
 #                                             apply hooks + apply systemd.
@@ -1029,6 +1040,75 @@ cmd_bootstrap() {
 DONE
 }
 
+cmd_cascade() {
+    # Install a pre-push hook in a target project repo that regenerates
+    # the knowledge graph, commits any KG changes, and pushes them when
+    # the target repo pushes.
+    local target_repo=""
+    local kg_depg=""
+    local kg_logg=""
+    local apply=0
+    local force=0
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --depgraph)  kg_depg="$2"; shift 2 ;;
+            --logigraph) kg_logg="$2"; shift 2 ;;
+            --apply)     apply=1; shift ;;
+            --force)     force=1; shift ;;
+            -*)          die "unknown flag: $1" ;;
+            *)           if [[ -z "$target_repo" ]]; then target_repo="$1"; shift
+                         else die "unexpected arg: $1"; fi ;;
+        esac
+    done
+
+    [[ -n "$target_repo" ]] || die "usage: install.sh cascade <target-repo> --depgraph <dir> [--logigraph <dir>] [--apply]"
+    [[ -d "$target_repo/.git" ]] || die "$target_repo is not a git repo"
+    [[ -n "$kg_depg" || -n "$kg_logg" ]] || die "at least one of --depgraph / --logigraph must be supplied"
+    [[ -z "$kg_depg" || -d "$kg_depg" ]] || die "depgraph dir not found: $kg_depg"
+    [[ -z "$kg_logg" || -d "$kg_logg" ]] || die "logigraph dir not found: $kg_logg"
+
+    # Locate the cascade script. Resolve from this install.sh's location so
+    # it works against both the source checkout and the installed target.
+    local script_path
+    script_path="$(cd "$(dirname "$0")" && pwd)/bin/kg-prepush-cascade"
+    [[ -f "$script_path" ]] || die "kg-prepush-cascade script missing at $script_path"
+
+    local hook_path="$target_repo/.git/hooks/pre-push"
+    local generated
+    generated=$(cat <<EOF
+#!/bin/bash
+# pre-push hook installed by knowledge-graph install.sh cascade.
+# Cascades regen + commit + push to the KG corpora when this repo pushes.
+export KG_DEPGRAPH_DIR="${kg_depg}"
+export KG_LOGIGRAPH_DIR="${kg_logg}"
+exec "${script_path}" "\$@"
+EOF
+)
+
+    if [[ $apply -eq 0 ]]; then
+        printf '%s\n' "$generated"
+        log "(not written — pass --apply to install at $hook_path)"
+        return 0
+    fi
+
+    if [[ -e "$hook_path" && $force -eq 0 ]]; then
+        # If existing file already matches what we'd write, no-op
+        if [[ "$(cat "$hook_path")" == "$generated" ]]; then
+            ok "pre-push hook already in place: $hook_path"
+            return 0
+        fi
+        backup_file "$hook_path"
+        warn "existing pre-push hook backed up; pass --force to skip backup next time"
+    fi
+
+    printf '%s\n' "$generated" >"$hook_path"
+    chmod +x "$hook_path"
+    ok "installed pre-push hook: $hook_path"
+    log "  KG depgraph:  ${kg_depg:-(unset)}"
+    log "  KG logigraph: ${kg_logg:-(unset)}"
+}
+
+
 # ----- dispatch -------------------------------------------------------------
 
 main() {
@@ -1046,6 +1126,7 @@ main() {
         path)                   shift; cmd_path "$@" ;;
         install)                shift; cmd_install "$@" ;;
         migrate)                shift; cmd_migrate "$@" ;;
+        cascade)                shift; cmd_cascade "$@" ;;
         bootstrap)              shift; cmd_bootstrap "$@" ;;
         *)                      err "unknown command: $cmd"; usage; exit 1 ;;
     esac
