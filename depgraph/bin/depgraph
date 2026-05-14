@@ -1,0 +1,1476 @@
+#!/usr/bin/env python3
+"""
+depgraph — CLI entrypoint for regen, lookup, validation.
+
+Subcommands:
+  regen [--all|--since REF]    Run extractors and reconcile.
+  context <file-or-id>         Print the same block PreToolUse would inject.
+  dependents <id> [--depth N]  Walk the reverse graph from <id>.
+  orphans [--purge]            List/archive nodes whose source no longer exists.
+  validate [--strict]          JSON-Schema validate every node file.
+  self-check                   Smoke-test the hook/extractor pipeline.
+  flag <id> --reason "..."     Set flagged=true on a node; commits.
+  unflag <id>                  Clear flagged; commits.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import subprocess
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+# Tool location (where this script lives) — schemas, framework code.
+TOOL_ROOT = Path(__file__).resolve().parent.parent
+
+# Prefer the framework's own .venv python for subprocess calls that need
+# fastembed / numpy (reconcile.py runs the embedding pass). Fall back to
+# bare "python3" so the script still works on fresh checkouts without a venv.
+_VENV_PYTHON = TOOL_ROOT / ".venv" / "bin" / "python3"
+FRAMEWORK_PYTHON = str(_VENV_PYTHON) if _VENV_PYTHON.exists() else "python3"
+
+# Make the shared config helpers importable.
+sys.path.insert(0, str(TOOL_ROOT))
+from lib.config import (  # noqa: E402
+    resolve_data_dir,
+    load_project_config,
+    project_repos,
+    project_primary_repo,
+    primary_repo_path,
+    render_extractor,
+    repo_basenames,
+    repo_for_basename,
+    path_to_repo_relative,
+    basename_path_map,
+)
+
+# Project data location. Resolved from DEPGRAPH_DATA_DIR or by walking
+# cwd ancestors looking for project.toml + nodes/.
+DEPGRAPH = resolve_data_dir("DEPGRAPH_DATA_DIR")
+NODES = DEPGRAPH / "nodes"
+DEPENDENTS_INDEX = NODES / "_index" / "dependents.json"
+CORPUS_META = NODES / "_meta.json"
+TELEMETRY_DIR = DEPGRAPH / "telemetry"
+INJECTIONS_LOG = TELEMETRY_DIR / "injections.jsonl"
+ACKS_LOG = TELEMETRY_DIR / "acknowledgments.jsonl"
+
+
+def mark_regen_in_progress() -> None:
+    """Defect #2: write a regen marker so the hook can surface 'graph being
+    rebuilt' when an edit happens mid-regen, and so a crashed extractor leaves
+    a visible signal rather than a silently-torn graph. Reconcile rewrites
+    _meta.json with regen_status='complete' on success — if anything fails
+    between mark_regen_in_progress and reconcile finishing, the file stays at
+    'in_progress'."""
+    import datetime as _dt
+
+    NODES.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "schema_version": 1,
+        "regen_status": "in_progress",
+        "started_at": _dt.datetime.now(_dt.timezone.utc).isoformat(),
+    }
+    # Don't clobber the prior `complete` payload if it has more info — preserve
+    # what's there and override only the status fields.
+    if CORPUS_META.exists():
+        try:
+            existing = json.loads(CORPUS_META.read_text())
+            payload = {**existing, **payload}
+        except (OSError, json.JSONDecodeError):
+            pass
+    tmp = CORPUS_META.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(payload, indent=2, sort_keys=False) + "\n")
+    tmp.replace(CORPUS_META)
+
+
+def load_dependents_index() -> dict[str, list[dict]]:
+    """Read the reverse-edge index. Empty dict if not yet built."""
+    if not DEPENDENTS_INDEX.exists():
+        return {}
+    try:
+        idx = json.loads(DEPENDENTS_INDEX.read_text())
+    except (OSError, json.JSONDecodeError):
+        return {}
+    if idx.get("schema_version") != 1:
+        print(f"WARN: dependents index schema_version mismatch", file=sys.stderr)
+        return {}
+    return idx.get("by_target") or {}
+
+
+def cmd_regen(args: argparse.Namespace) -> int:
+    """Run each [repos.<key>].extractor from project.toml, then reconcile.
+    The legacy four-extractor dispatch table is gone — repos without an
+    extractor configured are skipped with a note.
+
+    Inject DEPGRAPH_DATA_DIR into the subprocess env so extractors target the
+    resolved data dir even when the user invoked `depgraph regen` via cwd
+    discovery rather than an explicit env var. Without this, extractors fall
+    back to their own (often stale) defaults and write to a different dir
+    than reconcile reads from — a silent failure mode."""
+    mark_regen_in_progress()
+    env = {**os.environ, "DEPGRAPH_DATA_DIR": str(DEPGRAPH)}
+    failed: list[str] = []
+    for key, info in project_repos(DEPGRAPH).items():
+        cmd = render_extractor(info, DEPGRAPH)
+        if cmd is None:
+            print(f"--- {key} (no extractor configured; skipping)")
+            continue
+        print(f"--- {key}")
+        rc = subprocess.call(cmd, env=env)
+        if rc != 0:
+            failed.append(key)
+    print("--- reconcile")
+    rc = subprocess.call([FRAMEWORK_PYTHON, str(TOOL_ROOT / "extractors" / "reconcile.py")], env=env)
+    if rc != 0:
+        failed.append("reconcile")
+    if failed:
+        print(f"\nFAILED stages: {', '.join(failed)}", file=sys.stderr)
+        return 1
+    return 0
+
+
+def find_nodes_for_target(target: str) -> list[Path]:
+    """If `target` is a file path, return nodes whose source.path matches.
+    Otherwise treat it as a node id. Node ids contain `::` separators
+    (e.g. `<repo>::models/foo.py::Bar` or `GET::/api/x`); a `/` in
+    the target alone isn't enough to treat it as a path.
+
+    Path matching looks up each repo's actual checkout from project.toml
+    rather than assuming ~/<basename>/ — projects with non-flat layouts
+    (e.g. ~/projects/<group>/<repo>/) need the config-driven lookup."""
+    out: list[Path] = []
+    is_id = "::" in target
+    abs_path = Path(target).expanduser().resolve() if "/" in target and not is_id else None
+    basename_to_path = {info["basename"]: info["path"] for info in project_repos(DEPGRAPH).values()}
+    for node_file in NODES.rglob("*.json"):
+        if node_file.name.startswith("_") or any(p.startswith("_") for p in node_file.parts):
+            continue
+        try:
+            data = json.loads(node_file.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        if abs_path:
+            src_repo = data.get("source", {}).get("repo", "")
+            src_rel = data.get("source", {}).get("path", "") or ""
+            repo_path = basename_to_path.get(src_repo)
+            if repo_path is None:
+                continue
+            cand = (repo_path / src_rel).resolve()
+            if cand == abs_path:
+                out.append(node_file)
+        else:
+            if data.get("id") == target:
+                out.append(node_file)
+    return out
+
+
+def cmd_context(args: argparse.Namespace) -> int:
+    matches = find_nodes_for_target(args.target)
+    if not matches:
+        print(f"no nodes match: {args.target}", file=sys.stderr)
+        return 1
+    dependents_index = load_dependents_index()
+    for path in matches:
+        data = json.loads(path.read_text())
+        print(f"# {data.get('title', data['id'])}")
+        print(f"id: {data['id']}  ·  kind: {data['kind']}  ·  hash: {data['structural_hash'][:12]}")
+        print(f"source: {data['source']['repo']}/{data['source']['path']}:{data['source'].get('line')}")
+        print()
+        print("## Direct dependents")
+        for d in dependents_index.get(data["id"]) or []:
+            print(f"  - {d['source']} (via {d.get('via','?')}, {d.get('confidence', 'exact')}, {d.get('where', '?')})")
+        if not dependents_index.get(data["id"]):
+            print("  _none_")
+        print()
+        dossier_rel = data.get("dossier")
+        if dossier_rel and (DEPGRAPH / dossier_rel).exists():
+            print("## Dossier")
+            print((DEPGRAPH / dossier_rel).read_text())
+        else:
+            print("## Dossier\n_missing_")
+        print()
+        warns = data.get("warnings") or []
+        if warns:
+            print("## Warnings")
+            for w in warns:
+                print(f"  - [{w['code']}] {w['message']}")
+            print()
+    return 0
+
+
+def cmd_dependents(args: argparse.Namespace) -> int:
+    dependents_index = load_dependents_index()
+    if not dependents_index:
+        print("dependents index not built — run `bin/depgraph regen`", file=sys.stderr)
+        return 1
+    seen: set[str] = set()
+    frontier = [(args.id, 0)]
+    while frontier:
+        nid, depth = frontier.pop(0)
+        if nid in seen or depth > args.depth:
+            continue
+        seen.add(nid)
+        prefix = "  " * depth + ("→ " if depth else "")
+        print(f"{prefix}{nid}")
+        for d in dependents_index.get(nid) or []:
+            frontier.append((d["source"], depth + 1))
+    return 0
+
+
+def cmd_orphans(args: argparse.Namespace) -> int:
+    orphans = []
+    basename_to_path = basename_path_map(DEPGRAPH)
+    for node_file in NODES.rglob("*.json"):
+        if node_file.name.startswith("_") or any(p.startswith("_") for p in node_file.parts):
+            continue
+        try:
+            data = json.loads(node_file.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        src = data.get("source") or {}
+        repo, rel = src.get("repo"), src.get("path")
+        # No source path at all → not an orphan, just an abstract node (rare).
+        if not repo or not rel:
+            continue
+        repo_path = basename_to_path.get(repo)
+        if repo_path is None:
+            continue  # Unknown repo — don't claim it's orphan.
+        if not (repo_path / rel).exists():
+            orphans.append((node_file, data["id"]))
+    if not orphans:
+        print("no orphans")
+        return 0
+    for path, nid in orphans:
+        print(f"orphan: {nid}  ({path.relative_to(DEPGRAPH)})")
+    if args.purge:
+        archive = NODES / "_archive"
+        archive.mkdir(exist_ok=True)
+        for path, _ in orphans:
+            target = archive / path.name
+            path.rename(target)
+            print(f"  archived → {target.relative_to(DEPGRAPH)}")
+    return 0
+
+
+def cmd_validate(args: argparse.Namespace) -> int:
+    try:
+        import jsonschema  # type: ignore[import-untyped]
+    except ImportError:
+        print("jsonschema not installed; install with: pip install jsonschema", file=sys.stderr)
+        return 1
+    # Schema travels with the tool framework; node data lives in DEPGRAPH.
+    schema = json.loads((TOOL_ROOT / "schema" / "node.schema.json").read_text())
+    bad = 0
+    for node_file in NODES.rglob("*.json"):
+        if node_file.name.startswith("_") or any(p.startswith("_") for p in node_file.parts):
+            continue
+        try:
+            data = json.loads(node_file.read_text())
+            jsonschema.validate(data, schema)
+        except (json.JSONDecodeError, jsonschema.ValidationError) as e:
+            print(f"INVALID {node_file}: {e}", file=sys.stderr)
+            bad += 1
+    if bad:
+        return 1
+    print("all nodes valid")
+    return 0
+
+
+def cmd_commit_summary(args: argparse.Namespace) -> int:
+    """Output a compact summary of touched tracked nodes for a commit body
+    trailer. Format is intentionally machine-greppable so blind spots can be
+    found later: any bug in a node that doesn't appear in any commit's
+    `Depgraph:` trailer is by definition unsurfaced.
+
+    No args → reads `git diff --name-only` (staged + unstaged).
+    With args → uses the given paths.
+    """
+    files: list[str] = list(args.files or [])
+    if not files:
+        try:
+            staged = subprocess.run(
+                ["git", "diff", "--cached", "--name-only"],
+                capture_output=True, text=True, check=False,
+            ).stdout.splitlines()
+            unstaged = subprocess.run(
+                ["git", "diff", "--name-only"],
+                capture_output=True, text=True, check=False,
+            ).stdout.splitlines()
+            files = sorted(set(staged + unstaged))
+        except FileNotFoundError:
+            print("git not available", file=sys.stderr)
+            return 1
+    if not files:
+        print("Depgraph: no files in diff (or none changed).")
+        return 0
+
+    # Resolve paths to absolute, then to (repo, rel) per project.toml repos.
+    home = Path.home()
+    by_id: dict[str, dict] = {}
+    by_source: dict[tuple[str, str], list[str]] = {}
+    for nf in NODES.rglob("*.json"):
+        if nf.name.startswith("_") or any(p.startswith("_") for p in nf.parts):
+            continue
+        try:
+            data = json.loads(nf.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        nid = data.get("id")
+        if not nid:
+            continue
+        by_id[nid] = data
+        src = data.get("source") or {}
+        repo, p = src.get("repo"), src.get("path")
+        if repo and p:
+            by_source.setdefault((repo, p), []).append(nid)
+
+    deps_index = load_dependents_index()
+
+    repos = list(project_repos(DEPGRAPH).values())
+
+    def _repo_relative(p: str) -> tuple[str, str] | None:
+        """Path → (basename, rel) by consulting [repos.*].path. Works for both
+        absolute paths and already-repo-relative paths regardless of layout."""
+        # If `p` is already a repo-relative path like "models/foo.py", probe
+        # each configured checkout for the file.
+        if not Path(p).is_absolute():
+            for info in repos:
+                if (info["path"] / p).exists():
+                    return info["basename"], p
+            # Also tolerate "<basename>/<rel>" style by checking the prefix.
+            for info in repos:
+                bn = info["basename"]
+                if p == bn or p.startswith(bn + "/"):
+                    return bn, p[len(bn) + 1:] if p != bn else ""
+            return None
+        rr = path_to_repo_relative(p, DEPGRAPH)
+        return rr
+
+    # Group nodes by source file so a 274-method api.ts shows once, not 274 times.
+    by_file: dict[str, list[str]] = {}
+    untracked_files: list[str] = []
+    for f in files:
+        rr = _repo_relative(f)
+        if not rr:
+            untracked_files.append(f)
+            continue
+        ids = by_source.get(rr) or []
+        if not ids:
+            untracked_files.append(f)
+            continue
+        by_file[f"{rr[0]}/{rr[1]}"] = ids
+
+    def _check_dossier(node: dict) -> str | None:
+        rel = node.get("dossier")
+        if not rel:
+            return None
+        dpath = DEPGRAPH / rel
+        if not dpath.exists():
+            return "missing-dossier"
+        text = dpath.read_text()
+        pinned = None
+        status = "current"
+        for line in text.splitlines():
+            s = line.strip()
+            if s.startswith("last_reviewed_against_hash:"):
+                pinned = s.split(":", 1)[1].strip().strip('"').strip("'")
+            if s.startswith("status:"):
+                status = s.split(":", 1)[1].strip()
+            if s == "---" and pinned is not None:
+                break
+        if pinned and pinned != node.get("structural_hash"):
+            return "stale-dossier"
+        if status == "unreviewed":
+            return "unreviewed-dossier"
+        return None
+
+    total_node_ids = sum(len(v) for v in by_file.values())
+    lines = ["Depgraph:"]
+    lines.append(
+        f"  changed: {len(files)} file(s), {total_node_ids} tracked node(s)"
+        + (f", {len(untracked_files)} untracked" if untracked_files else "")
+    )
+
+    high_impact: list[tuple[str, dict]] = []  # (id, node) for direct >= 5
+    all_warnings: set[str] = set()
+    grand_total_direct = 0
+    grand_total_fuzzy = 0
+
+    for fpath, ids in sorted(by_file.items()):
+        per_file_direct = 0
+        per_file_fuzzy = 0
+        per_file_warnings: set[str] = set()
+        for nid in ids:
+            node = by_id.get(nid, {})
+            direct = deps_index.get(nid) or []
+            fuzzy = sum(1 for d in direct if d.get("via") == "string_url" or d.get("confidence") in ("fuzzy", "inferred"))
+            per_file_direct += len(direct)
+            per_file_fuzzy += fuzzy
+            grand_total_direct += len(direct)
+            grand_total_fuzzy += fuzzy
+            for w in (node.get("warnings") or []):
+                code = w.get("code") or "?"
+                per_file_warnings.add(code)
+                all_warnings.add(code)
+            dossier_warn = _check_dossier(node)
+            if dossier_warn:
+                per_file_warnings.add(dossier_warn)
+                all_warnings.add(dossier_warn)
+            if len(direct) >= 5:
+                high_impact.append((nid, node))
+
+        # Per-file line: file path, node count, kind summary, direct deps
+        kinds = {by_id.get(nid, {}).get("kind", "?") for nid in ids}
+        kind_summary = ",".join(sorted(kinds))
+        warn_str = f", warnings={','.join(sorted(per_file_warnings))}" if per_file_warnings else ""
+        lines.append(
+            f"  - {fpath}: {len(ids)} {kind_summary} node(s)"
+            f", direct-deps={per_file_direct} (fuzzy={per_file_fuzzy})"
+            f"{warn_str}"
+        )
+
+    if high_impact:
+        lines.append("  high-impact (>=5 direct deps):")
+        # Sort by direct desc, top 10
+        scored = [(len(deps_index.get(nid) or []), nid) for nid, _ in high_impact]
+        scored.sort(reverse=True)
+        for n_direct, nid in scored[:10]:
+            lines.append(f"    {n_direct:>4}  {nid}")
+        if len(scored) > 10:
+            lines.append(f"    ... +{len(scored) - 10} more")
+
+    if untracked_files:
+        sample = ",".join(untracked_files[:5])
+        more = f" (+{len(untracked_files) - 5} more)" if len(untracked_files) > 5 else ""
+        lines.append(f"  untracked: {sample}{more}")
+
+    lines.append(
+        f"  totals: direct-deps={grand_total_direct} (fuzzy={grand_total_fuzzy}), "
+        f"warnings={','.join(sorted(all_warnings)) or 'none'}"
+    )
+
+    print("\n".join(lines))
+    return 0
+
+
+def cmd_memory_sync(args: argparse.Namespace) -> int:
+    """Mirror Claude's project memories from ~/.claude/.../memory/ into
+    the project's configured mirror dir (project.toml [memory] mirror,
+    relative to $HOME) for version control.
+
+    Refuses to mirror files containing plaintext credentials — replaces those
+    files with a redacted version that points back at the canonical path.
+    """
+    import re
+
+    # Claude encodes the project name by replacing path separators in $HOME.
+    home_encoded = str(Path.home()).replace("/", "-")
+    canonical = Path.home() / ".claude" / "projects" / home_encoded / "memory"
+
+    cfg = load_project_config(DEPGRAPH)
+    mirror_rel = (cfg.get("memory") or {}).get("mirror")
+    if not mirror_rel:
+        print(
+            "memory-sync: no [memory] mirror configured in project.toml — nothing to do.",
+            file=sys.stderr,
+        )
+        return 1
+    mirror = Path.home() / mirror_rel
+    if not canonical.exists():
+        print(f"canonical memory dir not found: {canonical}", file=sys.stderr)
+        return 1
+    mirror.mkdir(parents=True, exist_ok=True)
+
+    # Patterns that, if matched, force the line to be replaced with a
+    # placeholder. Conservative: false positives just mean the user has to
+    # re-read the canonical file when restoring. The patterns target real
+    # leakage shapes seen in this repo's memories so far.
+    line_patterns = [
+        # Backtick-quoted passwords ("password `hunter2`")
+        re.compile(r"password\s+`[^`]+`", re.IGNORECASE),
+        # YAML-style "password: value" (excludes REDACTED/null/unset placeholders)
+        re.compile(r"^\s*password:\s*(?!(?:REDACTED|null|unset|\s*$))[^\s].*", re.IGNORECASE),
+        # `user` / `value` ... creds — catches "Same `lgreenlee` / `in53cure` creds."
+        re.compile(r"`[^`]+`\s*/\s*`[^`]+`.*\b(creds|credentials|login)\b", re.IGNORECASE),
+        # Inline "user:pass@host" credential URLs
+        re.compile(r"://[^/\s:@]+:[^/\s@]+@", re.IGNORECASE),
+        # API key / token / secret literal patterns
+        re.compile(r"(api[_-]?key|secret|token)\s*[:=]\s*['\"][^'\"]{8,}['\"]", re.IGNORECASE),
+        re.compile(r"^-----BEGIN\s+(RSA|OPENSSH|EC|DSA|PRIVATE)"),
+        # AWS-style secrets
+        re.compile(r"AKIA[0-9A-Z]{16}"),
+    ]
+
+    def _redact_line(line: str, src_path: Path, line_no: int) -> str:
+        # Preserve the leading bullet / heading marker so the file structure
+        # stays readable; replace the value portion with a pointer.
+        prefix = ""
+        m = re.match(r"^(\s*[-*]\s+(?:\*\*[^*]+\*\*\s*[:.]?\s*)?|\s*#+\s+)", line)
+        if m:
+            prefix = m.group(1)
+        return (
+            prefix
+            + f"REDACTED — see canonical memory at `{src_path}` (line {line_no})"
+        )
+
+    written = 0
+    redacted_files: list[str] = []
+    for src in canonical.glob("*.md"):
+        text = src.read_text()
+        original_lines = text.splitlines(keepends=False)
+        had_match = False
+        rebuilt: list[str] = []
+        for line_no, line in enumerate(original_lines, 1):
+            matched = any(pat.search(line) for pat in line_patterns)
+            if matched:
+                had_match = True
+                rebuilt.append(_redact_line(line, src.relative_to(Path.home()), line_no))
+            else:
+                rebuilt.append(line)
+        new_text = "\n".join(rebuilt)
+        if text.endswith("\n"):
+            new_text += "\n"
+
+        dest = mirror / src.name
+        if had_match:
+            dest.write_text(new_text)
+            redacted_files.append(src.name)
+        else:
+            dest.write_text(text)
+        written += 1
+
+    # Detect deletions: files in mirror but not in canonical
+    canonical_names = {f.name for f in canonical.glob("*.md")}
+    stale = [f for f in mirror.glob("*.md") if f.name not in canonical_names and f.name != "README.md"]
+    for f in stale:
+        f.unlink()
+
+    print(f"memory-sync: wrote {written} file(s) to {mirror.relative_to(Path.home())}")
+    if redacted_files:
+        print(f"redacted: {len(redacted_files)} file(s)")
+        for name in redacted_files[:5]:
+            print(f"  - {name}")
+        if len(redacted_files) > 5:
+            print(f"  ... +{len(redacted_files) - 5} more")
+    if stale:
+        print(f"removed stale (no longer in canonical): {len(stale)}")
+        for f in stale[:5]:
+            print(f"  - {f.name}")
+
+    # Auto-commit the mirror so memory history is versioned end-to-end.
+    # Skip silently if the mirror isn't a git repo (legitimate config).
+    if (mirror / ".git").exists():
+        status = subprocess.run(
+            ["git", "-C", str(mirror), "status", "--porcelain"],
+            capture_output=True, text=True,
+        )
+        if status.returncode != 0:
+            print(
+                f"memory-sync: git status failed in mirror: {status.stderr.strip()}",
+                file=sys.stderr,
+            )
+        elif status.stdout.strip():
+            timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+            msg = f"auto-snapshot {timestamp}"
+            add = subprocess.run(
+                ["git", "-C", str(mirror), "add", "-A"],
+                capture_output=True, text=True,
+            )
+            if add.returncode != 0:
+                print(
+                    f"memory-sync: git add failed: {add.stderr.strip()}",
+                    file=sys.stderr,
+                )
+            else:
+                commit = subprocess.run(
+                    ["git", "-C", str(mirror), "commit", "-m", msg],
+                    capture_output=True, text=True,
+                )
+                if commit.returncode != 0:
+                    print(
+                        f"memory-sync: git commit failed: {commit.stderr.strip()}",
+                        file=sys.stderr,
+                    )
+                else:
+                    print(f"memory-sync: committed {msg}")
+    return 0
+
+
+def _dossier_state(node: dict) -> str:
+    """Return one of: 'current', 'unreviewed', 'stale', 'missing'."""
+    rel = node.get("dossier")
+    if not rel:
+        return "missing"
+    full = DEPGRAPH / rel
+    if not full.exists():
+        return "missing"
+    text = full.read_text()
+    pinned = None
+    status = "current"
+    for line in text.splitlines():
+        s = line.strip()
+        if s.startswith("status:"):
+            status = s.split(":", 1)[1].strip()
+        if s.startswith("last_reviewed_against_hash:"):
+            pinned = s.split(":", 1)[1].strip().strip('"').strip("'")
+        if s == "---" and pinned is not None:
+            break
+    if pinned and pinned != node.get("structural_hash"):
+        return "stale"
+    if status == "unreviewed":
+        return "unreviewed"
+    return "current"
+
+
+def _commits_touching(rel_path: str, repo: str, days: int = 30) -> int:
+    """Count commits in the last `days` that touched this file. Uses git log
+    in the source repo. Returns 0 if anything goes wrong (no repo, file
+    untracked, etc.). Resolves repo basename → checkout path via
+    project.toml."""
+    info = repo_for_basename(DEPGRAPH, repo)
+    if info is None:
+        return 0
+    repo_root = info["path"]
+    if not (repo_root / ".git").exists():
+        return 0
+    try:
+        out = subprocess.run(
+            ["git", "log", f"--since={days}.days.ago", "--oneline", "--", rel_path],
+            cwd=str(repo_root),
+            capture_output=True, text=True, timeout=10,
+        )
+        return len([l for l in out.stdout.splitlines() if l.strip()])
+    except (OSError, subprocess.SubprocessError):
+        return 0
+
+
+def _tier_of(fan_out: int) -> str:
+    if fan_out >= 10:
+        return "A"
+    if fan_out >= 3:
+        return "B"
+    return "C"
+
+
+def cmd_dossier_rank(args: argparse.Namespace) -> int:
+    """Rank unreviewed nodes by importance, so the next dossier batch is
+    chosen by leverage rather than alphabetical accident. Default scoring:
+    fan_out + 2 * commits_30d (recent activity weighted slightly higher
+    since recently-edited code is also more likely to be edited next)."""
+    deps_idx = load_dependents_index()
+
+    rows = []
+    for node_file in NODES.rglob("*.json"):
+        if node_file.name.startswith("_") or any(p.startswith("_") for p in node_file.parts):
+            continue
+        try:
+            data = json.loads(node_file.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        nid = data.get("id")
+        if not nid:
+            continue
+        state = _dossier_state(data)
+        if args.only_stale:
+            if state != "stale":
+                continue
+        elif args.only_unreviewed and state != "unreviewed":
+            continue
+        fan_out = len(deps_idx.get(nid) or [])
+        tier = _tier_of(fan_out)
+        if args.tier and tier != args.tier:
+            continue
+        # Skip test nodes from rank by default — test dossiers are rarely
+        # worth manual review (one-line "exercises X" suffices). Toggle
+        # --include-tests to surface them.
+        kind = data.get("kind", "")
+        if kind == "test" and not args.include_tests:
+            continue
+        src = data.get("source") or {}
+        repo = src.get("repo")
+        rel = src.get("path")
+        commits_30d = _commits_touching(rel, repo, days=30) if (repo and rel) else 0
+        score = fan_out + 2 * commits_30d
+        rows.append({
+            "score": score,
+            "fan_out": fan_out,
+            "commits_30d": commits_30d,
+            "tier": tier,
+            "kind": kind,
+            "state": state,
+            "id": nid,
+            "src": f"{repo}/{rel}" if (repo and rel) else "—",
+        })
+
+    rows.sort(key=lambda r: -r["score"])
+    if args.limit:
+        rows = rows[: args.limit]
+
+    print(f"{'#':>4}  {'fan':>4}  {'30d':>4}  {'tier':<4}  {'kind':<10}  {'state':<10}  {'id'}")
+    print("-" * 100)
+    for i, r in enumerate(rows, 1):
+        print(
+            f"{i:>4}  {r['fan_out']:>4}  {r['commits_30d']:>4}  {r['tier']:<4}  "
+            f"{r['kind']:<10}  {r['state']:<10}  {r['id']}"
+        )
+    print(f"\n  total: {len(rows)} nodes")
+    return 0
+
+
+def cmd_dossier_draft(args: argparse.Namespace) -> int:
+    """Prepare an LLM-drafting context bundle for one node. Outputs a
+    structured prompt with source code, dependents, recent git history,
+    and a strict authoring template. The user (or current Claude session)
+    feeds this into the Agent tool, saves the response to the dossier
+    path printed at the end, and bumps frontmatter status to llm_drafted.
+
+    v2 will fully automate the agent invocation; v1 is two-step so
+    each draft can be eyeballed before landing."""
+    # Find the node by id or by file path
+    matches = find_nodes_for_target(args.target)
+    if not matches:
+        print(f"no nodes match: {args.target}", file=sys.stderr)
+        return 1
+    if len(matches) > 1:
+        print(f"multiple nodes match {args.target}; refine:", file=sys.stderr)
+        for m in matches:
+            try:
+                d = json.loads(m.read_text())
+                print(f"  {d['id']}", file=sys.stderr)
+            except (OSError, json.JSONDecodeError):
+                pass
+        return 1
+
+    node = json.loads(matches[0].read_text())
+    nid = node["id"]
+    src = node.get("source") or {}
+    repo, rel, line = src.get("repo"), src.get("path"), src.get("line") or 1
+
+    # Source excerpt — ~80 lines centered on the symbol's line
+    src_excerpt = "(unavailable)"
+    repo_info = repo_for_basename(DEPGRAPH, repo) if repo else None
+    if repo_info and rel:
+        full = repo_info["path"] / rel
+        if full.exists():
+            try:
+                lines = full.read_text().splitlines()
+                start = max(0, line - 10)
+                end = min(len(lines), line + 70)
+                numbered = [f"{i+1:>5}  {l}" for i, l in enumerate(lines[start:end], start=start)]
+                src_excerpt = "\n".join(numbered)
+            except OSError:
+                pass
+
+    # Dependents
+    deps_idx = load_dependents_index()
+    deps = deps_idx.get(nid) or []
+    deps_str = "\n".join(
+        f"  - {d.get('source','?')}  (via {d.get('via','?')}, {d.get('confidence','?')}, {d.get('where','—')})"
+        for d in deps[:15]
+    ) or "  (none)"
+    deps_more = f"  ... +{len(deps) - 15} more" if len(deps) > 15 else ""
+
+    # Recent git history
+    git_log = "(unavailable)"
+    if repo_info and rel:
+        try:
+            out = subprocess.run(
+                ["git", "log", "-15", "--oneline", "--", rel],
+                cwd=str(repo_info["path"]),
+                capture_output=True, text=True, timeout=10,
+            )
+            git_log = out.stdout.strip() or "(no recent commits)"
+        except (OSError, subprocess.SubprocessError):
+            pass
+
+    # Adjacent dossiers — siblings in same module, only ones already
+    # reviewed (current) so we don't propagate stub style
+    adj_dossiers = []
+    if repo and rel:
+        same_dir_prefix = "/".join(rel.split("/")[:-1])
+        for nf in NODES.rglob("*.json"):
+            if nf.name.startswith("_") or any(p.startswith("_") for p in nf.parts):
+                continue
+            try:
+                d = json.loads(nf.read_text())
+            except (OSError, json.JSONDecodeError):
+                continue
+            s = d.get("source") or {}
+            if s.get("repo") != repo:
+                continue
+            sp = s.get("path", "") or ""
+            if not sp.startswith(same_dir_prefix):
+                continue
+            if d.get("id") == nid:
+                continue
+            if _dossier_state(d) != "current":
+                continue
+            dossier_path = DEPGRAPH / (d.get("dossier") or "")
+            if dossier_path.exists():
+                adj_dossiers.append((d["id"], dossier_path))
+    adj_str = "\n".join(
+        f"  - {nid_a}: see {p.relative_to(DEPGRAPH)}" for nid_a, p in adj_dossiers[:5]
+    ) or "  (none reviewed yet in this module)"
+
+    # Logigraph rules claiming this node
+    rules_claiming = []
+    # Optional: surface logigraph rules claiming this depgraph node.
+    # Resolves from LOGIGRAPH_DATA_DIR or [logigraph].data_dir in project.toml.
+    cfg = load_project_config(DEPGRAPH)
+    logigraph_dir_str = (
+        os.environ.get("LOGIGRAPH_DATA_DIR")
+        or (cfg.get("logigraph") or {}).get("data_dir")
+    )
+    by_code_idx = (
+        Path(logigraph_dir_str).expanduser() / "nodes" / "_index" / "by_code.json"
+        if logigraph_dir_str
+        else None
+    )
+    if by_code_idx is not None and by_code_idx.exists():
+        try:
+            idx = json.loads(by_code_idx.read_text())
+            rules_claiming = idx.get("by_target", {}).get(nid, [])
+        except (OSError, json.JSONDecodeError):
+            pass
+    rules_str = "\n".join(f"  - {r}" for r in rules_claiming) or "  (none)"
+
+    # Build the prompt
+    dossier_path = DEPGRAPH / (node.get("dossier") or "")
+
+    prompt = f"""You are drafting a depgraph dossier for a code node. The
+dossier will be injected at edit time to give future LLM collaborators
+the *intent* and *gotchas* that source code alone doesn't carry.
+
+# Node
+- id: {nid}
+- kind: {node.get("kind","?")}
+- source: {repo}/{rel}:{line}
+- structural_hash: {node.get("structural_hash","?")[:12]}
+
+# Source excerpt (around line {line})
+```
+{src_excerpt}
+```
+
+# Direct dependents ({len(deps)} total)
+{deps_str}
+{deps_more}
+
+# Recent commits touching this file (last 15)
+```
+{git_log}
+```
+
+# Adjacent reviewed dossiers in this module
+{adj_str}
+
+# Logigraph rules claiming this node
+{rules_str}
+
+# Authoring task
+
+Write the dossier in this exact structure (markdown headings, no
+frontmatter — the CLI adds frontmatter when saving):
+
+## Purpose
+~1 paragraph. What does this node do, and why does it exist? Frame in
+terms a future Claude could use to make a decision. No filler.
+
+## Invariants
+Bulleted list of things that must remain true. Look at the source
++ recent commits for hard-learned truths.
+
+## Gotchas
+What has bitten? Surprising ordering, recent reverts, edge cases.
+Mine the git log — recent fix/revert commits are gold.
+
+## Cross-cutting concerns
+Auth, rate limits, websocket events, audit, side effects on other
+features. Be specific.
+
+## External consumers
+Apps, integrations, scheduled jobs, webhooks that depend on this.
+"None known" is a valid answer.
+
+## Open questions
+Unresolved design or implementation questions. Acceptable to leave
+empty if nothing comes up.
+
+Quality bar: substantive, not boilerplate. Surface what specifically
+bit recently (look at the git log). Be honest about uncertainty —
+"don't know" is better than confidently wrong.
+
+Output ONLY the dossier markdown body (no frontmatter, no
+``` fences around the whole thing). The CLI will save to:
+
+  {dossier_path.relative_to(DEPGRAPH)}
+"""
+
+    print(prompt)
+    print("\n---")
+    print(f"# After authoring, save the response with:")
+    print(f"#   bin/depgraph dossier-finalize {nid} <transcript-file>")
+    return 0
+
+
+def cmd_dossier_finalize(args: argparse.Namespace) -> int:
+    """Save an LLM-drafted dossier from a transcript file to the
+    appropriate path, with frontmatter set to llm_drafted."""
+    matches = find_nodes_for_target(args.node_id)
+    if not matches:
+        print(f"no nodes match: {args.node_id}", file=sys.stderr)
+        return 1
+    if len(matches) > 1:
+        print(f"multiple nodes match; refine the id", file=sys.stderr)
+        return 1
+
+    node = json.loads(matches[0].read_text())
+    rel = node.get("dossier")
+    if not rel:
+        print(f"node has no dossier path", file=sys.stderr)
+        return 1
+    dossier_path = DEPGRAPH / rel
+
+    body_file = Path(args.body_file)
+    if not body_file.exists():
+        print(f"body file not found: {body_file}", file=sys.stderr)
+        return 1
+    body = body_file.read_text().strip()
+
+    import datetime as _dt
+    today = _dt.date.today().isoformat()
+    title = node.get("title") or node["id"].split("::")[-1]
+    fm_lines = [
+        "---",
+        f"node_id: {node['id']}",
+        f"node_kind: {node.get('kind','?')}",
+        f"feature: {node.get('feature') or 'null'}",
+        f"last_reviewed: {today}",
+        f"last_reviewed_against_hash: {node.get('structural_hash')}",
+        "status: llm_drafted",
+    ]
+    if args.authored_by:
+        fm_lines.append("authored_by:")
+        for a in args.authored_by:
+            fm_lines.append(f"  - {a}")
+    fm_lines.append("---")
+    frontmatter = "\n".join(fm_lines) + "\n\n" + f"# {title}\n\n"
+    dossier_path.parent.mkdir(parents=True, exist_ok=True)
+    dossier_path.write_text(frontmatter + body + "\n")
+    print(f"wrote {dossier_path.relative_to(DEPGRAPH)}")
+    print(f"status: llm_drafted (review and bump to current when satisfied)")
+    return 0
+
+
+def cmd_dossier_bump(args: argparse.Namespace) -> int:
+    """Bump a dossier from llm_drafted/unreviewed to current after a human
+    review pass. Updates the status line and refreshes last_reviewed +
+    last_reviewed_against_hash to today and the node's current
+    structural_hash."""
+    matches = find_nodes_for_target(args.node_id)
+    if not matches:
+        print(f"no nodes match: {args.node_id}", file=sys.stderr)
+        return 1
+    if len(matches) > 1:
+        print(f"multiple nodes match; refine the id", file=sys.stderr)
+        return 1
+
+    node = json.loads(matches[0].read_text())
+    rel = node.get("dossier")
+    if not rel:
+        print(f"node has no dossier path", file=sys.stderr)
+        return 1
+    dossier_path = DEPGRAPH / rel
+    if not dossier_path.exists():
+        print(f"dossier file not found: {dossier_path}", file=sys.stderr)
+        return 1
+
+    text = dossier_path.read_text()
+    if not text.startswith("---"):
+        print(f"dossier missing frontmatter", file=sys.stderr)
+        return 1
+    end = text.index("\n---\n", 4)
+    fm = text[4:end]
+    body = text[end + 5:]
+
+    import datetime as _dt
+    today = _dt.date.today().isoformat()
+    new_hash = node.get("structural_hash")
+    out_lines = []
+    seen_status = False
+    seen_reviewed = False
+    seen_reviewed_hash = False
+    for line in fm.splitlines():
+        s = line.strip()
+        if s.startswith("status:"):
+            out_lines.append(f"status: {args.status}")
+            seen_status = True
+        elif s.startswith("last_reviewed:"):
+            out_lines.append(f"last_reviewed: {today}")
+            seen_reviewed = True
+        elif s.startswith("last_reviewed_against_hash:"):
+            out_lines.append(f"last_reviewed_against_hash: {new_hash}")
+            seen_reviewed_hash = True
+        else:
+            out_lines.append(line)
+    if not seen_status:
+        out_lines.append(f"status: {args.status}")
+    if not seen_reviewed:
+        out_lines.append(f"last_reviewed: {today}")
+    if not seen_reviewed_hash:
+        out_lines.append(f"last_reviewed_against_hash: {new_hash}")
+    new_text = "---\n" + "\n".join(out_lines).strip("\n") + "\n---\n" + body
+    dossier_path.write_text(new_text)
+    print(f"bumped {dossier_path.relative_to(DEPGRAPH)} → status: {args.status}")
+    return 0
+
+
+def _depgraph_default_actor() -> str:
+    r = subprocess.run(["git", "config", "user.name"], capture_output=True, text=True)
+    if r.returncode == 0 and r.stdout.strip():
+        return r.stdout.strip()
+    return os.environ.get("USER", "unknown")
+
+
+def _depgraph_commit_if_changed(paths: list[Path], message: str) -> bool:
+    rel = [str(p.relative_to(DEPGRAPH)) for p in paths]
+    subprocess.run(["git", "-C", str(DEPGRAPH), "add", *rel], check=True)
+    diff = subprocess.run(
+        ["git", "-C", str(DEPGRAPH), "diff", "--cached", "--name-only"],
+        capture_output=True, text=True,
+    )
+    if not diff.stdout.strip():
+        return False
+    subprocess.run(["git", "-C", str(DEPGRAPH), "commit", "-q", "-m", message], check=True)
+    return True
+
+
+def cmd_flag(args: argparse.Namespace) -> int:
+    """Set flagged=true on a depgraph node and commit."""
+    import datetime as _dt
+    matches = find_nodes_for_target(args.id)
+    if not matches:
+        print(f"no depgraph node with id: {args.id}", file=sys.stderr)
+        return 1
+    if len(matches) > 1:
+        print(f"ambiguous id (matched {len(matches)} nodes): {args.id}", file=sys.stderr)
+        return 1
+    node_path = matches[0]
+    node = json.loads(node_path.read_text())
+    actor = args.actor or _depgraph_default_actor()
+    today = _dt.date.today().isoformat()
+    if (node.get("flagged") and node.get("flagged_by") == actor
+            and node.get("flagged_reason") == args.reason):
+        print(f"already flagged by {actor} with same reason — no change")
+        return 0
+    node["flagged"] = True
+    node["flagged_by"] = actor
+    node["flagged_at"] = today
+    if args.reason:
+        node["flagged_reason"] = args.reason
+    else:
+        node.pop("flagged_reason", None)
+    node_path.write_text(json.dumps(node, indent=2) + "\n")
+    msg = f"flag: {args.id}"
+    if args.reason:
+        msg += f"\n\n{args.reason}"
+    _depgraph_commit_if_changed([node_path], msg)
+    print(f"flagged {args.id} by {actor}")
+    return 0
+
+
+def cmd_unflag(args: argparse.Namespace) -> int:
+    matches = find_nodes_for_target(args.id)
+    if not matches:
+        print(f"no depgraph node with id: {args.id}", file=sys.stderr)
+        return 1
+    if len(matches) > 1:
+        print(f"ambiguous id: {args.id}", file=sys.stderr)
+        return 1
+    node_path = matches[0]
+    node = json.loads(node_path.read_text())
+    if not node.get("flagged"):
+        print(f"{args.id} is not flagged — no change")
+        return 0
+    for key in ("flagged", "flagged_by", "flagged_at", "flagged_reason"):
+        node.pop(key, None)
+    node_path.write_text(json.dumps(node, indent=2) + "\n")
+    _depgraph_commit_if_changed([node_path], f"unflag: {args.id}")
+    print(f"unflagged {args.id}")
+    return 0
+
+
+def cmd_self_check(args: argparse.Namespace) -> int:
+    """Smoke-test: emit a fake PreToolUse payload and assert the hook produces something.
+    The payload's file_path is synthesized from the first configured [repos.*] table."""
+    repos = project_repos(DEPGRAPH)
+    if not repos:
+        print("self-check: no [repos.*] configured in project.toml", file=sys.stderr)
+        return 1
+    first = next(iter(repos.values()))
+    sample_path = first["path"] / "self-check-fake.py"
+    payload = json.dumps(
+        {
+            "tool_name": "Edit",
+            "tool_input": {"file_path": str(sample_path)},
+        }
+    )
+    proc = subprocess.run(
+        ["python3", str(TOOL_ROOT / "hooks" / "pre_edit_inject.py")],
+        input=payload,
+        capture_output=True,
+        text=True,
+        timeout=5,
+    )
+    print("hook stdout:")
+    print(proc.stdout)
+    if proc.returncode != 0:
+        print(f"FAILED rc={proc.returncode}", file=sys.stderr)
+        return 1
+    return 0
+
+
+def _load_telemetry_events(path: Path, since_hours: int | None = None) -> list[dict]:
+    """Read a JSONL log; if since_hours is given, filter to events newer
+    than that. Returns an empty list if the file is missing or unreadable."""
+    if not path.exists():
+        return []
+    import datetime as _dt
+    cutoff = None
+    if since_hours is not None:
+        cutoff = _dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(hours=since_hours)
+    out: list[dict] = []
+    try:
+        with path.open() as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    ev = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if cutoff is not None:
+                    ts_str = ev.get("ts", "")
+                    try:
+                        ts = _dt.datetime.fromisoformat(ts_str)
+                    except ValueError:
+                        continue
+                    if ts < cutoff:
+                        continue
+                out.append(ev)
+    except OSError:
+        return []
+    return out
+
+
+def cmd_stats(args: argparse.Namespace) -> int:
+    """Corpus rollup + optional telemetry. Mirrors `logigraph stats`."""
+    # ---- corpus rollup --------------------------------------------------
+    by_kind_tier_state: dict[str, dict[str, dict[str, int]]] = {}
+    total = 0
+    dependents = load_dependents_index()
+    for nf in NODES.rglob("*.json"):
+        if nf.name.startswith("_"):
+            continue
+        if any(p.startswith("_") for p in nf.relative_to(NODES).parts):
+            continue
+        try:
+            d = json.loads(nf.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        nid = d.get("id")
+        if not nid:
+            continue
+        kind = d.get("kind", "?")
+        fan_out = len(dependents.get(nid) or [])
+        tier = "A" if fan_out >= 10 else "B" if fan_out >= 3 else "C"
+        # Compute dossier state inline (avoid importing the FastAPI loader).
+        rel = d.get("dossier")
+        if not rel:
+            state = "missing"
+        else:
+            dp = DEPGRAPH / rel
+            if not dp.exists():
+                state = "missing"
+            else:
+                state = "current"
+                text = dp.read_text()
+                if text.startswith("---"):
+                    try:
+                        end = text.index("\n---\n", 4)
+                        for line in text[4:end].splitlines():
+                            s = line.strip()
+                            if s.startswith("status:"):
+                                v = s.split(":", 1)[1].strip()
+                                if v in ("llm_drafted", "unreviewed"):
+                                    state = v
+                                break
+                    except ValueError:
+                        pass
+        by_kind_tier_state.setdefault(kind, {}).setdefault(tier, {}).setdefault(state, 0)
+        by_kind_tier_state[kind][tier][state] += 1
+        total += 1
+
+    print("# Depgraph stats")
+    print()
+    print(f"  total nodes: {total}")
+    print()
+    print("## Coverage (current+llm_drafted / total) by kind+tier")
+    print(f"  {'kind':<11} {'tier':<5} {'%':>5} {'total':>6} {'cur':>5} {'llm':>5} {'unr':>5} {'miss':>5}")
+    for kind in sorted(by_kind_tier_state):
+        for tier in ("A", "B", "C"):
+            buckets = by_kind_tier_state[kind].get(tier)
+            if not buckets:
+                continue
+            t = sum(buckets.values())
+            cur = buckets.get("current", 0)
+            llm = buckets.get("llm_drafted", 0)
+            unr = buckets.get("unreviewed", 0)
+            miss = buckets.get("missing", 0)
+            pct = int(round(100 * (cur + llm) / t)) if t else 0
+            print(f"  {kind:<11} {tier:<5} {pct:>4}% {t:>6} {cur:>5} {llm:>5} {unr:>5} {miss:>5}")
+
+    if args.telemetry:
+        injections = _load_telemetry_events(INJECTIONS_LOG)
+        acks = _load_telemetry_events(ACKS_LOG)
+        recent_injections = _load_telemetry_events(INJECTIONS_LOG, since_hours=24 * 7)
+        recent_acks = _load_telemetry_events(ACKS_LOG, since_hours=24 * 7)
+
+        print()
+        print("## Telemetry (all-time)")
+        print(f"  total injections:        {len(injections)}")
+        print(f"  total acknowledgments:   {len(acks)}")
+        print()
+        print("## Telemetry (last 7 days)")
+        print(f"  injections:              {len(recent_injections)}")
+        print(f"  acknowledgments:         {len(recent_acks)}")
+
+        node_inj: dict[str, int] = {}
+        node_ack: dict[str, int] = {}
+        for ev in injections:
+            nid = ev.get("node_id")
+            if nid:
+                node_inj[nid] = node_inj.get(nid, 0) + 1
+        for ev in acks:
+            nid = ev.get("node_id")
+            if nid:
+                node_ack[nid] = node_ack.get(nid, 0) + 1
+
+        if node_inj:
+            print()
+            print("## Top-injected nodes (all-time, with ack rate)")
+            ranked = sorted(node_inj.items(), key=lambda kv: -kv[1])[:10]
+            print(f"  {'inj':>5}  {'ack':>5}  {'rate':>5}  node")
+            print(f"  {'-'*5}  {'-'*5}  {'-'*5}  {'-'*60}")
+            for nid, inj_n in ranked:
+                ack_n = node_ack.get(nid, 0)
+                rate = (ack_n / inj_n) if inj_n > 0 else 0.0
+                print(f"  {inj_n:>5}  {ack_n:>5}  {rate*100:>4.0f}%  {nid}")
+
+            low_ack = [(nid, inj_n, node_ack.get(nid, 0))
+                       for nid, inj_n in node_inj.items()
+                       if inj_n >= 3 and (node_ack.get(nid, 0) / inj_n) < 0.3]
+            if low_ack:
+                print()
+                print("## Low ack rate — candidates for dossier rework")
+                for nid, inj_n, ack_n in sorted(low_ack, key=lambda x: -x[1])[:10]:
+                    print(f"  {nid}: {inj_n} injected, {ack_n} acknowledged")
+
+    return 0
+
+
+def cmd_health(args: argparse.Namespace) -> int:
+    """Compact graph-health report. Bundles validate + orphans + stale-dossier
+    detection + tier-A coverage shortfall into one summary suitable for
+    SessionStart injection. Exits non-zero if anything is wrong."""
+    problems: list[str] = []
+    summary: list[str] = []
+
+    # ---- validate (schema) ----------------------------------------------
+    try:
+        import jsonschema  # type: ignore[import-untyped]
+        schema = json.loads((TOOL_ROOT / "schema" / "node.schema.json").read_text())
+        invalid = 0
+        for node_file in NODES.rglob("*.json"):
+            if node_file.name.startswith("_") or any(p.startswith("_") for p in node_file.parts):
+                continue
+            try:
+                data = json.loads(node_file.read_text())
+                jsonschema.validate(data, schema)
+            except (json.JSONDecodeError, jsonschema.ValidationError):
+                invalid += 1
+        if invalid:
+            problems.append(f"{invalid} invalid node(s) — run `depgraph validate`")
+    except ImportError:
+        summary.append("validate: skipped (jsonschema not installed)")
+
+    # ---- orphans (node points at missing source file) -------------------
+    orphan_n = 0
+    basename_to_path = basename_path_map(DEPGRAPH)
+    for node_file in NODES.rglob("*.json"):
+        if node_file.name.startswith("_") or any(p.startswith("_") for p in node_file.parts):
+            continue
+        try:
+            data = json.loads(node_file.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        src = data.get("source") or {}
+        repo, rel = src.get("repo"), src.get("path")
+        if not repo or not rel:
+            continue
+        repo_path = basename_to_path.get(repo)
+        if repo_path is None:
+            continue
+        if not (repo_path / rel).exists():
+            orphan_n += 1
+    if orphan_n:
+        problems.append(f"{orphan_n} orphan node(s) (source file gone) — run `depgraph orphans`")
+
+    # ---- stale dossiers (hash drift) ------------------------------------
+    stale_n = 0
+    for node_file in NODES.rglob("*.json"):
+        if node_file.name.startswith("_") or any(p.startswith("_") for p in node_file.parts):
+            continue
+        try:
+            data = json.loads(node_file.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        if _dossier_state(data) == "stale":
+            stale_n += 1
+    if stale_n:
+        problems.append(f"{stale_n} stale dossier(s) (structural_hash drifted) — run `depgraph dossier-rank --only-stale`")
+
+    # ---- tier-A coverage shortfall --------------------------------------
+    a_total = 0
+    a_covered = 0
+    dependents = load_dependents_index()
+    for node_file in NODES.rglob("*.json"):
+        if node_file.name.startswith("_") or any(p.startswith("_") for p in node_file.parts):
+            continue
+        try:
+            data = json.loads(node_file.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        nid = data.get("id")
+        if not nid:
+            continue
+        kind = data.get("kind", "")
+        if kind == "test":
+            continue
+        fan_out = len(dependents.get(nid) or [])
+        if fan_out < 10:
+            continue
+        a_total += 1
+        if _dossier_state(data) == "current":
+            a_covered += 1
+    a_pct = int(round(100 * a_covered / a_total)) if a_total else 100
+    if a_pct < 80 and a_total > 0:
+        problems.append(f"Tier-A dossier coverage at {a_pct}% ({a_covered}/{a_total}) — run `depgraph dossier-rank --tier A`")
+    else:
+        summary.append(f"tier-A coverage: {a_pct}% ({a_covered}/{a_total})")
+
+    # ---- output ---------------------------------------------------------
+    print("# Depgraph health")
+    if problems:
+        print()
+        for p in problems:
+            print(f"  ⚠ {p}")
+    else:
+        print()
+        print("  ✓ clean")
+    if summary:
+        print()
+        for s in summary:
+            print(f"  {s}")
+    return 1 if problems else 0
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(prog="depgraph")
+    sub = parser.add_subparsers(dest="cmd", required=True)
+
+    p_regen = sub.add_parser("regen")
+    p_regen.add_argument("--all", action="store_true")
+    p_regen.add_argument("--since")
+    p_regen.set_defaults(func=cmd_regen)
+
+    p_ctx = sub.add_parser("context")
+    p_ctx.add_argument("target")
+    p_ctx.set_defaults(func=cmd_context)
+
+    p_dep = sub.add_parser("dependents")
+    p_dep.add_argument("id")
+    p_dep.add_argument("--depth", type=int, default=2)
+    p_dep.set_defaults(func=cmd_dependents)
+
+    p_orph = sub.add_parser("orphans")
+    p_orph.add_argument("--purge", action="store_true")
+    p_orph.set_defaults(func=cmd_orphans)
+
+    p_val = sub.add_parser("validate")
+    p_val.add_argument("--strict", action="store_true")
+    p_val.set_defaults(func=cmd_validate)
+
+    p_sc = sub.add_parser("self-check")
+    p_sc.set_defaults(func=cmd_self_check)
+
+    p_health = sub.add_parser("health", help="One-shot graph health summary (validate + orphans + stale + tier-A coverage). Exit 1 if anything wrong.")
+    p_health.set_defaults(func=cmd_health)
+
+    p_stats = sub.add_parser("stats", help="Corpus coverage + (optional) telemetry rollup")
+    p_stats.add_argument("--telemetry", action="store_true",
+                         help="Include injection/ack telemetry (last 7d + all-time)")
+    p_stats.set_defaults(func=cmd_stats)
+
+    p_cs = sub.add_parser("commit-summary", help="Compact summary for commit body trailer")
+    p_cs.add_argument("files", nargs="*", help="Files to summarize; empty = git diff --name-only")
+    p_cs.set_defaults(func=cmd_commit_summary)
+
+    p_ms = sub.add_parser("memory-sync", help="Mirror ~/.claude memories into project.toml [memory] mirror dir")
+    p_ms.set_defaults(func=cmd_memory_sync)
+
+    p_dr = sub.add_parser("dossier-rank", help="Rank unreviewed/stale nodes by leverage (fan-out + recent-commit-frequency)")
+    p_dr.add_argument("--tier", choices=["A", "B", "C"], help="Filter by tier")
+    p_dr.add_argument("--limit", type=int, default=50, help="Max rows (default 50)")
+    p_dr.add_argument("--only-unreviewed", action="store_true", default=True)
+    p_dr.add_argument("--only-stale", action="store_true")
+    p_dr.add_argument("--include-tests", action="store_true", help="Include test nodes (default off — they rarely need full dossiers)")
+    p_dr.set_defaults(func=cmd_dossier_rank)
+
+    p_dd = sub.add_parser("dossier-draft", help="Prepare LLM-drafting context for one node (output a prompt)")
+    p_dd.add_argument("target", help="Node id or source file path")
+    p_dd.set_defaults(func=cmd_dossier_draft)
+
+    p_df = sub.add_parser("dossier-finalize", help="Save an LLM-drafted dossier body file to the canonical path")
+    p_df.add_argument("node_id")
+    p_df.add_argument("body_file", help="Path to file containing the dossier body markdown (no frontmatter)")
+    p_df.add_argument("--authored-by", action="append", default=[],
+                      help="Actor that drafted the body (model id or person). Repeat for multiple authors.")
+    p_df.set_defaults(func=cmd_dossier_finalize)
+
+    p_db = sub.add_parser("dossier-bump", help="Bump a dossier's status (e.g. llm_drafted → current) after a human review pass")
+    p_db.add_argument("node_id")
+    p_db.add_argument("--status", default="current", help="New status (default: current)")
+    p_db.set_defaults(func=cmd_dossier_bump)
+
+    p_flag = sub.add_parser("flag", help="Set flagged=true on a node")
+    p_flag.add_argument("id", help="Depgraph node id (contains :: separators)")
+    p_flag.add_argument("--reason", default=None)
+    p_flag.add_argument("--actor", default=None)
+    p_flag.set_defaults(func=cmd_flag)
+
+    p_unflag = sub.add_parser("unflag", help="Clear flagged")
+    p_unflag.add_argument("id")
+    p_unflag.add_argument("--actor", default=None)
+    p_unflag.set_defaults(func=cmd_unflag)
+
+    args = parser.parse_args()
+    return args.func(args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

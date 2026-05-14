@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "depgraph.node",
+  "title": "Dependency-graph node",
+  "description": "One node = one addressable surface in the system: an HTTP endpoint, a React component, a hook, a service function, a SQLAlchemy model, or a test fixture. Nodes are written by extractors and read by Claude before edits.",
+  "type": "object",
+  "required": ["schema_version", "id", "kind", "source", "extractor", "structural_hash"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Bump when the node format changes incompatibly. Hooks refuse to read mismatched versions and CLI validate fails — cheap insurance for future migrations."
+    },
+    "id": {
+      "type": "string",
+      "description": "Stable, location-independent identity. For endpoints: METHOD::/path/with/{params}. For components/hooks: package::ExportedName. For models: app::ClassName. Path/file moves do NOT change the id."
+    },
+    "kind": {
+      "enum": ["endpoint", "route_call", "component", "hook", "service", "model", "test", "schema", "module"],
+      "description": "The category that picks which dossier folder applies and which extractor owns it. 'module' is a generic catch-all for framework self-graph files (knowledge-graph-meta) and other corpora where file-level granularity is the right unit."
+    },
+    "title": {
+      "type": "string",
+      "description": "Human-readable label, e.g. \"POST /api/invite/{code}/accept\" or \"<CrewInviteCard>\"."
+    },
+    "feature": {
+      "type": ["string", "null"],
+      "description": "Owning feature slug. Cross-references docs/flows/<feature>.md when present. Optional — extractors emit null when not yet attributed. It's the join key for human-level reasoning, so populate it as soon as a node has a stable home."
+    },
+    "source": {
+      "type": "object",
+      "required": ["repo", "path"],
+      "description": "Where the symbol currently lives. Path is informational; node identity comes from `id` so renames don't orphan the file.",
+      "properties": {
+        "repo": { "type": "string", "description": "Repo basename (matches a [repos.<key>].path basename in the project's project.toml)." },
+        "path": { "type": ["string", "null"], "description": "Repo-relative path. Null if unresolvable (e.g. dynamic route)." },
+        "symbol": { "type": ["string", "null"], "description": "Function/class/component name in the file." },
+        "line": { "type": ["integer", "null"], "description": "Best-effort line of the definition; null if inspect could not resolve it." }
+      }
+    },
+    "signature": {
+      "type": "object",
+      "description": "What callers see. For endpoints: HTTP method/path/auth/request/response. For components: prop types. For hooks: argument and return shape.",
+      "properties": {
+        "method": { "type": ["string", "null"] },
+        "path": { "type": ["string", "null"] },
+        "url_pattern": {
+          "type": ["string", "null"],
+          "description": "For route_call nodes: the HTTP URL pattern after stripping any base-URL placeholder. Variable segments use the token <var> (e.g. /api/events/<var>/import). Reconcile normalizes endpoint paths to the same shape for matching."
+        },
+        "auth": { "anyOf": [{"enum": ["none", "user", "admin", "agent_token", "internal"]}, {"type": "null"}] },
+        "request_schema_ref": { "type": ["string", "null"] },
+        "response_schema_ref": { "type": ["string", "null"] },
+        "props_schema_ref": { "type": ["string", "null"] },
+        "args_schema_ref": { "type": ["string", "null"] },
+        "returns_schema_ref": { "type": ["string", "null"] }
+      }
+    },
+    "structural_hash": {
+      "type": "string",
+      "description": "SHA-256 over the canonical signature + body shape. Changing this is the trigger that marks dossier text and dependents as 'needs review'. See DRIFT.md scenario 3."
+    },
+    "depends_on": {
+      "type": "array",
+      "description": "Outgoing edges: nodes this node calls/imports/queries. Authoritative — written once per regen by the extractor that owns this node. The reverse index is computed separately and lives at `nodes/_index/dependents.json`; do not store dependents on a node file. See dependents.schema.json.",
+      "items": { "$ref": "#/$defs/edge" }
+    },
+    "external_consumers": {
+      "type": "array",
+      "description": "Known consumers outside the static graph: shipped iOS app versions, third-party integrations, scheduled jobs, webhooks. The graph cannot prove these are still alive — they're a hint to slow down.",
+      "items": {
+        "type": "object",
+        "required": ["name", "note"],
+        "properties": {
+          "name": { "type": "string" },
+          "note": { "type": "string" },
+          "first_seen": { "type": "string", "format": "date" }
+        }
+      }
+    },
+    "tests": {
+      "type": "array",
+      "description": "Test nodes that exercise this one. Populated by the test extractor matching Playwright fixtures, request URLs, or imported symbols.",
+      "items": { "type": "string", "description": "test node id" }
+    },
+    "dossier": {
+      "type": "string",
+      "description": "Path to the LLM-curated companion markdown (relative to depgraph/)."
+    },
+    "extractor": {
+      "type": "string",
+      "description": "Which extractor wrote this file. Used to know what to re-run on regen."
+    },
+    "warnings": {
+      "type": "array",
+      "description": "Extractor-emitted warnings: ambiguous call sites, dynamic URL construction, unresolved symbols. These surface in the PreToolUse injection so I know the picture is incomplete.",
+      "items": {
+        "type": "object",
+        "required": ["code", "message"],
+        "properties": {
+          "code": { "type": "string" },
+          "message": { "type": "string" },
+          "where": { "type": "string" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "edge": {
+      "type": "object",
+      "required": ["target", "via"],
+      "properties": {
+        "target": { "type": "string", "description": "Target node id." },
+        "via": {
+          "enum": ["import", "http_call", "render", "hook_call", "db_query", "websocket", "test_fixture", "string_url"],
+          "description": "How the dependency is realized. `string_url` is a fuzzy match — it means the extractor matched a literal URL to a route but couldn't import-link it; treat as advisory."
+        },
+        "where": { "type": "string", "description": "File:line of the call site." },
+        "confidence": {
+          "enum": ["exact", "fuzzy", "inferred"],
+          "default": "exact",
+          "description": "Static-import edges are 'exact'. Concatenated/template URLs are 'fuzzy'. Edges added by hand or by the LLM are 'inferred'."
+        }
+      }
+    }
+  }
+}

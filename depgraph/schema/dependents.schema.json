@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "depgraph.dependents",
+  "title": "Dependency-graph reverse index",
+  "description": "Materialized inverse of every node's depends_on across the corpus. One file per regen, owned by reconcile.py. Per-node JSON files do NOT carry dependents; this file is the single source of truth for reverse lookups, so a regen that changes only edges does not touch any node file. Written atomically (tmp + rename).",
+  "type": "object",
+  "required": ["generated_at", "git_commit", "by_target"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Bump when the index format changes incompatibly. Hooks refuse to read mismatched versions."
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this index was last rebuilt. The hook can use this to detect stale indexes vs current node state, but the index is the cache, not the truth — regen rebuilds it deterministically from depends_on."
+    },
+    "git_commit": {
+      "type": ["string", "null"],
+      "description": "HEAD commit at index generation time. Read by drift checks; not load-bearing for correctness."
+    },
+    "node_count": {
+      "type": "integer",
+      "description": "Total nodes considered when building this index. A drop here vs the prior generation is a signal that an extractor failed silently."
+    },
+    "edge_count": {
+      "type": "integer",
+      "description": "Total reverse edges in the index."
+    },
+    "by_target": {
+      "type": "object",
+      "description": "Map of target node id → list of incoming edges. The list is sorted deterministically (by source id, then via, then where) so this file is bit-stable across regens that produce the same edge set.",
+      "propertyNames": { "type": "string" },
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["source", "via"],
+          "properties": {
+            "source": { "type": "string", "description": "id of the node that depends on the target" },
+            "via": { "enum": ["import", "http_call", "render", "hook_call", "db_query", "websocket", "test_fixture", "string_url"] },
+            "where": { "type": ["string", "null"] },
+            "confidence": { "enum": ["exact", "fuzzy", "inferred"], "default": "exact" }
+          }
+        }
+      }
+    }
+  }
+}

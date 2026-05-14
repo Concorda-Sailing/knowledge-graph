@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "id": "rc-api::routers/events.py::import_events_endpoint",
+  "kind": "endpoint",
+  "title": "POST /api/events/import",
+  "source": {"repo": "rc-api", "path": "routers/events.py"},
+  "signature": {"method": "POST", "path": "/api/events/{id}/import"},
+  "structural_hash": "h1",
+  "extractor": "noop",
+  "depends_on": []
+}
