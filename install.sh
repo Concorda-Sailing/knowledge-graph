@@ -335,9 +335,16 @@ cmd_install() {
     mkdir -p "$bundle"
     log "installing into $(color_yellow "$bundle")"
 
-    # Framework repos
+    # Framework subsystems (depgraph, logigraph, graphui) used to be
+    # separate repos cloned here. They are now consolidated into this
+    # umbrella repo via git-filter-repo subtree merges, so they're
+    # already present as siblings of install.sh. We just verify each one
+    # is on disk and bail with a clear message if not (which would mean
+    # this script is being run outside the knowledge-graph checkout).
     for repo in "${FRAMEWORK_REPOS[@]}"; do
-        clone_or_pull "https://github.com/$ORG/$repo.git" "$bundle/$repo"
+        if [[ ! -d "$bundle/$repo" ]]; then
+            die "missing $bundle/$repo — install.sh must be run from inside the knowledge-graph checkout (subsystems are now consolidated; standalone repos are archived)"
+        fi
     done
 
     # graphui venv
