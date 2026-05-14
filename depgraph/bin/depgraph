@@ -956,9 +956,6 @@ def cmd_dossier_finalize(args: argparse.Namespace) -> int:
         fm_lines.append("authored_by:")
         for a in args.authored_by:
             fm_lines.append(f"  - {a}")
-    if args.reviewed_by:
-        fm_lines.append(f"reviewed_by: {args.reviewed_by}")
-        fm_lines.append(f"reviewed_at: {today}")
     fm_lines.append("---")
     frontmatter = "\n".join(fm_lines) + "\n\n" + f"# {title}\n\n"
     dossier_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1453,8 +1450,6 @@ def main() -> int:
     p_df.add_argument("body_file", help="Path to file containing the dossier body markdown (no frontmatter)")
     p_df.add_argument("--authored-by", action="append", default=[],
                       help="Actor that drafted the body (model id or person). Repeat for multiple authors.")
-    p_df.add_argument("--reviewed-by", default=None,
-                      help="Actor that reviewed and signed off. Omit to leave review pending.")
     p_df.set_defaults(func=cmd_dossier_finalize)
 
     p_db = sub.add_parser("dossier-bump", help="Bump a dossier's status (e.g. llm_drafted → current) after a human review pass")
