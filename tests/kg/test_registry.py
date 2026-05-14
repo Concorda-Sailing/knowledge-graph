@@ -1,0 +1,105 @@
+"""Tests for kg.registry — the ~/.claude/kg-graphs.toml manager."""
+from __future__ import annotations
+
+import os
+import sys
+from pathlib import Path
+
+import pytest
+
+# Make the framework root importable so `import kg.registry` works.
+TOOL_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(TOOL_ROOT))
+
+from kg import registry  # noqa: E402
+
+
+@pytest.fixture
+def tmp_registry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """Point KG_REGISTRY_PATH at a tmp file for the duration of the test."""
+    p = tmp_path / "kg-graphs.toml"
+    monkeypatch.setenv("KG_REGISTRY_PATH", str(p))
+    return p
+
+
+def test_load_returns_empty_when_missing(tmp_registry: Path) -> None:
+    assert not tmp_registry.exists()
+    assert registry.load() == []
+
+
+def test_add_then_load_roundtrips(tmp_registry: Path, tmp_path: Path) -> None:
+    graph_dir = tmp_path / "my-knowledge-graph"
+    graph_dir.mkdir()
+    registry.add(name="my-graph", path=graph_dir)
+
+    entries = registry.load()
+    assert len(entries) == 1
+    assert entries[0].name == "my-graph"
+    assert entries[0].path == graph_dir.resolve()
+
+
+def test_add_writes_managed_header(tmp_registry: Path, tmp_path: Path) -> None:
+    graph_dir = tmp_path / "g"
+    graph_dir.mkdir()
+    registry.add(name="g", path=graph_dir)
+
+    text = tmp_registry.read_text()
+    assert "managed by" in text.lower()
+    assert "kg add" in text
+
+
+def test_add_rejects_duplicate_name(tmp_registry: Path, tmp_path: Path) -> None:
+    (tmp_path / "a").mkdir()
+    (tmp_path / "b").mkdir()
+    registry.add(name="dup", path=tmp_path / "a")
+    with pytest.raises(ValueError, match="already registered"):
+        registry.add(name="dup", path=tmp_path / "b")
+
+
+def test_add_rejects_missing_path(tmp_registry: Path, tmp_path: Path) -> None:
+    with pytest.raises(FileNotFoundError):
+        registry.add(name="ghost", path=tmp_path / "nope")
+
+
+def test_remove_existing_returns_true(tmp_registry: Path, tmp_path: Path) -> None:
+    (tmp_path / "g").mkdir()
+    registry.add(name="g", path=tmp_path / "g")
+    assert registry.remove("g") is True
+    assert registry.load() == []
+
+
+def test_remove_missing_returns_false(tmp_registry: Path) -> None:
+    assert registry.remove("not-there") is False
+
+
+def test_find_by_name(tmp_registry: Path, tmp_path: Path) -> None:
+    (tmp_path / "alpha").mkdir()
+    (tmp_path / "beta").mkdir()
+    registry.add(name="alpha", path=tmp_path / "alpha")
+    registry.add(name="beta", path=tmp_path / "beta")
+
+    found = registry.find("beta")
+    assert found is not None
+    assert found.name == "beta"
+    assert registry.find("missing") is None
+
+
+def test_tilde_in_stored_path_expands_on_load(
+    tmp_registry: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A path written as ~/foo round-trips through load() as an absolute path."""
+    monkeypatch.setenv("HOME", str(tmp_path))
+    fake_home_graph = tmp_path / "graph-x"
+    fake_home_graph.mkdir()
+    # Write a registry file by hand with a tilde-prefixed path.
+    tmp_registry.write_text(
+        '[[graph]]\nname = "x"\npath = "~/graph-x"\n'
+    )
+    entries = registry.load()
+    assert entries[0].path == fake_home_graph.resolve()
+
+
+def test_default_registry_path_is_in_claude_dir() -> None:
+    """Without KG_REGISTRY_PATH, default is ~/.claude/kg-graphs.toml."""
+    os.environ.pop("KG_REGISTRY_PATH", None)
+    assert registry.path() == Path.home() / ".claude" / "kg-graphs.toml"

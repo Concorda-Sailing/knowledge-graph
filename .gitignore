@@ -5,3 +5,7 @@
 /depgraph/
 /logigraph/
 /graphui/
+
+# Python bytecode caches
+__pycache__/
+*.pyc
