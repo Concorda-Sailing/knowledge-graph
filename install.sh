@@ -526,6 +526,11 @@ generate_hooks_json() {
         },
         {
           "type": "command",
+          "command": "LOGIGRAPH_DATA_DIR=$logg DEPGRAPH_DATA_DIR=$depg python3 $bundle/logigraph/hooks/post_edit_regen.py",
+          "timeout": 60
+        },
+        {
+          "type": "command",
           "command": "DEPGRAPH_DATA_DIR=$depg python3 $bundle/depgraph/hooks/post_edit_telemetry.py",
           "timeout": 30
         },
