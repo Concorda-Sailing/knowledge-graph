@@ -1,0 +1,10 @@
+{
+  "id": "concorda-web::app/page.tsx::Page",
+  "kind": "component",
+  "title": "Page",
+  "source": {"repo": "concorda-web", "path": "app/page.tsx"},
+  "fan_out": 5,
+  "dossier": "dossiers/components/web__app__page_tsx__Page.md",
+  "structural_hash": "h1",
+  "deps": []
+}

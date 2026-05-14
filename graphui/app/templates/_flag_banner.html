@@ -1,0 +1,17 @@
+{% if flag.flagged %}
+<div class="flag-banner">
+  <div class="flag-banner-headline">
+    <span class="flag-glyph">⚠</span>
+    <strong>FLAGGED</strong> — documents a deficiency, not an invariant.
+    <button class="flag-action" data-action="unflag" data-node-id="{{ node_id }}">Unflag</button>
+  </div>
+  <div class="flag-banner-meta">
+    Flagged by {{ flag.flagged_by or "—" }}{% if flag.flagged_at %} · {{ flag.flagged_at }}{% endif %}
+    {% if flag.flagged_reason %}<br>Reason: {{ flag.flagged_reason }}{% endif %}
+  </div>
+</div>
+{% else %}
+<div class="flag-action-bar">
+  <button class="flag-action" data-action="flag" data-node-id="{{ node_id }}">⚑ Flag</button>
+</div>
+{% endif %}

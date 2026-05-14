@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}issues{% endblock %}
+{% block content %}
+
+<div class="repo-header">
+  <div class="breadcrumb">
+    <a href="/graph/">graphui</a> &nbsp;/&nbsp; issues
+  </div>
+  <h1>Issues</h1>
+  <div class="repo-meta">
+    {{ flags.count_fresh }} fresh · {{ flags.count_tracked }} tracked
+  </div>
+</div>
+
+{% macro flag_li(f, is_tracked) %}
+  <li class="flag flag-{{ f.severity }} flag-{{ f.kind }} {{ 'flag-tracked' if is_tracked else '' }}">
+    <span class="flag-pills">
+      <span class="flag-pill flag-pill-sev flag-pill-sev-{{ f.severity }}">{{ f.severity }}</span>
+      <code class="flag-code">{{ f.code }}</code>
+    </span>
+    <div class="flag-message">{{ f.message }}</div>
+    {% if f.tracking_ref %}<div class="flag-tracking">↳ {{ f.tracking_ref }}</div>{% endif %}
+    {% if f.affected %}
+    <div class="flag-affected">
+      {% for a in f.affected %}
+        {% if a.startswith('rule::') %}<a href="/graph/rule/{{ a }}"><code>{{ a }}</code></a>
+        {% elif a.startswith('role::') or a.startswith('resource::') or a.startswith('attribute::') or a.startswith('relationship::') or a.startswith('action::') %}<a href="/graph/domain/{{ a }}"><code>{{ a }}</code></a>
+        {% elif a.startswith('process::') %}<a href="/graph/process/{{ a }}"><code>{{ a }}</code></a>
+        {% else %}<a href="/graph/node/{{ a }}"><code>{{ a }}</code></a>{% endif %}
+        {%- if not loop.last %} · {% endif %}
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% if not is_tracked and f.affected %}
+    <div class="flag-actions">
+      <button class="flag-action-btn flag-action-track"
+              data-node="{{ f.affected[0] }}"
+              data-code="{{ f.code }}">Track…</button>
+      <span class="flag-action-status"></span>
+    </div>
+    {% endif %}
+  </li>
+{% endmacro %}
+
+{% if flagged_nodes %}
+<section class="flagged-section">
+  <h2>Flagged <span class="count">({{ flagged_nodes|length }})</span></h2>
+  <p class="lede">Nodes marked as documenting a known deficiency, not an invariant to preserve. Click in to read why.</p>
+  {% set kinds = flagged_nodes|groupby("kind") %}
+  {% for kind, rows in kinds %}
+  <div class="flagged-group">
+    <h3>{{ kind|capitalize }} <span class="count">({{ rows|length }})</span></h3>
+    <ul class="flagged-list">
+      {% for row in rows %}
+      <li>
+        <a href="{{ row.href }}">{{ row.title }}</a>
+        <code class="symbol-id">{{ row.id }}</code>
+        <span class="flagged-meta">
+          by {{ row.flagged_by }}{% if row.flagged_at %} · {{ row.flagged_at }}{% endif %}
+          {% if row.flagged_reason %} — {{ row.flagged_reason }}{% endif %}
+        </span>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endfor %}
+</section>
+{% endif %}
+
+{% if flags.fresh %}
+<section>
+  <h2 class="section-title">Fresh ({{ flags.count_fresh }})</h2>
+  {% for group in flags.fresh %}
+  <details class="flag-kind-group" open>
+    <summary class="flag-kind-summary">
+      <span class="flag-kind-name">{{ group.kind }}</span>
+      <span class="flag-kind-count">{{ group.count }}</span>
+    </summary>
+    <ul class="flags-list">
+      {% for f in group.flags %}{{ flag_li(f, false) }}{% endfor %}
+    </ul>
+  </details>
+  {% endfor %}
+</section>
+{% endif %}
+
+{% if flags.tracked %}
+<section>
+  <h2 class="section-title">Tracked ({{ flags.count_tracked }})</h2>
+  {% for group in flags.tracked %}
+  <details class="flag-kind-group">
+    <summary class="flag-kind-summary">
+      <span class="flag-kind-name">{{ group.kind }}</span>
+      <span class="flag-kind-count">{{ group.count }}</span>
+    </summary>
+    <ul class="flags-list">
+      {% for f in group.flags %}{{ flag_li(f, true) }}{% endfor %}
+    </ul>
+  </details>
+  {% endfor %}
+</section>
+{% endif %}
+
+{% if not flags.fresh and not flags.tracked %}
+<p class="empty">No issues. Corpus is clean.</p>
+{% endif %}
+
+<script>
+document.querySelectorAll('.flag-action-track').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const node = btn.dataset.node;
+    const code = btn.dataset.code;
+    const tracking_ref = prompt(
+      `Track this flag on ${node}.\n\nTracking ref (plan path, ticket id, free text — used to look it up later):`,
+      ''
+    );
+    if (tracking_ref === null) return;
+    const statusEl = btn.nextElementSibling;
+    btn.disabled = true;
+    statusEl.textContent = 'tracking…';
+    statusEl.className = 'flag-action-status pending';
+    try {
+      const res = await fetch('/graph/api/flags/track', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({node_id: node, code: code, tracking_ref: tracking_ref}),
+      });
+      const body = await res.json();
+      if (!res.ok || !body.ok) throw new Error(body.stderr || `HTTP ${res.status}`);
+      statusEl.textContent = '✓ tracked';
+      statusEl.className = 'flag-action-status ok';
+      setTimeout(() => location.reload(), 400);
+    } catch (e) {
+      statusEl.textContent = `✗ ${e.message}`;
+      statusEl.className = 'flag-action-status err';
+      btn.disabled = false;
+    }
+  });
+});
+</script>
+{% endblock %}

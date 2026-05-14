@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block title %}{{ proc.title or proc.id }}{% endblock %}
+{% block content %}
+<div class="detail">
+  <div class="breadcrumb">
+    <a href="#" onclick="history.back(); return false;" class="back-link">← Back</a> &nbsp;·&nbsp;
+    <a href="/graph/">index</a> &nbsp;/&nbsp;
+    <a href="/graph/kind/processes">processes</a>
+  </div>
+  <h1>{{ proc.title or proc.id }}</h1>
+  <div class="meta-row">
+    <span class="pill">id: {{ proc.id }}</span>
+    <span class="pill">{{ proc.steps|length }} steps</span>
+    {% if proc.ui_surfaces %}<span class="pill">{{ proc.ui_surfaces|length }} UI surface{{ '' if proc.ui_surfaces|length == 1 else 's' }}</span>{% endif %}
+    <span class="pill">def: {{ proc.definition_status }}</span>
+    <span class="pill">state: <span class="state-chip state-chip-{{ proc.dossier_state }}">{{ proc.dossier_state }}</span></span>
+  </div>
+
+  {% include "_review_strip.html" %}
+  {% include "_flag_banner.html" %}
+
+  <div class="cols">
+    <div class="dossier">
+      {% if proc.summary %}
+      <h2>Summary</h2>
+      <p>{{ proc.summary }}</p>
+      {% endif %}
+
+      <h2>Flow</h2>
+      <dl class="flow-block">
+        <dt>Entry</dt>
+        <dd>{{ proc.flow.action }}</dd>
+        {% if proc.flow.ui_surface %}
+        <dt>UI</dt>
+        <dd><a class="idref" href="/graph/node/{{ proc.flow.ui_surface }}"><code>{{ proc.flow.ui_surface }}</code></a></dd>
+        {% endif %}
+        {% if proc.flow.endpoint %}
+        <dt>Endpoint</dt>
+        <dd><a class="idref" href="/graph/node/{{ proc.flow.endpoint }}"><code>{{ proc.flow.endpoint }}</code></a></dd>
+        {% endif %}
+      </dl>
+
+      <h2>Steps</h2>
+      <ol class="process-steps">
+        {% for step in proc.steps %}
+        <li id="step-{{ step.id }}" class="process-step">
+          <div class="process-step-head">
+            <span class="process-step-id">{{ step.id }}</span>
+            <span class="process-step-title">{{ step.title }}</span>
+          </div>
+          {% if step.claims_code %}
+          <div class="process-step-section">
+            <span class="process-step-lbl">claims</span>
+            <ul class="process-claim-list">
+              {% for c in step.claims_code %}
+              <li class="{% if c.stale %}stale{% endif %}">
+                <span class="role-{{ c.role or 'implements' }}">{{ c.role or 'implements' }}</span>
+                <a href="/graph/node/{{ c.depgraph_id }}"><code>{{ c.depgraph_id }}</code></a>
+                {% if c.where %}<span class="where">{{ c.where }}</span>{% endif %}
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+          {% if step.enforces_rules %}
+          <div class="process-step-section">
+            <span class="process-step-lbl">enforces</span>
+            <ul>
+              {% for r in step.enforces_rules %}
+              <li><a href="/graph/rule/{{ r }}"><code>{{ r }}</code></a></li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+          {% if step.transitions %}
+          <div class="process-step-section">
+            <span class="process-step-lbl">→</span>
+            <ul class="process-transitions">
+              {% for t in step.transitions %}
+              <li>
+                <a href="#step-{{ t.to }}"><code>{{ t.to }}</code></a>
+                {% if t.when %}<span class="when">when {{ t.when }}</span>{% endif %}
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% else %}
+          <div class="process-step-section process-step-terminal">
+            <span class="process-step-lbl">terminal</span>
+          </div>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ol>
+
+      {% if dossier_html %}
+      <h2>Notes</h2>
+      {{ dossier_html | safe }}
+      {% endif %}
+    </div>
+
+    <aside class="side">
+      {% if proc.ui_surfaces %}
+      <div class="card">
+        <h3>UI surfaces</h3>
+        <ul class="ui-surface-list">
+          {% for u in proc.ui_surfaces %}
+          <li class="{% if u.stale %}stale{% endif %}">
+            <span class="role-{{ u.role }}">{{ u.role }}</span>
+            <a href="/graph/node/{{ u.depgraph_id }}"><code>{{ u.depgraph_id }}</code></a>
+            {% if u.where %}<div class="where">{{ u.where }}</div>{% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      {% if proc.broadcasts %}
+      <div class="card">
+        <h3>Broadcasts</h3>
+        <ul>
+        {% for b in proc.broadcasts %}<li><code>{{ b }}</code></li>{% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      {% if proc.state_modifications %}
+      <div class="card">
+        <h3>State modifications</h3>
+        <ul class="state-mods">
+        {% for s in proc.state_modifications %}<li>{{ s }}</li>{% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      {% if proc.side_effects %}
+      <div class="card">
+        <h3>Side effects</h3>
+        <ul class="side-effects">
+        {% for s in proc.side_effects %}<li>{{ s }}</li>{% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      {% if proc.enforces_rules %}
+      <div class="card">
+        <h3>Enforces rules</h3>
+        <ul>
+        {% for r in proc.enforces_rules %}<li><a href="/graph/rule/{{ r }}"><code>{{ r }}</code></a></li>{% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      {% include "_attribution_card.html" %}
+      {% include "_history_card.html" %}
+    </aside>
+  </div>
+</div>
+{% endblock %}

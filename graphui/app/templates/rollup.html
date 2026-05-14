@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}{{ ont.title or ont.id }} — rollup{% endblock %}
+{% block content %}
+<div class="detail rollup-page">
+  <div class="breadcrumb">
+    <a href="/graph/">index</a> &nbsp;/&nbsp;
+    <a href="/graph/domain/{{ ont.id }}">{{ ont.title or ont.id }}</a> &nbsp;/&nbsp;
+    rollup
+  </div>
+  <h1>{{ ont.title or ont.id }} — full rollup</h1>
+  <div class="meta-row">
+    <span class="pill">anchor: <code>{{ code_rollup.anchor.model_id or '(none)' }}</code></span>
+    <span class="pill">total: {{ code_rollup.total }}</span>
+  </div>
+
+  <div class="rollup-controls">
+    <span class="label">kind:</span>
+    <a href="/graph/domain/{{ ont.id }}/rollup?depth={{ depth }}" class="chip {% if not kind_filter %}active{% endif %}">All</a>
+    {% for k in all_kinds %}
+      {% set entries = code_rollup.by_kind.get(k, []) %}
+      {% if entries %}
+      <a href="/graph/domain/{{ ont.id }}/rollup?kind={{ k }}&depth={{ depth }}"
+         class="chip {% if kind_filter and k in kind_filter %}active{% endif %}">
+        {{ k|capitalize }} ({{ entries|length }})
+      </a>
+      {% endif %}
+    {% endfor %}
+    <span class="label">depth:</span>
+    {% for d in [1, 2, 3] %}
+    <a href="/graph/domain/{{ ont.id }}/rollup?{% if kind_filter %}kind={{ kind_filter|join(',') }}&{% endif %}depth={{ d }}"
+       class="chip {% if depth == d %}active{% endif %}">
+      {{ d }}{% if d == 1 %} (direct){% elif d == 3 %} (default){% endif %}
+    </a>
+    {% endfor %}
+  </div>
+
+  {% if not code_rollup.anchor.model_id %}
+    <div class="warning">&#9888; No anchor model — {{ code_rollup.anchor.reason }}. Nothing to roll up.</div>
+  {% else %}
+    {% for kind in all_kinds %}
+      {% set entries = code_rollup.by_kind.get(kind, []) %}
+      {% if entries and (not kind_filter or kind in kind_filter) %}
+      <section class="rollup-kind-full">
+        <h2>{{ kind|capitalize }} <span class="count">({{ entries|length }})</span></h2>
+        <ul class="rollup-list-dense">
+          {% for e in entries %}
+          <li>
+            <a href="/graph/node/{{ e.id }}">{{ e.title }}</a>
+            <code class="symbol-id">{{ e.id }}</code>
+            {% if e.direct %}
+              <span class="marker direct">direct</span>
+            {% else %}
+              <span class="marker via">via {{ e.via|join(' &rarr; ') }}</span>
+            {% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+      </section>
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+</div>
+{% endblock %}

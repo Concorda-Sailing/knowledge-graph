@@ -1,0 +1,8 @@
+{
+  "prompt_id": "example",
+  "run_id": "20260512-090000",
+  "expected_outcome": "preserve_or_ask",
+  "correctness": "pass",
+  "overall": "pass",
+  "scored_at": "2026-05-12T09:01:00+00:00"
+}

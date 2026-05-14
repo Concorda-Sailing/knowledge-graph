@@ -1,0 +1,49 @@
+{% set act = repo.activity %}
+{% set deps = repo.dep_counts %}
+{% set cc = repo.cross_cuts %}
+<a href="/graph/repo/{{ repo.basename }}" class="repo-card repo-card-{{ act.classification }}">
+  <header class="repo-card-head">
+    <span class="repo-card-name">{{ repo.basename }}</span>
+    <span class="repo-card-langs">
+      {% for l in repo.languages %}{{ l.label }}{% if not loop.last %} · {% endif %}{% endfor %}
+    </span>
+    {% if act.today_node_delta %}
+      <span class="repo-card-today">+{{ act.today_node_delta }} today</span>
+    {% elif act.classification == "dormant" or act.classification == "dead-candidate" %}
+      <span class="repo-card-quiet">no activity today</span>
+    {% endif %}
+  </header>
+
+  <div class="repo-card-activity">
+    <span class="repo-card-meta">activity (7d):</span>
+    <span class="sparkline-inline" aria-hidden="true">
+      {% set m = (act.sparkline | max) or 1 %}
+      {% for v in act.sparkline %}<span class="spark-cell" style="height:{{ (v / m * 14) | round(0,'ceil') }}px;"></span>{% endfor %}
+    </span>
+    <span class="repo-card-meta">{{ act.commits_7d }} commit{{ '' if act.commits_7d == 1 else 's' }} · {{ repo.node_count }} nodes · {{ repo.current_pct }}% current</span>
+  </div>
+
+  <div class="state-bar repo-card-states">
+    {% for state_key in ['current', 'llm_drafted', 'unreviewed', 'stale', 'missing'] %}
+      {% set n = repo.state_counts.get(state_key, 0) %}
+      {% if n > 0 %}<span class="state-bar-seg state-bar-{{ state_key }}" style="flex: {{ n }};" title="{{ n }} {{ state_key }}"></span>{% endif %}
+    {% endfor %}
+  </div>
+
+  {% if repo.areas %}
+  <div class="repo-card-areas">
+    {% for a in repo.areas[:5] %}<span class="area-chip">📁 {{ a.dir }}/</span>{% endfor %}
+    {% if repo.areas|length > 5 %}<span class="area-chip area-more">+{{ repo.areas|length - 5 }}</span>{% endif %}
+  </div>
+  {% endif %}
+
+  <footer class="repo-card-foot">
+    <span class="dep-stat">↑ inbound <b>{{ deps.inbound_repos }}</b></span>
+    <span class="dep-stat">↓ outbound <b>{{ deps.outbound_repos }}</b></span>
+    <span class="dep-stat">⊕ external <b>{{ deps.external_pkgs }}</b></span>
+    <span class="dep-sep">·</span>
+    <span class="cross-stat cross-rules-tag">🧷 {{ cc.rules|length }} rules</span>
+    <span class="cross-stat cross-proc-tag">⤳ {{ cc.processes|length }} processes</span>
+    {% if repo.has_stale %}<span class="repo-card-stale">⚠ {{ repo.state_counts.stale }} stale</span>{% endif %}
+  </footer>
+</a>

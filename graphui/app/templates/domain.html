@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% block title %}{{ ont.title or ont.id }}{% endblock %}
+{% block content %}
+<div class="detail">
+  <div class="breadcrumb">
+    <a href="#" onclick="history.back(); return false;" class="back-link">← Back</a> &nbsp;·&nbsp;
+    <a href="/graph/">index</a> &nbsp;/&nbsp;
+    <a href="/graph/kind/domain">domain</a> / {{ ont.subkind }}
+  </div>
+  <h1>{{ ont.title or ont.id }}</h1>
+  <div class="meta-row">
+    <span class="pill">id: {{ ont.id }}</span>
+    <span class="pill">def: {{ ont.definition_status }}</span>
+    <span class="pill">state: <span class="state-{{ ont.dossier_state }}">{{ ont.dossier_state }}</span></span>
+  </div>
+
+  {% include "_review_strip.html" %}
+  {% include "_flag_banner.html" %}
+
+  {% if collisions %}
+  <div class="collision-banner">
+    <strong>⚠ Mediation collision</strong> —
+    {% for c in collisions %}
+      <code>{{ c.mechanism }}</code> mediates
+      {% for r in c.relationships %}{% if r.id != ont.id %}<a href="/graph/domain/{{ r.id }}"><code>{{ r.id }}</code></a>{% if not loop.last %}, {% endif %}{% endif %}{% endfor %}
+      and this relationship.
+    {% endfor %}
+    Two conceptually-distinct relationships share the same mediation
+    mechanism. Read both dossiers and audit whether the shared storage
+    is intentional or a category error.
+  </div>
+  {% endif %}
+
+  {% if ont.subkind == "relationship" %}
+  <div class="rel-grid">
+    <div class="rel-cell"><span class="lbl">from</span>
+      <a href="/graph/domain/{{ ont.from }}"><code>{{ ont.from }}</code></a>
+    </div>
+    <div class="rel-cell"><span class="lbl">predicate</span>
+      <span class="rel-predicate">{{ ont.predicate }}</span>
+    </div>
+    <div class="rel-cell"><span class="lbl">to</span>
+      <a href="/graph/domain/{{ ont.to }}"><code>{{ ont.to }}</code></a>
+    </div>
+    <div class="rel-cell"><span class="lbl">mediated by</span>
+      <code>{{ ont.mediated_by }}</code>
+    </div>
+    <div class="rel-cell"><span class="lbl">cardinality</span>
+      <code>{{ ont.cardinality }}</code>
+    </div>
+    <div class="rel-cell"><span class="lbl">lifecycle</span>
+      <code>{{ ont.lifecycle }}</code>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="cols">
+    <div class="dossier">
+      {% if ont.summary %}
+      <h2>Summary</h2>
+      <p>{{ ont.summary }}</p>
+      {% endif %}
+
+      {% if dossier_html %}
+        {{ dossier_html | safe }}
+      {% else %}
+        <p class="empty">No dossier body yet.</p>
+      {% endif %}
+    </div>
+
+    <aside class="side">
+      {% if relationships and (relationships.outgoing or relationships.incoming) %}
+      <div class="card">
+        <h3>Relationships ({{ relationships.outgoing|length + relationships.incoming|length }})</h3>
+        {% if relationships.outgoing %}
+        <div class="rel-section">
+          <div class="rel-section-label">outgoing</div>
+          <ul>
+          {% for r in relationships.outgoing %}
+            <li>
+              <a href="/graph/domain/{{ r.id }}">{{ r.predicate }}</a>
+              <div class="where">→ <a href="/graph/domain/{{ r.to }}">{{ r.to }}</a></div>
+            </li>
+          {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+        {% if relationships.incoming %}
+        <div class="rel-section">
+          <div class="rel-section-label">incoming</div>
+          <ul>
+          {% for r in relationships.incoming %}
+            <li>
+              <a href="/graph/domain/{{ r.from }}">{{ r.from }}</a>
+              <div class="where">{{ r.predicate }} → here</div>
+            </li>
+          {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+      {% if ont.aliases %}
+      <div class="card">
+        <h3>Aliases</h3>
+        <ul>
+        {% for a in ont.aliases %}<li><code>{{ a }}</code></li>{% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+      {% if ont.source %}
+      <div class="card">
+        <h3>Source</h3>
+        <ul>
+        {% for k, v in ont.source.items() %}<li>{{ k }}: <code>{{ v }}</code></li>{% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      {% include "_attribution_card.html" %}
+      {% include "_history_card.html" %}
+    </aside>
+  </div>
+
+  {% if code_rollup %}
+  <section class="code-rollup">
+    {% if not code_rollup.anchor.model_id %}
+      <h2>Code rollup <span class="muted">· ⚠ no anchor model — {{ code_rollup.anchor.reason }}</span></h2>
+    {% elif code_rollup.total == 1 %}
+      <h2>Code rollup <span class="muted">· 1 node (model only) — nothing else depends on this entity</span></h2>
+    {% else %}
+      <h2>Code rollup <span class="muted">· anchor <code>{{ code_rollup.anchor.model_id }}</code></span></h2>
+      {% for kind in ["model","service","endpoint","component","test","hook","schema"] %}
+        {% set entries = code_rollup.by_kind.get(kind, []) %}
+        {% if entries %}
+        <div class="rollup-kind">
+          <h3>
+            {{ kind|capitalize }} <span class="count">({{ entries|length }})</span>
+            {% if entries|length > rollup_summary_cap %}
+              <a class="see-all" href="/graph/domain/{{ ont.id }}/rollup?kind={{ kind }}">see all →</a>
+            {% endif %}
+          </h3>
+          <ul class="rollup-list">
+            {% for e in entries[:rollup_summary_cap] %}
+            <li>
+              <a href="/graph/node/{{ e.id }}">{{ e.title }}</a>
+              <code class="symbol-id">{{ e.id }}</code>
+              {% if e.direct %}
+                <span class="marker direct">direct</span>
+              {% else %}
+                <span class="marker via">via {{ e.via|join(' → ') }}</span>
+              {% endif %}
+            </li>
+            {% endfor %}
+            {% if entries|length > rollup_summary_cap %}
+              <li class="more">+ {{ entries|length - rollup_summary_cap }} more</li>
+            {% endif %}
+          </ul>
+        </div>
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

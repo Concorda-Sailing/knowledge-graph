@@ -1,0 +1,21 @@
+<div class="card attribution-card">
+  <h3>Authorship</h3>
+  <dl>
+    <dt>Authored by</dt>
+    <dd>
+      {% if authorship.authored_by %}
+        {% for a in authorship.authored_by %}{{ a }}{% if not loop.last %}, {% endif %}{% endfor %}
+      {% else %}
+        <span class="empty">—</span>
+      {% endif %}
+    </dd>
+    <dt>Flagged</dt>
+    <dd>
+      {% if flag.flagged %}
+        yes — by {{ flag.flagged_by or "—" }}
+      {% else %}
+        no
+      {% endif %}
+    </dd>
+  </dl>
+</div>

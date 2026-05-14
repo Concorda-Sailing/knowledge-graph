@@ -1,0 +1,58 @@
+{# Shared review-queue strip + Approve button.
+
+Expects these context vars from the caller:
+  queue_position, queue_total — ints, the spot in the queue
+  prev_node                   — dict with .href and (optional) .fan_out
+  next_node                   — dict with .href and (optional) .fan_out
+  queue_back_href             — string, link back to the queue listing
+  target_node_id              — string, the node id to POST to /graph/api/bump
+  approve_next_href           — string, where to redirect after a successful bump
+#}
+{% if queue_position %}
+<div class="review-strip" id="review-strip">
+  <span class="review-title">Review queue</span>
+  <span class="review-pos">{{ queue_position }} / {{ queue_total }}</span>
+  {% if prev_node %}
+    <a href="{{ prev_node.href }}">← prev{% if prev_node.fan_out is defined %} ({{ prev_node.fan_out }} dep{{ '' if prev_node.fan_out == 1 else 's' }}){% endif %}</a>
+  {% else %}
+    <span class="muted">← prev</span>
+  {% endif %}
+  {% if next_node %}
+    <a href="{{ next_node.href }}" id="next-link">next{% if next_node.fan_out is defined %} ({{ next_node.fan_out }} dep{{ '' if next_node.fan_out == 1 else 's' }}){% endif %} →</a>
+  {% else %}
+    <span class="muted">next →</span>
+  {% endif %}
+  <a href="{{ queue_back_href }}" class="muted">queue</a>
+  <button class="approve-btn" onclick="approveDossier('{{ target_node_id }}', '{{ approve_next_href }}')">
+    ✓ Approve as current
+  </button>
+  <span id="approve-status" class="approve-status"></span>
+</div>
+<script>
+async function approveDossier(nodeId, nextHref) {
+  const btn = document.querySelector('.approve-btn');
+  const status = document.getElementById('approve-status');
+  btn.disabled = true;
+  status.textContent = 'bumping…';
+  status.className = 'approve-status pending';
+  try {
+    const res = await fetch('/graph/api/bump', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({node_id: nodeId, status: 'current'}),
+    });
+    const body = await res.json();
+    if (!res.ok || !body.ok) {
+      throw new Error(body.stderr || `HTTP ${res.status}`);
+    }
+    status.textContent = '✓ bumped — advancing';
+    status.className = 'approve-status ok';
+    setTimeout(() => { location.href = nextHref; }, 350);
+  } catch (e) {
+    status.textContent = `✗ ${e.message}`;
+    status.className = 'approve-status err';
+    btn.disabled = false;
+  }
+}
+</script>
+{% endif %}

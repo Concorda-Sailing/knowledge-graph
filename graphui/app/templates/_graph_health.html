@@ -1,0 +1,53 @@
+<section class="health-tile" aria-label="Graph health">
+  <header class="health-header">
+    <span class="health-label">Graph health</span>
+    {% if health.calibration.accuracy_pct is not none and health.calibration.accuracy_pct >= 90 and health.telemetry.dead_rules == 0 %}
+      <span class="health-status health-ok">● healthy</span>
+    {% else %}
+      <span class="health-status health-warn">● needs attention</span>
+    {% endif %}
+    {% if meta and meta.depgraph and meta.depgraph.git_commit %}
+      <span class="health-meta">commit <code>{{ meta.depgraph.git_commit[:8] }}</code></span>
+    {% endif %}
+  </header>
+  <div class="health-grid">
+    <article class="health-sub">
+      <h4>Telemetry · injections (30d)</h4>
+      <p class="health-big">{{ health.telemetry.injections_30d }}</p>
+      <p class="health-sub-meta">
+        {% if health.telemetry.trend_pct > 0 %}<span class="trend-up">▲ {{ health.telemetry.trend_pct }}%</span>{% elif health.telemetry.trend_pct < 0 %}<span class="trend-down">▼ {{ health.telemetry.trend_pct }}%</span>{% else %}<span class="trend-flat">– 0%</span>{% endif %}
+        · {{ health.telemetry.ack_rate_pct }}% acknowledged
+      </p>
+      <p class="health-sub-foot">
+        {% if health.telemetry.dead_rules %}<span class="warn">⚠ {{ health.telemetry.dead_rules }} rules never fired</span>{% else %}all rules firing{% endif %}
+        · {{ health.telemetry.never_acked_dossiers }} unacked dossiers
+      </p>
+    </article>
+    <article class="health-sub">
+      <h4>Calibration · last run</h4>
+      {% if health.calibration.last_run_id %}
+        <p class="health-big">{{ health.calibration.accuracy_pct }}%</p>
+        <p class="health-sub-meta">{{ health.calibration.last_run_id }} · {{ health.calibration.regressions }} regression{{ '' if health.calibration.regressions == 1 else 's' }}</p>
+        <p class="health-sub-foot">
+          {% if health.calibration.prev_delta_pp %}{% if health.calibration.prev_delta_pp > 0 %}<span class="trend-up">▲ +{{ health.calibration.prev_delta_pp }}pp</span>{% else %}<span class="trend-down">▼ {{ health.calibration.prev_delta_pp }}pp</span>{% endif %} vs prev{% endif %}
+          {% if health.calibration.drifted_rules %} · drift in <code>{{ health.calibration.drifted_rules[0] }}</code>{% if health.calibration.drifted_rules|length > 1 %} +{{ health.calibration.drifted_rules|length - 1 }}{% endif %}{% endif %}
+        </p>
+      {% else %}
+        <p class="health-empty">No calibration runs yet.</p>
+      {% endif %}
+    </article>
+    <article class="health-sub">
+      <h4>Hottest rules (30d)</h4>
+      {% if health.hottest_rules %}
+        <ul class="hottest-list">
+          {% for h in health.hottest_rules %}
+            <li><span class="hot-count">{{ h.count }}×</span> <a href="/graph/rule/{{ h.id }}">{{ h.id }}</a></li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="health-empty">No fires recorded yet.</p>
+      {% endif %}
+      <p class="health-sub-foot"><a href="/graph/telemetry">see all telemetry →</a></p>
+    </article>
+  </div>
+</section>

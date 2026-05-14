@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}graphui{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/graph/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a href="/graph/" class="brand{% if request.url.path in ['/graph/', '/graph'] %} brand-active{% endif %}">
+      <span class="brand-mark">◆</span>
+      <span class="brand-text">graphui</span>
+    </a>
+    <nav>
+      <a href="/graph/search" class="nav-search{% if request.url.path.startswith('/graph/search') %} nav-active{% endif %}">Search</a>
+      <a href="/graph/issues" class="nav-issues{% if request.url.path.startswith('/graph/issues') %} nav-active{% endif %}">
+        Issues
+        {% set _issues = issues_fresh_count() %}
+        {% if _issues %}<span class="nav-count-badge">{{ _issues }}</span>{% endif %}
+      </a>
+      <a href="/graph/review" class="nav-review{% if request.url.path.startswith('/graph/review') %} nav-active{% endif %}">
+        Review
+        {% set _pending = review_pending_count() %}
+        {% if _pending %}<span class="nav-count-badge">{{ _pending }}</span>{% endif %}
+      </a>
+    </nav>
+    <span class="meta-stamp">
+      {% if meta and meta.depgraph %}
+        <span class="meta-label">commit</span>
+        <span class="commit-pill">{{ meta.depgraph.git_commit[:8] }}</span>
+        <span class="node-count">{{ meta.depgraph.node_count }} nodes</span>
+      {% endif %}
+    </span>
+    <a href="/graph/settings" class="nav-settings-icon{% if request.url.path.startswith('/graph/settings') %} nav-active{% endif %}" aria-label="Settings" title="Settings">⚙</a>
+  </header>
+  <main>{% block content %}{% endblock %}</main>
+  <script>
+  document.addEventListener("click", async (e) => {
+    const btn = e.target.closest(".flag-action");
+    if (!btn) return;
+    const action = btn.dataset.action;
+    const nodeId = btn.dataset.nodeId;
+    if (!nodeId) return;
+    let reason = null;
+    if (action === "flag") {
+      reason = window.prompt("Reason for flag (one line, recorded in the commit and the banner):", "");
+      if (reason === null) return;  // cancelled
+    }
+    btn.disabled = true;
+    try {
+      const resp = await fetch("/graph/api/flag", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          node_id: nodeId,
+          flagged: (action === "flag"),
+          reason: reason || undefined,
+        }),
+      });
+      if (resp.ok) {
+        window.location.reload();
+      } else {
+        const data = await resp.json().catch(() => ({}));
+        alert("Flag action failed: " + (data.stderr || resp.statusText));
+        btn.disabled = false;
+      }
+    } catch (err) {
+      alert("Network error: " + err);
+      btn.disabled = false;
+    }
+  });
+  </script>
+</body>
+</html>

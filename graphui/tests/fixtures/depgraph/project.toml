@@ -1,0 +1,18 @@
+[project]
+name = "fixture-project"
+primary_repo = "web"
+
+[logigraph]
+data_dir = "~/fixture/logigraph"
+
+[repos.web]
+path = "~/concorda-web"
+extractor = ["npx", "tsx", "{data_dir}/extractors/example.py"]
+
+[repos.api]
+path = "~/concorda-api"
+extractor = ["python3", "{data_dir}/extractors/example.py"]
+files_arg = "--only"
+
+[memory]
+mirror = "fixture/memory"

@@ -1,0 +1,29 @@
+<section class="activity-strip" aria-label="Recent activity">
+  <div class="activity-col">
+    <span class="activity-label">TODAY · {{ today_date }}</span>
+    <span class="activity-line">
+      +{{ activity.today.nodes_added }} nodes
+      · {{ activity.today.drafts_authored }} drafts
+      · {{ activity.today.drift_events }} drift
+      · {{ activity.today.rules_authored }} rules
+    </span>
+  </div>
+  <div class="activity-col activity-col-divider">
+    <span class="activity-label">7-DAY</span>
+    <div class="sparkline" aria-hidden="true">
+      {% set max_val = (activity.week_sparkline | max) or 1 %}
+      {% for v in activity.week_sparkline %}
+        <span class="spark-bar" style="height: {{ (v / max_val * 24) | round(0, 'ceil') }}px;"></span>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="activity-col activity-col-divider">
+    <span class="activity-label">30-DAY</span>
+    <span class="activity-line">
+      +{{ activity.thirty_day.nodes_added }} nodes
+      · {{ activity.thirty_day.drafts_reviewed }} reviewed
+      · {{ activity.thirty_day.drift_events }} drift
+    </span>
+  </div>
+  <a href="/graph/activity" class="activity-link">activity timeline →</a>
+</section>

@@ -1,0 +1,42 @@
+{# Universal node list. Caller passes:
+   - nodes: iterable of {id, title, kind, subkind?, fan_out, state, href, summary?}
+   - columns: list of column-key strings (subset of: title, kind, area, tier, fan_in, state, id)
+   - empty_message (optional, default: "No nodes match the current filters.")
+#}
+{% set cols = columns or ['title', 'kind', 'fan_in', 'state', 'id'] %}
+{% if nodes %}
+<div class="knowledge-table-wrap scroll-x">
+  <table class="knowledge-table">
+    <thead>
+      <tr>
+        <th class="col-sel"><input type="checkbox" class="select-all"></th>
+        {% if 'title' in cols %}<th>Title</th>{% endif %}
+        {% if 'kind' in cols %}<th>Kind</th>{% endif %}
+        {% if 'area' in cols %}<th>Area</th>{% endif %}
+        {% if 'tier' in cols %}<th>Tier</th>{% endif %}
+        {% if 'fan_in' in cols %}<th class="numeric">Fan-in</th>{% endif %}
+        {% if 'state' in cols %}<th>State</th>{% endif %}
+        {% if 'id' in cols %}<th>ID</th>{% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for n in nodes %}
+      <tr class="knowledge-row">
+        <td>{% if n.state == "llm_drafted" %}<input type="checkbox" class="row-sel" data-id="{{ n.id }}" data-kind="{{ n.kind }}" data-state="{{ n.state }}">{% endif %}</td>
+        {% if 'title' in cols %}<td><a href="{{ n.href }}" class="knowledge-title">{{ n.title }}</a>
+          {% if n.summary %}<div class="knowledge-summary">{{ n.summary }}</div>{% endif %}
+        </td>{% endif %}
+        {% if 'kind' in cols %}<td class="knowledge-kind">{{ n.subkind or n.kind }}</td>{% endif %}
+        {% if 'area' in cols %}<td class="knowledge-area">{{ n.area or '—' }}</td>{% endif %}
+        {% if 'tier' in cols %}<td>{{ n.tier or '—' }}</td>{% endif %}
+        {% if 'fan_in' in cols %}<td class="numeric">{{ n.fan_out }}</td>{% endif %}
+        {% if 'state' in cols %}<td><span class="state-chip state-chip-{{ n.state }}">{{ '⚠ ' if n.state == 'stale' else '' }}{{ n.state }}</span></td>{% endif %}
+        {% if 'id' in cols %}<td class="src"><code>{{ n.id }}</code></td>{% endif %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="empty">{{ empty_message or "No nodes match the current filters." }}</p>
+{% endif %}

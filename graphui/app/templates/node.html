@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}{{ node.title or node.id }}{% endblock %}
+{% block content %}
+<div class="detail">
+  <div class="breadcrumb">
+    <a href="#" onclick="history.back(); return false;" class="back-link">← Back</a> &nbsp;·&nbsp;
+    <a href="/graph/">index</a> &nbsp;/&nbsp;
+    {{ node.kind }} &nbsp;/&nbsp;
+    <span class="tier-{{ node.tier }}">tier {{ node.tier }}</span>
+  </div>
+  <h1>{{ node.title or node.id }}</h1>
+  <div class="meta-row">
+    <span class="pill">id: {{ node.id }}</span>
+    <span class="pill">{{ node.fan_out }} dependent{{ '' if node.fan_out == 1 else 's' }}</span>
+    <span class="pill">state: <span class="state-{{ node.dossier_state }}">{{ node.dossier_state }}</span></span>
+    {% if node.structural_hash %}<span class="pill">hash: {{ node.structural_hash[:12] }}</span>{% endif %}
+    {% if commits_30d %}<span class="pill">{{ commits_30d }} commits / 30d</span>{% endif %}
+    {% if src.repo and src.path %}
+      <span class="pill">{{ src.repo }}/{{ src.path }}{% if src.line %}:{{ src.line }}{% endif %}</span>
+    {% endif %}
+  </div>
+
+  {% include "_review_strip.html" %}
+  {% include "_flag_banner.html" %}
+
+  <div class="cols">
+    <div class="dossier">
+      {% if dossier_html %}
+        {{ dossier_html | safe }}
+      {% else %}
+        <p class="empty">No dossier yet for this node.</p>
+      {% endif %}
+    </div>
+
+    <aside class="side">
+      {% if siblings %}
+      <div class="card sibling-card">
+        <details>
+          <summary><h3 class="collapsible-heading">In <code>{{ src.path }}</code> <span class="sibling-count">({{ siblings|length }})</span></h3></summary>
+          <ul class="sibling-list">
+            {% for s in siblings %}
+            <li>
+              <a href="{{ s.href }}">{{ s.title }}</a>
+              <span class="sibling-meta">{{ s.kind }}{% if s.fan_out %} · {{ s.fan_out }}{% endif %}</span>
+            </li>
+            {% endfor %}
+          </ul>
+        </details>
+      </div>
+      {% endif %}
+
+      <div class="card">
+        <h3>Applicable rules</h3>
+        {% if rules %}
+          <ul>
+          {% for r in rules %}
+            <li><a href="/graph/rule/{{ r.id }}">{{ r.title or r.id }}</a></li>
+          {% endfor %}
+          </ul>
+        {% else %}
+          <p class="empty">No rules touch this node.</p>
+        {% endif %}
+      </div>
+
+      <div class="card">
+        <details>
+          <summary><h3 class="collapsible-heading">Dependents ({{ dependents|length }})</h3></summary>
+          {% if dependents %}
+            <ul>
+            {% for d in dependents[:50] %}
+              <li>
+                <a href="/graph/node/{{ d.source }}">{{ d.source }}</a>
+                <div class="where">via {{ d.via or '?' }} · {{ d.where or '?' }}</div>
+              </li>
+            {% endfor %}
+            {% if dependents|length > 50 %}
+              <li class="empty">+ {{ dependents|length - 50 }} more</li>
+            {% endif %}
+            </ul>
+          {% else %}
+            <p class="empty">No tracked dependents.</p>
+          {% endif %}
+        </details>
+      </div>
+
+      {% if node.depends_on %}
+      <div class="card">
+        <details>
+          <summary><h3 class="collapsible-heading">Depends on ({{ node.depends_on|length }})</h3></summary>
+          <ul>
+          {% for d in node.depends_on[:50] %}
+            <li>
+              {% if d.target %}<a href="/graph/node/{{ d.target }}">{{ d.target }}</a>
+              {% else %}<span>{{ d }}</span>{% endif %}
+            </li>
+          {% endfor %}
+          </ul>
+        </details>
+      </div>
+      {% endif %}
+
+      {% include "_telemetry_card.html" %}
+
+      {% include "_attribution_card.html" %}
+      {% include "_history_card.html" %}
+    </aside>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}{{ rule.title or rule.id }}{% endblock %}
+{% block content %}
+<div class="detail">
+  <div class="breadcrumb">
+    <a href="#" onclick="history.back(); return false;" class="back-link">← Back</a> &nbsp;·&nbsp;
+    <a href="/graph/">index</a> &nbsp;/&nbsp;
+    <a href="/graph/kind/rules">rules</a>
+  </div>
+  <h1>{{ rule.title or rule.id }}</h1>
+  <div class="meta-row">
+    <span class="pill">id: {{ rule.id }}</span>
+    <span class="pill">claims: {{ rule.fan_out }}</span>
+    <span class="pill">conf: <span class="conf-{{ rule.confidence }}">{{ rule.confidence }}</span></span>
+    <span class="pill">def: {{ rule.definition_status }}</span>
+    <span class="pill">state: <span class="state-{{ rule.dossier_state }}">{{ rule.dossier_state }}</span></span>
+  </div>
+
+  {% include "_review_strip.html" %}
+  {% include "_flag_banner.html" %}
+
+  <div class="cols">
+    <div class="dossier">
+      {% if rule.statement %}
+      <h2>Statement</h2>
+      <p>{{ rule.statement }}</p>
+      {% endif %}
+
+      {% if dossier_html %}
+        {{ dossier_html | safe }}
+      {% else %}
+        <p class="empty">No dossier body yet.</p>
+      {% endif %}
+    </div>
+
+    <aside class="side">
+      {% include "_telemetry_card.html" %}
+
+      <div class="card">
+        <h3>References domain</h3>
+        {% if rule.references_domain %}
+          <ul>
+          {% for o in rule.references_domain %}
+            <li><a href="/graph/domain/{{ o }}">{{ o }}</a></li>
+          {% endfor %}
+          </ul>
+        {% else %}
+          <p class="empty">none</p>
+        {% endif %}
+      </div>
+
+      {% include "_attribution_card.html" %}
+      {% include "_history_card.html" %}
+    </aside>
+  </div>
+
+  {% if rule.claims_code %}
+  <section style="margin-top: 18px;">
+    <h2>Claims code</h2>
+    <div class="scroll-x">
+    <table class="claims">
+      <thead>
+        <tr><th>role</th><th>target</th><th>where</th><th>conf</th></tr>
+      </thead>
+      <tbody>
+      {% for c in rule.claims_code %}
+        <tr class="{% if c.stale %}stale{% endif %}">
+          <td class="role">{{ c.role }}</td>
+          <td><a href="/graph/node/{{ c.depgraph_id }}">{{ c.depgraph_id }}</a></td>
+          <td>{{ c.where }}</td>
+          <td class="conf-{{ c.confidence }}">{{ c.confidence }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

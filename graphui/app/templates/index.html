@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}graphui{% endblock %}
+{% block content %}
+
+{% include '_activity_strip.html' %}
+{% include '_graph_health.html' %}
+{% include '_cross_cutting.html' %}
+
+<section class="repos-section">
+  <header class="repos-header">
+    <h3 class="section-title">Tracked repos · {{ repos|length }}</h3>
+    <span class="repos-sort">
+      sort:
+      {% for s in ['activity', 'alpha', 'inbound', 'dead'] %}
+        <a href="/graph/?sort={{ s }}{% if activity_filter %}&activity={{ activity_filter }}{% endif %}" class="repos-sort-link{% if sort == s %} repos-sort-active{% endif %}">{{ s }}</a>
+        {% if not loop.last %}·{% endif %}
+      {% endfor %}
+    </span>
+  </header>
+  <div class="repos-filter">
+    {% for f in ['active', 'dormant', 'dead-candidate', 'all'] %}
+      <a href="/graph/?activity={{ f }}{% if sort %}&sort={{ sort }}{% endif %}" class="repos-filter-chip{% if activity_filter == f or (f == 'all' and not activity_filter) %} repos-filter-active{% endif %}">{{ f }} · {{ filter_counts[f] }}</a>
+    {% endfor %}
+  </div>
+  {% for repo in repos %}
+    {% include '_repo_card.html' %}
+  {% else %}
+    <p class="empty">No repos match the current filters.</p>
+  {% endfor %}
+</section>
+
+{% endblock %}

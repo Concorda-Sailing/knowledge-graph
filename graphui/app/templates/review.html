@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}review queue{% endblock %}
+{% block content %}
+
+<div class="repo-header">
+  <div class="breadcrumb">
+    <a href="/graph/">index</a> &nbsp;/&nbsp; review
+  </div>
+  <h1>Review queue{% if tier %} — Tier {{ tier }}{% endif %}{% if kind %} · {{ kind }}{% endif %}</h1>
+  <div class="repo-meta">{{ rows|length }} llm_drafted dossier{{ '' if rows|length == 1 else 's' }} awaiting review</div>
+</div>
+
+<div class="filter-row">
+  <span class="filter-label">Kind</span>
+  <a href="/graph/review" class="chip{% if not kind %} chip-active{% endif %}">all</a>
+  <a href="/graph/review?kind=rule" class="chip{% if kind == 'rule' %} chip-active{% endif %}">rule</a>
+  <a href="/graph/review?kind=domain" class="chip{% if kind == 'domain' %} chip-active{% endif %}">domain</a>
+  <a href="/graph/review?kind=process" class="chip{% if kind == 'process' %} chip-active{% endif %}">process</a>
+</div>
+
+{% if rows %}
+  {% set grouped = {} %}
+  {% for r in rows %}
+    {% set _ = grouped.setdefault(r.kind, []).append(r) %}
+  {% endfor %}
+  {% set kind_order = ['rule', 'domain', 'process'] %}
+  {% for k in kind_order %}
+    {% if k in grouped %}
+    <section class="review-group">
+      <div class="review-group-head">
+        <h2 class="review-group-title">{{ k }}</h2>
+        <span class="review-group-count">{{ grouped[k]|length }} pending</span>
+      </div>
+      <div class="node-cards">
+        {% for r in grouped[k] %}
+        <a href="{{ r.href }}" class="node-card">
+          <div class="node-card-title">{{ r.title or r.id.rsplit('::', 1)[-1] }}</div>
+          <div class="node-card-meta">
+            <span class="node-card-kind">{{ r.kind }}</span>
+            {% if r.fan_out %}<span class="node-card-deps">{{ r.fan_out }} dep{{ '' if r.fan_out == 1 else 's' }}</span>{% endif %}
+          </div>
+          <div class="node-card-foot">
+            <span class="state-chip state-chip-llm_drafted">llm_drafted</span>
+            <span class="node-card-id">{{ r.id }}</span>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+  {% endfor %}
+  {# any kinds that aren't in canonical order #}
+  {% for k, items in grouped.items() %}
+    {% if k not in kind_order %}
+    <section class="review-group">
+      <div class="review-group-head">
+        <h2 class="review-group-title">{{ k }}</h2>
+        <span class="review-group-count">{{ items|length }} pending</span>
+      </div>
+      <div class="node-cards">
+        {% for r in items %}
+        <a href="{{ r.href }}" class="node-card">
+          <div class="node-card-title">{{ r.title or r.id.rsplit('::', 1)[-1] }}</div>
+          <div class="node-card-meta">
+            <span class="node-card-kind">{{ r.kind }}</span>
+            {% if r.fan_out %}<span class="node-card-deps">{{ r.fan_out }} dep{{ '' if r.fan_out == 1 else 's' }}</span>{% endif %}
+          </div>
+          <div class="node-card-foot">
+            <span class="state-chip state-chip-llm_drafted">llm_drafted</span>
+            <span class="node-card-id">{{ r.id }}</span>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+  {% endfor %}
+{% else %}
+<p class="empty">Nothing pending review.</p>
+{% endif %}
+
+{% endblock %}
