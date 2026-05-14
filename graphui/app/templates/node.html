@@ -33,19 +33,19 @@
     </div>
 
     <aside class="side">
-      {% include "_telemetry_card.html" %}
-
       {% if siblings %}
       <div class="card sibling-card">
-        <h3>In <code>{{ src.path }}</code> <span class="sibling-count">({{ siblings|length }})</span></h3>
-        <ul class="sibling-list">
-          {% for s in siblings %}
-          <li>
-            <a href="{{ s.href }}">{{ s.title }}</a>
-            <span class="sibling-meta">{{ s.kind }}{% if s.fan_out %} · {{ s.fan_out }}{% endif %}</span>
-          </li>
-          {% endfor %}
-        </ul>
+        <details>
+          <summary><h3 class="collapsible-heading">In <code>{{ src.path }}</code> <span class="sibling-count">({{ siblings|length }})</span></h3></summary>
+          <ul class="sibling-list">
+            {% for s in siblings %}
+            <li>
+              <a href="{{ s.href }}">{{ s.title }}</a>
+              <span class="sibling-meta">{{ s.kind }}{% if s.fan_out %} · {{ s.fan_out }}{% endif %}</span>
+            </li>
+            {% endfor %}
+          </ul>
+        </details>
       </div>
       {% endif %}
 
@@ -94,6 +94,8 @@
         </ul>
       </div>
       {% endif %}
+
+      {% include "_telemetry_card.html" %}
 
       {% include "_attribution_card.html" %}
       {% include "_history_card.html" %}
