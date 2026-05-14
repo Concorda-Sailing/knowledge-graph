@@ -1,7 +1,6 @@
-# logigraph/ and graphui/ are still independent repos cloned in as
-# siblings by install.sh. depgraph/ was consolidated into this repo via
-# git-filter-repo subtree merge; logigraph and graphui follow.
-/logigraph/
+# graphui/ is still an independent repo cloned in as a sibling by
+# install.sh. depgraph/ and logigraph/ were consolidated into this repo
+# via git-filter-repo subtree merge; graphui follows.
 /graphui/
 
 # Python bytecode caches
