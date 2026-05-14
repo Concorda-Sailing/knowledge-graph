@@ -103,8 +103,15 @@ def load_dependents_index() -> dict[str, list[dict]]:
 def cmd_regen(args: argparse.Namespace) -> int:
     """Run each [repos.<key>].extractor from project.toml, then reconcile.
     The legacy four-extractor dispatch table is gone — repos without an
-    extractor configured are skipped with a note."""
+    extractor configured are skipped with a note.
+
+    Inject DEPGRAPH_DATA_DIR into the subprocess env so extractors target the
+    resolved data dir even when the user invoked `depgraph regen` via cwd
+    discovery rather than an explicit env var. Without this, extractors fall
+    back to their own (often stale) defaults and write to a different dir
+    than reconcile reads from — a silent failure mode."""
     mark_regen_in_progress()
+    env = {**os.environ, "DEPGRAPH_DATA_DIR": str(DEPGRAPH)}
     failed: list[str] = []
     for key, info in project_repos(DEPGRAPH).items():
         cmd = render_extractor(info, DEPGRAPH)
@@ -112,11 +119,11 @@ def cmd_regen(args: argparse.Namespace) -> int:
             print(f"--- {key} (no extractor configured; skipping)")
             continue
         print(f"--- {key}")
-        rc = subprocess.call(cmd)
+        rc = subprocess.call(cmd, env=env)
         if rc != 0:
             failed.append(key)
     print("--- reconcile")
-    rc = subprocess.call([FRAMEWORK_PYTHON, str(TOOL_ROOT / "extractors" / "reconcile.py")])
+    rc = subprocess.call([FRAMEWORK_PYTHON, str(TOOL_ROOT / "extractors" / "reconcile.py")], env=env)
     if rc != 0:
         failed.append("reconcile")
     if failed:
