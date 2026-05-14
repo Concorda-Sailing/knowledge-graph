@@ -496,26 +496,28 @@ h2 {
   font-size: 13.5px;
 }
 
-.sibling-card details > summary {
+.side .card details > summary {
   cursor: pointer;
   list-style: none;
   user-select: none;
 }
-.sibling-card details > summary::-webkit-details-marker { display: none; }
-.sibling-card details > summary .collapsible-heading {
+.side .card details > summary::-webkit-details-marker { display: none; }
+.side .card details > summary .collapsible-heading {
   margin: 0;
   display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
-.sibling-card details > summary .collapsible-heading::before {
+.side .card details > summary .collapsible-heading::before {
   content: "▸ ";
   color: var(--fg-mute);
   font-size: 11px;
   margin-right: 4px;
 }
-.sibling-card details[open] > summary .collapsible-heading::before {
+.side .card details[open] > summary .collapsible-heading::before {
   content: "▾ ";
 }
-.sibling-card details[open] > summary {
+.side .card details[open] > summary {
   margin-bottom: 10px;
 }
 
