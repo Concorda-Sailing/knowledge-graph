@@ -1,0 +1,2154 @@
+#!/usr/bin/env python3
+"""
+logigraph — CLI for the rule + domain graph.
+
+Subcommands:
+  regen                       Run extractors and reconcile (build indexes,
+                              validate claims, refresh remote_hash).
+  context <file-or-id>        Print the same block PreToolUse would inject.
+  flag <id> --reason "..."    Set flagged=true on a node; commits.
+  unflag <id>                 Clear flagged; commits.
+  validate                    JSON-Schema check + dossier section check.
+  rules-for <depgraph-id>     List rules that claim a depgraph node.
+  fan-out [--threshold N]     Rank rules by claim count (refactor signal).
+  gaps                        Orphan rules / orphan domain refs / stale
+                              claims.
+  rollup <entity-id>          Full code rollup for a domain entity.
+                              Flags: --kind, --depth, --direct-only,
+                              --format text|json.
+  dossiers --status           [Backwards-compat alias for `stats`.]
+  stats [--telemetry]         Curation backlog + optional injection metrics.
+  self-check                  Smoke-test the hook with a fake payload.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+# Schemas + lib/ travel with the tool framework, not the per-project data.
+TOOL_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(TOOL_ROOT))
+
+# Reconcile imports fastembed via the sibling depgraph repo's venv. Route
+# subprocess calls there too — bare "python3" misses the wheel.
+_DEPGRAPH_VENV = TOOL_ROOT.parent / "depgraph" / ".venv" / "bin" / "python3"
+FRAMEWORK_PYTHON = str(_DEPGRAPH_VENV) if _DEPGRAPH_VENV.exists() else "python3"
+from lib.config import (  # noqa: E402
+    resolve_data_dir,
+    load_project_config,
+    repo_basenames,
+    project_repos,
+    path_to_repo_relative,
+)
+
+# Rollup computation is shared with depgraph; import from the sibling
+# repo. Mirrors how this script already adds TOOL_ROOT to sys.path for
+# its own lib/.
+#
+# `from lib.config import` above already anchors the `lib` package to
+# logigraph's lib/ directory. A plain sys.path.insert won't help — the
+# package cache is already set. We extend lib.__path__ instead so that
+# Python searches depgraph's lib/ for sub-modules too.
+import lib as _lib_pkg  # noqa: E402  (already imported above; this binds the name)
+_DEPGRAPH_ROOT = TOOL_ROOT.parent / "depgraph"
+_lib_pkg.__path__.append(str(_DEPGRAPH_ROOT / "lib"))
+from lib.rollup import (  # noqa: E402
+    compute_rollup,
+    format_rollup_text,
+    format_rollup_json,
+    load_rollup_inputs,
+    resolve_anchor,
+    Rollup,
+)
+
+LOGIGRAPH = resolve_data_dir("LOGIGRAPH_DATA_DIR")
+
+
+def _depgraph_dir() -> Path:
+    """Logigraph claims against a depgraph corpus. Source priority:
+       1. DEPGRAPH_DATA_DIR env var
+       2. [depgraph].data_dir in logigraph's project.toml
+       3. SystemExit.
+    """
+    env = os.environ.get("DEPGRAPH_DATA_DIR")
+    if env:
+        return Path(env).expanduser().resolve()
+    cfg = load_project_config(LOGIGRAPH)
+    dg = (cfg.get("depgraph") or {}).get("data_dir")
+    if dg:
+        return Path(dg).expanduser().resolve()
+    raise SystemExit(
+        "Cannot locate depgraph data dir: set DEPGRAPH_DATA_DIR or add "
+        "[depgraph] data_dir = \"...\" to logigraph's project.toml."
+    )
+
+
+DEPGRAPH = _depgraph_dir()
+NODES = LOGIGRAPH / "nodes"
+DOMAIN_DIR = NODES / "domain"
+RULES_DIR = NODES / "rules"
+INDEX_DIR = NODES / "_index"
+BY_CODE_INDEX = INDEX_DIR / "by_code.json"
+BY_FILE_INDEX = INDEX_DIR / "by_file.json"
+BY_DOMAIN_INDEX = INDEX_DIR / "by_domain.json"
+CORPUS_META = NODES / "_meta.json"
+DOMAIN_SCHEMA = TOOL_ROOT / "schema" / "domain.schema.json"
+RULE_SCHEMA = TOOL_ROOT / "schema" / "rule.schema.json"
+PROCESS_SCHEMA = TOOL_ROOT / "schema" / "process.schema.json"
+TELEMETRY_DIR = LOGIGRAPH / "telemetry"
+INJECTIONS_LOG = TELEMETRY_DIR / "injections.jsonl"
+ACKS_LOG = TELEMETRY_DIR / "acknowledgments.jsonl"
+
+REQUIRED_RULE_DOSSIER_SECTIONS = (
+    "## The rule",
+    "## Why it exists",
+    "## Decision table",
+)
+REQUIRED_DOMAIN_ROLE_DOSSIER_SECTIONS = (
+    "## Plain definition",
+    "## They can",
+)
+
+
+def _is_node_file(path: Path) -> bool:
+    if path.name.startswith("_"):
+        return False
+    if any(p.startswith("_") for p in path.parts):
+        return False
+    return True
+
+
+def load_all_nodes() -> dict[str, tuple[Path, dict]]:
+    """Return id -> (file_path, node_dict) for every authored logigraph node."""
+    out: dict[str, tuple[Path, dict]] = {}
+    for path in NODES.rglob("*.json"):
+        if not _is_node_file(path):
+            continue
+        try:
+            data = json.loads(path.read_text())
+        except json.JSONDecodeError as e:
+            print(f"WARN: invalid JSON {path}: {e}", file=sys.stderr)
+            continue
+        nid = data.get("id")
+        if not nid:
+            continue
+        out[nid] = (path, data)
+    return out
+
+
+def load_depgraph_corpus() -> dict[str, dict]:
+    """Read depgraph nodes once. Returns id -> node dict."""
+    by_id: dict[str, dict] = {}
+    dnodes = DEPGRAPH / "nodes"
+    if not dnodes.exists():
+        return by_id
+    for path in dnodes.rglob("*.json"):
+        if path.name.startswith("_") or any(p.startswith("_") for p in path.parts):
+            continue
+        try:
+            data = json.loads(path.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        nid = data.get("id")
+        if nid:
+            by_id[nid] = data
+    return by_id
+
+
+def mark_regen_in_progress() -> None:
+    """Atomic marker: if regen crashes mid-run, this stays as in_progress
+    and the hook surfaces a banner. reconcile.py flips it to complete on
+    success."""
+    import datetime as _dt
+
+    NODES.mkdir(parents=True, exist_ok=True)
+    payload: dict = {
+        "schema_version": 1,
+        "regen_status": "in_progress",
+        "started_at": _dt.datetime.now(_dt.timezone.utc).isoformat(),
+    }
+    if CORPUS_META.exists():
+        try:
+            existing = json.loads(CORPUS_META.read_text())
+            payload = {**existing, **payload}
+        except (OSError, json.JSONDecodeError):
+            pass
+    tmp = CORPUS_META.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(payload, indent=2, sort_keys=False) + "\n")
+    tmp.replace(CORPUS_META)
+
+
+def cmd_regen(args: argparse.Namespace) -> int:
+    """Inject LOGIGRAPH_DATA_DIR into the subprocess env so reconcile targets
+    the resolved data dir even when the user invoked regen via cwd discovery
+    rather than an explicit env var. Mirrors the same fix in depgraph; cheap
+    insurance for the day logigraph grows project-owned extractors with their
+    own path defaults."""
+    mark_regen_in_progress()
+    env = {**os.environ, "LOGIGRAPH_DATA_DIR": str(LOGIGRAPH)}
+    rc = subprocess.call([FRAMEWORK_PYTHON, str(TOOL_ROOT / "extractors" / "reconcile.py")], env=env)
+    return 0 if rc == 0 else 1
+
+
+def _validate_json_schema(data: dict, schema_path: Path) -> str | None:
+    """Return None if valid, else error message."""
+    try:
+        import jsonschema
+    except ImportError:
+        return "jsonschema not installed; pip install jsonschema"
+    try:
+        schema = json.loads(schema_path.read_text())
+        jsonschema.validate(data, schema)
+    except jsonschema.ValidationError as e:
+        return str(e.message)
+    except json.JSONDecodeError as e:
+        return f"schema parse error: {e}"
+    return None
+
+
+def _check_dossier_sections(dossier_path: Path, required: tuple[str, ...]) -> list[str]:
+    """Return list of missing section headings."""
+    if not dossier_path.exists():
+        return list(required)
+    text = dossier_path.read_text()
+    return [s for s in required if s not in text]
+
+
+def cmd_validate(args: argparse.Namespace) -> int:
+    nodes = load_all_nodes()
+    bad = 0
+    stub_with_todo = 0
+
+    for nid, (path, data) in nodes.items():
+        kind = data.get("kind")
+        if kind == "domain":
+            err = _validate_json_schema(data, DOMAIN_SCHEMA)
+            if err:
+                print(f"INVALID {path}: {err}", file=sys.stderr)
+                bad += 1
+                continue
+            if data.get("subkind") == "role":
+                dossier_rel = data.get("dossier")
+                if dossier_rel:
+                    missing = _check_dossier_sections(
+                        LOGIGRAPH / dossier_rel,
+                        REQUIRED_DOMAIN_ROLE_DOSSIER_SECTIONS,
+                    )
+                    if missing and data.get("definition_status") != "stub":
+                        print(f"DOSSIER {path}: missing sections {missing}", file=sys.stderr)
+                        bad += 1
+        elif kind == "rule":
+            err = _validate_json_schema(data, RULE_SCHEMA)
+            if err:
+                print(f"INVALID {path}: {err}", file=sys.stderr)
+                bad += 1
+                continue
+            dossier_rel = data.get("dossier")
+            if dossier_rel:
+                missing = _check_dossier_sections(
+                    LOGIGRAPH / dossier_rel, REQUIRED_RULE_DOSSIER_SECTIONS
+                )
+                if missing and data.get("definition_status") != "stub":
+                    print(f"DOSSIER {path}: missing sections {missing}", file=sys.stderr)
+                    bad += 1
+        elif kind == "process":
+            err = _validate_json_schema(data, PROCESS_SCHEMA)
+            if err:
+                print(f"INVALID {path}: {err}", file=sys.stderr)
+                bad += 1
+                continue
+            # Reference-integrity: every transition.to must be an existing step id.
+            step_ids = {s["id"] for s in data.get("steps", [])}
+            for step in data.get("steps", []):
+                for tr in step.get("transitions", []) or []:
+                    if tr["to"] not in step_ids:
+                        print(
+                            f"INVALID {path}: step '{step['id']}' transitions to "
+                            f"'{tr['to']}' which is not a step in this process",
+                            file=sys.stderr,
+                        )
+                        bad += 1
+            # Dossier is intentionally optional for processes (pointer semantics).
+            # No required-sections check.
+        else:
+            print(f"UNKNOWN KIND {path}: kind={kind}", file=sys.stderr)
+            bad += 1
+
+        if data.get("definition_status") == "stub":
+            stub_with_todo += 1
+
+    if bad:
+        return 1
+    print(f"all nodes valid ({len(nodes)} total, {stub_with_todo} stub)")
+    return 0
+
+
+def cmd_rules_for(args: argparse.Namespace) -> int:
+    if not BY_CODE_INDEX.exists():
+        print("by_code index not built — run `bin/logigraph regen`", file=sys.stderr)
+        return 1
+    idx = json.loads(BY_CODE_INDEX.read_text())
+    rule_ids = idx.get("by_target", {}).get(args.depgraph_id, [])
+    if not rule_ids:
+        print(f"no rules claim {args.depgraph_id}")
+        return 0
+    nodes = load_all_nodes()
+    for rid in rule_ids:
+        node = nodes.get(rid, (None, {}))[1]
+        title = node.get("title", rid)
+        statement = node.get("statement", "")
+        print(f"- {rid}")
+        print(f"  {title}")
+        if statement:
+            print(f"  → {statement}")
+    return 0
+
+
+def cmd_fan_out(args: argparse.Namespace) -> int:
+    nodes = load_all_nodes()
+    rules = [(nid, data) for nid, (_, data) in nodes.items() if data.get("kind") == "rule"]
+    rules.sort(key=lambda x: -(x[1].get("fan_out") or len(x[1].get("claims_code") or [])))
+    threshold = args.threshold
+    print(f"{'fan-out':<8} rule")
+    print(f"{'-'*8} {'-'*60}")
+    for nid, data in rules:
+        fan_out = data.get("fan_out") or len(data.get("claims_code") or [])
+        if fan_out < threshold:
+            continue
+        print(f"{fan_out:<8} {nid}")
+    return 0
+
+
+def cmd_gaps(args: argparse.Namespace) -> int:
+    nodes = load_all_nodes()
+    domain_ids = {nid for nid, (_, d) in nodes.items() if d.get("kind") == "domain"}
+    depgraph_corpus = load_depgraph_corpus()
+    depgraph_ids = set(depgraph_corpus.keys())
+
+    orphan_claims: list[tuple[str, str]] = []
+    orphan_domain_refs: list[tuple[str, str]] = []
+    stale_claims: list[tuple[str, str]] = []
+
+    for nid, (_, data) in nodes.items():
+        if data.get("kind") != "rule":
+            continue
+        for ref in data.get("references_domain", []):
+            if ref not in domain_ids:
+                orphan_domain_refs.append((nid, ref))
+        for claim in data.get("claims_code", []):
+            cid = claim.get("depgraph_id")
+            if cid not in depgraph_ids:
+                orphan_claims.append((nid, cid))
+                continue
+            remote = claim.get("remote_hash")
+            current = depgraph_corpus[cid].get("structural_hash")
+            if remote and current and remote != current:
+                stale_claims.append((nid, cid))
+
+    if orphan_claims:
+        print(f"ORPHAN CLAIMS ({len(orphan_claims)}):")
+        for rule_id, claim_id in orphan_claims:
+            print(f"  {rule_id} → {claim_id}")
+    if orphan_domain_refs:
+        print(f"ORPHAN DOMAIN REFS ({len(orphan_domain_refs)}):")
+        for rule_id, ref in orphan_domain_refs:
+            print(f"  {rule_id} → {ref}")
+    if stale_claims:
+        print(f"STALE CLAIMS ({len(stale_claims)}):")
+        for rule_id, claim_id in stale_claims:
+            print(f"  {rule_id} → {claim_id}")
+
+    total = len(orphan_claims) + len(orphan_domain_refs) + len(stale_claims)
+    if total == 0:
+        print("no gaps")
+        return 0
+    return 1
+
+
+def cmd_dossiers(args: argparse.Namespace) -> int:
+    """Backwards-compat alias for `stats` with no flags."""
+    args.telemetry = False
+    return cmd_stats(args)
+
+
+def _load_telemetry_events(path: Path, since_hours: int | None = None) -> list[dict]:
+    """Read a JSONL log; if since_hours is given, filter to events newer
+    than that. Returns an empty list if the file is missing or unreadable."""
+    if not path.exists():
+        return []
+    import datetime as _dt
+    cutoff = None
+    if since_hours is not None:
+        cutoff = _dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(hours=since_hours)
+    out: list[dict] = []
+    try:
+        with path.open() as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    ev = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if cutoff is not None:
+                    ts_str = ev.get("ts", "")
+                    try:
+                        ts = _dt.datetime.fromisoformat(ts_str)
+                    except ValueError:
+                        continue
+                    if ts < cutoff:
+                        continue
+                out.append(ev)
+    except OSError:
+        return []
+    return out
+
+
+def cmd_stats(args: argparse.Namespace) -> int:
+    """Curation backlog + (optional) telemetry rollup. Designed to fit in
+    ~30 lines of output for typical state — eyeballable, not dashboard."""
+    nodes = load_all_nodes()
+    rules = [(nid, data) for nid, (_, data) in nodes.items() if data.get("kind") == "rule"]
+    domain_nodes = [(nid, data) for nid, (_, data) in nodes.items() if data.get("kind") == "domain"]
+
+    # Definition_status breakdown.
+    by_kind: dict[str, dict[str, int]] = {}
+    for nid, (_, data) in nodes.items():
+        kind = data.get("kind", "?")
+        by_kind.setdefault(kind, {"stub": 0, "llm_drafted": 0, "human_reviewed": 0, "missing": 0, "other": 0})
+        st = data.get("definition_status")
+        bucket = st if st in ("stub", "llm_drafted", "human_reviewed") else ("missing" if st is None else "other")
+        by_kind[kind][bucket] += 1
+
+    # Stale claims — read directly from rule claims to avoid recomputing.
+    stale_claims = sum(
+        1
+        for _nid, data in rules
+        for c in data.get("claims_code", [])
+        if c.get("stale")
+    )
+    total_claims = sum(len(data.get("claims_code", [])) for _nid, data in rules)
+
+    print("# Logigraph stats")
+    print()
+    print(f"  rules:      {len(rules)}")
+    print(f"  domain:     {len(domain_nodes)}")
+    print(f"  claims:     {total_claims}  (stale: {stale_claims})")
+    print()
+    print("## Definition status")
+    for kind, kc in sorted(by_kind.items()):
+        breakdown = ", ".join(f"{st}={n}" for st, n in kc.items() if n)
+        print(f"  {kind:<10} {breakdown}")
+
+    if args.telemetry:
+        injections = _load_telemetry_events(INJECTIONS_LOG)
+        acks = _load_telemetry_events(ACKS_LOG)
+        recent_injections = _load_telemetry_events(INJECTIONS_LOG, since_hours=24 * 7)
+        recent_acks = _load_telemetry_events(ACKS_LOG, since_hours=24 * 7)
+
+        print()
+        print("## Telemetry (all-time)")
+        print(f"  total injections:        {len(injections)}")
+        print(f"  total acknowledgments:   {len(acks)}")
+        print()
+        print("## Telemetry (last 7 days)")
+        print(f"  injections:              {len(recent_injections)}")
+        print(f"  acknowledgments:         {len(recent_acks)}")
+
+        # Per-rule breakdown.
+        rule_inj: dict[str, int] = {}
+        rule_ack: dict[str, int] = {}
+        for ev in injections:
+            rid = ev.get("rule_id")
+            if rid:
+                rule_inj[rid] = rule_inj.get(rid, 0) + 1
+        for ev in acks:
+            rid = ev.get("rule_id")
+            if rid:
+                rule_ack[rid] = rule_ack.get(rid, 0) + 1
+
+        if rule_inj:
+            print()
+            print("## Top-injected rules (all-time, with ack rate)")
+            ranked = sorted(rule_inj.items(), key=lambda kv: -kv[1])[:10]
+            print(f"  {'inj':>5}  {'ack':>5}  {'rate':>5}  rule")
+            print(f"  {'-'*5}  {'-'*5}  {'-'*5}  {'-'*40}")
+            for rid, inj_n in ranked:
+                ack_n = rule_ack.get(rid, 0)
+                rate = (ack_n / inj_n) if inj_n > 0 else 0.0
+                print(f"  {inj_n:>5}  {ack_n:>5}  {rate*100:>4.0f}%  {rid}")
+
+            # Highlight low-ack-rate rules — candidates for prose rework.
+            low_ack = [(rid, inj_n, rule_ack.get(rid, 0)) for rid, inj_n in rule_inj.items()
+                       if inj_n >= 3 and (rule_ack.get(rid, 0) / inj_n) < 0.3]
+            if low_ack:
+                print()
+                print("## Low ack rate — candidates for prose rework")
+                for rid, inj_n, ack_n in sorted(low_ack, key=lambda x: -x[1]):
+                    print(f"  {rid}: {inj_n} injected, {ack_n} acknowledged")
+
+    return 0
+
+
+def repo_relative(abs_path: str) -> tuple[str, str] | None:
+    """Same shape as depgraph's helper. Resolves any absolute path under a
+    configured [repos.*].path to (basename, rel) regardless of checkout
+    layout."""
+    return path_to_repo_relative(abs_path, LOGIGRAPH)
+
+
+def find_rules_for_target(target: str) -> list[str]:
+    """If target looks like a file path, return rule_ids that claim any
+    depgraph node living in that file. If target looks like a node id
+    (rule:: or domain subkind prefix), return [target] verbatim. If target
+    looks like a depgraph node id (contains '::' but is not a domain subkind
+    prefix), look it up in the by_code index."""
+    if target.startswith(("rule::", "role::", "resource::", "action::", "attribute::")):
+        return [target]
+    # Depgraph node IDs contain '::' (e.g. "concorda-api::models/foo.py::Foo").
+    # Look them up via the by_code index rather than by_file.
+    if "::" in target:
+        if not BY_CODE_INDEX.exists():
+            print("by_code index not built — run `bin/logigraph regen`", file=sys.stderr)
+            return []
+        idx = json.loads(BY_CODE_INDEX.read_text())
+        return idx.get("by_target", {}).get(target, [])
+    if not BY_FILE_INDEX.exists():
+        print("by_file index not built — run `bin/logigraph regen`", file=sys.stderr)
+        return []
+    idx = json.loads(BY_FILE_INDEX.read_text())
+    rr = repo_relative(target)
+    if not rr:
+        # Try treating as repo-relative — two forms accepted:
+        #   (a) bare relative:   "models/event.py"  → check info["path"] / target
+        #   (b) basename-prefix: "concorda-api/models/event.py"
+        #       → strip the first component when it matches a known basename
+        repos = project_repos(LOGIGRAPH)
+        for info in repos.values():
+            basename = info["basename"]
+            # Form (b): target already has the basename prefix — strip it.
+            if target.startswith(f"{basename}/"):
+                rel = target[len(basename) + 1:]
+                if (info["path"] / rel).exists():
+                    rr = (basename, rel)
+                    break
+            # Form (a): bare relative path under this repo.
+            elif (info["path"] / target).exists():
+                rr = (info["basename"], target)
+                break
+    if not rr:
+        return []
+    key = f"{rr[0]}/{rr[1]}"
+    return idx.get("by_file", {}).get(key, [])
+
+
+def cmd_context(args: argparse.Namespace) -> int:
+    nodes = load_all_nodes()
+    rule_ids = find_rules_for_target(args.target)
+    if not rule_ids:
+        print(f"no rules apply to: {args.target}")
+        return 0
+    for rid in rule_ids:
+        if rid not in nodes:
+            print(f"WARN: index points to missing rule {rid}", file=sys.stderr)
+            continue
+        path, data = nodes[rid]
+        if data.get("flagged"):
+            reason = data.get("flagged_reason") or "(no reason recorded)"
+            flagger = data.get("flagged_by") or "(unknown)"
+            flag_date = data.get("flagged_at") or ""
+            print("⚠ FLAGGED — this rule documents a known deficiency, not an invariant to preserve.")
+            meta = f"  Flagged by: {flagger}"
+            if flag_date:
+                meta += f" · {flag_date}"
+            print(meta)
+            print(f"  Reason: {reason}")
+            print("  When touching affected code: surface alternatives; do NOT pattern-match")
+            print("  the current state as desired. The rule's claims describe what exists,")
+            print("  not what should exist.")
+            print()
+        print(f"# {data.get('title', rid)}")
+        print(f"id: {rid}  ·  fan_out: {data.get('fan_out') or len(data.get('claims_code') or [])}")
+        print(f"statement: {data.get('statement', '')}")
+        print()
+        for ref in data.get("references_domain", []):
+            ont = nodes.get(ref, (None, {}))[1]
+            summary = ont.get("summary", "")
+            if summary:
+                print(f"  · {ref}: {summary}")
+        print()
+        dossier_rel = data.get("dossier")
+        if dossier_rel and (LOGIGRAPH / dossier_rel).exists():
+            print((LOGIGRAPH / dossier_rel).read_text())
+        else:
+            print("_no dossier_")
+        print()
+
+    # --- Entity rollups -------------------------------------------------------
+    # Collect the union of domain refs across the applicable rules; emit a
+    # rollup summary block per entity. Spec § "CLI surface / context": inline
+    # by default, summary mode (top 3 per kind).
+    entity_ids: list[str] = []
+    seen_entity: set[str] = set()
+    for rid in rule_ids:
+        if rid not in nodes:
+            continue
+        _, rdata = nodes[rid]
+        for ref in rdata.get("references_domain", []):
+            if ref not in seen_entity and ref in nodes:
+                entity_ids.append(ref)
+                seen_entity.add(ref)
+
+    if entity_ids:
+        try:
+            inputs = load_rollup_inputs(_depgraph_dir())
+        except FileNotFoundError as e:
+            # Reverse-dependents index missing — surface once, then skip.
+            print(f"# (rollups skipped: {e})")
+            return 0
+        logigraph_index = {nid: data for nid, (_, data) in nodes.items()}
+        for eid in entity_ids:
+            _, edata = nodes[eid]
+            anchor = resolve_anchor(edata, inputs.depgraph_index, logigraph_index=logigraph_index)
+            rollup = compute_rollup(
+                anchor_id=anchor.model_id or "",
+                depgraph_index=inputs.depgraph_index,
+                dependents_index=inputs.dependents_index,
+                depth=3,
+                anchor_result=anchor,
+            )
+            print(f"─ Rollup for {eid}")
+            print(format_rollup_text(rollup, summary=True))
+            print()
+
+    return 0
+
+
+def cmd_rollup(args: argparse.Namespace) -> int:
+    """Emit the full code rollup for a logigraph domain entity.
+
+    Resolves the entity's anchor model in depgraph, then BFS over the
+    reverse-dependents index to gather every code symbol that operates
+    on the entity. Output respects --kind / --depth / --format flags."""
+    depgraph_dir = _depgraph_dir()
+    inputs = load_rollup_inputs(depgraph_dir)
+
+    nodes = load_all_nodes()  # logigraph nodes — { id: (path, data) }
+    if args.entity_id not in nodes:
+        print(f"no logigraph node with id: {args.entity_id}", file=sys.stderr)
+        return 1
+    _, domain_node = nodes[args.entity_id]
+    logigraph_index = {nid: data for nid, (_, data) in nodes.items()}
+
+    anchor = resolve_anchor(domain_node, inputs.depgraph_index, logigraph_index=logigraph_index)
+    rollup = compute_rollup(
+        anchor_id=anchor.model_id or "",
+        depgraph_index=inputs.depgraph_index,
+        dependents_index=inputs.dependents_index,
+        depth=args.depth,
+        anchor_result=anchor,
+    )
+
+    # --kind filter (post-compute so via-chains stay coherent).
+    if args.kind:
+        wanted = set(args.kind.split(","))
+        rollup = Rollup(
+            anchor=rollup.anchor,
+            by_kind={k: v for k, v in rollup.by_kind.items() if k in wanted},
+            total=sum(len(v) for k, v in rollup.by_kind.items() if k in wanted),
+        )
+
+    if args.format == "json":
+        print(json.dumps(format_rollup_json(rollup), indent=2))
+    else:
+        print(format_rollup_text(rollup, summary=False))
+    return 0
+
+
+# ===== rule pipeline =========================================================
+# rule-rank   list rule nodes by definition_status, ranked by claim count
+# rule-stub   create a stub rule JSON node + placeholder dossier from a candidate
+# rule-draft  emit an LLM-drafting context bundle for one rule (template + claims sources + domain + sibling rules)
+# rule-finalize  write the dossier body for a stub/drafted rule with frontmatter
+# rule-bump   promote a rule's definition_status (default → human_reviewed)
+
+
+def _rule_node_path(rule_id: str) -> Path:
+    """rule::category::short_name → nodes/rules/category__short_name.json"""
+    if not rule_id.startswith("rule::"):
+        raise ValueError(f"not a rule id: {rule_id}")
+    parts = rule_id.split("::", 2)
+    if len(parts) != 3:
+        raise ValueError(f"malformed rule id (expected 3 segments): {rule_id}")
+    return RULES_DIR / f"{parts[1]}__{parts[2]}.json"
+
+
+def _rule_dossier_path(rule_id: str) -> Path:
+    parts = rule_id.split("::", 2)
+    return LOGIGRAPH / "dossiers" / "rules" / f"{parts[1]}__{parts[2]}.md"
+
+
+def _rule_dossier_rel(rule_id: str) -> str:
+    parts = rule_id.split("::", 2)
+    return f"dossiers/rules/{parts[1]}__{parts[2]}.md"
+
+
+_DOMAIN_PREFIXES = ("role", "resource", "attribute", "relationship", "action")
+
+
+def _domain_node_path(domain_id: str) -> Path:
+    """<subkind>::<category>::<short_name> → nodes/domain/<subkind>__<category>__<short_name>.json"""
+    parts = domain_id.split("::")
+    if len(parts) != 3 or parts[0] not in _DOMAIN_PREFIXES:
+        raise ValueError(f"not a valid domain id: {domain_id}")
+    return DOMAIN_DIR / f"{parts[0]}__{parts[1]}__{parts[2]}.json"
+
+
+def _domain_dossier_path(domain_id: str) -> Path:
+    parts = domain_id.split("::")
+    return LOGIGRAPH / "dossiers" / "domain" / f"{parts[0]}__{parts[1]}__{parts[2]}.md"
+
+
+def _process_node_path(process_id: str) -> Path:
+    """process::<category>::<short_name> → nodes/processes/<category>__<short_name>.json"""
+    parts = process_id.split("::")
+    if len(parts) != 3 or parts[0] != "process":
+        raise ValueError(f"not a valid process id: {process_id}")
+    return LOGIGRAPH / "nodes" / "processes" / f"{parts[1]}__{parts[2]}.json"
+
+
+def _process_dossier_path(process_id: str) -> Path:
+    parts = process_id.split("::")
+    return LOGIGRAPH / "dossiers" / "processes" / f"{parts[1]}__{parts[2]}.md"
+
+
+def _process_dossier_rel(process_id: str) -> str:
+    parts = process_id.split("::")
+    return f"dossiers/processes/{parts[1]}__{parts[2]}.md"
+
+
+def _process_dossier_path(process_id: str) -> Path:
+    parts = process_id.split("::")
+    return LOGIGRAPH / "dossiers" / "processes" / f"{parts[1]}__{parts[2]}.md"
+
+
+def cmd_rule_rank(args: argparse.Namespace) -> int:
+    """List rule nodes ranked by definition_status (stub > llm_drafted > human_reviewed)
+    then by claim count desc. Useful for picking the next rule to author."""
+    rows = []
+    if not RULES_DIR.is_dir():
+        print("no rules directory")
+        return 0
+    for nf in sorted(RULES_DIR.glob("*.json")):
+        try:
+            d = json.loads(nf.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        rows.append({
+            "id": d.get("id", nf.stem),
+            "title": d.get("title", ""),
+            "status": d.get("definition_status", "?"),
+            "claims": len(d.get("claims_code") or []),
+            "confidence": d.get("confidence", "?"),
+        })
+    status_order = {"stub": 0, "llm_drafted": 1, "human_reviewed": 2}
+    rows.sort(key=lambda r: (status_order.get(r["status"], 99), -r["claims"]))
+    if args.status:
+        rows = [r for r in rows if r["status"] == args.status]
+    print(f"{'#':>3}  {'status':<14}  {'claims':>6}  {'conf':<6}  id")
+    print("-" * 100)
+    for i, r in enumerate(rows, 1):
+        print(f"{i:>3}  {r['status']:<14}  {r['claims']:>6}  {r['confidence']:<6}  {r['id']}")
+    return 0
+
+
+def cmd_rule_stub(args: argparse.Namespace) -> int:
+    """Materialize a stub rule node from a one-line statement. Optionally
+    seed claims_code from --claim flags. Use this to capture rule
+    candidates before authoring the full dossier."""
+    rule_id = args.id
+    if not rule_id.startswith("rule::"):
+        print(f"id must start with rule:: — got {rule_id}", file=sys.stderr)
+        return 1
+    node_path = _rule_node_path(rule_id)
+    if node_path.exists() and not args.force:
+        print(f"node already exists: {node_path.relative_to(LOGIGRAPH)}; pass --force to overwrite", file=sys.stderr)
+        return 1
+    title = args.title or rule_id.split("::", 2)[2].replace("_", " ").capitalize()
+    statement = args.statement or "TODO: one-sentence rule statement"
+    claims = []
+    for c in args.claim or []:
+        # format: "<role>:<depgraph_id>[|<where>]"
+        if ":" not in c:
+            print(f"--claim format is '<role>:<depgraph_id>[|<where>]' (got: {c})", file=sys.stderr)
+            return 1
+        role, rest = c.split(":", 1)
+        if "|" in rest:
+            dg_id, where = rest.split("|", 1)
+        else:
+            dg_id, where = rest, ""
+        claims.append({
+            "depgraph_id": dg_id.strip(),
+            "role": role.strip(),
+            "where": where.strip(),
+            "confidence": "medium",
+            "remote_hash": "",
+            "stale": False,
+        })
+    domain_refs = args.domain_ref or ["resource::project::TODO"]
+    import hashlib as _h
+    structural_hash = _h.sha256(rule_id.encode()).hexdigest()
+    node = {
+        "schema_version": 2,
+        "id": rule_id,
+        "kind": "rule",
+        "title": title,
+        "statement": statement,
+        "references_domain": domain_refs,
+        "claims_code": claims,
+        "fan_out": len(claims),
+        "confidence": args.confidence,
+        "source": args.source or "",
+        "definition_status": "stub",
+        "structural_hash": structural_hash,
+        "dossier": _rule_dossier_rel(rule_id),
+    }
+    node_path.parent.mkdir(parents=True, exist_ok=True)
+    node_path.write_text(json.dumps(node, indent=2) + "\n")
+    print(f"wrote {node_path.relative_to(LOGIGRAPH)}")
+    print(f"status: stub — next: bin/logigraph rule-draft '{rule_id}'")
+    return 0
+
+
+def cmd_rule_draft(args: argparse.Namespace) -> int:
+    """Emit an LLM-drafting context bundle for a rule: template + sibling
+    rule examples + each claim_code's depgraph dossier + each domain
+    reference's dossier. Pipe to a file and feed to a drafting agent."""
+    rule_id = args.id
+    node_path = _rule_node_path(rule_id)
+    if not node_path.exists():
+        print(f"no rule node at {node_path.relative_to(LOGIGRAPH)} — try `rule-stub` first", file=sys.stderr)
+        return 1
+    node = json.loads(node_path.read_text())
+
+    out = []
+    out.append(f"# rule-draft context bundle: {rule_id}\n")
+    out.append(f"## Target rule\n")
+    out.append(f"- id: {rule_id}")
+    out.append(f"- title: {node.get('title', '')}")
+    out.append(f"- statement: {node.get('statement', '')}")
+    out.append(f"- references_domain: {', '.join(node.get('references_domain') or [])}")
+    out.append(f"- claims_code ({len(node.get('claims_code') or [])}):")
+    for c in node.get("claims_code") or []:
+        out.append(f"  - {c.get('role','?')} → `{c.get('depgraph_id','?')}` ({c.get('where','')})")
+    out.append("")
+
+    template_path = LOGIGRAPH / "schema" / "rule_dossier.template.md"
+    if template_path.exists():
+        out.append("## Authoring template (required sections)\n")
+        out.append("```markdown")
+        out.append(template_path.read_text().rstrip())
+        out.append("```\n")
+
+    out.append("## Existing rule dossiers (style examples — read these first)\n")
+    for sibling in sorted((LOGIGRAPH / "dossiers" / "rules").glob("*.md")):
+        out.append(f"### {sibling.stem}\n")
+        out.append("```markdown")
+        out.append(sibling.read_text().rstrip())
+        out.append("```\n")
+
+    out.append("## Claim sources (depgraph dossiers + source paths)\n")
+    for c in node.get("claims_code") or []:
+        dg_id = c.get("depgraph_id", "")
+        out.append(f"### {dg_id}\n")
+        # find the depgraph node json
+        dg_corpus = load_depgraph_corpus()
+        if dg_id in dg_corpus:
+            dgn = dg_corpus[dg_id]
+            src = dgn.get("source") or {}
+            out.append(f"- repo/path: `{src.get('repo','')}/{src.get('path','')}` line {src.get('line','?')}")
+            dossier_rel = dgn.get("dossier")
+            if dossier_rel:
+                p = DEPGRAPH / dossier_rel
+                if p.exists():
+                    out.append(f"- dossier: `depgraph/{dossier_rel}`\n")
+                    out.append("```markdown")
+                    out.append(p.read_text().rstrip())
+                    out.append("```\n")
+        else:
+            out.append(f"_(not in depgraph corpus — claim points at an HTTP route or an extractor blind spot)_\n")
+
+    out.append("## Domain references\n")
+    # Index domain nodes by id (filenames don't always match the id triple).
+    domain_by_id: dict[str, dict] = {}
+    for of in DOMAIN_DIR.glob("*.json"):
+        try:
+            d = json.loads(of.read_text())
+            if d.get("id"):
+                domain_by_id[d["id"]] = d
+        except (OSError, json.JSONDecodeError):
+            continue
+    for oid in node.get("references_domain") or []:
+        ontd = domain_by_id.get(oid)
+        if ontd:
+            out.append(f"### {oid}")
+            out.append(f"- title: {ontd.get('title','')}")
+            out.append(f"- summary: {ontd.get('summary','')}\n")
+            dossier_rel = ontd.get("dossier")
+            if dossier_rel:
+                p = LOGIGRAPH / dossier_rel
+                if p.exists():
+                    out.append("```markdown")
+                    out.append(p.read_text().rstrip())
+                    out.append("```\n")
+        else:
+            out.append(f"### {oid} _(stub — domain node not yet authored)_\n")
+
+    out.append("## Authoring instructions\n")
+    out.append(
+        "Write the dossier body markdown ONLY (no frontmatter — `rule-finalize` adds it).\n"
+        "Required sections, in order: `## The rule`, `## Why it exists`, `## Examples`, "
+        "`## Counter-examples (what the rule does NOT do)`, `## Decision table`, "
+        "`## Edge cases`, `## Surfaces`. The Decision table is mandatory and is the "
+        "primary reading surface for the LLM consumer — make it exhaustive over realistic "
+        "boundary conditions.\n\n"
+        "Reference real commit hashes / PR ids when citing the rule's origin. Cite "
+        "claim-code locations with `file:line` form. Keep the prose tight; the table is the "
+        "load-bearing artifact."
+    )
+
+    print("\n".join(out))
+    return 0
+
+
+def cmd_rule_finalize(args: argparse.Namespace) -> int:
+    """Write a rule dossier body file to the canonical path with frontmatter
+    set to llm_drafted. Mirrors `bin/depgraph dossier-finalize`."""
+    rule_id = args.id
+    node_path = _rule_node_path(rule_id)
+    if not node_path.exists():
+        print(f"no rule node at {node_path.relative_to(LOGIGRAPH)} — try `rule-stub` first", file=sys.stderr)
+        return 1
+    node = json.loads(node_path.read_text())
+
+    body_file = Path(args.body_file)
+    if not body_file.exists():
+        print(f"body file not found: {body_file}", file=sys.stderr)
+        return 1
+    body = body_file.read_text().strip()
+
+    import datetime as _dt
+    today = _dt.date.today().isoformat()
+    title = node.get("title") or rule_id
+    fan_out = len(node.get("claims_code") or [])
+    frontmatter = (
+        f"---\n"
+        f"node_id: {rule_id}\n"
+        f"node_kind: rule\n"
+        f"definition_status: llm_drafted\n"
+        f"last_reviewed: {today}\n"
+        f"last_reviewed_against_hash: {node.get('structural_hash')}\n"
+        f"fan_out: {fan_out}\n"
+        f"---\n\n"
+        f"# {title}\n\n"
+    )
+    dossier_path = _rule_dossier_path(rule_id)
+    dossier_path.parent.mkdir(parents=True, exist_ok=True)
+    dossier_path.write_text(frontmatter + body + "\n")
+    # Bump the JSON node's definition_status too — keeps node + dossier in sync
+    node["definition_status"] = "llm_drafted"
+    node_path.write_text(json.dumps(node, indent=2) + "\n")
+    print(f"wrote {dossier_path.relative_to(LOGIGRAPH)}")
+    print(f"updated {node_path.relative_to(LOGIGRAPH)} → definition_status: llm_drafted")
+    print("next: review the dossier, then `bin/logigraph rule-bump '{0}'`".format(rule_id))
+    return 0
+
+
+def _existing_process_coverage(dg_corpus: dict[str, dict] | None = None) -> set[str]:
+    """Return the set of depgraph node ids already covered by some existing
+    process: directly claimed by any step OR named as flow.endpoint /
+    flow.ui_surface OR reachable forward (1-2 hops) from any covered
+    endpoint. The forward-reach expansion suppresses convergence-on-model
+    candidates that the existing endpoint-anchored processes already
+    implicitly own."""
+    covered: set[str] = set()
+    proc_dir = LOGIGRAPH / "nodes" / "processes"
+    if not proc_dir.is_dir():
+        return covered
+    direct_endpoints: list[str] = []
+    for nf in proc_dir.glob("*.json"):
+        try:
+            d = json.loads(nf.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        for st in d.get("steps") or []:
+            for c in st.get("claims_code") or []:
+                cid = c.get("depgraph_id")
+                if cid:
+                    covered.add(cid)
+                    if dg_corpus and (dg_corpus.get(cid) or {}).get("kind") == "endpoint":
+                        direct_endpoints.append(cid)
+        flow = d.get("flow") or {}
+        for k in ("endpoint", "ui_surface"):
+            v = flow.get(k)
+            if v:
+                covered.add(v)
+                if dg_corpus and k == "endpoint":
+                    direct_endpoints.append(v)
+    # Forward-reach expansion: 1-2 hops from each covered endpoint
+    if dg_corpus:
+        for ep in direct_endpoints:
+            node = dg_corpus.get(ep)
+            if not node:
+                continue
+            hop1 = []
+            for edge in node.get("depends_on") or []:
+                tgt = edge.get("target") if isinstance(edge, dict) else None
+                if tgt:
+                    covered.add(tgt)
+                    hop1.append(tgt)
+            for h in hop1:
+                node2 = dg_corpus.get(h)
+                if not node2:
+                    continue
+                for edge in node2.get("depends_on") or []:
+                    tgt = edge.get("target") if isinstance(edge, dict) else None
+                    if tgt:
+                        covered.add(tgt)
+    return covered
+
+
+def _kinds_for_claims(claims: list, dg_corpus: dict[str, dict]) -> set[str]:
+    """Return the set of distinct depgraph `kind` values represented by these claims."""
+    kinds = set()
+    for c in claims or []:
+        cid = c.get("depgraph_id")
+        if not cid:
+            continue
+        node = dg_corpus.get(cid)
+        if node and node.get("kind"):
+            kinds.add(node["kind"])
+    return kinds
+
+
+def cmd_process_rank(args: argparse.Namespace) -> int:
+    """Stage 1: emit ranked candidate processes from heuristic signals.
+
+    Two signals in this pass:
+      rule_shape_mismatch — rule whose claims span ≥3 distinct depgraph kinds
+                             (it's behaving like a process)
+      entrypoint_fan_in   — endpoint whose dependents include ≥3 distinct kinds
+                             (UI + service + model is the classic flow shape)
+
+    Output is purely advisory. No corpus writes. A second LLM-classification
+    stage (the gate against pollution) can be layered on later — this stage
+    is deliberately noisy so we can see what falls out.
+    """
+    dg_corpus = load_depgraph_corpus()
+    covered = _existing_process_coverage(dg_corpus)
+    nodes = load_all_nodes()
+    candidates: list[dict] = []
+
+    # --- Signal A: rule_shape_mismatch -----------------------------------
+    for nid, (_path, data) in nodes.items():
+        if data.get("kind") != "rule":
+            continue
+        claims = data.get("claims_code") or []
+        kinds = _kinds_for_claims(claims, dg_corpus)
+        if len(kinds) < 3:
+            continue
+        # Skip if all claim anchors are already in some process
+        anchors = [c.get("depgraph_id", "") for c in claims if c.get("depgraph_id")]
+        if anchors and all(a in covered for a in anchors):
+            continue
+        # Confidence: 0.6 base + 0.1 per kind above 3, capped at 1.0
+        conf = min(1.0, 0.6 + 0.1 * (len(kinds) - 3))
+        cat = nid.split("::", 2)[1] if "::" in nid else "uncategorized"
+        short = nid.split("::", 2)[2] if nid.count("::") >= 2 else nid.replace("rule::", "")
+        candidates.append({
+            "signal": "rule_shape_mismatch",
+            "anchor": nid,
+            "confidence": conf,
+            "evidence": f"claims span kinds: {sorted(kinds)} (len={len(kinds)})",
+            "suggested": f"process::{cat}::{short}_flow",
+            "fan_out": len(claims),
+        })
+
+    # --- Signal B: entrypoint_fan_in -------------------------------------
+    deps_index_path = DEPGRAPH / "nodes" / "_index" / "dependents.json"
+    deps_idx: dict[str, list[dict]] = {}
+    if deps_index_path.exists():
+        try:
+            raw = json.loads(deps_index_path.read_text())
+            # Depgraph stores the actual reverse-edge map under "by_target"
+            deps_idx = raw.get("by_target") or {}
+        except (OSError, json.JSONDecodeError):
+            deps_idx = {}
+    # Iterate depgraph endpoints
+    for nid, dgn in dg_corpus.items():
+        if dgn.get("kind") != "endpoint":
+            continue
+        if nid in covered:
+            continue
+        dep_entries = deps_idx.get(nid) or []
+        # Map dependent source ids to their kinds
+        dep_kinds: set[str] = set()
+        for de in dep_entries:
+            src = de.get("source") or de.get("id")
+            if not src:
+                continue
+            dep_node = dg_corpus.get(src)
+            if dep_node and dep_node.get("kind"):
+                dep_kinds.add(dep_node["kind"])
+        if len(dep_kinds) < 3:
+            continue
+        # Confidence: 0.55 base + 0.1 per kind above 3 + small bump if fan-out is high
+        conf = min(1.0, 0.55 + 0.1 * (len(dep_kinds) - 3) + min(0.2, len(dep_entries) / 100))
+        # Derive a suggested name from the endpoint path
+        title = dgn.get("title") or nid
+        # POST::/api/events/{slug}/register → events_register
+        slug = ""
+        if "::" in nid:
+            try:
+                slug = nid.split("::", 1)[1].strip("/").replace("/", "_").replace("{", "").replace("}", "")
+            except Exception:
+                slug = ""
+        candidates.append({
+            "signal": "entrypoint_fan_in",
+            "anchor": nid,
+            "confidence": conf,
+            "evidence": f"{len(dep_entries)} dependents across kinds {sorted(dep_kinds)}",
+            "suggested": f"process::endpoints::{slug[:50]}_flow",
+            "fan_out": len(dep_entries),
+        })
+
+    # --- Signal C: forward-edge multi-kind reach from endpoint ----------
+    # Walk each endpoint's depends_on transitively (BFS depth 3). If the
+    # reached set spans >=3 distinct kinds OR writes >=2 distinct models,
+    # the endpoint is orchestrating something flow-shaped.
+    def _bfs_forward(start_id: str, max_depth: int = 2) -> dict[str, int]:
+        """Return {node_id: depth_first_reached}. Depth 1 = direct depends_on
+        edges from the start node. Depth 2 = one further hop. Stops at 2 by
+        default to avoid noise from transitively-shared services (auth, db,
+        utils) inflating reach counts."""
+        depth_of: dict[str, int] = {start_id: 0}
+        frontier = [start_id]
+        for d in range(1, max_depth + 1):
+            next_frontier = []
+            for nid in frontier:
+                node = dg_corpus.get(nid)
+                if not node:
+                    continue
+                for edge in node.get("depends_on") or []:
+                    tgt = edge.get("target") if isinstance(edge, dict) else None
+                    if tgt and tgt not in depth_of:
+                        depth_of[tgt] = d
+                        next_frontier.append(tgt)
+            frontier = next_frontier
+            if not frontier:
+                break
+        return {k: v for k, v in depth_of.items() if k != start_id}
+
+    # Build reverse-aggregation alongside Signal C for convergence
+    endpoints_reaching: dict[str, set[str]] = {}  # downstream_id -> {endpoint_ids}
+
+    # Lifecycle = state mutation, not aggregation. GET endpoints are reads
+    # in REST-shaped APIs; their fan-out reflects read patterns, not flow
+    # shape. Skip them from both Signal C and the convergence aggregation
+    # used by Signal D so noise like the ICS feed (reads 5 models) doesn't
+    # surface as flow-shaped.
+    for nid, dgn in dg_corpus.items():
+        if dgn.get("kind") != "endpoint":
+            continue
+        if nid.startswith("GET::"):
+            continue
+        reached = set(_bfs_forward(nid, max_depth=2).keys())
+        # Tally for convergence signal
+        for r in reached:
+            endpoints_reaching.setdefault(r, set()).add(nid)
+        # Signal C own emit
+        if nid in covered:
+            continue
+        kinds = {dg_corpus[r].get("kind", "?") for r in reached if r in dg_corpus}
+        kinds.discard("?")
+        models = {r for r in reached if r in dg_corpus and dg_corpus[r].get("kind") == "model"}
+        if len(kinds) < 3 and len(models) < 2:
+            continue
+        # Skip pure-test or pure-component fan-out (READ endpoints typically)
+        non_trivial_kinds = kinds - {"test", "component", "schema", "route_call"}
+        if len(non_trivial_kinds) < 2:
+            continue
+        conf = min(1.0, 0.55 + 0.1 * (len(kinds) - 3) + 0.15 * max(0, len(models) - 1))
+        # Suggested name from endpoint path
+        slug = nid.split("::", 1)[1].strip("/").replace("/", "_").replace("{", "").replace("}", "") if "::" in nid else "endpoint"
+        candidates.append({
+            "signal": "endpoint_forward_reach",
+            "anchor": nid,
+            "confidence": conf,
+            "evidence": f"reaches kinds {sorted(kinds)}; writes {len(models)} model(s)",
+            "suggested": f"process::endpoints::{slug[:50]}_orchestration",
+            "fan_out": len(reached),
+        })
+
+    # --- Signal D+E (unified): convergence on shared downstream ---------
+    # Kind-weighted; only emit when >=3 endpoints converge AND the
+    # downstream node isn't itself an endpoint or already covered.
+    KIND_WEIGHT = {"model": 1.0, "hook": 0.85, "service": 0.65, "schema": 0.45}
+    for downstream_id, endpoints in endpoints_reaching.items():
+        if downstream_id in covered:
+            continue
+        n_eps = len(endpoints)
+        if n_eps < 3:
+            continue
+        # Skip hubs: nodes touched by too many endpoints aren't flow centers,
+        # they're foundational primitives (Person, Event, the auth context).
+        # Threshold tuned by inspection — anything >15 endpoints in a corpus
+        # of ~300 is reading like a hub.
+        if n_eps > 15:
+            continue
+        ds_node = dg_corpus.get(downstream_id)
+        if not ds_node:
+            continue
+        ds_kind = ds_node.get("kind", "?")
+        if ds_kind not in KIND_WEIGHT:
+            continue
+        # confidence: kind weight × concentration factor (peaks 4-7 endpoints)
+        kw = KIND_WEIGHT[ds_kind]
+        # Gaussian-ish bump centered at 5 endpoints
+        conc = 1.0 - abs(n_eps - 5) / 12.0
+        conf = min(1.0, kw * max(0.3, conc))
+        # Suggested name from downstream id
+        # e.g. concorda-api::models/event_crew.py::EventCrew → process::event_crew::lifecycle
+        suggest_slug = downstream_id.split("::")[-1].lower()
+        suggest_cat = ds_kind  # "model", "hook", etc.
+        candidates.append({
+            "signal": f"convergence_on_{ds_kind}",
+            "anchor": downstream_id,
+            "confidence": conf,
+            "evidence": f"{len(endpoints)} endpoint(s) reach this {ds_kind}",
+            "suggested": f"process::{suggest_cat}::{suggest_slug}_lifecycle",
+            "fan_out": len(endpoints),
+        })
+
+    # --- Signal F — UI-initiated flow: pages and hooks --------------------
+    # A real Concorda flow usually starts at a button (component in
+    # src/app/**/page.tsx) or at a reusable hook (kind=hook in src/hooks/).
+    # Walk forward from each candidate entry point; require it to reach
+    # both an endpoint AND a model for the flow to be "complete."
+    for nid, dgn in dg_corpus.items():
+        kind = dgn.get("kind")
+        src = dgn.get("source") or {}
+        path = src.get("path") or ""
+
+        # Classify entry type
+        is_page = kind == "component" and path.endswith("/page.tsx")
+        is_hook = kind == "hook"
+
+        if not (is_page or is_hook):
+            continue
+        if nid in covered:
+            continue
+
+        reach_map = _bfs_forward(nid, max_depth=4)
+        if not reach_map:
+            continue
+
+        endpoints_reached = {r for r in reach_map if r in dg_corpus and dg_corpus[r].get("kind") == "endpoint"}
+        models_reached = {r for r in reach_map if r in dg_corpus and dg_corpus[r].get("kind") == "model"}
+
+        if not endpoints_reached or not models_reached:
+            continue
+
+        # Confidence: page > hook (pages are unambiguous user actions; hooks
+        # may be shared utilities). Bump by depth-1 closeness (the more
+        # direct the reach to the endpoint, the cleaner the flow shape).
+        min_endpoint_depth = min(reach_map.get(e, 99) for e in endpoints_reached)
+        base = 0.75 if is_page else 0.55
+        conf = min(1.0, base + 0.1 * max(0, 3 - min_endpoint_depth))
+
+        signal_name = "page_initiated_flow" if is_page else "hook_initiated_flow"
+        # Suggested name from path
+        slug = path.replace("src/", "").replace("/", "_").replace(".tsx", "").replace(".ts", "").lower()
+        category = "ui" if is_page else "hooks"
+        candidates.append({
+            "signal": signal_name,
+            "anchor": nid,
+            "confidence": conf,
+            "evidence": f"reaches {len(endpoints_reached)} endpoint(s), {len(models_reached)} model(s); nearest endpoint at depth {min_endpoint_depth}",
+            "suggested": f"process::{category}::{slug[:50]}_flow",
+            "fan_out": len(endpoints_reached) + len(models_reached),
+        })
+
+    # --- Signal G — headless flow: cron / worker / handler entry points ---
+    # A node with NO reverse-edge dependents AND non-(endpoint|component|test|hook)
+    # kind that still reaches endpoints/models via its forward graph is being
+    # entered from outside the dependency graph — i.e. a cron job, a worker
+    # function, a signal handler, a script.
+    HEADLESS_SKIP_KINDS = {"endpoint", "component", "test", "hook", "schema", "model"}
+    # Test-named paths aren't flows we want to document as processes —
+    # they're test infrastructure that ENTERS the system from outside but
+    # isn't user-facing or scheduled production work. Path-shaped hints
+    # only (no hardcoded repo basenames).
+    TEST_PATH_HINTS = ("/tests/", "tests/", ".spec.ts", ".spec.tsx", "_test.py", "test_", "/spec/")
+    # API client wrappers (lib/api.ts, lib/api-client.ts) and client-side
+    # hooks/utils directories — these are thin shells or caching primitives.
+    # Calling them is "calling the endpoint." They reach endpoints+models
+    # but the flow lives in the endpoint, not the wrapper. Path-shaped
+    # conventions only, not literal project repo names.
+    API_CLIENT_PATH_HINTS = (
+        "lib/api.ts", "lib/api-client.ts", "lib/client.ts",
+        "api_client.py", "client.py",
+        "/hooks/", "hooks/use-",   # React-convention client hooks
+        "/utils/", "/util/",        # generic util dirs
+    )
+    for nid, dgn in dg_corpus.items():
+        kind = dgn.get("kind")
+        if kind in HEADLESS_SKIP_KINDS:
+            continue
+        if nid in covered:
+            continue
+        # No one depends on this node — it's an entry from outside
+        if deps_idx.get(nid):
+            continue
+
+        src = dgn.get("source") or {}
+        path = src.get("path") or ""
+        repo = src.get("repo") or ""
+        # Skip test infrastructure (path-shaped hints only)
+        if any(h in path for h in TEST_PATH_HINTS):
+            continue
+        # Skip API client wrappers — the flow is the endpoint they call
+        if any(h in path for h in API_CLIENT_PATH_HINTS):
+            continue
+
+        reach_map = _bfs_forward(nid, max_depth=3)
+        if not reach_map:
+            continue
+        endpoints_reached = {r for r in reach_map if r in dg_corpus and dg_corpus[r].get("kind") == "endpoint"}
+        models_reached = {r for r in reach_map if r in dg_corpus and dg_corpus[r].get("kind") == "model"}
+        # Headless needs to TOUCH state to be a flow; needs at least one model
+        if not models_reached:
+            continue
+
+        # Suggested name from path
+        slug = path.replace("/", "_").replace(".py", "").replace(".ts", "").lower()[:50]
+        conf = min(1.0, 0.6 + 0.05 * len(models_reached) + (0.1 if endpoints_reached else 0))
+
+        candidates.append({
+            "signal": "headless_initiated_flow",
+            "anchor": nid,
+            "confidence": conf,
+            "evidence": f"no reverse deps; reaches {len(endpoints_reached)} endpoint(s), {len(models_reached)} model(s)",
+            "suggested": f"process::headless::{slug}_flow",
+            "fan_out": len(reach_map),
+        })
+
+    # Sort by confidence, then fan_out, descending
+    candidates.sort(key=lambda c: (-c["confidence"], -c["fan_out"]))
+    if args.limit:
+        candidates = candidates[: args.limit]
+
+    if args.format == "json":
+        print(json.dumps(candidates, indent=2))
+        return 0
+
+    print(f"# Process candidates (Stage 1 — heuristic, no LLM gate)\n")
+    print(f"  {len(candidates)} candidates after deduplication against existing processes\n")
+    print(f"  {'#':>3}  {'conf':>5}  {'signal':<22}  {'fan':>4}  anchor → suggested")
+    print(f"  {'-'*3}  {'-'*5}  {'-'*22}  {'-'*4}  {'-'*70}")
+    for i, c in enumerate(candidates, 1):
+        print(f"  {i:>3}  {c['confidence']:>5.2f}  {c['signal']:<22}  {c['fan_out']:>4}  {c['anchor']}")
+        print(f"  {'':>3}  {'':>5}  {'':>22}  {'':>4}    → {c['suggested']}")
+        print(f"  {'':>3}  {'':>5}  {'':>22}  {'':>4}    {c['evidence']}")
+    return 0
+
+
+def cmd_process_stub(args: argparse.Namespace) -> int:
+    """Materialize a stub process node from a flow.action + ordered list of
+    steps. Each --step has form 'step_id:title:depgraph_id[|where]'. Pass
+    --step multiple times to seed multi-step flows."""
+    process_id = args.id
+    if not process_id.startswith("process::"):
+        print(f"id must start with process:: — got {process_id}", file=sys.stderr)
+        return 1
+    node_path = _process_node_path(process_id)
+    if node_path.exists() and not args.force:
+        print(f"node already exists: {node_path.relative_to(LOGIGRAPH)}; pass --force to overwrite", file=sys.stderr)
+        return 1
+
+    if not args.step:
+        print("at least one --step is required (form 'step_id:title:depgraph_id[|where]')", file=sys.stderr)
+        return 1
+
+    steps = []
+    for s in args.step:
+        # format: "step_id:title:depgraph_id[|where]"
+        parts_s = s.split(":", 2)
+        if len(parts_s) != 3:
+            print(f"--step must be 'step_id:title:depgraph_id[|where]' (got: {s})", file=sys.stderr)
+            return 1
+        step_id, title, claim_part = parts_s
+        if "|" in claim_part:
+            dg_id, where = claim_part.split("|", 1)
+        else:
+            dg_id, where = claim_part, ""
+        steps.append({
+            "id": step_id.strip(),
+            "title": title.strip(),
+            "claims_code": [{
+                "depgraph_id": dg_id.strip(),
+                "role": "implements",
+                "where": where.strip(),
+                "confidence": "medium",
+                "remote_hash": "",
+                "stale": False,
+            }],
+        })
+
+    flow = {"action": args.flow_action or "TODO: describe what kicks off this flow"}
+    if args.flow_ui_surface:
+        flow["ui_surface"] = args.flow_ui_surface
+    if args.flow_endpoint:
+        flow["endpoint"] = args.flow_endpoint
+
+    title = args.title or process_id.split("::", 2)[2].replace("_", " ").capitalize()
+    summary = args.summary or "TODO: one-paragraph summary of what this flow does"
+
+    import hashlib as _h
+    structural_hash = _h.sha256(process_id.encode()).hexdigest()
+    node = {
+        "schema_version": 2,
+        "id": process_id,
+        "kind": "process",
+        "title": title,
+        "summary": summary,
+        "flow": flow,
+        "steps": steps,
+        "definition_status": "stub",
+        "structural_hash": structural_hash,
+        "dossier": _process_dossier_rel(process_id),
+    }
+    if args.enforces_rule:
+        node["enforces_rules"] = list(args.enforces_rule)
+
+    node_path.parent.mkdir(parents=True, exist_ok=True)
+    node_path.write_text(json.dumps(node, indent=2) + "\n")
+    print(f"wrote {node_path.relative_to(LOGIGRAPH)}")
+    print(f"status: stub — next: bin/logigraph process-draft '{process_id}'")
+    return 0
+
+
+def cmd_process_draft(args: argparse.Namespace) -> int:
+    """Emit an LLM-drafting context bundle for a process: the stub node +
+    each step's claim_code's depgraph dossier + sibling process examples
+    + recent commits touching any step's anchor file."""
+    process_id = args.id
+    node_path = _process_node_path(process_id)
+    if not node_path.exists():
+        print(f"no process node at {node_path.relative_to(LOGIGRAPH)} — try `process-stub` first", file=sys.stderr)
+        return 1
+    node = json.loads(node_path.read_text())
+
+    out = []
+    out.append(f"# process-draft context bundle: {process_id}\n")
+    out.append("## Target process\n")
+    out.append(f"- id: {process_id}")
+    out.append(f"- title: {node.get('title', '')}")
+    out.append(f"- summary: {node.get('summary', '')}")
+    flow = node.get("flow") or {}
+    out.append(f"- flow.action: {flow.get('action', '?')}")
+    if flow.get("endpoint"):
+        out.append(f"- flow.endpoint: `{flow['endpoint']}`")
+    if flow.get("ui_surface"):
+        out.append(f"- flow.ui_surface: `{flow['ui_surface']}`")
+    out.append(f"- steps ({len(node.get('steps') or [])}):")
+    for st in node.get("steps") or []:
+        for c in st.get("claims_code") or []:
+            out.append(f"  - {st.get('id','?')} \"{st.get('title','?')}\" → `{c.get('depgraph_id','?')}` ({c.get('where','')})")
+    if node.get("enforces_rules"):
+        out.append(f"- enforces_rules: {', '.join(node['enforces_rules'])}")
+    out.append("")
+
+    out.append("## Existing process dossiers (style examples — read these first)\n")
+    proc_dossier_dir = LOGIGRAPH / "dossiers" / "processes"
+    if proc_dossier_dir.exists():
+        for sibling in sorted(proc_dossier_dir.glob("*.md"))[:5]:
+            out.append(f"### {sibling.stem}\n")
+            out.append("```markdown")
+            out.append(sibling.read_text().rstrip())
+            out.append("```\n")
+
+    out.append("## Step anchors (depgraph dossiers + source paths)\n")
+    dg_corpus = load_depgraph_corpus()
+    for st in node.get("steps") or []:
+        out.append(f"### step `{st.get('id','?')}` — {st.get('title','')}\n")
+        for c in st.get("claims_code") or []:
+            dg_id = c.get("depgraph_id", "")
+            out.append(f"#### {dg_id}\n")
+            if dg_id in dg_corpus:
+                dgn = dg_corpus[dg_id]
+                src = dgn.get("source") or {}
+                out.append(f"- repo/path: `{src.get('repo','')}/{src.get('path','')}` line {src.get('line','?')}")
+                dossier_rel = dgn.get("dossier")
+                if dossier_rel:
+                    p = DEPGRAPH / dossier_rel
+                    if p.exists():
+                        out.append(f"- dossier: `depgraph/{dossier_rel}`\n")
+                        out.append("```markdown")
+                        out.append(p.read_text().rstrip())
+                        out.append("```\n")
+            else:
+                out.append(f"_(not in depgraph corpus — claim points at an HTTP route or extractor blind spot)_\n")
+
+    out.append("## Authoring instructions\n")
+    out.append(
+        "Write the dossier body markdown ONLY (no frontmatter — `process-finalize` adds it).\n"
+        "Processes are POINTER-SHAPED, not narrative. The dossier should be terse — "
+        "typically a single section explaining WHY this is one process and not N rules, "
+        "and any cross-cutting invariants the steps share that aren't captured by an "
+        "individual rule. Recommended sections:\n\n"
+        "  ## Why this is a process and not N rules\n"
+        "  ## Invariants across the flow\n"
+        "  ## Failure modes / partial-progress states\n"
+        "  ## State modifications (what the flow exists to do)\n"
+        "  ## Side effects (incidental but worth knowing)\n"
+        "  ## Open design questions  (omit if none — but include it whenever\n"
+        "                              an asymmetry, race window, missing\n"
+        "                              column, or other unresolved concern\n"
+        "                              became visible while writing the body)\n\n"
+        "Reference real commit hashes / PR ids when citing the flow's origin. Keep "
+        "everything tight. The node JSON itself carries the structured step + claim list "
+        "— don't duplicate that in prose."
+    )
+
+    print("\n".join(out))
+    return 0
+
+
+def cmd_process_finalize(args: argparse.Namespace) -> int:
+    """Write a process dossier body file to the canonical path with frontmatter
+    set to llm_drafted. Mirrors rule-finalize."""
+    process_id = args.id
+    node_path = _process_node_path(process_id)
+    if not node_path.exists():
+        print(f"no process node at {node_path.relative_to(LOGIGRAPH)} — try `process-stub` first", file=sys.stderr)
+        return 1
+    node = json.loads(node_path.read_text())
+
+    body_file = Path(args.body_file)
+    if not body_file.exists():
+        print(f"body file not found: {body_file}", file=sys.stderr)
+        return 1
+    body = body_file.read_text().strip()
+
+    import datetime as _dt
+    today = _dt.date.today().isoformat()
+    title = node.get("title") or process_id
+
+    fm_lines = [
+        "---",
+        f"node_id: {process_id}",
+        "node_kind: process",
+        "definition_status: llm_drafted",
+        f"last_reviewed: {today}",
+        f"last_reviewed_against_hash: {node.get('structural_hash')}",
+    ]
+    if args.authored_by:
+        fm_lines.append("authored_by:")
+        for a in args.authored_by:
+            fm_lines.append(f"  - {a}")
+    fm_lines.append("---")
+    frontmatter = "\n".join(fm_lines) + "\n\n" + f"# {title}\n\n"
+
+    dossier_path = _process_dossier_path(process_id)
+    dossier_path.parent.mkdir(parents=True, exist_ok=True)
+    dossier_path.write_text(frontmatter + body + "\n")
+    node["definition_status"] = "llm_drafted"
+    node_path.write_text(json.dumps(node, indent=2) + "\n")
+    print(f"wrote {dossier_path.relative_to(LOGIGRAPH)}")
+    print(f"updated {node_path.relative_to(LOGIGRAPH)} → definition_status: llm_drafted")
+    print(f"next: review the dossier, then `bin/logigraph process-bump '{process_id}'`")
+    return 0
+
+
+def _rewrite_dossier_frontmatter(
+    dossier_path: Path,
+    structural_hash: str,
+    new_status: str,
+    actor: str | None,
+) -> None:
+    """Rewrite a dossier's frontmatter for a bump action.
+
+    - Sets definition_status to new_status.
+    - When new_status == 'human_reviewed': sets last_reviewed + last_reviewed_against_hash
+      + reviewed_by + reviewed_at.
+    - When new_status != 'human_reviewed': drops last_reviewed / last_reviewed_against_hash
+      / reviewed_by / reviewed_at if present.
+    - Preserves every other frontmatter field (notably authored_by).
+    """
+    import datetime as _dt
+    text = dossier_path.read_text()
+    if not text.startswith("---"):
+        return
+    end = text.index("\n---\n", 4)
+    fm_block = text[4:end]
+    body = text[end + 5:]
+    today = _dt.date.today().isoformat()
+    reviewed = (new_status == "human_reviewed")
+    handled: set[str] = set()
+    out: list[str] = []
+    for line in fm_block.splitlines():
+        s = line.strip()
+        if s.startswith("definition_status:"):
+            out.append(f"definition_status: {new_status}")
+            handled.add("definition_status")
+        elif s.startswith("last_reviewed:"):
+            if reviewed:
+                out.append(f"last_reviewed: {today}")
+                handled.add("last_reviewed")
+            # else: drop
+        elif s.startswith("last_reviewed_against_hash:"):
+            if reviewed:
+                out.append(f"last_reviewed_against_hash: {structural_hash}")
+                handled.add("last_reviewed_against_hash")
+        elif s.startswith("reviewed_by:"):
+            if reviewed and actor:
+                out.append(f"reviewed_by: {actor}")
+                handled.add("reviewed_by")
+        elif s.startswith("reviewed_at:"):
+            if reviewed:
+                out.append(f"reviewed_at: {today}")
+                handled.add("reviewed_at")
+        else:
+            out.append(line)
+    if "definition_status" not in handled:
+        out.append(f"definition_status: {new_status}")
+    if reviewed:
+        if "last_reviewed" not in handled:
+            out.append(f"last_reviewed: {today}")
+        if "last_reviewed_against_hash" not in handled:
+            out.append(f"last_reviewed_against_hash: {structural_hash}")
+        if actor and "reviewed_by" not in handled:
+            out.append(f"reviewed_by: {actor}")
+        if "reviewed_at" not in handled:
+            out.append(f"reviewed_at: {today}")
+    dossier_path.write_text("---\n" + "\n".join(out).strip("\n") + "\n---\n" + body)
+
+
+def cmd_rule_bump(args: argparse.Namespace) -> int:
+    """Promote a rule's definition_status (default: → human_reviewed). Updates
+    both the JSON node and the dossier frontmatter."""
+    rule_id = args.id
+    node_path = _rule_node_path(rule_id)
+    if not node_path.exists():
+        print(f"no rule node: {node_path.relative_to(LOGIGRAPH)}", file=sys.stderr)
+        return 1
+    node = json.loads(node_path.read_text())
+    new_status = args.status
+    node["definition_status"] = new_status
+    node_path.write_text(json.dumps(node, indent=2) + "\n")
+    print(f"bumped {node_path.relative_to(LOGIGRAPH)} → definition_status: {new_status}")
+
+    dossier_path = _rule_dossier_path(rule_id)
+    actor = args.actor or _default_actor()
+    paths = [node_path]
+    if dossier_path.exists():
+        _rewrite_dossier_frontmatter(dossier_path, node.get("structural_hash", ""), new_status, actor)
+        print(f"updated {dossier_path.relative_to(LOGIGRAPH)} frontmatter")
+        paths.append(dossier_path)
+
+    prefix = "review" if new_status == "human_reviewed" else "chore(bump)"
+    _git_commit_if_changed(LOGIGRAPH, paths, f"{prefix}: {rule_id}")
+    return 0
+
+
+def cmd_domain_bump(args: argparse.Namespace) -> int:
+    """Promote a domain node's definition_status (default: → human_reviewed).
+    Updates both the JSON node and the dossier frontmatter."""
+    domain_id = args.id
+    try:
+        node_path = _domain_node_path(domain_id)
+    except ValueError as e:
+        print(str(e), file=sys.stderr)
+        return 1
+    if not node_path.exists():
+        print(f"no domain node: {node_path.relative_to(LOGIGRAPH)}", file=sys.stderr)
+        return 1
+    node = json.loads(node_path.read_text())
+    new_status = args.status
+    node["definition_status"] = new_status
+    node_path.write_text(json.dumps(node, indent=2) + "\n")
+    print(f"bumped {node_path.relative_to(LOGIGRAPH)} → definition_status: {new_status}")
+
+    dossier_path = _domain_dossier_path(domain_id)
+    actor = args.actor or _default_actor()
+    paths = [node_path]
+    if dossier_path.exists():
+        _rewrite_dossier_frontmatter(dossier_path, node.get("structural_hash", ""), new_status, actor)
+        print(f"updated {dossier_path.relative_to(LOGIGRAPH)} frontmatter")
+        paths.append(dossier_path)
+
+    prefix = "review" if new_status == "human_reviewed" else "chore(bump)"
+    _git_commit_if_changed(LOGIGRAPH, paths, f"{prefix}: {domain_id}")
+    return 0
+
+
+def cmd_process_bump(args: argparse.Namespace) -> int:
+    """Promote a process node's definition_status (default: → human_reviewed).
+    Updates both the JSON node and the dossier frontmatter."""
+    process_id = args.id
+    try:
+        node_path = _process_node_path(process_id)
+    except ValueError as e:
+        print(str(e), file=sys.stderr)
+        return 1
+    if not node_path.exists():
+        print(f"no process node: {node_path.relative_to(LOGIGRAPH)}", file=sys.stderr)
+        return 1
+    node = json.loads(node_path.read_text())
+    new_status = args.status
+    node["definition_status"] = new_status
+    node_path.write_text(json.dumps(node, indent=2) + "\n")
+    print(f"bumped {node_path.relative_to(LOGIGRAPH)} → definition_status: {new_status}")
+
+    dossier_path = _process_dossier_path(process_id)
+    actor = args.actor or _default_actor()
+    paths = [node_path]
+    if dossier_path.exists():
+        _rewrite_dossier_frontmatter(dossier_path, node.get("structural_hash", ""), new_status, actor)
+        print(f"updated {dossier_path.relative_to(LOGIGRAPH)} frontmatter")
+        paths.append(dossier_path)
+
+    prefix = "review" if new_status == "human_reviewed" else "chore(bump)"
+    _git_commit_if_changed(LOGIGRAPH, paths, f"{prefix}: {process_id}")
+    return 0
+
+
+def _resolve_node_path(node_id: str) -> Path | None:
+    """Resolve a logigraph node id to its JSON path. Supports rule / domain
+    (resource, role, attribute, relationship) / process prefixes."""
+    if node_id.startswith("rule::"):
+        try:
+            return _rule_node_path(node_id)
+        except ValueError:
+            return None
+    if any(node_id.startswith(p + "::") for p in _DOMAIN_PREFIXES):
+        try:
+            return _domain_node_path(node_id)
+        except ValueError:
+            return None
+    if node_id.startswith("process::"):
+        try:
+            return _process_node_path(node_id)
+        except ValueError:
+            return None
+    return None
+
+
+def _git_commit_if_changed(data_dir: Path, paths: list[Path], message: str) -> bool:
+    """Stage given paths and commit if there's a diff. Returns True iff a
+    commit was made."""
+    rel = [str(p.relative_to(data_dir)) for p in paths]
+    subprocess.run(["git", "-C", str(data_dir), "add", *rel], check=True)
+    diff = subprocess.run(
+        ["git", "-C", str(data_dir), "diff", "--cached", "--name-only"],
+        capture_output=True, text=True,
+    )
+    if not diff.stdout.strip():
+        return False
+    subprocess.run(["git", "-C", str(data_dir), "commit", "-q", "-m", message], check=True)
+    return True
+
+
+def _default_actor() -> str:
+    r = subprocess.run(["git", "config", "user.name"], capture_output=True, text=True)
+    if r.returncode == 0 and r.stdout.strip():
+        return r.stdout.strip()
+    return os.environ.get("USER", "unknown")
+
+
+def cmd_flag(args: argparse.Namespace) -> int:
+    """Set flagged=true on a logigraph node. Writes flagged_by + flagged_at
+    (and flagged_reason if --reason given) to the node JSON and commits.
+    Idempotent: if already flagged with same actor+reason, exit 0 without
+    committing."""
+    import datetime as _dt
+    node_path = _resolve_node_path(args.id)
+    if node_path is None or not node_path.exists():
+        print(f"no logigraph node with id: {args.id}", file=sys.stderr)
+        return 1
+    node = json.loads(node_path.read_text())
+    actor = args.actor or _default_actor()
+    today = _dt.date.today().isoformat()
+    if (node.get("flagged") and node.get("flagged_by") == actor
+            and node.get("flagged_reason") == args.reason):
+        print(f"already flagged by {actor} with same reason — no change")
+        return 0
+    node["flagged"] = True
+    node["flagged_by"] = actor
+    node["flagged_at"] = today
+    if args.reason:
+        node["flagged_reason"] = args.reason
+    else:
+        node.pop("flagged_reason", None)
+    node_path.write_text(json.dumps(node, indent=2) + "\n")
+    msg = f"flag: {args.id}"
+    if args.reason:
+        msg += f"\n\n{args.reason}"
+    _git_commit_if_changed(LOGIGRAPH, [node_path], msg)
+    print(f"flagged {args.id} by {actor}")
+    return 0
+
+
+def cmd_unflag(args: argparse.Namespace) -> int:
+    """Clear flagged + flagged_by + flagged_at + flagged_reason and commit.
+    Idempotent: if not flagged, exit 0 without committing."""
+    node_path = _resolve_node_path(args.id)
+    if node_path is None or not node_path.exists():
+        print(f"no logigraph node with id: {args.id}", file=sys.stderr)
+        return 1
+    node = json.loads(node_path.read_text())
+    if not node.get("flagged"):
+        print(f"{args.id} is not flagged — no change")
+        return 0
+    for key in ("flagged", "flagged_by", "flagged_at", "flagged_reason"):
+        node.pop(key, None)
+    node_path.write_text(json.dumps(node, indent=2) + "\n")
+    actor = args.actor or _default_actor()
+    _git_commit_if_changed(LOGIGRAPH, [node_path], f"unflag: {args.id}")
+    print(f"unflagged {args.id} by {actor}")
+    return 0
+
+
+def cmd_self_check(args: argparse.Namespace) -> int:
+    """Smoke-test the PreToolUse hook end-to-end.
+
+    The hook is intentionally silent for files with no claiming rules, so
+    a synthetic path verifies almost nothing. Prefer the first real path
+    from the by_file index — that exercises the injection pipeline and
+    proves the hook produces non-empty output. Fall back to a synthetic
+    path only when the index is empty (early bootstrap), and report that
+    case honestly rather than as a green pass."""
+    from lib.config import project_repos as _project_repos
+    repos = _project_repos(LOGIGRAPH)
+    if not repos:
+        print("self-check: no [repos.*] configured in project.toml", file=sys.stderr)
+        return 1
+
+    sample_path: Path | None = None
+    by_file_path = LOGIGRAPH / "nodes" / "_index" / "by_file.json"
+    if by_file_path.exists():
+        try:
+            idx = json.loads(by_file_path.read_text())
+        except (OSError, json.JSONDecodeError):
+            idx = {}
+        if idx.get("schema_version") == 1:
+            basename_to_path = {r["path"].name: r["path"] for r in repos.values()}
+            for key, rule_ids in (idx.get("by_file") or {}).items():
+                if not rule_ids:
+                    continue
+                basename, _, rel = key.partition("/")
+                repo_path = basename_to_path.get(basename)
+                if repo_path is not None and rel:
+                    sample_path = repo_path / rel
+                    break
+
+    fallback_used = sample_path is None
+    if sample_path is None:
+        first = next(iter(repos.values()))
+        sample_path = first["path"] / "self-check-fake.py"
+
+    payload = json.dumps(
+        {
+            "tool_name": "Edit",
+            "tool_input": {"file_path": str(sample_path)},
+        }
+    )
+    proc = subprocess.run(
+        ["python3", str(TOOL_ROOT / "hooks" / "pre_edit_inject.py")],
+        input=payload,
+        capture_output=True,
+        text=True,
+        timeout=5,
+    )
+    if proc.returncode != 0:
+        print(f"FAILED rc={proc.returncode}", file=sys.stderr)
+        print(proc.stderr, file=sys.stderr)
+        return 1
+
+    if fallback_used:
+        print(f"self-check: index empty or unreadable — used synthetic path {sample_path}")
+        print("hook returned rc=0 with no injection (expected for an unmatched path)")
+        print("run `bin/logigraph regen` to populate the index, then re-run self-check "
+              "to exercise the injection pipeline")
+        return 0
+
+    if not proc.stdout.strip():
+        print(
+            f"FAILED: hook produced empty stdout for indexed path {sample_path}, "
+            f"which has claiming rules in by_file.json — injection pipeline is broken",
+            file=sys.stderr,
+        )
+        return 2
+
+    print(f"self-check OK — injection ran for {sample_path}")
+    print("hook stdout:")
+    print(proc.stdout)
+    return 0
+
+
+def cmd_health(args: argparse.Namespace) -> int:
+    """Compact graph-health summary: validate + gaps + curation-backlog
+    counts in one block. Exit non-zero if anything is wrong. Used by the
+    SessionStart hook for at-a-glance freshness."""
+    problems: list[str] = []
+    summary: list[str] = []
+
+    nodes = load_all_nodes()
+
+    # ---- validate ------------------------------------------------------
+    invalid = 0
+    for nid, (path, data) in nodes.items():
+        kind = data.get("kind")
+        if kind == "domain":
+            schema_path = DOMAIN_SCHEMA
+        elif kind == "rule":
+            schema_path = RULE_SCHEMA
+        elif kind == "process":
+            schema_path = PROCESS_SCHEMA
+        else:
+            continue
+        if _validate_json_schema(data, schema_path):
+            invalid += 1
+    if invalid:
+        problems.append(f"{invalid} invalid node(s) — run `logigraph validate`")
+
+    # ---- gaps (orphans + stale) ----------------------------------------
+    domain_ids = {nid for nid, (_, d) in nodes.items() if d.get("kind") == "domain"}
+    depgraph_corpus = load_depgraph_corpus()
+    depgraph_ids = set(depgraph_corpus.keys())
+
+    orphan_claims = 0
+    orphan_refs = 0
+    stale_claims = 0
+
+    def _check_claim(claim: dict) -> tuple[bool, bool]:
+        cid = claim.get("depgraph_id")
+        if cid not in depgraph_ids:
+            return (True, False)
+        remote = claim.get("remote_hash")
+        current = depgraph_corpus[cid].get("structural_hash")
+        if remote and current and remote != current:
+            return (False, True)
+        return (False, False)
+
+    for nid, (_, data) in nodes.items():
+        kind = data.get("kind")
+        if kind == "rule":
+            for ref in data.get("references_domain", []):
+                if ref not in domain_ids:
+                    orphan_refs += 1
+            for claim in data.get("claims_code", []):
+                orph, st = _check_claim(claim)
+                orphan_claims += int(orph)
+                stale_claims += int(st)
+        elif kind == "process":
+            for step in data.get("steps", []):
+                for claim in step.get("claims_code", []):
+                    orph, st = _check_claim(claim)
+                    orphan_claims += int(orph)
+                    stale_claims += int(st)
+            for surface in data.get("ui_surfaces", []):
+                orph, st = _check_claim(surface)
+                orphan_claims += int(orph)
+                stale_claims += int(st)
+    if orphan_claims:
+        problems.append(f"{orphan_claims} orphan claim(s) (rule claims missing depgraph node) — run `logigraph gaps`")
+    if orphan_refs:
+        problems.append(f"{orphan_refs} orphan domain ref(s) — run `logigraph gaps`")
+    if stale_claims:
+        problems.append(f"{stale_claims} stale claim(s) (depgraph hash drifted) — run `logigraph gaps`")
+
+    # ---- curation backlog ----------------------------------------------
+    by_kind_status: dict[str, dict[str, int]] = {}
+    for nid, (_, data) in nodes.items():
+        k = data.get("kind", "?")
+        s = data.get("definition_status", "?")
+        by_kind_status.setdefault(k, {}).setdefault(s, 0)
+        by_kind_status[k][s] += 1
+    stub_rules = by_kind_status.get("rule", {}).get("stub", 0)
+    llm_rules = by_kind_status.get("rule", {}).get("llm_drafted", 0)
+    if stub_rules:
+        problems.append(f"{stub_rules} rule(s) in stub status — run `logigraph rule-rank --status stub`")
+    if llm_rules:
+        problems.append(f"{llm_rules} rule(s) awaiting human review — run `logigraph rule-rank --status llm_drafted`")
+
+    rules = by_kind_status.get("rule", {}).get("human_reviewed", 0)
+    domain = by_kind_status.get("domain", {}).get("human_reviewed", 0)
+    process = by_kind_status.get("process", {}).get("human_reviewed", 0)
+    summary.append(f"reviewed: rules={rules} domain={domain} process={process}")
+
+    # ---- output --------------------------------------------------------
+    print("# Logigraph health")
+    if problems:
+        print()
+        for p in problems:
+            print(f"  ⚠ {p}")
+    else:
+        print()
+        print("  ✓ clean")
+    if summary:
+        print()
+        for s in summary:
+            print(f"  {s}")
+    return 1 if problems else 0
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(prog="logigraph")
+    sub = parser.add_subparsers(dest="cmd", required=True)
+
+    p_regen = sub.add_parser("regen")
+    p_regen.set_defaults(func=cmd_regen)
+
+    p_val = sub.add_parser("validate")
+    p_val.set_defaults(func=cmd_validate)
+
+    p_ctx = sub.add_parser("context")
+    p_ctx.add_argument("target")
+    p_ctx.set_defaults(func=cmd_context)
+
+    p_rf = sub.add_parser("rules-for")
+    p_rf.add_argument("depgraph_id")
+    p_rf.set_defaults(func=cmd_rules_for)
+
+    p_fo = sub.add_parser("fan-out")
+    p_fo.add_argument("--threshold", type=int, default=1)
+    p_fo.set_defaults(func=cmd_fan_out)
+
+    p_g = sub.add_parser("gaps")
+    p_g.set_defaults(func=cmd_gaps)
+
+    p_d = sub.add_parser("dossiers")
+    p_d.add_argument("--status", action="store_true")
+    p_d.set_defaults(func=cmd_dossiers)
+
+    p_s = sub.add_parser("stats", help="Curation backlog + optional telemetry rollup")
+    p_s.add_argument("--telemetry", action="store_true",
+                     help="Include injection/acknowledgment metrics from telemetry/")
+    p_s.set_defaults(func=cmd_stats)
+
+    p_sc = sub.add_parser("self-check")
+    p_sc.set_defaults(func=cmd_self_check)
+
+    p_h = sub.add_parser("health", help="One-shot graph health summary (validate + gaps + curation backlog). Exit 1 if anything wrong.")
+    p_h.set_defaults(func=cmd_health)
+
+    p_rr = sub.add_parser("rule-rank", help="List rule nodes by status (stub > llm_drafted > human_reviewed)")
+    p_rr.add_argument("--status", choices=["stub", "llm_drafted", "human_reviewed"], help="Filter by status")
+    p_rr.set_defaults(func=cmd_rule_rank)
+
+    p_rs = sub.add_parser("rule-stub", help="Materialize a rule candidate as a stub JSON node")
+    p_rs.add_argument("id", help="rule::category::short_name")
+    p_rs.add_argument("--title")
+    p_rs.add_argument("--statement", help="One-sentence rule statement")
+    p_rs.add_argument("--domain-ref", action="append", help="Domain entity id (repeat for multiple)")
+    p_rs.add_argument("--claim", action="append", help="Format: <role>:<depgraph_id>[|<where>]; repeat for multiple")
+    p_rs.add_argument("--confidence", choices=["high", "medium", "low"], default="medium")
+    p_rs.add_argument("--source", help="Free-text origin (commit hash, incident, decision)")
+    p_rs.add_argument("--force", action="store_true", help="Overwrite existing node")
+    p_rs.set_defaults(func=cmd_rule_stub)
+
+    p_rd = sub.add_parser("rule-draft", help="Emit an LLM-drafting context bundle for one rule")
+    p_rd.add_argument("id")
+    p_rd.set_defaults(func=cmd_rule_draft)
+
+    p_rf = sub.add_parser("rule-finalize", help="Save an LLM-drafted rule dossier body to canonical path")
+    p_rf.add_argument("id")
+    p_rf.add_argument("body_file", help="Path to dossier body markdown (no frontmatter)")
+    p_rf.set_defaults(func=cmd_rule_finalize)
+
+    p_rb = sub.add_parser("rule-bump", help="Promote a rule's definition_status (default → human_reviewed)")
+    p_rb.add_argument("id")
+    p_rb.add_argument("--status", default="human_reviewed", choices=["stub", "llm_drafted", "human_reviewed"])
+    p_rb.add_argument("--actor", default=None, help="Reviewer (default: git config user.name)")
+    p_rb.set_defaults(func=cmd_rule_bump)
+
+    p_db = sub.add_parser("domain-bump", help="Promote a domain node's definition_status (default → human_reviewed)")
+    p_db.add_argument("id")
+    p_db.add_argument("--status", default="human_reviewed", choices=["stub", "llm_drafted", "human_reviewed"])
+    p_db.add_argument("--actor", default=None, help="Reviewer (default: git config user.name)")
+    p_db.set_defaults(func=cmd_domain_bump)
+
+    p_pr = sub.add_parser("process-rank", help="Stage 1: emit heuristic process candidates (no corpus writes)")
+    p_pr.add_argument("--limit", type=int, default=30, help="Max candidates (default 30)")
+    p_pr.add_argument("--format", choices=["text", "json"], default="text")
+    p_pr.set_defaults(func=cmd_process_rank)
+
+    p_ps = sub.add_parser("process-stub", help="Materialize a process candidate as a stub JSON node")
+    p_ps.add_argument("id", help="process::category::short_name")
+    p_ps.add_argument("--title")
+    p_ps.add_argument("--summary", help="One-paragraph elevator pitch for the flow")
+    p_ps.add_argument("--flow-action", help="What kicks off the flow ('User clicks Accept on…', 'Stripe webhook fires', 'Cron at 02:00 UTC')")
+    p_ps.add_argument("--flow-endpoint", help="Optional depgraph node id of the HTTP endpoint that receives the trigger")
+    p_ps.add_argument("--flow-ui-surface", help="Optional depgraph node id of the UI element that triggers the flow")
+    p_ps.add_argument("--step", action="append", default=[],
+                      help="Format: 'step_id:title:depgraph_id[|where]'; repeat for ordered steps")
+    p_ps.add_argument("--enforces-rule", action="append", default=[],
+                      help="Rule id this process enforces (repeatable)")
+    p_ps.add_argument("--force", action="store_true", help="Overwrite existing node")
+    p_ps.set_defaults(func=cmd_process_stub)
+
+    p_pd = sub.add_parser("process-draft", help="Emit an LLM-drafting context bundle for one process")
+    p_pd.add_argument("id")
+    p_pd.set_defaults(func=cmd_process_draft)
+
+    p_pf = sub.add_parser("process-finalize", help="Save an LLM-drafted process dossier body to canonical path")
+    p_pf.add_argument("id")
+    p_pf.add_argument("body_file", help="Path to dossier body markdown (no frontmatter)")
+    p_pf.add_argument("--authored-by", action="append", default=[],
+                      help="Actor that drafted the body (model id or person). Repeat for multiple authors.")
+    p_pf.set_defaults(func=cmd_process_finalize)
+
+    p_pb = sub.add_parser("process-bump", help="Promote a process node's definition_status (default → human_reviewed)")
+    p_pb.add_argument("id")
+    p_pb.add_argument("--status", default="human_reviewed", choices=["stub", "llm_drafted", "human_reviewed"])
+    p_pb.add_argument("--actor", default=None, help="Reviewer (default: git config user.name)")
+    p_pb.set_defaults(func=cmd_process_bump)
+
+    p_rollup = sub.add_parser("rollup", help="Emit code rollup for a domain entity")
+    p_rollup.add_argument("entity_id", help="Logigraph domain node id (e.g. resource::concorda::boat_crew)")
+    p_rollup.add_argument("--kind", default=None, help="Comma-separated kinds (model,service,endpoint,component,test,hook,schema)")
+    p_rollup.add_argument("--depth", type=int, default=3, choices=[1, 2, 3], help="BFS depth (1=direct only)")
+    p_rollup.add_argument("--direct-only", action="store_true", help="Equivalent to --depth 1")
+    p_rollup.add_argument("--format", choices=["text", "json"], default="text")
+    p_rollup.set_defaults(func=cmd_rollup)
+
+    p_flag = sub.add_parser("flag", help="Set flagged=true on a node")
+    p_flag.add_argument("id", help="Logigraph node id (rule::*, resource::*, role::*, attribute::*, relationship::*, process::*)")
+    p_flag.add_argument("--reason", default=None, help="One-line reason (recorded in commit message and JSON)")
+    p_flag.add_argument("--actor", default=None, help="Actor name (default: git config user.name)")
+    p_flag.set_defaults(func=cmd_flag)
+
+    p_unflag = sub.add_parser("unflag", help="Clear flagged from a node")
+    p_unflag.add_argument("id", help="Logigraph node id")
+    p_unflag.add_argument("--actor", default=None, help="Actor name (default: git config user.name)")
+    p_unflag.set_defaults(func=cmd_unflag)
+
+    args = parser.parse_args()
+
+    if getattr(args, "direct_only", False):
+        args.depth = 1
+
+    return args.func(args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

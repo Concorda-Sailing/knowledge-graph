@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "logigraph.rule",
+  "title": "Logigraph rule node",
+  "description": "One node = one business rule. References domain entities; claims depgraph code nodes that implement the rule. The plain-language statement and Decision table in the dossier are the canonical statement of meaning; the technical anchor is one implementation of it.",
+  "type": "object",
+  "required": ["schema_version", "id", "kind", "title", "statement", "references_domain", "claims_code", "definition_status", "structural_hash"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 2
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^rule::[a-z_]+::[a-z0-9_]+$",
+      "description": "Form: rule::<category>::<short_name>. Example: rule::crew_visibility::peer_pii_resume_gated."
+    },
+    "kind": {
+      "const": "rule"
+    },
+    "title": {
+      "type": "string",
+      "description": "Short human-readable label. E.g. \"Peer crew identity hidden unless resume is published\"."
+    },
+    "statement": {
+      "type": "string",
+      "description": "Single-sentence plain-English rule. The full structured form (Decision table, examples, edge cases) lives in the dossier."
+    },
+    "references_domain": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(role|resource|action|attribute)::[a-z_]+::[a-z0-9_]+$"
+      },
+      "minItems": 1,
+      "description": "Domain node ids the rule mentions. Validated against nodes/domain/ at regen time; missing ids are orphans."
+    },
+    "claims_code": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/claim" },
+      "minItems": 1,
+      "description": "Depgraph code nodes that implement this rule. At least one required — a rule with zero claims is unenforced."
+    },
+    "fan_out": {
+      "type": ["integer", "null"],
+      "description": "Computed at regen time: count of claims_code entries. Reported by bin/logigraph fan-out for refactor signals."
+    },
+    "confidence": {
+      "enum": ["high", "medium", "low"],
+      "description": "How confident the author is in the rule's accuracy. Low = forward-looking or speculative."
+    },
+    "source": {
+      "type": "string",
+      "description": "Where the rule was sourced from (memory file, design doc, code docstring)."
+    },
+    "definition_status": {
+      "enum": ["stub", "llm_drafted", "human_reviewed"]
+    },
+    "structural_hash": {
+      "type": "string",
+      "description": "SHA-256 over statement + references_domain + claim ids. Drift triggers dossier re-review."
+    },
+    "dossier": {
+      "type": "string",
+      "description": "Path to the plain-language dossier markdown (relative to logigraph/)."
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/warning" }
+    },
+    "flagged": {
+      "type": "boolean",
+      "description": "Set by `bin/logigraph flag`. true = this rule documents a known deficiency or contested decision; injection surfaces a FLAGGED banner before the rule body."
+    },
+    "flagged_by": {
+      "type": "string",
+      "description": "Who flagged. Written by `flag` from --actor or $USER."
+    },
+    "flagged_at": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+      "description": "Date the node was flagged (UTC)."
+    },
+    "flagged_reason": {
+      "type": "string",
+      "description": "Free-text reason supplied to `flag --reason`."
+    }
+  },
+  "$defs": {
+    "warning": {
+      "type": "object",
+      "required": ["code", "kind", "severity", "message", "tracked", "discovered_at", "discovered_by"],
+      "additionalProperties": false,
+      "properties": {
+        "code": { "type": "string", "description": "Stable short identifier. E.g. 'mediator_overload', 'sha256_token_only_candidate'." },
+        "kind": { "enum": ["defect", "drift", "gap", "review_due", "incident"] },
+        "severity": { "enum": ["info", "low", "medium", "high", "critical"] },
+        "message": { "type": "string", "description": "One-line human-readable description." },
+        "tracked": { "type": "boolean", "description": "true = formally acknowledged, fix planned or accepted as-is; false = fresh signal needing triage." },
+        "tracking_ref": { "type": ["string", "null"], "description": "Optional pointer — plan path, git sha, ticket id, or free-text reference for tracked warnings." },
+        "affected": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Optional list of node ids this warning cross-references."
+        },
+        "discovered_at": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+        "discovered_by": { "enum": ["reconcile", "author", "hook", "calibration"] }
+      }
+    },
+    "claim": {
+      "type": "object",
+      "required": ["depgraph_id", "role"],
+      "additionalProperties": false,
+      "properties": {
+        "depgraph_id": {
+          "type": "string",
+          "description": "Id of a node in the depgraph corpus. Validated at regen — missing ids are orphans."
+        },
+        "role": {
+          "enum": ["enforces", "checks", "serializes", "displays", "emits", "illustrates"],
+          "description": "How this code relates to the rule. enforces=gate/filter, checks=predicate, serializes=response shape, displays=UI surface, emits=side-effect, illustrates=cited as example/witness when primary enforcement surfaces aren't depgraph-tracked."
+        },
+        "where": {
+          "type": ["string", "null"],
+          "description": "File:line range where the rule lives in this node's source. E.g. \"events.py:2235-2406\"."
+        },
+        "confidence": {
+          "enum": ["high", "medium", "low"],
+          "default": "high"
+        },
+        "remote_hash": {
+          "type": ["string", "null"],
+          "description": "Copy of the depgraph node's structural_hash at last review. Drift between this and current hash flags the claim as stale."
+        },
+        "stale": {
+          "type": "boolean",
+          "default": false,
+          "description": "Set by reconcile when remote_hash diverges from depgraph node. Surfaced by hooks; cleared by re-reviewing the claim."
+        }
+      }
+    }
+  }
+}
