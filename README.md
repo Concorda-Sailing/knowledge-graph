@@ -2,13 +2,14 @@
 
 A small, project-agnostic substrate that gives an AI coding collaborator working memory about a codebase. Three pieces:
 
-| Tool | What it does | Repo |
-|---|---|---|
-| **depgraph** | Code-structure nodes (models, services, endpoints, components, hooks, tests) + reverse-dependency index. Hooks into Claude Code's PreToolUse to inject dependents before every edit. | [`depgraph`](https://github.com/Concorda-Sailing/depgraph) |
-| **logigraph** | Authored business rules, domain entities, and process flows. Hooks inject applicable rule prose + flow context on edit. Mediation-collision detection flags design defects. | [`logigraph`](https://github.com/Concorda-Sailing/logigraph) |
-| **graphui** | FastAPI + Jinja2 dark-themed viewer for both graphs. Coverage gallery, repo-and-kind navigation, mobile-friendly cards, Needs-attention card, review queue with promote-from-draft. | [`graphui`](https://github.com/Concorda-Sailing/graphui) |
+| Tool | What it does |
+|---|---|
+| **depgraph** | Code-structure nodes (models, services, endpoints, components, hooks, tests) + reverse-dependency index. Hooks into Claude Code's PreToolUse to inject dependents before every edit. |
+| **logigraph** | Authored business rules, domain entities, and process flows. Hooks inject applicable rule prose + flow context on edit. Mediation-collision detection flags design defects. |
+| **graphui** | FastAPI + Jinja2 dark-themed viewer for both graphs. Coverage gallery, repo-and-kind navigation, mobile-friendly cards, Needs-attention card, review queue with promote-from-draft. |
+| **kg** | Orchestrator. Reads `~/.claude/kg-graphs.toml`, fans Claude Code hook events to whichever registered graph owns the file being edited. One settings.json entry per phase replaces the per-project hand-wired hooks. |
 
-Framework code lives in `~/tools/{depgraph,logigraph,graphui}/`. Per-project data lives in `<project>/depgraph/` and `<project>/logigraph/` — nodes, dossiers, extractors, telemetry, plus a `project.toml` declaring the project's tracked repos.
+All four ship from this one repo. Framework code lives in `~/tools/knowledge-graph/{depgraph,logigraph,graphui,kg}/`. Per-project data lives in `<project>-knowledge-graph/{depgraph,logigraph}/` — nodes, dossiers, extractors, telemetry, plus a root `project.toml` declaring the project and subsystems.
 
 ---
 
@@ -49,15 +50,19 @@ This section is the source of truth for what to do when a user asks for knowledg
 ### Core layout (mental model)
 
 ```
-~/tools/                              (framework — clone once, shared across projects)
+~/tools/knowledge-graph/              (framework — clone once, shared across projects)
+├── bin/kg                            ← orchestrator CLI (list/add/remove/hook)
+├── kg/                               ← orchestrator package
 ├── depgraph/      bin/, hooks/, extractors/reconcile.py, lib/config.py, schema/
 ├── logigraph/     bin/, hooks/, extractors/reconcile.py, lib/config.py, schema/
-├── graphui/       app/, .venv/  (FastAPI viewer)
-└── knowledge-graph/  install.sh, this README
+├── graphui/       app/, .venv/       (FastAPI viewer)
+├── install.sh                        ← installer + project scaffolder
+└── README.md                         ← this file
 
-<project>/                            (per-project data — one set per project)
+<project>-knowledge-graph/            (per-project data — one repo per project)
+├── project.toml                      [project] name; subsystems = ["depgraph", "logigraph"]
 ├── depgraph/
-│   ├── project.toml                  [project] name, primary_repo
+│   ├── project.toml                  [project] primary_repo; [logigraph] data_dir;
 │   │                                 [repos.<key>] path, extractor, files_arg
 │   ├── extractors/                   project-specific extractors (extract_api.py, …)
 │   ├── nodes/                        produced by `bin/depgraph regen`
@@ -68,6 +73,8 @@ This section is the source of truth for what to do when a user asks for knowledg
     ├── nodes/{rules,domain,processes}/
     ├── dossiers/{rules,domain,processes}/
     └── telemetry/
+
+~/.claude/kg-graphs.toml              ← registry of installed graphs (kg add/remove edits this)
 ```
 
 ### When the user asks: "Install knowledge-graph"
@@ -76,28 +83,28 @@ This section is the source of truth for what to do when a user asks for knowledg
    ```bash
    git clone https://github.com/Concorda-Sailing/knowledge-graph.git ~/tools/knowledge-graph
    ```
-2. Resolve the project path. If the user is `cd`'d into the project, use `$PWD`. Otherwise ask which project root to wire up.
+2. Resolve the project path. If the user is `cd`'d into the project, use `$PWD`. Otherwise ask which project root to wire up. The data repo conventionally lives at `<project>-knowledge-graph/` (sibling to the source repos), but can live anywhere — `kg add` takes the path.
 3. Run the bootstrap:
    ```bash
-   ~/tools/knowledge-graph/install.sh bootstrap <project_path>
+   ~/tools/knowledge-graph/install.sh bootstrap <data-repo-path>
    ```
-   This clones `depgraph`, `logigraph`, `graphui` into `~/tools/knowledge-graph/`, scaffolds `<project_path>/knowledge-graph/{depgraph,logigraph}/`, writes `~/.claude/settings.json` hook entries (with `DEPGRAPH_DATA_DIR` and `LOGIGRAPH_DATA_DIR` set explicitly to the bundled project paths), and registers the graphui systemd `--user` service. If you have an older flat install (`~/tools/{depgraph,logigraph,graphui}/` or `<project>/{depgraph,logigraph}/`), `bootstrap` (or the standalone `migrate <project>`) moves them into the bundle and rewrites every dependent path.
-4. Verify; all three should pass:
+   This scaffolds `<data-repo-path>/{depgraph,logigraph}/` and root `project.toml`, writes the `kg`-orchestrated hook entries into `~/.claude/settings.json`, registers the data repo via `kg add <data-repo-path>`, and starts the graphui systemd `--user` service.
+4. Verify:
    ```bash
-   DEPGRAPH_DATA_DIR=<project_path>/knowledge-graph/depgraph ~/tools/knowledge-graph/depgraph/bin/depgraph self-check
-   DEPGRAPH_DATA_DIR=<project_path>/knowledge-graph/depgraph ~/tools/knowledge-graph/depgraph/bin/depgraph validate
-   LOGIGRAPH_DATA_DIR=<project_path>/knowledge-graph/logigraph DEPGRAPH_DATA_DIR=<project_path>/knowledge-graph/depgraph ~/tools/knowledge-graph/logigraph/bin/logigraph validate
+   ~/tools/knowledge-graph/bin/kg list                          # data repo appears
+   DEPGRAPH_DATA_DIR=<data-repo-path>/depgraph ~/tools/knowledge-graph/depgraph/bin/depgraph self-check
+   LOGIGRAPH_DATA_DIR=<data-repo-path>/logigraph DEPGRAPH_DATA_DIR=<data-repo-path>/depgraph ~/tools/knowledge-graph/logigraph/bin/logigraph validate
    systemctl --user is-active graphui
    ```
 5. Tell the user the graphui URL: `http://localhost:8081/graph/` (or LAN IP).
 
 ### When the user asks: "Add a new tracked repo"
 
-1. Read the current `<project>/depgraph/project.toml`.
+1. Read the current `<data-repo>/depgraph/project.toml`.
 2. Add a new `[repos.<key>]` table with required `path` and an `extractor` array — e.g. `["python3", "{data_dir}/extractors/extract_<key>.py"]`. Set `files_arg = "--only"` if the extractor takes `--only <file>` flags per touched file; omit otherwise.
-3. Author the extractor file in `<project>/depgraph/extractors/`. Copy structure from an existing extractor in the same data dir if one exists.
-4. Run `bin/depgraph regen` and confirm nodes appear under `<project>/depgraph/nodes/`.
-5. If logigraph rules will claim against the new repo, also add the `[repos.<key>]` table to `<project>/logigraph/project.toml` so path-classification works for the logigraph hook.
+3. Author the extractor file in `<data-repo>/depgraph/extractors/`. Copy structure from an existing extractor in the same data dir if one exists.
+4. Run `bin/depgraph regen` and confirm nodes appear under `<data-repo>/depgraph/nodes/`.
+5. If logigraph rules will claim against the new repo, also add the `[repos.<key>]` table to `<data-repo>/logigraph/project.toml` so path-classification works for the logigraph hook.
 
 ### When the user asks: "Author a rule / process / domain entity"
 
@@ -121,7 +128,7 @@ This section is the source of truth for what to do when a user asks for knowledg
 
 ### When the user asks: "Why is `<flag>` showing on the dashboard?"
 
-1. Flags live in `<project>/logigraph/nodes/_meta.json::flags` — read it directly or via graphui's index page.
+1. Flags live in `<data-repo>/logigraph/nodes/_meta.json::flags` — read it directly or via graphui's index page.
 2. Each flag has `kind` (defect/drift/gap/review_due/incident), `severity`, `message`, `tracked` boolean, optional `tracking_ref`, and an `affected` list of node ids.
 3. **Fresh** (`tracked: false`) = triage. Either resolve in code (delete the source of the drift) or formalize via the warning shape on the affected node (set `tracked: true` + add `tracking_ref`).
 4. **Tracked** (`tracked: true`) = acknowledged but live. Don't re-flag; reference the existing `tracking_ref` if proposing to actually fix.
@@ -131,39 +138,37 @@ This section is the source of truth for what to do when a user asks for knowledg
 
 - **No hardcoded project strings outside `project.toml`.** Path resolution goes through `lib/config` helpers (`path_to_repo_relative`, `project_repos`, `basename_path_map`, `repo_for_basename`, `primary_repo_path`). Never `Path.home() / "<literal-basename>"`. Never `seg.startswith("<literal-prefix>")` as a tracked-repo check.
 - **Warnings use the universal shape.** Required fields: `code`, `kind`, `severity`, `message`, `tracked`, `discovered_at`, `discovered_by`. Defined as `$defs.warning` in each schema. New node kinds copy it verbatim.
-- **Schemas live with the tool, not with the data.** `~/tools/<framework>/schema/`, never `<project>/<framework>/schema/`.
+- **Schemas live with the tool, not with the data.** `~/tools/knowledge-graph/<framework>/schema/`, never `<data-repo>/<framework>/schema/`.
 - **Bumping `definition_status` to `human_reviewed` is the *user's* call, not Claude's.** Author drafts; surface them via the review queue; let the human click Promote in graphui.
 - **Commit trailers**: every commit in a tracked repo should end with `bin/depgraph commit-summary` output. Greppable via `git log --grep="Depgraph:"`.
 
 ### Hook environment
 
-Each entry in `~/.claude/settings.json` prefixes its command with the env vars:
+`settings.json` carries **one entry per phase** pointing at the `kg` orchestrator. `kg` reads `~/.claude/kg-graphs.toml`, classifies the edited path against each registered graph's source roots, and dispatches to the owning graph's inject/regen scripts. Phases: `pre-edit`, `post-edit`, `pre-irreversible`, `session-start`, `session-end`.
 
 ```json
 {
-  "PreToolUse": [{
-    "matcher": "Edit|Write|MultiEdit",
-    "hooks": [{
-      "type": "command",
-      "command": "DEPGRAPH_DATA_DIR=/path/to/<project>/knowledge-graph/depgraph python3 ~/tools/knowledge-graph/depgraph/hooks/pre_edit_inject.py",
-      "timeout": 5
-    }, {
-      "type": "command",
-      "command": "LOGIGRAPH_DATA_DIR=/path/to/<project>/knowledge-graph/logigraph DEPGRAPH_DATA_DIR=/path/to/<project>/knowledge-graph/depgraph python3 ~/tools/knowledge-graph/logigraph/hooks/pre_edit_inject.py",
-      "timeout": 5
+  "hooks": {
+    "PreToolUse": [{
+      "matcher": "Edit|Write|MultiEdit",
+      "hooks": [{
+        "type": "command",
+        "command": "/home/<user>/tools/knowledge-graph/bin/kg hook pre-edit",
+        "timeout": 10
+      }]
+    }],
+    "Stop": [{
+      "hooks": [{
+        "type": "command",
+        "command": "/home/<user>/tools/knowledge-graph/bin/kg hook post-edit",
+        "timeout": 120
+      }]
     }]
-  }],
-  "Stop": [{
-    "hooks": [{
-      "type": "command",
-      "command": "DEPGRAPH_DATA_DIR=/path/to/<project>/knowledge-graph/depgraph python3 ~/tools/knowledge-graph/depgraph/hooks/post_edit_regen.py",
-      "timeout": 60
-    }]
-  }]
+  }
 }
 ```
 
-For multi-project setups (the framework dogfooding itself, or two projects on one machine), add a second set of hook entries with different `*_DATA_DIR` values. Each hook script's `path_to_repo_relative` returns `None` for paths outside its own `[repos.*]`, so non-matching hooks silently no-op.
+Multi-project setups are handled by the registry, not by duplicating hook entries — `kg add <data-repo>` registers another graph; the dispatcher fans the event out. Run `kg list` to see what's registered; run `kg --help` for the authoritative subcommand surface.
 
 ### Regen lifecycle
 
@@ -192,7 +197,7 @@ If a regen crashes mid-flight, `_meta.regen_status` stays `in_progress` and the 
 
 ### Framework self-tracking (advanced)
 
-The framework can track itself: `~/knowledge-graph-meta/` is a data dir whose `project.toml` lists `~/tools/knowledge-graph/depgraph`, `~/tools/knowledge-graph/logigraph`, `~/tools/knowledge-graph/graphui` as tracked repos. Authored rules (`rule::config::no_hardcoded_project_strings`, `rule::warnings::use_universal_object_shape`) fire on framework edits, so when extending the framework Claude sees its own invariants. Not required for normal project use; a useful dogfood when contributing to the framework itself.
+The framework can track itself: `~/knowledge-graph-meta/knowledge-graph/` is a data repo (registered as `kg-framework`) whose `project.toml` lists `~/tools/knowledge-graph/{depgraph,logigraph,graphui}` as tracked repos. Authored rules (`rule::config::no_hardcoded_project_strings`, `rule::warnings::use_universal_object_shape`) fire on framework edits, so when extending the framework Claude sees its own invariants. Not required for normal project use; a useful dogfood when contributing to the framework itself.
 
 ## License
 

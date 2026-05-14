@@ -30,7 +30,7 @@ No manual lookup. No "I forgot to check the mobile app." The information arrives
 
 ## Layout
 
-The framework (this repo, typically cloned to `~/tools/depgraph/`) is project-agnostic. Per-project data — nodes, dossiers, project-specific extractors — lives in a separate **data dir** owned by your project (e.g. `~/<project>/depgraph/`). The two are bridged by `project.toml` in the data dir:
+The framework (this repo, cloned to `~/tools/knowledge-graph/` — depgraph is a sibling subdir alongside `logigraph`, `graphui`, and the `kg` orchestrator) is project-agnostic. Per-project data — nodes, dossiers, project-specific extractors — lives in a separate **data dir** owned by your project (e.g. `~/<project>-knowledge-graph/depgraph/`). The two are bridged by `project.toml` in the data dir:
 
 ```toml
 [project]
@@ -48,7 +48,7 @@ extractor = ["npx", "tsx", "{data_dir}/extractors/extract_web.ts"]
 ```
 
 ```
-~/tools/depgraph/                       (this framework repo)
+~/tools/knowledge-graph/depgraph/       (this framework subdir; siblings: logigraph/, graphui/, kg/)
 ├── README.md                  ← you are here
 ├── PROCESS.md                 ← rules to follow before/during/after every edit
 ├── DRIFT.md                   ← every way this system can lie to you, and the mitigation
@@ -67,7 +67,7 @@ extractor = ["npx", "tsx", "{data_dir}/extractors/extract_web.ts"]
 │   └── depgraph               ← CLI: regen, context, dependents, orphans, validate, self-check
 └── examples/                  ← worked example: a generic POST endpoint
 
-~/<project>/depgraph/                   (per-project data dir)
+~/<project>-knowledge-graph/depgraph/   (per-project data dir; sibling: logigraph/)
 ├── project.toml               ← [repos.*] config; consumed by the framework
 ├── nodes/                     ← per-node JSON, owned by extractors, bit-stable across regens
 │   ├── endpoints/             ← one file per HTTP route (METHOD::/path)
@@ -152,7 +152,7 @@ Only the **hook wiring** (the `PreToolUse` / `Stop` invocation in `.claude/setti
 
 ## Quickstart
 
-Set `DEPGRAPH_DATA_DIR` to point at your project's data dir, or `cd` into it before running CLI commands. Examples below assume `DEPGRAPH_DATA_DIR=~/<project>/depgraph` (or that you've cd'd there).
+Set `DEPGRAPH_DATA_DIR` to point at your project's data dir, or `cd` into it before running CLI commands. Examples below assume `DEPGRAPH_DATA_DIR=~/<project>-knowledge-graph/depgraph` (or that you've cd'd there).
 
 ```bash
 # Full regen — runs every extractor and reconciles. Idempotent.

@@ -10,9 +10,13 @@
 #   ./install.sh init <project>               scaffold a fresh project data dir
 #                                             under <project>/knowledge-graph/
 #
-#   ./install.sh hooks [--project <dir>] [--apply]
-#                                             print (or write) the
-#                                             ~/.claude/settings.json hook snippet
+#   ./install.sh hooks [--apply]              print (or write) the
+#                                             ~/.claude/settings.json hook
+#                                             snippet. One entry per phase
+#                                             pointing at the `kg`
+#                                             orchestrator — project paths
+#                                             come from kg-graphs.toml, not
+#                                             from settings.json.
 #   ./install.sh systemd [--project <dir>] [--apply]
 #                                             print (or write) graphui systemd unit
 #   ./install.sh path [--rcfile <file>] [--apply] [--force]
@@ -228,6 +232,18 @@ cmd_init() {
     local pname
     pname=$(basename "$project_dir")
 
+    mkdir -p "$bundle"
+    # Root project.toml: declares the graph as a whole. `kg add` reads
+    # this to learn the graph's name and subsystem list.
+    cat > "$bundle/project.toml" <<TOML
+# Root project descriptor read by \`kg\` (the orchestrator). Per-subsystem
+# configuration lives in depgraph/project.toml and logigraph/project.toml.
+
+[project]
+name = "$pname"
+subsystems = ["depgraph", "logigraph"]
+TOML
+
     mkdir -p "$bundle/depgraph/extractors" \
              "$bundle/depgraph/nodes" \
              "$bundle/depgraph/dossiers" \
@@ -294,23 +310,26 @@ MD
     cat <<NEXT
 $(color_yellow "Next:")
 
-  Apply Claude Code hooks pointing at this project:
-    $0 hooks --project $project_dir --apply
+  Register this graph with the kg orchestrator:
+    $DEFAULT_TARGET/$BUNDLE_DIR/bin/kg add $bundle
 
-  Or print the snippet to merge by hand:
-    $0 hooks --project $project_dir
+  Apply the project-agnostic Claude Code hook block (one-time per machine):
+    $0 hooks --apply
+
+  Or print the hook snippet to merge by hand:
+    $0 hooks
 NEXT
 }
 
 # ----- hooks: print or apply -----------------------------------------------
 
 generate_hooks_json() {
-    # $target is the tools target (e.g. ~/tools); hooks/extractors live
-    # one level deeper under $BUNDLE_DIR. Data dirs ($depg, $logg) are
-    # already passed in as their fully-qualified bundled paths by the
-    # caller, so don't re-rewrite them here.
-    local target="$1" depg="$2" logg="$3"
-    local bundle="$target/$BUNDLE_DIR"
+    # One entry per phase, all pointing at the `kg` orchestrator. kg reads
+    # ~/.claude/kg-graphs.toml and dispatches to whichever registered graph
+    # owns the file being edited — so settings.json no longer carries
+    # per-project paths. Add/remove projects with `kg add` / `kg remove`.
+    local target="$1"
+    local kg_bin="$target/$BUNDLE_DIR/bin/kg"
     cat <<JSON
 {
   "PreToolUse": [
@@ -319,13 +338,8 @@ generate_hooks_json() {
       "hooks": [
         {
           "type": "command",
-          "command": "DEPGRAPH_DATA_DIR=$depg python3 $bundle/depgraph/hooks/pre_edit_inject.py",
-          "timeout": 5
-        },
-        {
-          "type": "command",
-          "command": "LOGIGRAPH_DATA_DIR=$logg DEPGRAPH_DATA_DIR=$depg python3 $bundle/logigraph/hooks/pre_edit_inject.py",
-          "timeout": 5
+          "command": "$kg_bin hook pre-edit",
+          "timeout": 10
         }
       ]
     },
@@ -334,7 +348,7 @@ generate_hooks_json() {
       "hooks": [
         {
           "type": "command",
-          "command": "python3 $bundle/logigraph/hooks/pre_irreversible_inject.py",
+          "command": "$kg_bin hook pre-irreversible",
           "timeout": 5
         }
       ]
@@ -345,22 +359,29 @@ generate_hooks_json() {
       "hooks": [
         {
           "type": "command",
-          "command": "DEPGRAPH_DATA_DIR=$depg python3 $bundle/depgraph/hooks/post_edit_regen.py",
-          "timeout": 60
-        },
+          "command": "$kg_bin hook post-edit",
+          "timeout": 120
+        }
+      ]
+    }
+  ],
+  "SessionStart": [
+    {
+      "hooks": [
         {
           "type": "command",
-          "command": "LOGIGRAPH_DATA_DIR=$logg DEPGRAPH_DATA_DIR=$depg python3 $bundle/logigraph/hooks/post_edit_regen.py",
-          "timeout": 60
-        },
-        {
-          "type": "command",
-          "command": "DEPGRAPH_DATA_DIR=$depg python3 $bundle/depgraph/hooks/post_edit_telemetry.py",
+          "command": "$kg_bin hook session-start",
           "timeout": 30
-        },
+        }
+      ]
+    }
+  ],
+  "SessionEnd": [
+    {
+      "hooks": [
         {
           "type": "command",
-          "command": "LOGIGRAPH_DATA_DIR=$logg python3 $bundle/logigraph/hooks/post_edit_telemetry.py",
+          "command": "$kg_bin hook session-end",
           "timeout": 30
         }
       ]
@@ -385,15 +406,12 @@ cmd_hooks() {
         esac
     done
 
-    if [[ -z "$project" ]]; then
-        project="$HOME/your-project"
-        warn "no --project given; using placeholder $project"
-    fi
-    local depg="$project/$BUNDLE_DIR/depgraph"
-    local logg="$project/$BUNDLE_DIR/logigraph"
+    # --project is no longer required (hooks are project-agnostic via the kg
+    # orchestrator) but we still accept it so callers like `bootstrap` can
+    # register the project via `kg add` after writing the hooks block.
 
     local hooks_json
-    hooks_json=$(generate_hooks_json "$target" "$depg" "$logg")
+    hooks_json=$(generate_hooks_json "$target")
 
     if [[ "$apply" -eq 0 ]]; then
         cat <<HEADER
@@ -760,6 +778,14 @@ cmd_bootstrap() {
     # bootstrap implies "set up from scratch" — overwrite any existing hooks
     # block (after backing it up). Use plain `cmd_hooks` for interactive review.
     cmd_hooks --project "$project" --apply --force
+    echo
+
+    log "registering project with kg orchestrator"
+    # The hooks are project-agnostic; kg-graphs.toml is where dispatch
+    # happens. `kg add` is idempotent — re-running with the same path is
+    # a no-op success.
+    "$DEFAULT_TARGET/$BUNDLE_DIR/bin/kg" add "$project/$BUNDLE_DIR" \
+        || warn "kg add failed; run '$DEFAULT_TARGET/$BUNDLE_DIR/bin/kg add $project/$BUNDLE_DIR' manually"
     echo
 
     log "applying systemd unit for graphui"
