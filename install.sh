@@ -18,15 +18,7 @@
 #   ./install.sh path [--rcfile <file>] [--apply] [--force]
 #                                             print (or write) the shell PATH
 #                                             snippet that puts depgraph and
-#                                             logigraph CLIs on $PATH. Also
-#                                             rewrites a stale block left over
-#                                             from the old flat tools layout.
-#
-#   ./install.sh migrate <project-dir>        retrofit an old flat
-#                                             <project>/{depgraph,logigraph}
-#                                             into <project>/knowledge-graph/
-#                                             and rewrite project.toml paths.
-#                                             Re-runs hooks+systemd if --apply.
+#                                             logigraph CLIs on $PATH.
 #
 #   ./install.sh cascade <target-repo> \
 #                --depgraph <kg-depgraph-dir> \
@@ -42,15 +34,12 @@
 #   ./install.sh bootstrap <project-dir>      one-shot: install tools + scaffold
 #                                             project (or use existing data) +
 #                                             apply hooks + apply systemd.
-#                                             Idempotent. Migrates old flat
-#                                             layouts in-place.
+#                                             Idempotent.
 #
 #   ./install.sh --help                       show this help
 #
 # Safe by default: never overwrites without a backup; never modifies
 # ~/.claude/settings.json or systemd units unless --apply is passed.
-# Old flat layouts are migrated in-place on re-run (no destructive
-# operations without explicit pre-condition checks).
 
 set -euo pipefail
 
@@ -59,11 +48,7 @@ set -euo pipefail
 DEFAULT_TARGET="$HOME/tools"
 # Default GitHub org for framework repos; override with KNOWLEDGE_GRAPH_ORG env.
 ORG="${KNOWLEDGE_GRAPH_ORG:-Concorda-Sailing}"
-FRAMEWORK_REPOS=("depgraph" "logigraph" "graphui")
-# All framework repos and project data dirs live one level deep under
-# this bundle dir, so a tools install or a project init produces a
-# single new directory rather than a scatter. See migrate_*_layout for
-# the in-place migration from the old flat layout.
+# Tools install and project data both live one level deep under this dir.
 BUNDLE_DIR="knowledge-graph"
 SETTINGS_FILE="$HOME/.claude/settings.json"
 SYSTEMD_DIR="$HOME/.config/systemd/user"
@@ -93,7 +78,7 @@ err()  { printf '%s %s\n' "$(color_red "✗")" "$*" >&2; }
 die()  { err "$*"; exit 1; }
 
 usage() {
-    sed -n '2,36p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '2,42p' "$0" | sed 's/^# \{0,1\}//'
 }
 
 require() {
@@ -147,173 +132,6 @@ backup_file() {
     log "backed up to $bak"
 }
 
-# ----- layout migration -----------------------------------------------------
-#
-# Older installs used a flat layout: framework repos sat next to each
-# other under $target (and project data sat flat under $project). The
-# bundle layout puts everything one level deeper under $BUNDLE_DIR so a
-# single subdirectory contains the whole knowledge-graph install. These
-# helpers are idempotent — they detect old-flat vs new-bundled and only
-# act if migration is needed. Pre-conditions are checked strictly; on
-# any conflict they bail with a clear error rather than overwrite.
-
-# Move flat $target/{depgraph,logigraph,graphui} → $target/$BUNDLE_DIR/{...}.
-# No-op if any framework repo already lives under the bundle.
-migrate_tools_layout() {
-    local target="$1"
-    local bundle="$target/$BUNDLE_DIR"
-
-    # If anything is already inside the bundle, this looks like a
-    # previously-migrated (or freshly-installed) layout — nothing to do.
-    local already_bundled=0
-    local repo
-    for repo in "${FRAMEWORK_REPOS[@]}"; do
-        [[ -d "$bundle/$repo" ]] && already_bundled=1
-    done
-    [[ "$already_bundled" -eq 1 ]] && return 0
-
-    # Find which (if any) flat repos exist. If none, there is nothing
-    # to migrate — caller will clone fresh into the bundle.
-    local present=()
-    for repo in "${FRAMEWORK_REPOS[@]}"; do
-        [[ -d "$target/$repo" ]] && present+=("$repo")
-    done
-    [[ ${#present[@]} -gt 0 ]] || return 0
-
-    warn "migrating flat tools layout $target/{$(IFS=,; echo "${present[*]}")} → $bundle/"
-
-    # If $bundle doesn't exist yet, create it. If it exists (e.g. as the
-    # orchestrator checkout), we just mv into it.
-    mkdir -p "$bundle"
-
-    for repo in "${present[@]}"; do
-        # mv -n refuses to overwrite. If a dest exists, that means a
-        # partial prior migration — bail rather than fight it.
-        if [[ -e "$bundle/$repo" ]]; then
-            die "migration aborted: $bundle/$repo already exists (partial prior migration?); resolve manually"
-        fi
-        mv "$target/$repo" "$bundle/$repo"
-        ok "mv $target/$repo → $bundle/$repo"
-    done
-
-    # graphui's .venv bakes absolute paths into shebangs and activate
-    # scripts — moving the venv leaves them pointing at the old location.
-    # Rebuild it in-place. requirements.txt is the source of truth.
-    if [[ -d "$bundle/graphui" && -f "$bundle/graphui/requirements.txt" ]]; then
-        log "rebuilding graphui venv (mv invalidates baked-in shebang paths)"
-        rm -rf "$bundle/graphui/.venv"
-        python3 -m venv "$bundle/graphui/.venv"
-        "$bundle/graphui/.venv/bin/pip" install --quiet -r "$bundle/graphui/requirements.txt"
-        ok "graphui venv rebuilt at $bundle/graphui/.venv"
-    fi
-
-    warn "tools layout migrated. Existing ~/.claude/settings.json hooks and graphui systemd unit reference the OLD paths and will fail until regenerated."
-    warn "Re-run with 'hooks --project <project-dir> --apply --force' and 'systemd --project <project-dir> --apply' to fix, or use 'bootstrap <project-dir>' to handle both at once."
-
-    # Shell PATH blocks added by an earlier install reference the OLD
-    # flat layout (e.g. `$HOME/tools/depgraph/bin`). Those directories no
-    # longer exist after the move, so `depgraph`/`logigraph` will resolve
-    # to "command not found" until the rcfile is fixed. Surface this
-    # explicitly so the user (or an LLM agent) doesn't silently work
-    # around it by skipping the discovery step.
-    detect_stale_path_blocks "$target"
-}
-
-# Look for shell rcfiles whose PATH export references the old flat tools
-# layout (anything under $target/{depgraph,logigraph}/bin that isn't
-# under $BUNDLE_DIR). Print a per-file warning + the recovery command.
-# Pure side-effect: never edits files.
-detect_stale_path_blocks() {
-    local target="$1"
-    local stale=0
-    local f
-    for f in "$HOME/.profile" "$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.zprofile"; do
-        [[ -f "$f" ]] || continue
-        # Match `tools/depgraph/bin` or `tools/logigraph/bin` not preceded
-        # by `$BUNDLE_DIR/`. Tilde-form and $HOME-form both covered.
-        if grep -E "(tools|\\\$HOME/tools|~/tools)/(depgraph|logigraph)/bin" "$f" \
-            | grep -vE "/$BUNDLE_DIR/(depgraph|logigraph)/bin" >/dev/null 2>&1; then
-            warn "$f references the old flat tools layout in PATH (e.g. \$HOME/tools/depgraph/bin)."
-            warn "  Those paths no longer exist. Fix with:  $0 path --rcfile $f --apply --force"
-            stale=1
-        fi
-    done
-    [[ "$stale" -eq 1 ]] || return 0
-}
-
-# Move flat $project/{depgraph,logigraph} → $project/$BUNDLE_DIR/{...} and
-# rewrite paths that reference the old layout:
-#  - logigraph/project.toml [depgraph] data_dir
-#  - any [repos.*] paths that point at $HOME/tools/{framework-repo}
-#    (these become $HOME/tools/$BUNDLE_DIR/{framework-repo}, used by
-#    knowledge-graph-meta to track the framework itself).
-migrate_project_layout() {
-    local project="$1"
-    [[ -n "$project" && -d "$project" ]] || return 0
-    local bundle="$project/$BUNDLE_DIR"
-
-    local already_bundled=0
-    [[ -d "$bundle/depgraph" || -d "$bundle/logigraph" ]] && already_bundled=1
-    # Even if already bundled, still rewrite framework [repos.*] paths
-    # below — a project might have been bundled before the framework
-    # tools were, leaving those repo paths pointing at the old flat
-    # tools layout.
-
-    if [[ "$already_bundled" -eq 0 ]]; then
-        local present=()
-        [[ -d "$project/depgraph" ]] && present+=("depgraph")
-        [[ -d "$project/logigraph" ]] && present+=("logigraph")
-        [[ ${#present[@]} -gt 0 ]] || return 0
-
-        warn "migrating flat project layout $project/{$(IFS=,; echo "${present[*]}")} → $bundle/"
-        mkdir -p "$bundle"
-        local d
-        for d in "${present[@]}"; do
-            if [[ -e "$bundle/$d" ]]; then
-                die "migration aborted: $bundle/$d already exists (partial prior migration?); resolve manually"
-            fi
-            mv "$project/$d" "$bundle/$d"
-            ok "mv $project/$d → $bundle/$d"
-        done
-    fi
-
-    # Rewrite paths inside the bundled project.toml files. Two distinct
-    # rewrites, both idempotent (skip if pattern not present, skip if
-    # already rewritten).
-    local lp="$bundle/logigraph/project.toml"
-    local dp="$bundle/depgraph/project.toml"
-
-    # 1. logigraph [depgraph] data_dir = "<X>/depgraph"
-    #    → "<X>/$BUNDLE_DIR/depgraph" (where <X> is the project root, in
-    #    either tilde-expanded or absolute form).
-    if [[ -f "$lp" ]] && ! grep -q "data_dir = \"[^\"]*/$BUNDLE_DIR/depgraph\"" "$lp"; then
-        if grep -q '^data_dir = ".*\/depgraph"$' "$lp"; then
-            sed -i -E "s|^(data_dir = \".*)(/depgraph\")$|\1/$BUNDLE_DIR\2|" "$lp"
-            ok "rewrote $lp [depgraph] data_dir → bundled path"
-        fi
-    fi
-
-    # 2. [repos.*] path entries pointing at the flat tools layout, e.g.
-    #    path = "~/tools/depgraph" → "~/tools/$BUNDLE_DIR/depgraph".
-    #    Only rewrite values whose basename exactly matches a framework
-    #    repo — so a project that legitimately has a repo named
-    #    "depgraph-fork" elsewhere isn't touched.
-    local f r
-    for f in "$lp" "$dp"; do
-        [[ -f "$f" ]] || continue
-        for r in "${FRAMEWORK_REPOS[@]}"; do
-            # Skip if already bundled in this file.
-            grep -q "path = \"[^\"]*/$BUNDLE_DIR/$r\"" "$f" && continue
-            # Match path = "<X>/$r" where <X> is anything not containing
-            # the bundle segment already.
-            if grep -qE "^path = \"[^\"]*/${r}\"$" "$f"; then
-                sed -i -E "s|^(path = \".*)(/${r}\")$|\1/$BUNDLE_DIR\2|" "$f"
-                ok "rewrote $f [repos.*] path → bundled $r"
-            fi
-        done
-    done
-}
-
 # ----- subcommands ----------------------------------------------------------
 
 cmd_install() {
@@ -331,19 +149,16 @@ cmd_install() {
     check_prereqs
     mkdir -p "$target"
     local bundle="$target/$BUNDLE_DIR"
-    migrate_tools_layout "$target"
     mkdir -p "$bundle"
     log "installing into $(color_yellow "$bundle")"
 
-    # Framework subsystems (depgraph, logigraph, graphui) used to be
-    # separate repos cloned here. They are now consolidated into this
-    # umbrella repo via git-filter-repo subtree merges, so they're
-    # already present as siblings of install.sh. We just verify each one
-    # is on disk and bail with a clear message if not (which would mean
-    # this script is being run outside the knowledge-graph checkout).
-    for repo in "${FRAMEWORK_REPOS[@]}"; do
-        if [[ ! -d "$bundle/$repo" ]]; then
-            die "missing $bundle/$repo — install.sh must be run from inside the knowledge-graph checkout (subsystems are now consolidated; standalone repos are archived)"
+    # Subsystems are siblings of install.sh in this consolidated repo.
+    # Verify each is on disk; absence means the script is being run
+    # outside the knowledge-graph checkout.
+    local subsystem
+    for subsystem in depgraph logigraph graphui; do
+        if [[ ! -d "$bundle/$subsystem" ]]; then
+            die "missing $bundle/$subsystem — install.sh must be run from inside the knowledge-graph checkout"
         fi
     done
 
@@ -369,11 +184,6 @@ cmd_install() {
         local cloned_path
         cloned_path=$(eval echo "$path")
         clone_or_pull "https://github.com/$repo.git" "$cloned_path"
-        # If the data repo was cloned to a project root that still has a
-        # flat $project/{depgraph,logigraph} layout, migrate it on the
-        # spot so all downstream hooks and systemd point at the bundled
-        # paths. Idempotent: no-op if already bundled.
-        migrate_project_layout "$cloned_path"
     done
 
     echo
@@ -411,10 +221,6 @@ cmd_init() {
     local project_dir="${1:-}"
     [[ -n "$project_dir" ]] || die "usage: $0 init <project-data-dir>"
     [[ "$project_dir" = /* ]] || project_dir="$PWD/$project_dir"
-    # Adopt an existing flat layout into the bundle before refusing on a
-    # conflict — re-running `init` against a pre-bundled project should
-    # rescue it, not error out.
-    migrate_project_layout "$project_dir"
     local bundle="$project_dir/$BUNDLE_DIR"
     [[ ! -e "$bundle/depgraph" ]] || die "$bundle/depgraph already exists; refusing to overwrite"
 
@@ -783,13 +589,12 @@ HEADER
 # but interactive shells (and the LLM's Bash tool) need `depgraph` /
 # `logigraph` resolvable on $PATH too. This subcommand emits a sentinel-
 # guarded block that can be appended to ~/.profile (default) or any other
-# rcfile. Re-applying is idempotent; if a block from an OLD flat install
-# is detected (no $BUNDLE_DIR segment), --apply --force replaces it after
-# a backup.
+# rcfile. Re-applying is idempotent; --apply --force replaces a block
+# pointing at a different target after backing it up.
 
 # Sentinel comment — used as the marker to find/replace the block on
-# re-apply. Do not change without bumping a migration; an existing
-# install's rcfile uses the literal string to identify the block.
+# re-apply. Existing installs' rcfiles use the literal string to identify
+# the block, so don't change it casually.
 PATH_BLOCK_MARKER="# Knowledge-graph framework CLIs (depgraph, logigraph) — managed by install.sh"
 
 generate_path_snippet() {
@@ -834,8 +639,8 @@ cmd_path() {
     if [[ "$apply" -eq 0 ]]; then
         cat <<HEADER
 # Append the following to $rcfile (or re-run with --apply to write it
-# automatically; --apply --force replaces a stale block from the old
-# flat tools layout).
+# automatically; --apply --force replaces a managed block pointing at a
+# different target after backing it up).
 
 HEADER
         echo "$snippet"
@@ -919,61 +724,6 @@ print(f"✓ rewrote PATH block in {rcfile}")
 PY
 }
 
-# ----- migrate: retrofit an old flat project layout into the bundle -------
-
-cmd_migrate() {
-    local project=""
-    local target="$DEFAULT_TARGET"
-    local apply=0
-    while [[ $# -gt 0 ]]; do
-        case "$1" in
-            --target)  target="$2"; shift 2 ;;
-            --apply)   apply=1; shift ;;
-            -*) die "unknown flag: $1" ;;
-            *) [[ -z "$project" ]] || die "multiple project dirs given"; project="$1"; shift ;;
-        esac
-    done
-    [[ -n "$project" ]] || die "usage: $0 migrate <project-dir> [--apply]"
-    [[ "$project" = /* ]] || project="$PWD/$project"
-    [[ -d "$project" ]] || die "no such directory: $project"
-
-    log "migrating project at $(color_yellow "$project")"
-
-    # Migration of the tools dir is the user's call (different scope);
-    # do it here only if the flat layout is detected at $target so the
-    # rewritten [repos.*] paths inside the project actually resolve.
-    migrate_tools_layout "$target"
-    migrate_project_layout "$project"
-    echo
-
-    if [[ "$apply" -eq 1 ]]; then
-        log "applying Claude Code hooks → $SETTINGS_FILE"
-        cmd_hooks --target "$target" --project "$project" --apply --force
-        echo
-        log "applying systemd unit for graphui"
-        cmd_systemd --target "$target" --project "$project" --apply
-        echo
-        # Migrate scenario implies the user previously ran a flat-layout
-        # install — their shell rcfile almost certainly has a stale PATH
-        # block. --force replaces it after a backup.
-        log "applying PATH block to ~/.profile"
-        cmd_path --target "$target" --apply --force \
-            || warn "PATH apply skipped or failed; run '$0 path' to inspect"
-        echo
-    else
-        cat <<NEXT
-$(color_yellow "Next:") regenerate hooks + systemd + PATH so they reference the bundled paths:
-
-  $0 hooks   --target $target --project $project --apply --force
-  $0 systemd --target $target --project $project --apply
-  $0 path    --target $target --apply --force
-
-Or re-run with --apply to do all three automatically.
-NEXT
-    fi
-    ok "migrate complete"
-}
-
 # ----- bootstrap: install + (init|use existing data) + hooks + systemd -----
 
 cmd_bootstrap() {
@@ -996,13 +746,8 @@ cmd_bootstrap() {
     cmd_install "${data_args[@]}"
     echo
 
-    # Adopt an existing flat $project/{depgraph,logigraph} into the bundle
-    # so the rest of bootstrap (hooks + systemd + scaffolding decision)
-    # sees a uniform $project/$BUNDLE_DIR/{...} shape.
-    migrate_project_layout "$project"
-
-    # If the project doesn't have a data layout yet, scaffold it. Otherwise
-    # use what's there (e.g. cloned via --data, or just migrated above).
+    # If the project doesn't have a data layout yet, scaffold it.
+    # Otherwise use what's there (e.g. cloned via --data).
     if [[ ! -d "$project/$BUNDLE_DIR/depgraph" || ! -d "$project/$BUNDLE_DIR/logigraph" ]]; then
         log "scaffolding empty project layout at $project/$BUNDLE_DIR"
         cmd_init "$project"
@@ -1027,8 +772,8 @@ cmd_bootstrap() {
     # context X") break with command-not-found, which historically led
     # the agent to skip the discovery step entirely.
     log "applying PATH block to ~/.profile"
-    # bootstrap implies a clean slate — replace any stale block that an
-    # earlier flat-layout install wrote.
+    # bootstrap implies a clean slate — replace any managed block that
+    # points at a different target.
     cmd_path --apply --force || warn "PATH apply skipped or failed; run '$0 path' to inspect"
     echo
 
@@ -1132,7 +877,6 @@ main() {
         systemd)                shift; cmd_systemd "$@" ;;
         path)                   shift; cmd_path "$@" ;;
         install)                shift; cmd_install "$@" ;;
-        migrate)                shift; cmd_migrate "$@" ;;
         cascade)                shift; cmd_cascade "$@" ;;
         bootstrap)              shift; cmd_bootstrap "$@" ;;
         *)                      err "unknown command: $cmd"; usage; exit 1 ;;
