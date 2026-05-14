@@ -57,9 +57,19 @@
         {% endfor %}
       </div>
       {% set columns = ['title', 'area', 'kind', 'tier', 'fan_in', 'state'] %}
-      {% with nodes=nodes, columns=columns %}
+      <h3 class="nodes-group-h">Domain <span class="nodes-group-count">{{ domain_nodes|length }}</span></h3>
+      {% with nodes=domain_nodes, columns=columns, empty_message="No domain-specific nodes match the current filters." %}
         {% include '_node_list.html' %}
       {% endwith %}
+
+      {% if common_nodes %}
+      <details class="nodes-common-group">
+        <summary><span class="nodes-group-h-inline">Common</span> <span class="nodes-group-count">{{ common_nodes|length }}</span> <span class="nodes-group-hint">shared infrastructure (ui primitives, lib, hooks, utils)</span></summary>
+        {% with nodes=common_nodes, columns=columns %}
+          {% include '_node_list.html' %}
+        {% endwith %}
+      </details>
+      {% endif %}
 
     {% elif active_tab == 'deps' %}
       <div class="deps-section">

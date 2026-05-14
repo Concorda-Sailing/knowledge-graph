@@ -92,7 +92,6 @@ def cosine_score(query_vecs: np.ndarray, doc_vecs: np.ndarray) -> np.ndarray:
 def _scope_to_source_fields(scope: str) -> set[str]:
     """Map a UI scope chip to the set of source_field values it covers."""
     return {
-        "code": {"dossier_body"},
         "dossiers": {"dossier_body"},
         "rules": {"rule_statement"},
         "domain": {"domain_summary"},
@@ -146,7 +145,7 @@ def load_search_index() -> dict:
 
 def _kind_hint(source_field: str) -> str:
     return {
-        "dossier_body": "code",
+        "dossier_body": "dossier",
         "rule_statement": "rule",
         "domain_summary": "domain",
         "process_summary": "process",

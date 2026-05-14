@@ -13,7 +13,7 @@ import json
 import os
 import subprocess
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -151,7 +151,7 @@ def search_page(
     request: Request,
     q: str = "",
     mode: str = "semantic",
-    scope: list[str] | None = None,
+    scope: list[str] | None = Query(default=None),
     limit: int = 30,
 ) -> HTMLResponse:
     """Hybrid search results. `mode` is the primary tab (semantic/dep/
@@ -163,8 +163,8 @@ def search_page(
             if q else [])
     # Granular chips visible under the active tab depend on mode.
     chips_by_mode = {
-        "semantic": ["rules", "domain", "processes", "code", "dossiers"],
-        "dep": ["code", "dossiers"],
+        "semantic": ["rules", "domain", "processes", "dossiers"],
+        "dep": ["dossiers"],
         "knowledge": ["rules", "domain", "processes"],
     }
     return TEMPLATES.TemplateResponse(
@@ -276,6 +276,8 @@ def repo_detail(
         raise HTTPException(404, f"repo not found in any tracked node: {basename}")
 
     nodes = loader.nodes_for_repo(basename, kind=kind, area=area, tier=tier, state=state)
+    domain_nodes = [n for n in nodes if not n.get("common")]
+    common_nodes = [n for n in nodes if n.get("common")]
     dead_code = loader.repo_dead_code(basename)
     inbound_rollup = loader.repo_inbound_deps_rollup(basename)
     outbound_rollup = loader.repo_outbound_deps_rollup(basename)
@@ -306,6 +308,8 @@ def repo_detail(
             "repo": repo,
             "active_tab": tab,
             "nodes": nodes,
+            "domain_nodes": domain_nodes,
+            "common_nodes": common_nodes,
             "dead_code": dead_code,
             "inbound_rollup": inbound_rollup,
             "outbound_rollup": outbound_rollup,

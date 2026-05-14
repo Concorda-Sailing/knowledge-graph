@@ -564,6 +564,23 @@ def knowledge_filters() -> dict:
     }
 
 
+# Path prefixes that mark a node as "common" infrastructure rather than
+# domain feature code. Conservative: only obvious shared-utility folders.
+# Everything else is treated as domain-specific so the repo view defaults
+# to surfacing feature code first.
+_COMMON_PATH_PREFIXES = (
+    "src/components/ui/",
+    "src/lib/",
+    "src/hooks/",
+    "lib/",
+    "utils/",
+)
+
+
+def is_common_path(path: str) -> bool:
+    return any(path.startswith(p) for p in _COMMON_PATH_PREFIXES)
+
+
 def nodes_for_repo(
     basename: str,
     kind: str | None = None,
@@ -574,7 +591,7 @@ def nodes_for_repo(
 ) -> list[dict]:
     """Flat node list for a repo, ready to feed the universal `_node_list.html`
     partial. Each row carries the keys the partial reads (`id`, `title`, `kind`,
-    `fan_out`, `state`, `href`, `id`, plus `area` and `tier`).
+    `fan_out`, `state`, `href`, `id`, plus `area`, `tier`, and `common`).
 
     Filters: kind, area (top-level directory), tier (A/B/C), state, sort (fan_out|title|state).
     """
@@ -602,6 +619,7 @@ def nodes_for_repo(
             "state": n.get("dossier_state", "current"),
             "tier": n.get("tier"),
             "area": area_val,
+            "common": is_common_path(path),
             "href": f"/graph/node/{n['id']}",
             "src": f"{src.get('repo','')}/{src.get('path','')}" if src.get("path") else "",
         })

@@ -16,6 +16,7 @@
       <span class="brand-text">graphui</span>
     </a>
     <nav>
+      <a href="/graph/search" class="nav-search{% if request.url.path.startswith('/graph/search') %} nav-active{% endif %}">Search</a>
       <a href="/graph/issues" class="nav-issues{% if request.url.path.startswith('/graph/issues') %} nav-active{% endif %}">
         Issues
         {% set _issues = issues_fresh_count() %}
@@ -26,8 +27,6 @@
         {% set _pending = review_pending_count() %}
         {% if _pending %}<span class="nav-count-badge">{{ _pending }}</span>{% endif %}
       </a>
-      <a href="/graph/search" class="nav-search{% if request.url.path.startswith('/graph/search') %} nav-active{% endif %}">Search</a>
-      <a href="/graph/settings" class="nav-settings{% if request.url.path.startswith('/graph/settings') %} nav-active{% endif %}">Settings</a>
     </nav>
     <span class="meta-stamp">
       {% if meta and meta.depgraph %}
@@ -36,6 +35,7 @@
         <span class="node-count">{{ meta.depgraph.node_count }} nodes</span>
       {% endif %}
     </span>
+    <a href="/graph/settings" class="nav-settings-icon{% if request.url.path.startswith('/graph/settings') %} nav-active{% endif %}" aria-label="Settings" title="Settings">⚙</a>
   </header>
   <main>{% block content %}{% endblock %}</main>
   <script>
