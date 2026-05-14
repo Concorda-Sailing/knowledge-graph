@@ -1,8 +1,6 @@
-# The orchestrator repo's checkout doubles as the bundle dir for a
-# tools install (install.sh clones depgraph/, logigraph/, graphui/ as
-# siblings of install.sh). Those are independent git repos with their
-# own histories — keep them out of this repo's status.
-/depgraph/
+# logigraph/ and graphui/ are still independent repos cloned in as
+# siblings by install.sh. depgraph/ was consolidated into this repo via
+# git-filter-repo subtree merge; logigraph and graphui follow.
 /logigraph/
 /graphui/
 
