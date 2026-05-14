@@ -674,9 +674,10 @@ def cmd_dossier_rank(args: argparse.Namespace) -> int:
         if not nid:
             continue
         state = _dossier_state(data)
-        if args.only_unreviewed and state != "unreviewed":
-            continue
-        if args.only_stale and state != "stale":
+        if args.only_stale:
+            if state != "stale":
+                continue
+        elif args.only_unreviewed and state != "unreviewed":
             continue
         fan_out = len(deps_idx.get(nid) or [])
         tier = _tier_of(fan_out)
@@ -1278,6 +1279,112 @@ def cmd_stats(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_health(args: argparse.Namespace) -> int:
+    """Compact graph-health report. Bundles validate + orphans + stale-dossier
+    detection + tier-A coverage shortfall into one summary suitable for
+    SessionStart injection. Exits non-zero if anything is wrong."""
+    problems: list[str] = []
+    summary: list[str] = []
+
+    # ---- validate (schema) ----------------------------------------------
+    try:
+        import jsonschema  # type: ignore[import-untyped]
+        schema = json.loads((TOOL_ROOT / "schema" / "node.schema.json").read_text())
+        invalid = 0
+        for node_file in NODES.rglob("*.json"):
+            if node_file.name.startswith("_") or any(p.startswith("_") for p in node_file.parts):
+                continue
+            try:
+                data = json.loads(node_file.read_text())
+                jsonschema.validate(data, schema)
+            except (json.JSONDecodeError, jsonschema.ValidationError):
+                invalid += 1
+        if invalid:
+            problems.append(f"{invalid} invalid node(s) — run `depgraph validate`")
+    except ImportError:
+        summary.append("validate: skipped (jsonschema not installed)")
+
+    # ---- orphans (node points at missing source file) -------------------
+    orphan_n = 0
+    basename_to_path = basename_path_map(DEPGRAPH)
+    for node_file in NODES.rglob("*.json"):
+        if node_file.name.startswith("_") or any(p.startswith("_") for p in node_file.parts):
+            continue
+        try:
+            data = json.loads(node_file.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        src = data.get("source") or {}
+        repo, rel = src.get("repo"), src.get("path")
+        if not repo or not rel:
+            continue
+        repo_path = basename_to_path.get(repo)
+        if repo_path is None:
+            continue
+        if not (repo_path / rel).exists():
+            orphan_n += 1
+    if orphan_n:
+        problems.append(f"{orphan_n} orphan node(s) (source file gone) — run `depgraph orphans`")
+
+    # ---- stale dossiers (hash drift) ------------------------------------
+    stale_n = 0
+    for node_file in NODES.rglob("*.json"):
+        if node_file.name.startswith("_") or any(p.startswith("_") for p in node_file.parts):
+            continue
+        try:
+            data = json.loads(node_file.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        if _dossier_state(data) == "stale":
+            stale_n += 1
+    if stale_n:
+        problems.append(f"{stale_n} stale dossier(s) (structural_hash drifted) — run `depgraph dossier-rank --only-stale`")
+
+    # ---- tier-A coverage shortfall --------------------------------------
+    a_total = 0
+    a_covered = 0
+    dependents = load_dependents_index()
+    for node_file in NODES.rglob("*.json"):
+        if node_file.name.startswith("_") or any(p.startswith("_") for p in node_file.parts):
+            continue
+        try:
+            data = json.loads(node_file.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        nid = data.get("id")
+        if not nid:
+            continue
+        kind = data.get("kind", "")
+        if kind == "test":
+            continue
+        fan_out = len(dependents.get(nid) or [])
+        if fan_out < 10:
+            continue
+        a_total += 1
+        if _dossier_state(data) == "current":
+            a_covered += 1
+    a_pct = int(round(100 * a_covered / a_total)) if a_total else 100
+    if a_pct < 80 and a_total > 0:
+        problems.append(f"Tier-A dossier coverage at {a_pct}% ({a_covered}/{a_total}) — run `depgraph dossier-rank --tier A`")
+    else:
+        summary.append(f"tier-A coverage: {a_pct}% ({a_covered}/{a_total})")
+
+    # ---- output ---------------------------------------------------------
+    print("# Depgraph health")
+    if problems:
+        print()
+        for p in problems:
+            print(f"  ⚠ {p}")
+    else:
+        print()
+        print("  ✓ clean")
+    if summary:
+        print()
+        for s in summary:
+            print(f"  {s}")
+    return 1 if problems else 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(prog="depgraph")
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -1306,6 +1413,9 @@ def main() -> int:
 
     p_sc = sub.add_parser("self-check")
     p_sc.set_defaults(func=cmd_self_check)
+
+    p_health = sub.add_parser("health", help="One-shot graph health summary (validate + orphans + stale + tier-A coverage). Exit 1 if anything wrong.")
+    p_health.set_defaults(func=cmd_health)
 
     p_stats = sub.add_parser("stats", help="Corpus coverage + (optional) telemetry rollup")
     p_stats.add_argument("--telemetry", action="store_true",
