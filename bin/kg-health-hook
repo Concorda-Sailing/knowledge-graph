@@ -1,0 +1,127 @@
+#!/usr/bin/env python3
+"""SessionStart hook: run depgraph + logigraph `health` against one or more
+project data dirs and emit the combined output as additionalContext.
+
+Designed to be wired into ~/.claude/settings.json under `hooks.SessionStart`.
+
+Each --project arg names a project label and points at the parent dir
+containing depgraph/ and logigraph/ sibling data dirs. The script tolerates
+either sibling being absent. If every check is clean, emits a one-line
+all-good banner. Exit always 0 — never block session start on health.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+
+TOOL_ROOT = Path(__file__).resolve().parent.parent
+
+
+def _run(cmd: list[str], cwd: Path, extra_env: dict[str, str]) -> tuple[int, str]:
+    env = os.environ.copy()
+    env.update(extra_env)
+    try:
+        proc = subprocess.run(
+            cmd,
+            cwd=str(cwd),
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=20,
+        )
+        return proc.returncode, (proc.stdout or "") + (proc.stderr or "")
+    except (OSError, subprocess.SubprocessError) as exc:
+        return 99, f"failed to run {' '.join(cmd)}: {exc}"
+
+
+def check_project(label: str, root: Path) -> tuple[bool, str]:
+    """Return (any_problems, rendered_block). Skips missing sibling dirs."""
+    depgraph_dir = root / "depgraph"
+    logigraph_dir = root / "logigraph"
+    lines: list[str] = [f"## {label}"]
+    any_problem = False
+
+    if depgraph_dir.exists():
+        rc, out = _run(
+            [str(TOOL_ROOT / "depgraph" / "bin" / "depgraph"), "health"],
+            cwd=depgraph_dir,
+            extra_env={"DEPGRAPH_DATA_DIR": str(depgraph_dir)},
+        )
+        lines.append(out.rstrip())
+        if rc != 0:
+            any_problem = True
+
+    if logigraph_dir.exists():
+        rc, out = _run(
+            [str(TOOL_ROOT / "logigraph" / "bin" / "logigraph"), "health"],
+            cwd=logigraph_dir,
+            extra_env={
+                "LOGIGRAPH_DATA_DIR": str(logigraph_dir),
+                "DEPGRAPH_DATA_DIR": str(depgraph_dir) if depgraph_dir.exists() else "",
+            },
+        )
+        lines.append(out.rstrip())
+        if rc != 0:
+            any_problem = True
+
+    return any_problem, "\n".join(lines).strip() + "\n"
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument(
+        "--project",
+        action="append",
+        required=True,
+        help="Format: LABEL=/abs/path/to/knowledge-graph-parent. Repeat for multiple projects.",
+        metavar="LABEL=PATH",
+    )
+    args = ap.parse_args()
+
+    blocks: list[str] = []
+    any_problem = False
+    for entry in args.project:
+        if "=" not in entry:
+            continue
+        label, _, path_str = entry.partition("=")
+        label = label.strip()
+        root = Path(path_str.strip()).expanduser()
+        if not root.exists():
+            blocks.append(f"## {label}\n  (skipped — path missing: {root})")
+            continue
+        problem, block = check_project(label, root)
+        any_problem = any_problem or problem
+        blocks.append(block)
+
+    header = "# 🩺 Knowledge graph health (session start)"
+    if not any_problem:
+        body = header + "\n\n" + "\n".join(blocks)
+        body += (
+            "\n_All graphs clean. Health is checked on session start; "
+            "run `depgraph health` / `logigraph health` anytime to recheck._"
+        )
+    else:
+        body = header + "\n\n" + "\n".join(blocks)
+        body += (
+            "\n_⚠ Knowledge graph has out-of-date items. "
+            "Address before edits that depend on accurate context._"
+        )
+
+    payload = {
+        "hookSpecificOutput": {
+            "hookEventName": "SessionStart",
+            "additionalContext": body,
+        }
+    }
+    json.dump(payload, sys.stdout)
+    sys.stdout.write("\n")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
