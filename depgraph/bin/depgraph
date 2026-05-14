@@ -943,17 +943,24 @@ def cmd_dossier_finalize(args: argparse.Namespace) -> int:
     import datetime as _dt
     today = _dt.date.today().isoformat()
     title = node.get("title") or node["id"].split("::")[-1]
-    frontmatter = (
-        f"---\n"
-        f"node_id: {node['id']}\n"
-        f"node_kind: {node.get('kind','?')}\n"
-        f"feature: {node.get('feature') or 'null'}\n"
-        f"last_reviewed: {today}\n"
-        f"last_reviewed_against_hash: {node.get('structural_hash')}\n"
-        f"status: llm_drafted\n"
-        f"---\n\n"
-        f"# {title}\n\n"
-    )
+    fm_lines = [
+        "---",
+        f"node_id: {node['id']}",
+        f"node_kind: {node.get('kind','?')}",
+        f"feature: {node.get('feature') or 'null'}",
+        f"last_reviewed: {today}",
+        f"last_reviewed_against_hash: {node.get('structural_hash')}",
+        "status: llm_drafted",
+    ]
+    if args.authored_by:
+        fm_lines.append("authored_by:")
+        for a in args.authored_by:
+            fm_lines.append(f"  - {a}")
+    if args.reviewed_by:
+        fm_lines.append(f"reviewed_by: {args.reviewed_by}")
+        fm_lines.append(f"reviewed_at: {today}")
+    fm_lines.append("---")
+    frontmatter = "\n".join(fm_lines) + "\n\n" + f"# {title}\n\n"
     dossier_path.parent.mkdir(parents=True, exist_ok=True)
     dossier_path.write_text(frontmatter + body + "\n")
     print(f"wrote {dossier_path.relative_to(DEPGRAPH)}")
@@ -1444,6 +1451,10 @@ def main() -> int:
     p_df = sub.add_parser("dossier-finalize", help="Save an LLM-drafted dossier body file to the canonical path")
     p_df.add_argument("node_id")
     p_df.add_argument("body_file", help="Path to file containing the dossier body markdown (no frontmatter)")
+    p_df.add_argument("--authored-by", action="append", default=[],
+                      help="Actor that drafted the body (model id or person). Repeat for multiple authors.")
+    p_df.add_argument("--reviewed-by", default=None,
+                      help="Actor that reviewed and signed off. Omit to leave review pending.")
     p_df.set_defaults(func=cmd_dossier_finalize)
 
     p_db = sub.add_parser("dossier-bump", help="Bump a dossier's status (e.g. llm_drafted → current) after a human review pass")
