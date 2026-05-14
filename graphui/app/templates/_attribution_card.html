@@ -9,14 +9,6 @@
         <span class="empty">—</span>
       {% endif %}
     </dd>
-    <dt>Reviewed by</dt>
-    <dd>
-      {% if authorship.reviewed_by %}
-        {{ authorship.reviewed_by }}{% if authorship.reviewed_at %} · {{ authorship.reviewed_at }}{% endif %}
-      {% else %}
-        <span class="empty">— (awaiting review)</span>
-      {% endif %}
-    </dd>
     <dt>Flagged</dt>
     <dd>
       {% if flag.flagged %}
