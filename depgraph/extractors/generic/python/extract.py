@@ -228,6 +228,10 @@ def apply_mutations(
 _KIND_DIR = {
     "module": "modules", "class": "classes", "function": "functions",
     "import_edge": "imports", "call_edge": "calls",
+    # Canonical kinds — plural dirs to match pre-flip layout.
+    "endpoint": "endpoints", "model": "models",
+    "schema": "schemas", "service": "services",
+    "test": "tests",
 }
 
 
@@ -235,7 +239,13 @@ _MAX_FILENAME = 200  # bytes; ext4/xfs allow 255; leave headroom for ".json"
 
 
 def _safe_filename(node_id: str) -> str:
-    stem = node_id.replace("/", "__").replace(":", "__")
+    # Canonical IDs (post-canonicalize) use `::` as separator. Route them
+    # through slugify_id_py so the on-disk filename matches pre-flip.
+    if "::" in node_id:
+        from extractors.generic.python.canonical import slugify_id_py
+        stem = slugify_id_py(node_id)
+    else:
+        stem = node_id.replace("/", "__").replace(":", "__")
     if len(stem) > _MAX_FILENAME:
         import hashlib
         digest = hashlib.sha1(stem.encode()).hexdigest()[:12]
@@ -251,6 +261,245 @@ def write_nodes(nodes: list[dict], data_dir: Path) -> None:
         out_dir.mkdir(parents=True, exist_ok=True)
         path = out_dir / _safe_filename(n["id"])
         path.write_text(json.dumps(n, indent=2, sort_keys=True) + "\n")
+
+
+# --------------------------------------------------------------------------- #
+# Canonicalize stage: convert primitives + detector metadata into the
+# pre-flip-shape canonical node set. See § Canonical Node Contracts in
+# docs/superpowers/plans/2026-05-15-framework-canonicalization.md.
+# --------------------------------------------------------------------------- #
+
+from extractors.generic.python.canonical import (
+    slugify_id_py, structural_hash, canonical_path,
+    canonical_id_for_endpoint, canonical_id_for_repo_symbol,
+    build_symbol_index, resolve_endpoint_depends_on,
+)
+
+
+CANONICAL_KINDS = {"endpoint", "model", "schema", "service", "test"}
+PRIMITIVE_KINDS_TO_DROP = {
+    "module", "class", "function", "import_edge", "call_edge",
+}
+
+
+def _is_under(path: str, top: str) -> bool:
+    from pathlib import PurePosixPath
+    parts = PurePosixPath(path).parts
+    return bool(parts) and parts[0] == top
+
+
+def _canonicalize_endpoint(n, *, primitives, sym_idx, repo_key):
+    method = n["method"]
+    path = n["path"]
+    auth = n.get("auth", "none")
+    request_type_name = n.get("request_type_name")
+    response_type_name = n.get("response_type_name")
+    cid = canonical_id_for_endpoint(method, path)
+    sig = {
+        "method": method,
+        "path": path,
+        "auth": auth,
+        "request_schema_ref": n.get("request_schema_ref"),
+        "response_schema_ref": n.get("response_schema_ref"),
+    }
+    hpayload = {
+        "method": method,
+        "path": canonical_path(path),
+        "auth": auth,
+        "request": request_type_name,
+        "response": response_type_name,
+    }
+    out = {
+        "schema_version": 1,
+        "id": cid,
+        "kind": "endpoint",
+        "title": f"{method} {path}",
+        "feature": None,
+        "source": {
+            "repo": repo_key,
+            "path": n["file"],
+            "symbol": n["name"],
+            "line": n["line"],
+        },
+        "signature": sig,
+        "structural_hash": structural_hash(hpayload),
+        "depends_on": resolve_endpoint_depends_on(
+            host_id=n["id"], host_file=n["file"],
+            primitives=primitives, symbol_index=sym_idx,
+            repo_key=repo_key,
+        ),
+        "external_consumers": [],
+        "tests": [],
+        "dossier": f"dossiers/endpoints/{slugify_id_py(cid)}.md",
+        "extractor": "extract_api.py",
+        "warnings": [],
+    }
+    if response_type_name is None and method != "DELETE":
+        out["warnings"].append({
+            "code": "weakly_typed_response",
+            "message": (
+                "Handler has no declared response_model; structural hash "
+                "cannot detect response shape changes. See DRIFT.md "
+                "scenario 3."
+            ),
+            "where": f"{n['file']}:{n['line']}",
+        })
+    return out
+
+
+def _canonicalize_model(n, *, repo_key):
+    cid = canonical_id_for_repo_symbol(repo_key, n["file"], n["name"])
+    payload = {
+        "name": n["name"],
+        "kind": "model",
+        "tablename": n.get("tablename"),
+    }
+    return {
+        "schema_version": 1,
+        "id": cid,
+        "kind": "model",
+        "title": n["name"],
+        "feature": None,
+        "source": {
+            "repo": repo_key,
+            "path": n["file"],
+            "symbol": n["name"],
+            "line": n["line"],
+        },
+        "signature": payload,
+        "structural_hash": structural_hash(payload),
+        "depends_on": [],
+        "external_consumers": [],
+        "tests": [],
+        "dossier": f"dossiers/models/{slugify_id_py(cid)}.md",
+        "extractor": "extract_api.py",
+        "warnings": [],
+    }
+
+
+def _canonicalize_schema(n, *, repo_key):
+    cid = canonical_id_for_repo_symbol(repo_key, n["file"], n["name"])
+    payload = {
+        "name": n["name"],
+        "kind": "schema",
+        "fields": n.get("fields", []),
+    }
+    return {
+        "schema_version": 1,
+        "id": cid,
+        "kind": "schema",
+        "title": n["name"],
+        "feature": None,
+        "source": {
+            "repo": repo_key,
+            "path": n["file"],
+            "symbol": n["name"],
+            "line": n["line"],
+        },
+        "signature": payload,
+        "structural_hash": structural_hash(payload),
+        "depends_on": [],
+        "external_consumers": [],
+        "tests": [],
+        "dossier": f"dossiers/schemas/{slugify_id_py(cid)}.md",
+        "extractor": "extract_api.py",
+        "warnings": [],
+    }
+
+
+def _canonicalize_service(n, *, repo_key):
+    cid = canonical_id_for_repo_symbol(repo_key, n["file"], n["name"])
+    payload = {
+        "name": n["name"],
+        "kind": "service",
+        "args": n.get("args", []),
+    }
+    return {
+        "schema_version": 1,
+        "id": cid,
+        "kind": "service",
+        "title": n["name"],
+        "feature": None,
+        "source": {
+            "repo": repo_key,
+            "path": n["file"],
+            "symbol": n["name"],
+            "line": n["line"],
+        },
+        "signature": payload,
+        "structural_hash": structural_hash(payload),
+        "depends_on": [],
+        "external_consumers": [],
+        "tests": [],
+        "dossier": f"dossiers/services/{slugify_id_py(cid)}.md",
+        "extractor": "extract_api.py",
+        "warnings": [],
+    }
+
+
+def _accept_model(n: dict) -> bool:
+    """Pre-flip extract_model_nodes only scans <repo>/models/**, skipping
+    __init__.py and base.py. Mirror that here so detector emissions from
+    elsewhere don't leak through."""
+    from pathlib import PurePosixPath
+    parts = PurePosixPath(n["file"]).parts
+    if not parts or parts[0] != "models":
+        return False
+    fname = parts[-1]
+    if fname in ("__init__.py", "base.py"):
+        return False
+    return True
+
+
+def _accept_schema(n: dict) -> bool:
+    from pathlib import PurePosixPath
+    parts = PurePosixPath(n["file"]).parts
+    if not parts or parts[0] != "schemas":
+        return False
+    if parts[-1] == "__init__.py":
+        return False
+    return True
+
+
+def _accept_service(n: dict) -> bool:
+    from pathlib import PurePosixPath
+    parts = PurePosixPath(n["file"]).parts
+    if not parts or parts[0] not in ("services", "utils"):
+        return False
+    if parts[-1] == "__init__.py":
+        return False
+    return True
+
+
+def canonicalize(primitives: list[dict], *, repo_key: str) -> list[dict]:
+    """Convert detector-relabeled primitives into pre-flip-shape nodes.
+
+    Primitive kinds (module/class/function/import_edge/call_edge) are
+    dropped — they're tool-internal, not part of the depgraph node set.
+    """
+    sym_idx = build_symbol_index(primitives, repo_key=repo_key)
+    out: list[dict] = []
+    for n in primitives:
+        k = n["kind"]
+        if k in PRIMITIVE_KINDS_TO_DROP or k not in CANONICAL_KINDS:
+            continue
+        if k == "endpoint":
+            out.append(_canonicalize_endpoint(
+                n, primitives=primitives, sym_idx=sym_idx, repo_key=repo_key,
+            ))
+        elif k == "model":
+            if not _accept_model(n):
+                continue
+            out.append(_canonicalize_model(n, repo_key=repo_key))
+        elif k == "schema":
+            if not _accept_schema(n):
+                continue
+            out.append(_canonicalize_schema(n, repo_key=repo_key))
+        elif k == "service":
+            if not _accept_service(n):
+                continue
+            out.append(_canonicalize_service(n, repo_key=repo_key))
+    return out
 
 
 def _run_detectors(
@@ -304,6 +553,7 @@ def main(argv: list[str] | None = None) -> int:
         ctx = DetectorContext(
             repo_key=args.repo_key, file_path=rel,
             project_config={"detectors": names},
+            repo_path=str(args.repo_path),
         )
         muts = _run_detectors(detectors, tree, prims, ctx)
         labeled += sum(1 for m in muts if isinstance(m, RelabelNode))
@@ -311,8 +561,10 @@ def main(argv: list[str] | None = None) -> int:
         all_nodes.extend(nodes)
         total_nodes += len(nodes)
 
-    write_nodes(all_nodes, args.data_dir)
-    print(f"wrote {total_nodes} nodes ({labeled} labeled by detectors), "
+    canonical = canonicalize(all_nodes, repo_key=args.repo_key)
+    write_nodes(canonical, args.data_dir)
+    print(f"wrote {len(canonical)} canonical nodes "
+          f"({labeled} labeled by detectors, {total_nodes} primitives), "
           f"skipped {skipped} files")
     return 0
 

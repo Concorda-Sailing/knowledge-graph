@@ -24,17 +24,24 @@ def test_load_case_parses_files(tmp_path: Path):
 
 
 def test_run_deterministic_reports_precision_recall(tmp_path: Path):
+    """Primitive kinds are dropped post-canonicalize (§ Canonical Node
+    Contracts), so the eval harness compares against canonical kinds —
+    here we exercise the `service` detector emitting `r::services/a.py::hi`."""
     case = tmp_path / "c"
-    (case / "source").mkdir(parents=True)
-    (case / "source" / "a.py").write_text("def hi(): pass\ndef ho(): pass\n")
+    (case / "source" / "services").mkdir(parents=True)
+    (case / "source" / "services" / "a.py").write_text(
+        "def hi(): pass\ndef ho(): pass\n"
+    )
     (case / "expected.json").write_text(json.dumps({
-        "nodes": {"function": ["r:a.py:hi"]},  # intentionally incomplete
+        "nodes": {"service": ["r::services/a.py::hi"]},  # intentionally incomplete
     }))
-    (case / "case.toml").write_text('detectors = []\nlanguage = "python"\n')
+    (case / "case.toml").write_text(
+        'detectors = ["service"]\nlanguage = "python"\n'
+    )
     report = run_deterministic(case, repo_key="r")
     assert report["passed"] is True  # superset is OK; only declared expectations are checked
-    assert report["precision"]["function"] == 1.0
-    assert report["recall"]["function"] == 1.0
+    assert report["precision"]["service"] == 1.0
+    assert report["recall"]["service"] == 1.0
 
 
 from extractors.eval.judge import write_judgment_package

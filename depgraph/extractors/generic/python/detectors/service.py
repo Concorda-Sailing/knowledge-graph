@@ -39,6 +39,16 @@ class ServiceDetector(Detector):
     ) -> list[Mutation]:
         if not _is_service_path(ctx.file_path):
             return []
+        # Pre-flip iterates tree.body (top-level only); match that.
+        if not isinstance(tree, ast.Module):
+            return []
+        # Map top-level function name -> args list from the AST so we
+        # emit args metadata that mirrors extract_api.py:710.
+        args_by_name: dict[str, list[str]] = {}
+        for node in tree.body:
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                args_by_name[node.name] = [a.arg for a in node.args.args]
+
         muts: list[Mutation] = []
         for n in primitives:
             if n["kind"] != "function":
@@ -48,9 +58,12 @@ class ServiceDetector(Detector):
                 continue
             if n["name"].startswith("_"):
                 continue
+            if n["name"] not in args_by_name:
+                # Not a true top-level def (e.g. nested-but-emitted-at-module).
+                continue
             muts.append(RelabelNode(
                 node_id=n["id"],
                 new_kind="service",
-                metadata={},
+                metadata={"args": args_by_name[n["name"]]},
             ))
         return muts

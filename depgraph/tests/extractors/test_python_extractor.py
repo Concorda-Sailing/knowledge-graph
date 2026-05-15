@@ -149,7 +149,13 @@ def test_write_nodes_creates_per_kind_dirs(tmp_data_dir):
 
 
 def test_cli_end_to_end(tmp_repo, tmp_data_dir):
-    (tmp_repo / "a.py").write_text("def hi(): pass\n")
+    """End-to-end smoke: the CLI runs detectors + canonicalize and writes
+    canonical nodes only. Primitive kinds are dropped post-canonicalize
+    (see § Canonical Node Contracts), so we exercise the service detector
+    which produces a canonical `service` node from `services/a.py`."""
+    services = tmp_repo / "services"
+    services.mkdir()
+    (services / "a.py").write_text("def hi(): pass\n")
     extractor = (
         Path(__file__).resolve().parents[3]
         / "depgraph" / "extractors" / "generic" / "python" / "extract.py"
@@ -158,10 +164,11 @@ def test_cli_end_to_end(tmp_repo, tmp_data_dir):
         [sys.executable, str(extractor),
          "--repo-key", "r", "--repo-path", str(tmp_repo),
          "--data-dir", str(tmp_data_dir),
-         "--detectors", ""],
+         "--detectors", "service"],
         capture_output=True, text=True,
     )
     assert r.returncode == 0, r.stderr
     assert "wrote" in r.stdout
-    func_dir = tmp_data_dir / "nodes" / "functions"
-    assert any(p.suffix == ".json" for p in func_dir.iterdir())
+    services_dir = tmp_data_dir / "nodes" / "services"
+    assert services_dir.exists(), r.stdout
+    assert any(p.suffix == ".json" for p in services_dir.iterdir())

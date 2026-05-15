@@ -80,12 +80,9 @@ class SQLAlchemyDetector(Detector):
                     model_classes.add(node.name)
                     prim = by_qualname.get(node.name)
                     if prim:
-                        meta: dict[str, Any] = {}
-                        if tn:
-                            meta["tablename"] = tn
                         muts.append(RelabelNode(
                             node_id=prim["id"],
                             new_kind="model",
-                            metadata=meta,
+                            metadata={"tablename": tn},
                         ))
         return muts

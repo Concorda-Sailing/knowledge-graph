@@ -41,6 +41,7 @@ class DetectorContext:
     repo_key: str
     file_path: str
     project_config: dict[str, Any]
+    repo_path: str = ""  # Optional absolute repo root for cross-file lookups.
 
 
 class Detector(ABC):
