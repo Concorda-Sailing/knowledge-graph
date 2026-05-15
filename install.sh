@@ -178,6 +178,32 @@ cmd_install() {
     fi
     ok "graphui venv at $g/.venv"
 
+    # depgraph venv — reconcile.py runs the embedding pass via fastembed.
+    # Without this venv, the embedding pass falls through to system python3,
+    # silently records `embedding_status: skipped`, and graphui search returns
+    # empty results. The CLI at depgraph/bin/depgraph already prefers
+    # .venv/bin/python3 for subprocess calls, so creating the venv is all
+    # that's needed.
+    local d="$bundle/depgraph"
+    if [[ ! -d "$d/.venv" ]]; then
+        log "depgraph: creating venv + installing requirements"
+        python3 -m venv "$d/.venv"
+        "$d/.venv/bin/pip" install --quiet -r "$d/requirements.txt"
+    else
+        log "depgraph: venv present; upgrading requirements"
+        "$d/.venv/bin/pip" install --quiet --upgrade -r "$d/requirements.txt"
+    fi
+    # Verify the embedding stack actually imports — a pip success doesn't
+    # guarantee fastembed will load on this host (libstdc++ mismatches,
+    # missing ONNX runtime deps, etc.). Surface the failure now rather
+    # than at first regen.
+    if "$d/.venv/bin/python3" -c "import fastembed, numpy" >/dev/null 2>&1; then
+        ok "depgraph venv at $d/.venv (embeddings ready)"
+    else
+        warn "depgraph venv at $d/.venv — but 'import fastembed, numpy' failed"
+        warn "graphui search will return no results until this is fixed"
+    fi
+
     # Arbitrary --data clones
     for spec in "${extra_data[@]}"; do
         local repo="${spec%%=*}"
