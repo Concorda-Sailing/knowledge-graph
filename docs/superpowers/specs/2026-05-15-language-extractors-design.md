@@ -36,15 +36,15 @@ Today the framework ships one generic extractor (`extractors/generic/typescript/
 │   │   └── README.md
 │   ├── typescript/                 native: typescript Compiler API
 │   │   ├── extract.ts              entry point
-│   │   ├── detectors/              react.ts, vitest.ts, express.ts, route-calls.ts
+│   │   ├── detectors/              react.ts, vitest.ts, route-calls.ts
 │   │   ├── detector_api.ts
 │   │   ├── TEMPLATE_detector.ts
 │   │   └── README.md
-│   ├── go/                         tree-sitter via Python driver
+│   ├── go/                         tree-sitter via `py-tree-sitter`
 │   │   ├── extract.py              tree-sitter-go grammar
 │   │   ├── detectors/              empty + TEMPLATE
 │   │   └── README.md
-│   └── rust/                       tree-sitter via Python driver
+│   └── rust/                       tree-sitter via `py-tree-sitter`
 │       ├── extract.py              tree-sitter-rust grammar
 │       ├── detectors/              empty + TEMPLATE
 │       └── README.md
@@ -111,7 +111,6 @@ Each existing Concorda extractor decomposes into AST-walk (into the framework la
 | `extract_api.py` pytest detection | `python/detectors/pytest.py` |
 | `extract_web.ts` AST walk | `typescript/extract.ts` |
 | `extract_web.ts` React component/hook detection | `typescript/detectors/react.ts` |
-| `extract_web.ts` Express detection (if present) | `typescript/detectors/express.ts` |
 | `extract_tests.ts` Vitest detection | `typescript/detectors/vitest.ts` |
 | `extractors/generic/typescript/route-calls.ts` | promoted to `typescript/detectors/route-calls.ts` |
 | `ingest_route_calls.py` | stays in Concorda until route-calls is fully integrated, then retired |
@@ -123,7 +122,7 @@ Before Concorda's `project.toml` flips to framework extractors:
 1. Run `bin/depgraph regen` with new extractors writing to a scratch nodes dir.
 2. Diff scratch dir vs current `<data>/nodes/`.
 3. Acceptable diffs: new optional metadata fields; reordering of `dependents`/`imports` lists.
-4. Node count per kind must match within ±2%. Any missing node must be diagnosable to a specific detector gap and either fixed or explicitly accepted in the migration commit message.
+4. Node count per kind must match within ±2%, with a floor of ±1 node (small kinds can vary by one). Any missing node must be diagnosable to a specific detector gap and either fixed or explicitly accepted in the migration commit message.
 5. Once parity is verified in the same commit: flip `project.toml`, delete `extract_api.py` / `extract_web.ts` / `extract_tests.ts` from Concorda.
 
 ## Evaluation harness
@@ -171,7 +170,7 @@ Only declared expectations are checked. Omitted fields mean "don't check that su
 
 - **Framework unit tests** in `~/tools/knowledge-graph/depgraph/tests/`:
   - One test per language extractor exercising the five-stage contract against a fixture.
-  - One test per shipped detector (fastapi, sqlalchemy, pydantic, pytest, react, express, vitest, route-calls) — single-file fixture, asserts expected mutations.
+  - One test per shipped detector (fastapi, sqlalchemy, pydantic, pytest, react, vitest, route-calls) — single-file fixture, asserts expected mutations.
   - Detector-contract tests: raising detector doesn't break the run; unknown detector name produces a clear error.
 - **Eval CI**: deterministic mode across seed cases, gated on `KG_EVAL=1`.
 - **Concorda parity test**: one-off script in the migration branch; not ongoing CI.
