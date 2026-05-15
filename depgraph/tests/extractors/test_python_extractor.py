@@ -111,10 +111,9 @@ from extractors.generic.python.detector_api import RelabelNode, AddNode
 
 
 def test_load_detector_from_framework_dir():
-    # fastapi detector not yet implemented; loader should raise.
-    import pytest
-    with pytest.raises(ValueError, match="unknown detector"):
-        load_detectors(names=["fastapi"], extra_paths=[])
+    detectors = load_detectors(names=["fastapi"], extra_paths=[])
+    assert len(detectors) == 1
+    assert detectors[0].name == "fastapi"
 
 
 def test_load_detector_missing_raises():
