@@ -6,8 +6,8 @@ import subprocess
 from pathlib import Path
 
 
-REPO = Path(__file__).resolve().parent.parent
-BIN = REPO / "bin" / "depgraph"
+TOOL_ROOT = Path(__file__).resolve().parents[2]
+BIN = TOOL_ROOT / "depgraph" / "bin" / "depgraph"
 
 
 def _make_fixture(tmp_path: Path) -> Path:
