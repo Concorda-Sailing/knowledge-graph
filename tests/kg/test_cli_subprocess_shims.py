@@ -50,3 +50,9 @@ def test_kg_depgraph_validate_runs_against_resolved_project(single_project: dict
     res = _run(single_project["registry"], "depgraph", "validate")
     # Validate on an empty graph should succeed with no errors.
     assert res.returncode == 0, f"stderr: {res.stderr}"
+
+
+def test_kg_logigraph_help_reaches_logigraph(single_project: dict) -> None:
+    res = _run(single_project["registry"], "logigraph", "--help")
+    assert res.returncode == 0
+    assert "regen" in res.stdout
