@@ -10,8 +10,10 @@ if str(_DEPGRAPH_ROOT) not in _sys.path:
     _sys.path.insert(0, str(_DEPGRAPH_ROOT))
 
 import argparse
+import hashlib
 import importlib.util
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any, Iterable
@@ -48,6 +50,25 @@ def parse_file(path: Path) -> tuple[Tree | None, str | None]:
 
 def _text(n: Node, source: bytes) -> str:
     return source[n.start_byte:n.end_byte].decode("utf-8", errors="replace")
+
+
+_WS_RUN = re.compile(r"\s+")
+
+
+def _callee_target(fn_node: Node, source: bytes) -> str:
+    """Single-line, bounded identifier for the callee of a call_expression.
+
+    Tree-sitter represents `a.b().c()` as call_expression(function=field_expression(...)),
+    so a literal slice of the function field can span the entire receiver chain
+    (newlines, arguments, closures, ...). Mirror Python's `ast.unparse` shape: a
+    flat, single-line expression that round-trips into a stable node id.
+    """
+    raw = _text(fn_node, source)
+    flat = _WS_RUN.sub(" ", raw).strip()
+    if len(flat) <= 120:
+        return flat
+    digest = hashlib.sha256(flat.encode("utf-8")).hexdigest()[:8]
+    return flat[:120].rstrip() + f"...#{digest}"
 
 
 def emit_primitives(tree: Tree, *, source: bytes, repo_key: str, rel_path: str) -> list[dict]:
@@ -92,7 +113,7 @@ def emit_primitives(tree: Tree, *, source: bytes, repo_key: str, rel_path: str) 
             })
         if node.type == "call_expression":
             fn_node = node.child_by_field_name("function")
-            target = _text(fn_node, source) if fn_node else "<unknown>"
+            target = _callee_target(fn_node, source) if fn_node else "<unknown>"
             origin = current_fn_id or module_id
             nodes.append({
                 "id": f"{origin}#call:{target}:{node.start_point[0]+1}",
@@ -162,14 +183,29 @@ _KIND_DIR = {
     "import_edge": "imports", "call_edge": "calls",
 }
 
+_MAX_STEM = 200
+
+
+def _safe_filename(node_id: str) -> str:
+    """Stem-cap with hash overflow. Mirrors the TypeScript extractor's helper
+    so any pathological id (use-declaration imports, raw macros, etc.) still
+    fits inside the 255-byte ext4/btrfs filename limit while staying unique.
+    """
+    stem = node_id.replace("/", "__").replace(":", "__")
+    if len(stem) <= _MAX_STEM:
+        return stem + ".json"
+    digest = hashlib.sha256(node_id.encode("utf-8")).hexdigest()[:8]
+    return stem[:_MAX_STEM] + "__" + digest + ".json"
+
 
 def write_nodes(nodes: list[dict], data_dir: Path) -> None:
     for n in nodes:
         sub = _KIND_DIR.get(n["kind"], n["kind"] + "s")
         d = data_dir / "nodes" / sub
         d.mkdir(parents=True, exist_ok=True)
-        fn = n["id"].replace("/", "__").replace(":", "__") + ".json"
-        (d / fn).write_text(json.dumps(n, indent=2, sort_keys=True) + "\n")
+        (d / _safe_filename(n["id"])).write_text(
+            json.dumps(n, indent=2, sort_keys=True) + "\n"
+        )
 
 
 def main(argv=None):
