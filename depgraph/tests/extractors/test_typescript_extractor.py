@@ -97,3 +97,24 @@ def test_react_ignores_lowercase_function(tmp_repo, tmp_data_dir):
     comps = _read_nodes(tmp_data_dir, "components")
     hooks = _read_nodes(tmp_data_dir, "hooks")
     assert not any(c["name"] == "helper" for c in comps + hooks)
+
+
+def test_vitest_describe_emits_test_node(tmp_repo, tmp_data_dir):
+    (tmp_repo / "a.test.ts").write_text(
+        "import { describe, it, expect } from 'vitest'\n"
+        "describe('thing', () => { it('works', () => { expect(1).toBe(1) }) })\n"
+    )
+    r = _run(tmp_repo, tmp_data_dir, detectors="vitest")
+    assert r.returncode == 0, r.stderr
+    tests = _read_nodes(tmp_data_dir, "tests")
+    assert any(t.get("name") == "works" for t in tests)
+
+
+def test_vitest_only_fires_in_test_files(tmp_repo, tmp_data_dir):
+    (tmp_repo / "a.ts").write_text(
+        "describe('x', () => { it('y', () => {}) })\n"
+    )
+    r = _run(tmp_repo, tmp_data_dir, detectors="vitest")
+    assert r.returncode == 0, r.stderr
+    tests = _read_nodes(tmp_data_dir, "tests")
+    assert tests == []
