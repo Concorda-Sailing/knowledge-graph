@@ -16,7 +16,7 @@ from extractors.generic.python.detector_api import (
 )
 
 
-_BASE_NAMES = {"Base", "DeclarativeBase", "BaseModel"}
+_BASE_NAMES = {"Base", "DeclarativeBase"}
 
 
 def _is_model_path(path: str) -> bool:
@@ -34,12 +34,19 @@ def _tablename(cls: ast.ClassDef) -> str | None:
     return None
 
 
-def _has_model_base(cls: ast.ClassDef, model_classes: set[str]) -> bool:
+def _has_model_base(cls: ast.ClassDef, model_classes: set[str], path: str) -> bool:
+    in_models_dir = _is_model_path(path)
     for base in cls.bases:
-        if isinstance(base, ast.Name) and (base.id in _BASE_NAMES or base.id in model_classes):
-            return True
-        if isinstance(base, ast.Attribute) and base.attr in _BASE_NAMES:
-            return True
+        if isinstance(base, ast.Name):
+            if base.id in _BASE_NAMES or base.id in model_classes:
+                return True
+            if in_models_dir and base.id == "BaseModel":
+                return True
+        if isinstance(base, ast.Attribute):
+            if base.attr in _BASE_NAMES:
+                return True
+            if in_models_dir and base.attr == "BaseModel":
+                return True
     return False
 
 
@@ -63,7 +70,7 @@ class SQLAlchemyDetector(Detector):
             if isinstance(node, ast.ClassDef):
                 tn = _tablename(node)
                 in_models_dir = _is_model_path(ctx.file_path)
-                inherits_known_base = _has_model_base(node, model_classes)
+                inherits_known_base = _has_model_base(node, model_classes, ctx.file_path)
                 inherits_modelish_base = in_models_dir and any(
                     (isinstance(b, ast.Name) and b.id.endswith("Model"))
                     or (isinstance(b, ast.Attribute) and b.attr.endswith("Model"))

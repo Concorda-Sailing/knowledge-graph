@@ -53,14 +53,24 @@ def main() -> int:
         print("\nDiff (current -> new):")
         all_kinds = set(current) | set(new)
         regressions = []
+        additions = []
         for k in sorted(all_kinds):
             c, n = current.get(k, 0), new.get(k, 0)
             diff = n - c
             tol = max(ACCEPTABLE_FLOOR, int(c * ACCEPTABLE_PCT))
-            marker = " OK" if abs(diff) <= tol else " REGRESSION"
-            print(f"  {k}: {c} -> {n} ({diff:+d}, tol ±{tol}){marker}")
-            if abs(diff) > tol:
+            if c == 0 and n > 0:
+                marker = "NEW"
+                additions.append((k, n))
+            elif abs(diff) <= tol:
+                marker = "OK"
+            else:
+                marker = "REGRESSION"
                 regressions.append(k)
+            print(f"  {k}: {c} -> {n} ({diff:+d}, tol ±{tol}) {marker}")
+        if additions:
+            print("\nNet additions (kinds not present in baseline):")
+            for k, n in additions:
+                print(f"  +{k}: {n}")
         return 0 if not regressions else 1
     return 0
 

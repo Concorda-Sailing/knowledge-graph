@@ -7,7 +7,7 @@ data_dir = "~/concorda-knowledge-graph/logigraph"
 [repos.api]
 path = "~/concorda-api"
 extractor = ["python3", "{kg_dir}/depgraph/extractors/generic/python/extract.py"]
-detectors = ["fastapi", "sqlalchemy", "pydantic", "pytest"]
+detectors = ["fastapi", "sqlalchemy", "pydantic", "pytest", "service"]
 files_arg = "--only"
 
 [repos.web]

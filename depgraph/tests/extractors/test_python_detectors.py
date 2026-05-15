@@ -198,6 +198,23 @@ def test_service_skips_methods():
 # ---------------------------------------------------------------------------
 
 
+def test_sqlalchemy_basemodel_outside_models_dir_not_relabeled():
+    """BaseModel outside models/ must NOT be treated as a SQLAlchemy model."""
+    src = (
+        "from pydantic import BaseModel\n"
+        "class UserSchema(BaseModel):\n"
+        "    name: str\n"
+    )
+    tree = ast.parse(src)
+    prims = emit_primitives(tree, repo_key="r", rel_path="schemas/user.py")
+    ctx = DetectorContext(repo_key="r", file_path="schemas/user.py", project_config={})
+    muts = SQLAlchemyDetector().detect(tree, prims, ctx)
+    rl = [m for m in muts if isinstance(m, RelabelNode)]
+    assert all(m.new_kind != "model" for m in rl), (
+        "SQLAlchemyDetector should not relabel BaseModel subclass outside models/"
+    )
+
+
 def test_sqlalchemy_basemodel_pattern_in_models_dir():
     src = (
         "from .base import BaseModel\n"
