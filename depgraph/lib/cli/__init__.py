@@ -11,14 +11,19 @@ import argparse
 
 
 def build_parser() -> argparse.ArgumentParser:
-    """Construct the depgraph CLI's argparse tree.
-
-    Modules will be added in subsequent Phase-2 tasks. Until then this
-    returns a parser with no subcommands — useful only as scaffolding.
-    """
+    """Construct the depgraph CLI's argparse tree."""
     parser = argparse.ArgumentParser(prog="depgraph")
     sub = parser.add_subparsers(dest="cmd", required=True)
-    # Modules wired in subsequent tasks (Tasks 2-14):
-    #   regen, context_cmd, dependents, orphans, validate, self_check,
-    #   health, stats, commit_summary, memory_sync, dossier, flag, repo
+    from . import (
+        regen, context_cmd, dependents, orphans, validate,
+        self_check, health, stats, commit_summary, memory_sync,
+        dossier, flag, repo,
+    )
+    # Order matches legacy bin/depgraph to keep --help output consistent.
+    for mod in (
+        regen, context_cmd, dependents, orphans, validate,
+        self_check, health, stats, commit_summary, memory_sync,
+        dossier, flag, repo,
+    ):
+        mod.register(sub)
     return parser
