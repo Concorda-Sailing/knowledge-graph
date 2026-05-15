@@ -148,37 +148,8 @@ def find_nodes_for_target(target: str) -> list[Path]:
 
 
 def cmd_context(args: argparse.Namespace) -> int:
-    matches = find_nodes_for_target(args.target)
-    if not matches:
-        print(f"no nodes match: {args.target}", file=sys.stderr)
-        return 1
-    dependents_index = load_dependents_index()
-    for path in matches:
-        data = json.loads(path.read_text())
-        print(f"# {data.get('title', data['id'])}")
-        print(f"id: {data['id']}  ·  kind: {data['kind']}  ·  hash: {data['structural_hash'][:12]}")
-        print(f"source: {data['source']['repo']}/{data['source']['path']}:{data['source'].get('line')}")
-        print()
-        print("## Direct dependents")
-        for d in dependents_index.get(data["id"]) or []:
-            print(f"  - {d['source']} (via {d.get('via','?')}, {d.get('confidence', 'exact')}, {d.get('where', '?')})")
-        if not dependents_index.get(data["id"]):
-            print("  _none_")
-        print()
-        dossier_rel = data.get("dossier")
-        if dossier_rel and (DEPGRAPH / dossier_rel).exists():
-            print("## Dossier")
-            print((DEPGRAPH / dossier_rel).read_text())
-        else:
-            print("## Dossier\n_missing_")
-        print()
-        warns = data.get("warnings") or []
-        if warns:
-            print("## Warnings")
-            for w in warns:
-                print(f"  - [{w['code']}] {w['message']}")
-            print()
-    return 0
+    from lib.cli.context_cmd import cmd_context as _impl
+    return _impl(args, _CTX)
 
 
 def cmd_dependents(args: argparse.Namespace) -> int:
