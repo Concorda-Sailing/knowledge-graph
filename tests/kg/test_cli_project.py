@@ -101,3 +101,20 @@ def test_show_named_project_overrides_default(two_projects: dict) -> None:
     res = _run(two_projects["registry"], "project", "show", "beta")
     assert "beta" in res.stdout
     assert str(two_projects["beta"]) in res.stdout
+
+
+def test_remove_unregisters(two_projects: dict) -> None:
+    res = _run(two_projects["registry"], "project", "remove", "alpha")
+    assert res.returncode == 0
+    list_res = _run(two_projects["registry"], "project", "list")
+    assert "alpha" not in list_res.stdout
+
+
+def test_init_scaffolds_layout(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    reg = tmp_path / "kg-graphs.toml"
+    monkeypatch.setenv("KG_REGISTRY_PATH", str(reg))
+    project_root = tmp_path / "fresh"
+    res = _run(reg, "project", "init", str(project_root))
+    assert res.returncode == 0
+    assert (project_root / "knowledge-graph" / "depgraph" / "project.toml").exists()
+    assert (project_root / "knowledge-graph" / "logigraph" / "project.toml").exists()

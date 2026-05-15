@@ -123,6 +123,22 @@ def _cmd_add(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_remove(args: argparse.Namespace) -> int:
+    if registry.remove(args.name):
+        print(f"Removed '{args.name}'")
+        return 0
+    print(f"Error: '{args.name}' is not registered", file=sys.stderr)
+    return 1
+
+
+def _cmd_init(args: argparse.Namespace) -> int:
+    """Phase 1: shell out to install.sh init <path>."""
+    import subprocess
+    tool_root = Path(__file__).resolve().parents[2]
+    installer = tool_root / "install.sh"
+    return subprocess.run([str(installer), "init", args.path]).returncode
+
+
 def register(sub: argparse._SubParsersAction) -> None:
     p = sub.add_parser("project", help="Per-project config and registry.")
     proj_sub = p.add_subparsers(dest="project_cmd", required=True)
@@ -145,3 +161,11 @@ def register(sub: argparse._SubParsersAction) -> None:
     p_add = proj_sub.add_parser("add", help="Register a project's data dir with the orchestrator.")
     p_add.add_argument("path", help="Path to the project's knowledge-graph dir.")
     p_add.set_defaults(func=_cmd_add)
+
+    p_remove = proj_sub.add_parser("remove", help="Unregister a project (does not delete on disk).")
+    p_remove.add_argument("name")
+    p_remove.set_defaults(func=_cmd_remove)
+
+    p_init = proj_sub.add_parser("init", help="Scaffold a fresh project's data layout.")
+    p_init.add_argument("path", help="Project root (knowledge-graph subdir will be created here).")
+    p_init.set_defaults(func=_cmd_init)
