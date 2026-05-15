@@ -1,5 +1,7 @@
 __pycache__/
 *.pyc
 .venv/
+venv/
+*.egg-info/
 node_modules/
 extractors/generic/typescript/node_modules/
