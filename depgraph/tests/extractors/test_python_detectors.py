@@ -141,5 +141,12 @@ def test_pytest_test_class_methods_relabeled():
 
 def test_pytest_only_fires_in_test_files():
     src = "def test_x(): pass\n"
-    _, muts = _run_pt(src, rel="not_a_test.py")
+    _, muts = _run_pt(src, rel="mymodule.py")
     assert muts == []
+
+
+def test_pytest_fires_in_underscore_test_suffix():
+    src = "def test_y(): pass\n"
+    _, muts = _run_pt(src, rel="api_test.py")
+    rl = [m for m in muts if isinstance(m, RelabelNode) and m.new_kind == "test"]
+    assert any(m.node_id.endswith(":test_y") for m in rl)

@@ -18,7 +18,9 @@ from extractors.generic.python.detector_api import (
 
 def _is_test_file(path: str) -> bool:
     name = PurePosixPath(path).name
-    return name.startswith("test_") and name.endswith(".py")
+    if not name.endswith(".py"):
+        return False
+    return name.startswith("test_") or name.endswith("_test.py")
 
 
 class PytestDetector(Detector):
