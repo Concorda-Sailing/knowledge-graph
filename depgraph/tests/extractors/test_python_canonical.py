@@ -55,3 +55,91 @@ def test_canonical_id_for_endpoint():
 def test_canonical_id_for_repo_symbol():
     assert canonical_id_for_repo_symbol("concorda-api", "models/user.py", "User") \
         == "concorda-api::models/user.py::User"
+
+
+from extractors.generic.python.canonical import (
+    build_symbol_index, resolve_endpoint_depends_on,
+)
+
+
+def test_build_symbol_index_classifies_classes_vs_functions():
+    primitives = [
+        {"id": "concorda-api:models/user.py:User", "kind": "class",
+         "name": "User", "file": "models/user.py", "parent_id": None,
+         "line": 5},
+        {"id": "concorda-api:services/email.py:send_email", "kind": "function",
+         "name": "send_email", "file": "services/email.py",
+         "parent_id": None, "line": 10},
+    ]
+    idx = build_symbol_index(primitives, repo_key="concorda-api")
+    assert idx["User"] == {"file": "models/user.py", "kind": "class", "line": 5}
+    assert idx["send_email"] == {"file": "services/email.py",
+                                  "kind": "function", "line": 10}
+
+
+def test_resolve_endpoint_depends_on_db_query_label():
+    primitives = [
+        {"id": "concorda-api:models/user.py:User", "kind": "class",
+         "name": "User", "file": "models/user.py", "parent_id": None,
+         "line": 5},
+        {"id": "concorda-api:routers/users.py:<module>", "kind": "module",
+         "file": "routers/users.py", "name": "<module>", "parent_id": None},
+        {"id": "concorda-api:routers/users.py:<module>#import:models.user.User",
+         "kind": "import_edge",
+         "from_id": "concorda-api:routers/users.py:<module>",
+         "target": "models.user.User", "line": 1},
+        {"id": "concorda-api:routers/users.py:get_user", "kind": "function",
+         "name": "get_user", "file": "routers/users.py",
+         "parent_id": None, "line": 10},
+        {"id": "concorda-api:routers/users.py:get_user#call:User:11",
+         "kind": "call_edge",
+         "from_id": "concorda-api:routers/users.py:get_user",
+         "target": "User", "line": 11},
+    ]
+    sym_idx = build_symbol_index(primitives, repo_key="concorda-api")
+    edges = resolve_endpoint_depends_on(
+        host_id="concorda-api:routers/users.py:get_user",
+        host_file="routers/users.py",
+        primitives=primitives, symbol_index=sym_idx,
+        repo_key="concorda-api",
+    )
+    assert edges == [{
+        "target": "concorda-api::models/user.py::User",
+        "via": "db_query",
+        "where": "routers/users.py:11",
+        "confidence": "exact",
+    }]
+
+
+def test_resolve_endpoint_depends_on_websocket_label():
+    primitives = [
+        {"id": "concorda-api:utils/broadcast.py:broadcast_event",
+         "kind": "function", "name": "broadcast_event",
+         "file": "utils/broadcast.py", "parent_id": None, "line": 5},
+        {"id": "concorda-api:routers/x.py:<module>", "kind": "module",
+         "file": "routers/x.py", "name": "<module>", "parent_id": None},
+        {"id": "concorda-api:routers/x.py:<module>#import:utils.broadcast.broadcast_event",
+         "kind": "import_edge",
+         "from_id": "concorda-api:routers/x.py:<module>",
+         "target": "utils.broadcast.broadcast_event", "line": 1},
+        {"id": "concorda-api:routers/x.py:handler", "kind": "function",
+         "name": "handler", "file": "routers/x.py", "parent_id": None,
+         "line": 10},
+        {"id": "concorda-api:routers/x.py:handler#call:broadcast_event:11",
+         "kind": "call_edge",
+         "from_id": "concorda-api:routers/x.py:handler",
+         "target": "broadcast_event", "line": 11},
+    ]
+    sym_idx = build_symbol_index(primitives, repo_key="concorda-api")
+    edges = resolve_endpoint_depends_on(
+        host_id="concorda-api:routers/x.py:handler",
+        host_file="routers/x.py",
+        primitives=primitives, symbol_index=sym_idx,
+        repo_key="concorda-api",
+    )
+    assert edges == [{
+        "target": "concorda-api::utils/broadcast.py::broadcast_event",
+        "via": "websocket",
+        "where": "routers/x.py:11",
+        "confidence": "exact",
+    }]
