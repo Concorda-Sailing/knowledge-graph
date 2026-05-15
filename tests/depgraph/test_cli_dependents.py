@@ -63,10 +63,14 @@ def test_dependents_depth2_includes_transitive(
     assert "repo::models/baz.py::Baz" in out
 
 
-def test_dependents_unknown_target_returns_nonzero(
+def test_dependents_unknown_target_silently_prints_just_id(
     data_dir: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """An id with no entry in the index → non-zero exit + error message."""
+    """An id with no entry in the index walks zero edges and prints just the id.
+
+    Matches legacy bin/depgraph behavior — Phase 2 preserves it byte-for-byte.
+    Whether this is the right UX is a separate question for later refinement.
+    """
     ctx = Context.from_data_dir(data_dir)
     _write_index(ctx, {
         "repo::models/foo.py::Foo": [
@@ -75,6 +79,6 @@ def test_dependents_unknown_target_returns_nonzero(
     })
     args = argparse.Namespace(id="repo::models/nonexistent.py::Ghost", depth=2)
     rc = cmd_dependents(args, ctx)
-    assert rc != 0
-    err = capsys.readouterr().err
-    assert "no nodes match" in err or "not found" in err.lower() or "nonexistent" in err
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "repo::models/nonexistent.py::Ghost" in out

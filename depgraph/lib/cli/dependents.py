@@ -17,19 +17,6 @@ def cmd_dependents(args: argparse.Namespace, ctx: Context) -> int:
     if not dependents_index:
         print("dependents index not built — run `bin/depgraph regen`", file=sys.stderr)
         return 1
-
-    # Validate that the requested id exists in the index (has at least an
-    # entry as a target or as a source in some entry).  An id that appears
-    # nowhere is almost certainly a typo.
-    all_ids: set[str] = set(dependents_index.keys())
-    for entries in dependents_index.values():
-        for entry in entries:
-            all_ids.add(entry["source"])
-
-    if args.id not in all_ids:
-        print(f"no nodes match: {args.id}", file=sys.stderr)
-        return 1
-
     seen: set[str] = set()
     frontier = [(args.id, 0)]
     while frontier:
