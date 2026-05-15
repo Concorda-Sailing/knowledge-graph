@@ -118,3 +118,35 @@ def test_init_scaffolds_layout(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) 
     assert res.returncode == 0
     assert (project_root / "knowledge-graph" / "depgraph" / "project.toml").exists()
     assert (project_root / "knowledge-graph" / "logigraph" / "project.toml").exists()
+
+
+def test_add_repo_via_kg_project_writes_subtable(two_projects: dict) -> None:
+    res = _run(
+        two_projects["registry"], "project", "--project", "alpha",
+        "add-repo", "api", str(two_projects["tmp_path"] / "fake-repo"),
+    )
+    assert res.returncode == 0, f"stderr: {res.stderr}"
+    cfg_text = (two_projects["alpha"] / "depgraph" / "project.toml").read_text()
+    assert "[repos.api]" in cfg_text
+    assert "path = " in cfg_text
+
+
+def test_list_repos_via_kg_project(two_projects: dict) -> None:
+    _run(
+        two_projects["registry"], "project", "--project", "alpha",
+        "add-repo", "api", str(two_projects["tmp_path"] / "fake-repo"),
+    )
+    res = _run(two_projects["registry"], "project", "--project", "alpha", "list-repos")
+    assert res.returncode == 0
+    assert "api" in res.stdout
+
+
+def test_remove_repo_via_kg_project(two_projects: dict) -> None:
+    _run(
+        two_projects["registry"], "project", "--project", "alpha",
+        "add-repo", "api", str(two_projects["tmp_path"] / "fake-repo"),
+    )
+    res = _run(two_projects["registry"], "project", "--project", "alpha", "remove-repo", "api")
+    assert res.returncode == 0
+    cfg_text = (two_projects["alpha"] / "depgraph" / "project.toml").read_text()
+    assert "[repos.api]" not in cfg_text

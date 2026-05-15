@@ -20,6 +20,24 @@ from kg import registry
 from kg.cli import resolve
 
 
+def _delegate_to_depgraph(proj: "resolve.Project", *args: str) -> int:
+    """Run `depgraph <args>` against `proj`'s depgraph dir."""
+    import os
+    import subprocess
+    tool_root = Path(__file__).resolve().parents[2]
+    depgraph_bin = tool_root / "depgraph" / "bin" / "depgraph"
+    env = {**os.environ, "DEPGRAPH_DATA_DIR": str(proj.depgraph_dir)}
+    return subprocess.run([str(depgraph_bin), *args], env=env).returncode
+
+
+def _resolved(args: argparse.Namespace) -> "resolve.Project":
+    """Resolve project from --project / --data-dir flags or fall through."""
+    return resolve.resolve_project(
+        project_name=getattr(args, "project", None),
+        data_dir=Path(args.data_dir).expanduser() if getattr(args, "data_dir", None) else None,
+    )
+
+
 def _cmd_list(args: argparse.Namespace) -> int:
     entries = registry.load()
     if not entries:
@@ -139,8 +157,46 @@ def _cmd_init(args: argparse.Namespace) -> int:
     return subprocess.run([str(installer), "init", args.path]).returncode
 
 
+def _cmd_add_repo(args: argparse.Namespace) -> int:
+    try:
+        proj = _resolved(args)
+    except resolve.ProjectResolutionError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+    cli_args = ["repo-add", args.key, args.path]
+    if args.extractor:
+        cli_args.extend(["--extractor", *args.extractor])
+    for det in args.detector or []:
+        cli_args.extend(["--detector", det])
+    if args.files_arg:
+        cli_args.append(f"--files-arg={args.files_arg}")
+    if args.force:
+        cli_args.append("--force")
+    return _delegate_to_depgraph(proj, *cli_args)
+
+
+def _cmd_list_repos(args: argparse.Namespace) -> int:
+    try:
+        proj = _resolved(args)
+    except resolve.ProjectResolutionError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+    return _delegate_to_depgraph(proj, "repo-list")
+
+
+def _cmd_remove_repo(args: argparse.Namespace) -> int:
+    try:
+        proj = _resolved(args)
+    except resolve.ProjectResolutionError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+    return _delegate_to_depgraph(proj, "repo-remove", args.key)
+
+
 def register(sub: argparse._SubParsersAction) -> None:
     p = sub.add_parser("project", help="Per-project config and registry.")
+    p.add_argument("--project", help="Project name (overrides env/cwd/default).")
+    p.add_argument("--data-dir", help="Project data dir path (escape hatch for unregistered).")
     proj_sub = p.add_subparsers(dest="project_cmd", required=True)
 
     p_list = proj_sub.add_parser("list", help="List registered projects (default marked *).")
@@ -169,3 +225,19 @@ def register(sub: argparse._SubParsersAction) -> None:
     p_init = proj_sub.add_parser("init", help="Scaffold a fresh project's data layout.")
     p_init.add_argument("path", help="Project root (knowledge-graph subdir will be created here).")
     p_init.set_defaults(func=_cmd_init)
+
+    p_ar = proj_sub.add_parser("add-repo", help="Add a [repos.<key>] entry to project.toml.")
+    p_ar.add_argument("key")
+    p_ar.add_argument("path")
+    p_ar.add_argument("--extractor", nargs="+")
+    p_ar.add_argument("--detector", action="append", default=[])
+    p_ar.add_argument("--files-arg", default=None)
+    p_ar.add_argument("--force", action="store_true")
+    p_ar.set_defaults(func=_cmd_add_repo)
+
+    p_lr = proj_sub.add_parser("list-repos", help="List configured [repos.*] entries.")
+    p_lr.set_defaults(func=_cmd_list_repos)
+
+    p_rr = proj_sub.add_parser("remove-repo", help="Remove a [repos.<key>] entry.")
+    p_rr.add_argument("key")
+    p_rr.set_defaults(func=_cmd_remove_repo)
