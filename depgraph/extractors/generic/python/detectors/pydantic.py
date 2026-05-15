@@ -15,6 +15,11 @@ from extractors.generic.python.detector_api import (
 _SCHEMA_BASES = {"BaseModel"}
 
 
+def _is_schema_path(path: str) -> bool:
+    from pathlib import PurePosixPath
+    return any(p == "schemas" for p in PurePosixPath(path).parts)
+
+
 def _field_names(cls: ast.ClassDef) -> list[str]:
     names: list[str] = []
     for stmt in cls.body:
@@ -27,6 +32,8 @@ class PydanticDetector(Detector):
     name = "pydantic"
 
     def detect(self, tree, primitives, ctx):
+        if not _is_schema_path(ctx.file_path):
+            return []
         muts: list[Mutation] = []
         by_qualname = {
             n["id"].split(":", 2)[-1]: n

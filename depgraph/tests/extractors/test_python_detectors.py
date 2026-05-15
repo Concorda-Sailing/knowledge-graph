@@ -90,10 +90,10 @@ def test_sqlalchemy_ignores_plain_class():
     assert muts == []
 
 
-def _run_pd(src: str):
+def _run_pd(src: str, rel: str = "schemas/a.py"):
     tree = ast.parse(src)
-    prims = emit_primitives(tree, repo_key="r", rel_path="a.py")
-    ctx = DetectorContext(repo_key="r", file_path="a.py", project_config={})
+    prims = emit_primitives(tree, repo_key="r", rel_path=rel)
+    ctx = DetectorContext(repo_key="r", file_path=rel, project_config={})
     return prims, PydanticDetector().detect(tree, prims, ctx)
 
 
@@ -150,3 +150,90 @@ def test_pytest_fires_in_underscore_test_suffix():
     _, muts = _run_pt(src, rel="api_test.py")
     rl = [m for m in muts if isinstance(m, RelabelNode) and m.new_kind == "test"]
     assert any(m.node_id.endswith(":test_y") for m in rl)
+
+
+# ---------------------------------------------------------------------------
+# ServiceDetector
+# ---------------------------------------------------------------------------
+
+from extractors.generic.python.detectors.service import ServiceDetector
+
+
+def _run_svc(src: str, rel: str = "services/foo.py"):
+    tree = ast.parse(src)
+    prims = emit_primitives(tree, repo_key="r", rel_path=rel)
+    ctx = DetectorContext(repo_key="r", file_path=rel, project_config={})
+    return prims, ServiceDetector().detect(tree, prims, ctx)
+
+
+def test_service_top_level_public_function():
+    src = "def do_thing():\n    return 1\n"
+    _, muts = _run_svc(src, "services/foo.py")
+    rl = [m for m in muts if isinstance(m, RelabelNode) and m.new_kind == "service"]
+    assert any(m.node_id.endswith(":do_thing") for m in rl)
+
+
+def test_service_skips_private_functions():
+    src = "def _helper(): pass\ndef pub(): pass\n"
+    _, muts = _run_svc(src, "utils/x.py")
+    names = [m.node_id.split(":")[-1] for m in muts]
+    assert "pub" in names
+    assert "_helper" not in names
+
+
+def test_service_skips_non_service_path():
+    src = "def f(): pass\n"
+    _, muts = _run_svc(src, "models/foo.py")
+    assert muts == []
+
+
+def test_service_skips_methods():
+    src = "class C:\n    def m(self): pass\n"
+    _, muts = _run_svc(src, "services/x.py")
+    assert muts == []
+
+
+# ---------------------------------------------------------------------------
+# SQLAlchemyDetector — BaseModel + path-based fallback
+# ---------------------------------------------------------------------------
+
+
+def test_sqlalchemy_basemodel_pattern_in_models_dir():
+    src = (
+        "from .base import BaseModel\n"
+        "from sqlalchemy.orm import Mapped, mapped_column\n"
+        "class PersonProduct(BaseModel):\n"
+        "    __tablename__ = 'person_products'\n"
+    )
+    tree = ast.parse(src)
+    prims = emit_primitives(tree, repo_key="r", rel_path="models/person_product.py")
+    ctx = DetectorContext(repo_key="r", file_path="models/person_product.py", project_config={})
+    muts = SQLAlchemyDetector().detect(tree, prims, ctx)
+    rl = [m for m in muts if isinstance(m, RelabelNode)]
+    pp = next(m for m in rl if m.node_id.endswith(":PersonProduct"))
+    assert pp.new_kind == "model"
+    assert pp.metadata["tablename"] == "person_products"
+
+
+# ---------------------------------------------------------------------------
+# PydanticDetector — directory gate
+# ---------------------------------------------------------------------------
+
+
+def test_pydantic_outside_schemas_dir_ignored():
+    src = "from pydantic import BaseModel\nclass X(BaseModel):\n    a: int\n"
+    tree = ast.parse(src)
+    prims = emit_primitives(tree, repo_key="r", rel_path="some/other/x.py")
+    ctx = DetectorContext(repo_key="r", file_path="some/other/x.py", project_config={})
+    muts = PydanticDetector().detect(tree, prims, ctx)
+    assert muts == []
+
+
+def test_pydantic_inside_schemas_dir_recognized():
+    src = "from pydantic import BaseModel\nclass X(BaseModel):\n    a: int\n"
+    tree = ast.parse(src)
+    prims = emit_primitives(tree, repo_key="r", rel_path="schemas/x.py")
+    ctx = DetectorContext(repo_key="r", file_path="schemas/x.py", project_config={})
+    muts = PydanticDetector().detect(tree, prims, ctx)
+    rl = [m for m in muts if isinstance(m, RelabelNode)]
+    assert any(m.new_kind == "schema" for m in rl)

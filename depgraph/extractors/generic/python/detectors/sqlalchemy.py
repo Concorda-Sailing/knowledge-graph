@@ -16,7 +16,12 @@ from extractors.generic.python.detector_api import (
 )
 
 
-_BASE_NAMES = {"Base", "DeclarativeBase"}
+_BASE_NAMES = {"Base", "DeclarativeBase", "BaseModel"}
+
+
+def _is_model_path(path: str) -> bool:
+    from pathlib import PurePosixPath
+    return any(p == "models" for p in PurePosixPath(path).parts)
 
 
 def _tablename(cls: ast.ClassDef) -> str | None:
@@ -57,7 +62,14 @@ class SQLAlchemyDetector(Detector):
         for node in ast.walk(tree):
             if isinstance(node, ast.ClassDef):
                 tn = _tablename(node)
-                if tn or _has_model_base(node, model_classes):
+                in_models_dir = _is_model_path(ctx.file_path)
+                inherits_known_base = _has_model_base(node, model_classes)
+                inherits_modelish_base = in_models_dir and any(
+                    (isinstance(b, ast.Name) and b.id.endswith("Model"))
+                    or (isinstance(b, ast.Attribute) and b.attr.endswith("Model"))
+                    for b in node.bases
+                )
+                if tn or inherits_known_base or inherits_modelish_base:
                     model_classes.add(node.name)
                     prim = by_qualname.get(node.name)
                     if prim:
