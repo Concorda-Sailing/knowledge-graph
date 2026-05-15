@@ -1,4 +1,5 @@
 import * as ts from "typescript";
+import type { SourceFile as TsMorphSourceFile } from "ts-morph";
 
 export type RelabelNode = {
   type: "relabel";
@@ -26,6 +27,13 @@ export type DetectorContext = {
   repoKey: string;
   filePath: string;
   projectConfig: Record<string, unknown>;
+  /** Absolute path of the repo root (so detectors can compute relative paths
+   *  consistent with ts-morph's getFilePath() output). */
+  repoPath?: string;
+  /** ts-morph SourceFile for the same file as `sourceFile`. Present only when
+   *  the extractor opened a ts-morph Project (the default for TypeScript
+   *  detectors that need import resolution). */
+  tsMorphSf?: TsMorphSourceFile;
 };
 
 export type Primitive = {
