@@ -87,3 +87,22 @@ def test_depgraph_flag_unknown_id_exits_1(tmp_path):
     r = _run(["flag", "test-api::no::Such", "--reason", "x"], data)
     assert r.returncode == 1
     assert "no" in r.stderr.lower()
+
+
+def test_depgraph_flag_no_reason_omits_flagged_reason(tmp_path):
+    """flag with no --reason sets flagged=true but does not set flagged_reason."""
+    data = _make_fixture(tmp_path)
+    r = _run(["flag", "test-api::models/foo.py::Foo", "--actor", "alice"], data)
+    assert r.returncode == 0, r.stderr
+    node = json.loads((data / "nodes/models/test_api__models_foo_py__Foo.json").read_text())
+    assert node["flagged"] is True
+    assert node["flagged_by"] == "alice"
+    assert "flagged_reason" not in node
+
+
+def test_depgraph_unflag_not_flagged_exits_0_with_message(tmp_path):
+    """unflag on a node that is not flagged exits 0 with a 'no change' message."""
+    data = _make_fixture(tmp_path)
+    r = _run(["unflag", "test-api::models/foo.py::Foo"], data)
+    assert r.returncode == 0, r.stderr
+    assert "no change" in r.stdout

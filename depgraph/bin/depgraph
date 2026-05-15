@@ -279,58 +279,13 @@ def _depgraph_commit_if_changed(paths: list[Path], message: str) -> bool:
 
 
 def cmd_flag(args: argparse.Namespace) -> int:
-    """Set flagged=true on a depgraph node and commit."""
-    import datetime as _dt
-    matches = find_nodes_for_target(args.id)
-    if not matches:
-        print(f"no depgraph node with id: {args.id}", file=sys.stderr)
-        return 1
-    if len(matches) > 1:
-        print(f"ambiguous id (matched {len(matches)} nodes): {args.id}", file=sys.stderr)
-        return 1
-    node_path = matches[0]
-    node = json.loads(node_path.read_text())
-    actor = args.actor or _depgraph_default_actor()
-    today = _dt.date.today().isoformat()
-    if (node.get("flagged") and node.get("flagged_by") == actor
-            and node.get("flagged_reason") == args.reason):
-        print(f"already flagged by {actor} with same reason — no change")
-        return 0
-    node["flagged"] = True
-    node["flagged_by"] = actor
-    node["flagged_at"] = today
-    if args.reason:
-        node["flagged_reason"] = args.reason
-    else:
-        node.pop("flagged_reason", None)
-    node_path.write_text(json.dumps(node, indent=2) + "\n")
-    msg = f"flag: {args.id}"
-    if args.reason:
-        msg += f"\n\n{args.reason}"
-    _depgraph_commit_if_changed([node_path], msg)
-    print(f"flagged {args.id} by {actor}")
-    return 0
+    from lib.cli.flag import cmd_flag as _impl
+    return _impl(args, _CTX)
 
 
 def cmd_unflag(args: argparse.Namespace) -> int:
-    matches = find_nodes_for_target(args.id)
-    if not matches:
-        print(f"no depgraph node with id: {args.id}", file=sys.stderr)
-        return 1
-    if len(matches) > 1:
-        print(f"ambiguous id: {args.id}", file=sys.stderr)
-        return 1
-    node_path = matches[0]
-    node = json.loads(node_path.read_text())
-    if not node.get("flagged"):
-        print(f"{args.id} is not flagged — no change")
-        return 0
-    for key in ("flagged", "flagged_by", "flagged_at", "flagged_reason"):
-        node.pop(key, None)
-    node_path.write_text(json.dumps(node, indent=2) + "\n")
-    _depgraph_commit_if_changed([node_path], f"unflag: {args.id}")
-    print(f"unflagged {args.id}")
-    return 0
+    from lib.cli.flag import cmd_unflag as _impl
+    return _impl(args, _CTX)
 
 
 def _format_repo_table(key: str, path: str, extractor, detectors, files_arg) -> str:
