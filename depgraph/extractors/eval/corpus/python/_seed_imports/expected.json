@@ -1,0 +1,6 @@
+{
+  "nodes": {
+    "module": ["r:a.py:<module>"],
+    "function": ["r:a.py:hi"]
+  }
+}

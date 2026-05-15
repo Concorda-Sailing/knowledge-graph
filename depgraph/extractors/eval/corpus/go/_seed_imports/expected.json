@@ -1,0 +1,6 @@
+{
+  "nodes": {
+    "module": ["r:a.go:<module>"],
+    "function": ["r:a.go:Hi"]
+  }
+}
