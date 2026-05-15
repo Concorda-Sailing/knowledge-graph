@@ -20,6 +20,58 @@ function returnsJsx(fn: ts.FunctionLikeDeclaration): boolean {
   return found;
 }
 
+function pascal(name: string): boolean {
+  return /^[A-Z]/.test(name);
+}
+
+function variableStatementComponents(
+  node: ts.VariableStatement,
+  ctx: DetectorContext,
+  sf: ts.SourceFile,
+): Mutation[] {
+  const out: Mutation[] = [];
+  for (const decl of node.declarationList.declarations) {
+    if (!ts.isIdentifier(decl.name)) continue;
+    const name = decl.name.text;
+    if (!pascal(name)) continue;
+    const init = decl.initializer;
+    if (!init) continue;
+
+    let via: string | null = null;
+    let jsxOk = true;
+
+    if (ts.isCallExpression(init)) {
+      const callee = init.expression;
+      const last = callee.getText(sf).split(".").pop() || "";
+      if (last === "forwardRef" || last === "memo") {
+        via = last;
+        const arg = init.arguments[0];
+        if (
+          arg &&
+          (ts.isArrowFunction(arg) || ts.isFunctionExpression(arg))
+        ) {
+          jsxOk = returnsJsx(arg as ts.ArrowFunction | ts.FunctionExpression);
+        }
+      }
+    } else if (ts.isPropertyAccessExpression(init)) {
+      via = "alias";
+    }
+
+    if (via && jsxOk) {
+      const id = `${ctx.repoKey}:${ctx.filePath}:${name}`;
+      const line = sf.getLineAndCharacterOfPosition(decl.getStart()).line + 1;
+      const payload: Record<string, unknown> = {
+        id, name, file: ctx.filePath, line, via,
+      };
+      if (via === "alias") {
+        payload.aliases = init.getText(sf);
+      }
+      out.push({ type: "node", kind: "component", payload });
+    }
+  }
+  return out;
+}
+
 function callsHook(fn: ts.FunctionLikeDeclaration): boolean {
   let found = false;
   function walk(node: ts.Node) {
@@ -65,6 +117,9 @@ export class ReactDetector implements Detector {
             muts.push({ type: "relabel", nodeId: prim.id, newKind: "hook" });
           }
         }
+      }
+      if (ts.isVariableStatement(node)) {
+        muts.push(...variableStatementComponents(node, ctx, sf));
       }
       ts.forEachChild(node, visit);
     };

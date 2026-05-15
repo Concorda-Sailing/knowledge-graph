@@ -128,3 +128,67 @@ def test_route_calls_detector_emits_route_call(tmp_repo, tmp_data_dir):
     assert r.returncode == 0, r.stderr
     calls = _read_nodes(tmp_data_dir, "route_calls")
     assert any(c.get("url") == "/api/items" for c in calls)
+
+
+def test_react_component_forwardref(tmp_repo, tmp_data_dir):
+    (tmp_repo / "Button.tsx").write_text(
+        'import * as React from "react"\n'
+        'export const Button = React.forwardRef<HTMLButtonElement, {x:number}>('
+        '({ x }, ref) => <button ref={ref}>{x}</button>'
+        ')\n'
+    )
+    r = _run(tmp_repo, tmp_data_dir, detectors="react")
+    assert r.returncode == 0, r.stderr
+    comps = _read_nodes(tmp_data_dir, "components")
+    assert any(c["name"] == "Button" for c in comps)
+
+
+def test_react_component_alias(tmp_repo, tmp_data_dir):
+    (tmp_repo / "Popover.tsx").write_text(
+        'import * as PopoverPrimitive from "@radix-ui/react-popover"\n'
+        'export const Popover = PopoverPrimitive.Root\n'
+    )
+    r = _run(tmp_repo, tmp_data_dir, detectors="react")
+    assert r.returncode == 0, r.stderr
+    comps = _read_nodes(tmp_data_dir, "components")
+    assert any(c["name"] == "Popover" for c in comps)
+
+
+def test_react_ignores_lowercase_variable(tmp_repo, tmp_data_dir):
+    (tmp_repo / "x.ts").write_text(
+        'export const helper = someLib.thing\n'
+    )
+    r = _run(tmp_repo, tmp_data_dir, detectors="react")
+    assert r.returncode == 0, r.stderr
+    comps = _read_nodes(tmp_data_dir, "components")
+    assert not any(c["name"] == "helper" for c in comps)
+
+
+def test_vitest_deduplicates_same_test_name(tmp_repo, tmp_data_dir):
+    (tmp_repo / "a.test.ts").write_text(
+        'import { describe, it } from "vitest"\n'
+        'describe("g", () => {\n'
+        '  it("works", () => {})\n'
+        '  it("works", () => {})\n'
+        '})\n'
+    )
+    r = _run(tmp_repo, tmp_data_dir, detectors="vitest")
+    assert r.returncode == 0, r.stderr
+    tests = _read_nodes(tmp_data_dir, "tests")
+    works = [t for t in tests if t.get("name") == "works"]
+    assert len(works) == 1, f"expected dedup; got {[t.get('name') for t in tests]}"
+
+
+def test_vitest_handles_property_access_verbs(tmp_repo, tmp_data_dir):
+    (tmp_repo / "a.test.ts").write_text(
+        'import { describe, test } from "vitest"\n'
+        'describe("g", () => {\n'
+        '  test.skip("skipped", () => {})\n'
+        '  test.only("only", () => {})\n'
+        '})\n'
+    )
+    r = _run(tmp_repo, tmp_data_dir, detectors="vitest")
+    assert r.returncode == 0, r.stderr
+    tests = _read_nodes(tmp_data_dir, "tests")
+    names = sorted(t.get("name") for t in tests)
+    assert names == ["only", "skipped"]
