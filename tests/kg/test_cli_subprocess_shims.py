@@ -56,3 +56,10 @@ def test_kg_logigraph_help_reaches_logigraph(single_project: dict) -> None:
     res = _run(single_project["registry"], "logigraph", "--help")
     assert res.returncode == 0
     assert "regen" in res.stdout
+
+
+def test_kg_install_help_reaches_install_sh(single_project: dict) -> None:
+    res = _run(single_project["registry"], "install", "--help")
+    assert res.returncode == 0
+    # install.sh --help mentions a known subcommand.
+    assert "bootstrap" in res.stdout or "systemd" in res.stdout
