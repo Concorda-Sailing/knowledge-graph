@@ -63,3 +63,10 @@ def test_kg_install_help_reaches_install_sh(single_project: dict) -> None:
     assert res.returncode == 0
     # install.sh --help mentions a known subcommand.
     assert "bootstrap" in res.stdout or "systemd" in res.stdout
+
+
+def test_kg_depgraph_regen_help_reaches_subcommand_help(single_project: dict) -> None:
+    """After Phase 2, kg depgraph regen --help reaches the real subcommand argparse."""
+    res = _run(single_project["registry"], "depgraph", "regen", "--help")
+    assert res.returncode == 0
+    assert "--all" in res.stdout or "--since" in res.stdout
