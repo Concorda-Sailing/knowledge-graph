@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -52,3 +53,23 @@ def test_judgment_package_contains_source_and_emitted_nodes(tmp_path: Path):
     assert "def hi(): pass" in text
     assert "## Emitted nodes" in text
     assert "## Judgment prompt" in text
+
+
+@pytest.mark.skipif(
+    not os.environ.get("KG_EVAL"),
+    reason="KG_EVAL=1 to run full eval corpus",
+)
+def test_all_seed_cases_pass():
+    from extractors.eval.harness import run_deterministic
+    corpus = Path(__file__).resolve().parents[3] / "depgraph" / "extractors" / "eval" / "corpus"
+    failures = []
+    for lang_dir in corpus.iterdir():
+        if not lang_dir.is_dir():
+            continue
+        for case_dir in lang_dir.iterdir():
+            if not case_dir.is_dir():
+                continue
+            rpt = run_deterministic(case_dir)
+            if not rpt["passed"]:
+                failures.append((case_dir.name, rpt))
+    assert not failures, f"eval regressions: {failures}"
