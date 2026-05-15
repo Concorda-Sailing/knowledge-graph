@@ -111,6 +111,43 @@ def test_resolve_endpoint_depends_on_db_query_label():
     }]
 
 
+def test_resolve_endpoint_depends_on_via_name_ref():
+    """Pre-flip walk_handler_body walks ast.Name refs, not just call sites.
+    E.g. `db.query(Person)` references Person as a Name argument."""
+    primitives = [
+        {"id": "concorda-api:models/user.py:User", "kind": "class",
+         "name": "User", "file": "models/user.py", "parent_id": None,
+         "line": 5},
+        {"id": "concorda-api:routers/x.py:<module>", "kind": "module",
+         "file": "routers/x.py", "name": "<module>", "parent_id": None},
+        {"id": "concorda-api:routers/x.py:<module>#import:models.user.User",
+         "kind": "import_edge",
+         "from_id": "concorda-api:routers/x.py:<module>",
+         "target": "models.user.User", "line": 1},
+        {"id": "concorda-api:routers/x.py:handler", "kind": "function",
+         "name": "handler", "file": "routers/x.py", "parent_id": None,
+         "line": 10},
+        # User referenced as a name (e.g. `db.query(User)`) — NOT as a call target
+        {"id": "concorda-api:routers/x.py:handler#nameref:User:11",
+         "kind": "name_ref_edge",
+         "from_id": "concorda-api:routers/x.py:handler",
+         "target": "User", "line": 11},
+    ]
+    sym_idx = build_symbol_index(primitives, repo_key="concorda-api")
+    edges = resolve_endpoint_depends_on(
+        host_id="concorda-api:routers/x.py:handler",
+        host_file="routers/x.py",
+        primitives=primitives, symbol_index=sym_idx,
+        repo_key="concorda-api",
+    )
+    assert edges == [{
+        "target": "concorda-api::models/user.py::User",
+        "via": "db_query",
+        "where": "routers/x.py:11",
+        "confidence": "exact",
+    }]
+
+
 def test_resolve_endpoint_depends_on_websocket_label():
     primitives = [
         {"id": "concorda-api:utils/broadcast.py:broadcast_event",

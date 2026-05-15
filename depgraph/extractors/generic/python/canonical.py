@@ -60,13 +60,19 @@ def build_symbol_index(primitives: list[dict], *, repo_key: str) -> dict[str, di
 
     extract_api.py:511-533. Used by walk_handler_body to resolve imported
     names to canonical targets. Last definition wins on collision.
+
+    Includes detector-relabeled kinds (model/schema/service) in addition to
+    the raw AST kinds (class/function) so that symbols relabeled by detectors
+    before this index is built are still resolvable.
     """
+    _INDEXABLE_KINDS = frozenset({"class", "function", "model", "schema", "service"})
     out: dict[str, dict] = {}
     for n in primitives:
-        if n["kind"] not in ("class", "function"):
+        if n["kind"] not in _INDEXABLE_KINDS:
             continue
-        # Top-level: parent is the module
-        if n.get("parent_id") and not n["parent_id"].endswith(":<module>"):
+        # Top-level: parent is the module (or no parent for canonical nodes)
+        parent = n.get("parent_id")
+        if parent and not parent.endswith(":<module>"):
             continue
         out[n["name"]] = {
             "file": n["file"], "kind": n["kind"],
@@ -99,20 +105,21 @@ def resolve_endpoint_depends_on(
 
     edges: list[dict] = []
     seen: set[tuple[str, str]] = set()
-    for n in primitives:
-        if n["kind"] != "call_edge" or n["from_id"] != host_id:
-            continue
-        callee = n["target"].split(".", 1)[0]
+
+    def _resolve_name(raw_name: str, lineno: int) -> None:
+        """Resolve a single name reference and append an edge if resolvable."""
+        # For call_edges the target may be dotted (e.g. "db.query"); take
+        # only the first component. For name_ref_edges it's already a bare
+        # name, but apply the same split for uniformity.
+        callee = raw_name.split(".", 1)[0]
         if callee not in aliases:
-            continue
+            return
         imported_name = aliases[callee]
         sym = symbol_index.get(imported_name)
         if not sym:
-            continue
-        target_id = (
-            f"{repo_key}::{sym['file']}::{imported_name}"
-        )
-        if sym["kind"] == "class":
+            return
+        target_id = f"{repo_key}::{sym['file']}::{imported_name}"
+        if sym["kind"] in ("class", "model"):
             via = "db_query"
         elif imported_name in WEBSOCKET_SYMBOLS:
             via = "websocket"
@@ -120,11 +127,19 @@ def resolve_endpoint_depends_on(
             via = "import"
         key = (target_id, via)
         if key in seen:
-            continue
+            return
         seen.add(key)
         edges.append({
             "target": target_id, "via": via,
-            "where": f"{host_file}:{n['line']}",
+            "where": f"{host_file}:{lineno}",
             "confidence": "exact",
         })
+
+    for n in primitives:
+        if n["kind"] not in ("call_edge", "name_ref_edge"):
+            continue
+        if n.get("from_id") != host_id:
+            continue
+        _resolve_name(n["target"], n["line"])
+
     return edges

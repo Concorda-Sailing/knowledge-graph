@@ -141,6 +141,18 @@ def emit_primitives(
             })
             self.generic_visit(node)
 
+        def visit_Name(self, node: ast.Name):
+            # Only emit name_ref_edges inside a function body, not at
+            # module scope (where imports and class/function defs live).
+            origin = current_fn_id[0]
+            if origin is None:
+                return
+            nodes.append({
+                "id": f"{origin}#nameref:{node.id}:{node.lineno}",
+                "kind": "name_ref_edge", "from_id": origin,
+                "target": node.id, "line": node.lineno,
+            })
+
     Visitor().visit(tree)
     return nodes
 
@@ -277,7 +289,7 @@ from extractors.generic.python.canonical import (
 
 CANONICAL_KINDS = {"endpoint", "model", "schema", "service", "test"}
 PRIMITIVE_KINDS_TO_DROP = {
-    "module", "class", "function", "import_edge", "call_edge",
+    "module", "class", "function", "import_edge", "call_edge", "name_ref_edge",
 }
 
 
