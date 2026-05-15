@@ -97,6 +97,40 @@ def find_nodes_for_target(ctx: Context, target: str) -> list[Path]:
     return out
 
 
+def load_telemetry_events(path: Path, since_hours: int | None = None) -> list[dict]:
+    """Read a JSONL log; if since_hours is given, filter to events newer
+    than that. Returns an empty list if the file is missing or unreadable."""
+    if not path.exists():
+        return []
+    import datetime as _dt
+    cutoff = None
+    if since_hours is not None:
+        cutoff = _dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(hours=since_hours)
+    out: list[dict] = []
+    try:
+        with path.open() as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    ev = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if cutoff is not None:
+                    ts_str = ev.get("ts", "")
+                    try:
+                        ts = _dt.datetime.fromisoformat(ts_str)
+                    except ValueError:
+                        continue
+                    if ts < cutoff:
+                        continue
+                out.append(ev)
+    except OSError:
+        return []
+    return out
+
+
 def _depgraph_commit_if_changed(ctx: Context, paths: list[Path], message: str) -> bool:
     rel = [str(p.relative_to(ctx.DEPGRAPH)) for p in paths]
     subprocess.run(["git", "-C", str(ctx.DEPGRAPH), "add", *rel], check=True)
