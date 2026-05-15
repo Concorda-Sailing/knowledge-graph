@@ -5,6 +5,7 @@ from extractors.generic.python.detector_api import (
     DetectorContext, RelabelNode,
 )
 from extractors.generic.python.detectors.fastapi import FastAPIDetector
+from extractors.generic.python.detectors.pydantic import PydanticDetector
 from extractors.generic.python.detectors.sqlalchemy import SQLAlchemyDetector
 from extractors.generic.python.extract import emit_primitives
 
@@ -87,3 +88,24 @@ def test_sqlalchemy_ignores_plain_class():
     src = "class Plain: pass\n"
     _, muts = _run_sa(src)
     assert muts == []
+
+
+def _run_pd(src: str):
+    tree = ast.parse(src)
+    prims = emit_primitives(tree, repo_key="r", rel_path="a.py")
+    ctx = DetectorContext(repo_key="r", file_path="a.py", project_config={})
+    return prims, PydanticDetector().detect(tree, prims, ctx)
+
+
+def test_pydantic_basemodel_subclass_relabeled_schema():
+    src = (
+        "from pydantic import BaseModel\n"
+        "class UserIn(BaseModel):\n"
+        "    name: str\n"
+        "    age: int\n"
+    )
+    _, muts = _run_pd(src)
+    rl = [m for m in muts if isinstance(m, RelabelNode)]
+    assert len(rl) == 1
+    assert rl[0].new_kind == "schema"
+    assert sorted(rl[0].metadata["fields"]) == ["age", "name"]
