@@ -5,6 +5,7 @@ from extractors.generic.python.detector_api import (
     DetectorContext, RelabelNode,
 )
 from extractors.generic.python.detectors.fastapi import FastAPIDetector
+from extractors.generic.python.detectors.sqlalchemy import SQLAlchemyDetector
 from extractors.generic.python.extract import emit_primitives
 
 
@@ -59,3 +60,30 @@ def test_fastapi_handles_async_endpoints():
     _, muts = _run(src)
     rl = [m for m in muts if isinstance(m, RelabelNode)]
     assert rl[0].new_kind == "endpoint"
+
+
+def _run_sa(src: str):
+    tree = ast.parse(src)
+    prims = emit_primitives(tree, repo_key="r", rel_path="a.py")
+    ctx = DetectorContext(repo_key="r", file_path="a.py", project_config={})
+    return prims, SQLAlchemyDetector().detect(tree, prims, ctx)
+
+
+def test_sqlalchemy_declarative_base_subclass_relabeled_model():
+    src = (
+        "from sqlalchemy.orm import DeclarativeBase\n"
+        "class Base(DeclarativeBase): pass\n"
+        "class User(Base):\n"
+        "    __tablename__ = 'users'\n"
+    )
+    _, muts = _run_sa(src)
+    rl = [m for m in muts if isinstance(m, RelabelNode)]
+    user = next(m for m in rl if m.node_id.endswith(":User"))
+    assert user.new_kind == "model"
+    assert user.metadata["tablename"] == "users"
+
+
+def test_sqlalchemy_ignores_plain_class():
+    src = "class Plain: pass\n"
+    _, muts = _run_sa(src)
+    assert muts == []
