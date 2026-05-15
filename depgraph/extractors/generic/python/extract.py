@@ -5,6 +5,14 @@ detectors -> write. This file lands in stages across tasks 3, 4, 5.
 """
 from __future__ import annotations
 
+import sys as _sys
+from pathlib import Path as _Path
+# Allow direct script invocation: insert depgraph/ on path so
+# `from extractors.X import ...` resolves.
+_DEPGRAPH_ROOT = _Path(__file__).resolve().parents[3]
+if str(_DEPGRAPH_ROOT) not in _sys.path:
+    _sys.path.insert(0, str(_DEPGRAPH_ROOT))
+
 import ast
 from pathlib import Path
 from typing import Iterator
@@ -135,3 +143,171 @@ def emit_primitives(
 
     Visitor().visit(tree)
     return nodes
+
+
+import argparse
+import importlib.util
+import json
+import sys
+from typing import Iterable
+
+from extractors.generic.python.detector_api import (
+    Detector, DetectorContext, Mutation,
+    RelabelNode, AddEdge, AddNode,
+)
+
+
+FRAMEWORK_DETECTOR_DIR = Path(__file__).parent / "detectors"
+
+
+def _load_detector_module(path: Path) -> type[Detector] | None:
+    spec = importlib.util.spec_from_file_location(f"detector_{path.stem}", path)
+    if spec is None or spec.loader is None:
+        return None
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    for attr in vars(mod).values():
+        if (isinstance(attr, type) and issubclass(attr, Detector)
+                and attr is not Detector):
+            return attr
+    return None
+
+
+def load_detectors(
+    names: list[str],
+    extra_paths: list[Path],
+) -> list[Detector]:
+    """Load detectors by name from framework dir + extra_paths."""
+    if not names or names == [""]:
+        return []
+    search = [FRAMEWORK_DETECTOR_DIR, *extra_paths]
+    loaded: list[Detector] = []
+    for name in names:
+        found_cls = None
+        for d in search:
+            candidate = d / f"{name}.py"
+            if candidate.exists():
+                found_cls = _load_detector_module(candidate)
+                if found_cls:
+                    break
+        if found_cls is None:
+            available = sorted(p.stem for d in search if d.exists()
+                               for p in d.glob("*.py")
+                               if not p.stem.startswith("_"))
+            raise ValueError(
+                f"unknown detector: {name!r}. available: {available}"
+            )
+        loaded.append(found_cls())
+    return loaded
+
+
+def apply_mutations(
+    primitives: list[dict],
+    mutations: Iterable[Mutation],
+) -> list[dict]:
+    by_id = {n["id"]: dict(n) for n in primitives}
+    extras: list[dict] = []
+    for m in mutations:
+        if isinstance(m, RelabelNode):
+            if m.node_id in by_id:
+                by_id[m.node_id]["kind"] = m.new_kind
+                by_id[m.node_id].update(m.metadata)
+        elif isinstance(m, AddNode):
+            payload = dict(m.payload)
+            payload["kind"] = m.kind
+            extras.append(payload)
+        elif isinstance(m, AddEdge):
+            extras.append({
+                "id": f"{m.from_id}#edge:{m.kind}:{m.to_id}",
+                "kind": f"{m.kind}_edge",
+                "from_id": m.from_id, "to_id": m.to_id,
+            })
+    return list(by_id.values()) + extras
+
+
+_KIND_DIR = {
+    "module": "modules", "class": "classes", "function": "functions",
+    "import_edge": "imports", "call_edge": "calls",
+}
+
+
+def _safe_filename(node_id: str) -> str:
+    return node_id.replace("/", "__").replace(":", "__") + ".json"
+
+
+def write_nodes(nodes: list[dict], data_dir: Path) -> None:
+    for n in nodes:
+        kind = n["kind"]
+        sub = _KIND_DIR.get(kind, kind + "s")
+        out_dir = data_dir / "nodes" / sub
+        out_dir.mkdir(parents=True, exist_ok=True)
+        path = out_dir / _safe_filename(n["id"])
+        path.write_text(json.dumps(n, indent=2, sort_keys=True) + "\n")
+
+
+def _run_detectors(
+    detectors: list[Detector],
+    tree: ast.AST,
+    primitives: list[dict],
+    ctx: DetectorContext,
+) -> list[Mutation]:
+    out: list[Mutation] = []
+    for d in detectors:
+        try:
+            out.extend(d.detect(tree, primitives, ctx))
+        except Exception as exc:
+            print(f"detector_error: {d.name or type(d).__name__} "
+                  f"on {ctx.file_path}: {exc}", file=sys.stderr)
+    return out
+
+
+def main(argv: list[str] | None = None) -> int:
+    p = argparse.ArgumentParser()
+    p.add_argument("--repo-key", required=True)
+    p.add_argument("--repo-path", required=True, type=Path)
+    p.add_argument("--data-dir", required=True, type=Path)
+    p.add_argument("--detectors", default="")
+    p.add_argument("--detector-path", action="append", default=[], type=Path)
+    p.add_argument("--exclude", action="append", default=[])
+    p.add_argument("--only", default=None, type=Path)
+    args = p.parse_args(argv)
+
+    names = [n.strip() for n in args.detectors.split(",") if n.strip()]
+    detectors = load_detectors(names, args.detector_path)
+
+    files: Iterable[Path]
+    if args.only:
+        files = [args.only]
+    else:
+        files = list(discover_files(args.repo_path, args.exclude))
+
+    total_nodes = 0
+    labeled = 0
+    skipped = 0
+    all_nodes: list[dict] = []
+    for f in files:
+        rel = f.relative_to(args.repo_path).as_posix()
+        tree, err = parse_file(f)
+        if err:
+            print(err, file=sys.stderr)
+            skipped += 1
+            continue
+        prims = emit_primitives(tree, repo_key=args.repo_key, rel_path=rel)
+        ctx = DetectorContext(
+            repo_key=args.repo_key, file_path=rel,
+            project_config={"detectors": names},
+        )
+        muts = _run_detectors(detectors, tree, prims, ctx)
+        labeled += sum(1 for m in muts if isinstance(m, RelabelNode))
+        nodes = apply_mutations(prims, muts)
+        all_nodes.extend(nodes)
+        total_nodes += len(nodes)
+
+    write_nodes(all_nodes, args.data_dir)
+    print(f"wrote {total_nodes} nodes ({labeled} labeled by detectors), "
+          f"skipped {skipped} files")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

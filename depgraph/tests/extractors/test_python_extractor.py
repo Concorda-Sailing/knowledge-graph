@@ -98,3 +98,71 @@ def test_emit_call_edge(tmp_repo: Path):
     nodes = emit_primitives(tree, repo_key="r", rel_path="a.py")
     calls = [n for n in nodes if n["kind"] == "call_edge"]
     assert any(c["target"] == "print" and c["from_id"] == "r:a.py:hi" for c in calls)
+
+
+import json
+import subprocess
+import sys
+
+from extractors.generic.python.extract import (
+    load_detectors, apply_mutations, write_nodes,
+)
+from extractors.generic.python.detector_api import RelabelNode, AddNode
+
+
+def test_load_detector_from_framework_dir():
+    # fastapi detector not yet implemented; loader should raise.
+    import pytest
+    with pytest.raises(ValueError, match="unknown detector"):
+        load_detectors(names=["fastapi"], extra_paths=[])
+
+
+def test_load_detector_missing_raises():
+    import pytest
+    with pytest.raises(ValueError, match="unknown detector"):
+        load_detectors(names=["nope_xyz"], extra_paths=[])
+
+
+def test_apply_mutations_relabels_node():
+    prims = [{"id": "x", "kind": "function", "name": "hi"}]
+    muts = [RelabelNode(node_id="x", new_kind="endpoint", metadata={"route": "/x"})]
+    out = apply_mutations(prims, muts)
+    rel = next(n for n in out if n["id"] == "x")
+    assert rel["kind"] == "endpoint"
+    assert rel["route"] == "/x"
+
+
+def test_apply_mutations_adds_node():
+    prims = []
+    muts = [AddNode(kind="route_call", payload={"url": "/x", "id": "rc1"})]
+    out = apply_mutations(prims, muts)
+    assert any(n["id"] == "rc1" and n["kind"] == "route_call" for n in out)
+
+
+def test_write_nodes_creates_per_kind_dirs(tmp_data_dir):
+    nodes = [
+        {"id": "r:a.py:f", "kind": "function", "name": "f", "file": "a.py"},
+        {"id": "r:a.py:<module>", "kind": "module", "name": "<module>"},
+    ]
+    write_nodes(nodes, tmp_data_dir)
+    assert (tmp_data_dir / "nodes" / "functions" / "r__a.py__f.json").exists()
+    assert (tmp_data_dir / "nodes" / "modules" / "r__a.py__<module>.json").exists()
+
+
+def test_cli_end_to_end(tmp_repo, tmp_data_dir):
+    (tmp_repo / "a.py").write_text("def hi(): pass\n")
+    extractor = (
+        Path(__file__).resolve().parents[3]
+        / "depgraph" / "extractors" / "generic" / "python" / "extract.py"
+    )
+    r = subprocess.run(
+        [sys.executable, str(extractor),
+         "--repo-key", "r", "--repo-path", str(tmp_repo),
+         "--data-dir", str(tmp_data_dir),
+         "--detectors", ""],
+        capture_output=True, text=True,
+    )
+    assert r.returncode == 0, r.stderr
+    assert "wrote" in r.stdout
+    func_dir = tmp_data_dir / "nodes" / "functions"
+    assert any(p.suffix == ".json" for p in func_dir.iterdir())
