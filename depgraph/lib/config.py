@@ -96,7 +96,8 @@ def project_repos(data_dir: Path) -> dict[str, dict]:
 
     Returns: {repo_key: {"path": Path, "basename": str,
                          "extractor": list[str] | None,
-                         "files_arg": str | None}}
+                         "files_arg": str | None,
+                         "detectors": list[str]}}
 
     The repo_key is the [repos.<key>] table name (e.g. "api").
     The basename is the final path segment (e.g. "<project>-api"), used
@@ -123,6 +124,7 @@ def project_repos(data_dir: Path) -> dict[str, dict]:
             "basename": resolved.name,
             "extractor": val.get("extractor"),
             "files_arg": val.get("files_arg"),
+            "detectors": val.get("detectors", []),
         }
     return out
 

@@ -41,6 +41,7 @@ from lib.config import (  # noqa: E402
     project_primary_repo,
     primary_repo_path,
     render_extractor,
+    repo_detectors,
     repo_basenames,
     repo_for_basename,
     path_to_repo_relative,
@@ -118,6 +119,10 @@ def cmd_regen(args: argparse.Namespace) -> int:
         if cmd is None:
             print(f"--- {key} (no extractor configured; skipping)")
             continue
+        detectors = repo_detectors(info)
+        if detectors:
+            cmd += ["--detectors", ",".join(detectors)]
+        cmd += ["--detector-path", str(DEPGRAPH / "extractors" / "detectors")]
         print(f"--- {key}")
         rc = subprocess.call(cmd, env=env)
         if rc != 0:
