@@ -118,3 +118,13 @@ def test_vitest_only_fires_in_test_files(tmp_repo, tmp_data_dir):
     assert r.returncode == 0, r.stderr
     tests = _read_nodes(tmp_data_dir, "tests")
     assert tests == []
+
+
+def test_route_calls_detector_emits_route_call(tmp_repo, tmp_data_dir):
+    (tmp_repo / "client.ts").write_text(
+        "async function load() { return fetch('/api/items') }\n"
+    )
+    r = _run(tmp_repo, tmp_data_dir, detectors="route-calls")
+    assert r.returncode == 0, r.stderr
+    calls = _read_nodes(tmp_data_dir, "route_calls")
+    assert any(c.get("url") == "/api/items" for c in calls)
