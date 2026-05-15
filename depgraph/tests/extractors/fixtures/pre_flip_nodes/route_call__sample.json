@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "id": "concorda-web::src/lib/api.ts:10::response",
+  "kind": "route_call",
+  "title": "fetch GET /health",
+  "source": {
+    "repo": "concorda-web",
+    "path": "src/lib/api.ts",
+    "line": 10
+  },
+  "signature": {
+    "method": "GET",
+    "url_pattern": "/health"
+  },
+  "extractor": "generic/typescript/route-calls",
+  "structural_hash": "eb7fa3f8",
+  "depends_on": []
+}

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "concorda-test::tests/admin/club-management.spec.ts::test@12",
+  "kind": "test",
+  "title": "clubs page loads with seeded organizations",
+  "feature": null,
+  "source": {
+    "repo": "concorda-test",
+    "path": "tests/admin/club-management.spec.ts",
+    "symbol": "test@12",
+    "line": 12
+  },
+  "signature": {
+    "name": "test@12",
+    "kind": "test"
+  },
+  "structural_hash": "8ad991408f523251aea9fd36ade32a34b5435faa09737894903e2d3dbccd2d14",
+  "depends_on": [],
+  "external_consumers": [],
+  "tests": [],
+  "dossier": "dossiers/tests/concorda_test__tests_admin_club_management_spec_ts__test_12.md",
+  "extractor": "extract_tests.ts",
+  "warnings": []
+}

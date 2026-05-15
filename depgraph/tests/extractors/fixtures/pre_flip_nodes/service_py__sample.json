@@ -1,0 +1,30 @@
+{
+  "depends_on": [],
+  "dossier": "dossiers/services/concorda-api__services_approval_notifications.py__send_approval_notification.md",
+  "external_consumers": [],
+  "extractor": "extract_api.py",
+  "feature": null,
+  "id": "concorda-api::services/approval_notifications.py::send_approval_notification",
+  "kind": "service",
+  "schema_version": 1,
+  "signature": {
+    "args": [
+      "db",
+      "person_uuid",
+      "template_key",
+      "request"
+    ],
+    "kind": "service",
+    "name": "send_approval_notification"
+  },
+  "source": {
+    "line": 291,
+    "path": "services/approval_notifications.py",
+    "repo": "concorda-api",
+    "symbol": "send_approval_notification"
+  },
+  "structural_hash": "571ee2e8acaebab6165721a19fbe840aa57fdfb11d646eec04cf7c76de1a2837",
+  "tests": [],
+  "title": "send_approval_notification",
+  "warnings": []
+}
