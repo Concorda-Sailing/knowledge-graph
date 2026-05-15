@@ -1,21 +1,18 @@
 [project]
-primary_repo = "api"
+primary_repo = "concorda-api"
 
-[logigraph]
-data_dir = "~/concorda-knowledge-graph/logigraph"
-
-[repos.api]
+[repos.concorda-api]
 path = "~/concorda-api"
 extractor = ["python3", "{kg_dir}/depgraph/extractors/generic/python/extract.py"]
-detectors = ["fastapi", "sqlalchemy", "pydantic", "pytest", "service"]
+detectors = ["fastapi", "sqlalchemy", "pydantic", "service"]
 files_arg = "--only"
 
-[repos.web]
+[repos.concorda-web]
 path = "~/concorda-web"
 extractor = ["npx", "tsx", "{kg_dir}/depgraph/extractors/generic/typescript/extract.ts"]
-detectors = ["react", "vitest", "route-calls", "service"]
+detectors = ["react", "route-calls", "service"]
 
-[repos.test]
+[repos.concorda-test]
 path = "~/concorda-test"
 extractor = ["npx", "tsx", "{kg_dir}/depgraph/extractors/generic/typescript/extract.ts"]
-detectors = ["vitest", "service"]
+detectors = ["vitest"]
