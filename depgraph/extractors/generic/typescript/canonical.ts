@@ -26,10 +26,3 @@ export function canonicalIdForRepoSymbol(
   return `${repoKey}::${relPath}::${symbol}`;
 }
 
-export function canonicalIdForRouteCall(
-  repoKey: string,
-  relPath: string,
-  line: number,
-): string {
-  return `${repoKey}::${relPath}:${line}::response`;
-}

@@ -172,26 +172,6 @@ export function parseHttpCallTest(call: CallExpression): Edge | null {
   };
 }
 
-/** Higher-order component wrappers whose first argument is the actual
- *  component body. */
-export const HOC_NAMES = new Set(["forwardRef", "memo"]);
-
-/** If `call` is `forwardRef(...)` / `React.forwardRef(...)` / `memo(...)` and
- *  its first argument is an arrow/function expression, return that inner
- *  function so it can be used as the JSX-attribution scope. */
-export function unwrapHocCall(call: CallExpression): Node | null {
-  const expr = call.getExpression();
-  let calleeName = "";
-  if (Node.isIdentifier(expr)) calleeName = expr.getText();
-  else if (Node.isPropertyAccessExpression(expr)) calleeName = expr.getName();
-  if (!HOC_NAMES.has(calleeName)) return null;
-  const args = call.getArguments();
-  if (args.length === 0) return null;
-  const arg0 = args[0];
-  if (Node.isArrowFunction(arg0) || Node.isFunctionExpression(arg0)) return arg0;
-  return null;
-}
-
 /** Collect imported names from the file so hook_call/render edges can resolve
  *  to a node id. Resolves the importing module to an actual file via ts-morph
  *  so the qualified id `<repo>::<file>::<symbol>` is correct. Imports that

@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import * as fs from "fs";
 import * as path from "path";
 import {
-  slugifyIdTs, sha, canonicalIdForRepoSymbol, canonicalIdForRouteCall,
+  slugifyIdTs, sha, canonicalIdForRepoSymbol,
 } from "../../extractors/generic/typescript/canonical";
 
 describe("typescript canonical helpers", () => {
@@ -32,8 +32,4 @@ describe("typescript canonical helpers", () => {
       .toBe("concorda-web::src/x.tsx::Foo");
   });
 
-  it("canonicalIdForRouteCall", () => {
-    expect(canonicalIdForRouteCall("concorda-web", "src/lib/api.ts", 10))
-      .toBe("concorda-web::src/lib/api.ts:10::response");
-  });
 });

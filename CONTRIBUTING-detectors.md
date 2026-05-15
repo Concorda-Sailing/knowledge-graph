@@ -34,6 +34,35 @@ This guide covers the PR process for upstreaming a new detector.
 - Detectors compose: a project can enable multiple detectors against the same source. Don't try to be exhaustive in one file.
 - Don't reach across files. A detector sees one AST + one file's primitives. Cross-file reasoning belongs in `reconcile.py`.
 
+## AddNode metadata contract
+
+Detectors emit nodes via two mutation types:
+
+**`RelabelNode`** — promotes an existing primitive (e.g. a `function` primitive
+that is really a FastAPI endpoint). The detector sets `metadata` on the
+mutation; `applyMutations()` merges those fields onto the primitive. Each
+detector's source documents which metadata fields it sets.
+
+**`AddNode`** — creates a node for a kind that has no corresponding primitive
+(e.g. `test` for a Playwright spec file, or `route_call` for an HTTP call
+site). The `payload` object must include these `_`-prefixed fields so that
+`canonicalize()` in `depgraph/extractors/generic/typescript/extract.ts` can
+locate the matching ts-morph node and produce canonical output:
+
+| Field | Type | Description |
+|---|---|---|
+| `_full_name` | `string` | Symbol name (e.g. `"MyComponent"` or `"api.get"`) |
+| `_file` | `string` | Repo-relative file path |
+| `_symbol_pos` | `number` | ts-morph start offset of the symbol node |
+| `_symbol_end` | `number` | ts-morph end offset of the symbol node |
+| `_scope_pos` | `number` | Start offset of the scope used for edge attribution |
+| `_scope_end` | `number` | End offset of the scope node |
+| `_title` | `string` | *(optional)* Human-readable title for the node |
+
+`canonicalize()` uses `_symbol_pos`/`_symbol_end` to re-locate the node via
+`findNodeByRange()` and walks `_scope_pos`/`_scope_end` for `depends_on`
+attribution. Omitting these fields produces a non-canonical node silently.
+
 ## Project-local detectors
 
 If your detector is specific to one project, keep it in
