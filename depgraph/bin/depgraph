@@ -167,6 +167,11 @@ def cmd_validate(args: argparse.Namespace) -> int:
     return _impl(args, _CTX)
 
 
+def cmd_self_check(args: argparse.Namespace) -> int:
+    from lib.cli.self_check import cmd_self_check as _impl
+    return _impl(args, _CTX)
+
+
 def cmd_commit_summary(args: argparse.Namespace) -> int:
     """Output a compact summary of touched tracked nodes for a commit body
     trailer. Format is intentionally machine-greppable so blind spots can be
