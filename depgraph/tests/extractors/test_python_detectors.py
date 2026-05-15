@@ -109,3 +109,37 @@ def test_pydantic_basemodel_subclass_relabeled_schema():
     assert len(rl) == 1
     assert rl[0].new_kind == "schema"
     assert sorted(rl[0].metadata["fields"]) == ["age", "name"]
+
+
+from extractors.generic.python.detectors.pytest import PytestDetector
+
+
+def _run_pt(src: str, rel="test_a.py"):
+    tree = ast.parse(src)
+    prims = emit_primitives(tree, repo_key="r", rel_path=rel)
+    ctx = DetectorContext(repo_key="r", file_path=rel, project_config={})
+    return prims, PytestDetector().detect(tree, prims, ctx)
+
+
+def test_pytest_function_relabeled_test():
+    src = "def test_x(): pass\ndef helper(): pass\n"
+    _, muts = _run_pt(src)
+    rl = [m for m in muts if isinstance(m, RelabelNode) and m.new_kind == "test"]
+    ids = [m.node_id for m in rl]
+    assert any(i.endswith(":test_x") for i in ids)
+    assert not any(i.endswith(":helper") for i in ids)
+
+
+def test_pytest_test_class_methods_relabeled():
+    src = "class TestThing:\n    def test_m(self): pass\n    def helper(self): pass\n"
+    _, muts = _run_pt(src)
+    rl = [m for m in muts if isinstance(m, RelabelNode)]
+    names = [m.node_id.split(":")[-1] for m in rl]
+    assert "TestThing.test_m" in names
+    assert "TestThing.helper" not in names
+
+
+def test_pytest_only_fires_in_test_files():
+    src = "def test_x(): pass\n"
+    _, muts = _run_pt(src, rel="not_a_test.py")
+    assert muts == []
