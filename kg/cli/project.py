@@ -290,6 +290,7 @@ def _cmd_health(args: argparse.Namespace) -> int:
 
     # depgraph
     print("### depgraph")
+    sys.stdout.flush()  # subprocess writes inherit fd 1 and bypass Python's buffer
     if proj.depgraph_dir.exists():
         rc = subprocess.run(
             [str(tool_root / "depgraph" / "bin" / "depgraph"), "health"],
@@ -303,6 +304,7 @@ def _cmd_health(args: argparse.Namespace) -> int:
 
     # logigraph
     print("### logigraph")
+    sys.stdout.flush()
     if proj.logigraph_dir.exists():
         rc = subprocess.run(
             [str(tool_root / "logigraph" / "bin" / "logigraph"), "health"],
