@@ -49,8 +49,27 @@ _ACK_DIR = Path(
 _ACK_TTL_SECONDS = int(os.environ.get("KG_PRE_IRREVERSIBLE_TTL", "120"))
 
 
+_BASH_SALIENT_KEYS = ("command",)
+
+
+def _salient_input(tool_name: str, tool_input: dict) -> dict:
+    """Project the tool_input to only the fields that identify the action.
+
+    For Bash, that's just `command` — the description and timeout vary across
+    retries (the model often rewords the description on retry, which would
+    miss the ack-file lookup if we hashed the full input). For MCP writes,
+    every field is part of the payload, so hash the whole thing.
+    """
+    if tool_name == "Bash":
+        return {k: tool_input.get(k) for k in _BASH_SALIENT_KEYS if k in tool_input}
+    return tool_input
+
+
 def _command_key(tool_name: str, tool_input: dict) -> str:
-    canon = json.dumps({"tool": tool_name, "input": tool_input}, sort_keys=True)
+    canon = json.dumps(
+        {"tool": tool_name, "input": _salient_input(tool_name, tool_input)},
+        sort_keys=True,
+    )
     return hashlib.sha256(canon.encode("utf-8")).hexdigest()[:16]
 
 

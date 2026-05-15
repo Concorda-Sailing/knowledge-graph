@@ -262,3 +262,28 @@ def test_non_flagged_command_passes(tmp_path):
     assert r.returncode == 0
     assert r.stdout.strip() == ""
     assert not ack_dir.exists() or list(ack_dir.iterdir()) == []
+
+
+def test_retry_with_different_description_still_consumes_ack(tmp_path):
+    """The Bash tool's optional `description` (and `timeout`, etc.) varies
+    across retries when the model rewords its narration. The ack key must
+    ignore those auxiliary fields, otherwise the legitimate retry misses
+    the cache and stays blocked.
+    """
+    ack_dir = tmp_path / "ack"
+    cmd = "rm -rf /tmp/whatever"
+    first = _invoke_hook(
+        "Bash",
+        {"command": cmd, "description": "first try", "timeout": 60000},
+        ack_dir,
+    )
+    assert _json.loads(first.stdout)["hookSpecificOutput"]["permissionDecision"] == "deny"
+
+    second = _invoke_hook(
+        "Bash",
+        {"command": cmd, "description": "retry after stating trio", "timeout": 30000},
+        ack_dir,
+    )
+    assert second.returncode == 0
+    assert second.stdout.strip() == "", f"expected empty stdout, got: {second.stdout!r}"
+    assert list(ack_dir.iterdir()) == []
