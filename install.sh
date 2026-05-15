@@ -18,7 +18,17 @@
 #                                             come from kg-graphs.toml, not
 #                                             from settings.json.
 #   ./install.sh systemd [--project <dir>] [--apply]
-#                                             print (or write) graphui systemd unit
+#                [--depgraph-data-dir <p>] [--logigraph-data-dir <p>]
+#                                             print (or write) graphui systemd unit.
+#                                             Data dirs default to
+#                                             <project>/knowledge-graph/{depgraph,logigraph},
+#                                             with fallback to the sibling
+#                                             layout <project>-knowledge-graph/...
+#                                             Override either explicitly with
+#                                             the *-data-dir flags. --apply
+#                                             preflights that the data dirs and
+#                                             graphui venv exist (bootstrapping
+#                                             the venv if missing).
 #   ./install.sh path [--rcfile <file>] [--apply] [--force]
 #                                             print (or write) the shell PATH
 #                                             snippet that puts depgraph and
@@ -254,12 +264,17 @@ TOML
 [project]
 name = "$pname"
 
-# Repos this depgraph corpus extracts from. The logical name on the left
-# is what extractors refer to; the path on the right is the directory
-# under \$HOME (or an absolute path).
-[repos]
-# api = "$pname-api"
-# web = "$pname-web"
+# Repos this depgraph corpus extracts from. One [repos.<key>] table per
+# repo. The key is the logical name extractors reference (e.g. "api");
+# canonical node ids look like <key>::<rel-path>::<symbol>.
+#
+# Add a repo with: depgraph repo-add <key> <path> [--extractor ...] [--detector ...]
+# List repos with:  depgraph repo-list
+#
+# [repos.api]
+# path = "~/$pname-api"
+# extractor = ["python3", "{kg_dir}/depgraph/extractors/generic/python/extract.py"]
+# detectors = ["fastapi", "sqlalchemy"]
 TOML
     cat > "$bundle/depgraph/extractors/README.md" <<MD
 # Extractors
@@ -533,22 +548,44 @@ UNIT
 cmd_systemd() {
     local target="$DEFAULT_TARGET"
     local project=""
+    local depg_override=""
+    local logg_override=""
     local apply=0
     while [[ $# -gt 0 ]]; do
         case "$1" in
-            --target)  target="$2"; shift 2 ;;
-            --project) project="$2"; shift 2 ;;
-            --apply)   apply=1; shift ;;
-            *)         die "unknown flag: $1" ;;
+            --target)              target="$2"; shift 2 ;;
+            --project)             project="$2"; shift 2 ;;
+            --depgraph-data-dir)   depg_override="$2"; shift 2 ;;
+            --logigraph-data-dir)  logg_override="$2"; shift 2 ;;
+            --apply)               apply=1; shift ;;
+            *)                     die "unknown flag: $1" ;;
         esac
     done
 
-    if [[ -z "$project" ]]; then
+    if [[ -z "$project" ]] && [[ -z "$depg_override" || -z "$logg_override" ]]; then
         project="$HOME/your-project"
         warn "no --project given; using placeholder $project"
     fi
-    local depg="$project/$BUNDLE_DIR/depgraph"
-    local logg="$project/$BUNDLE_DIR/logigraph"
+
+    # Resolve data dirs: explicit flags win, then `<project>/<BUNDLE>/<sub>`,
+    # then the sibling-with-hyphen fallback `<project>-<BUNDLE>/<sub>` that
+    # some projects use (e.g. `~/concorda-knowledge-graph/`).
+    local depg="$depg_override"
+    local logg="$logg_override"
+    if [[ -z "$depg" ]]; then
+        depg="$project/$BUNDLE_DIR/depgraph"
+        if [[ ! -d "$depg" && -d "${project}-${BUNDLE_DIR}/depgraph" ]]; then
+            depg="${project}-${BUNDLE_DIR}/depgraph"
+            log "depgraph data dir: using sibling layout $depg"
+        fi
+    fi
+    if [[ -z "$logg" ]]; then
+        logg="$project/$BUNDLE_DIR/logigraph"
+        if [[ ! -d "$logg" && -d "${project}-${BUNDLE_DIR}/logigraph" ]]; then
+            logg="${project}-${BUNDLE_DIR}/logigraph"
+            log "logigraph data dir: using sibling layout $logg"
+        fi
+    fi
 
     local unit
     unit=$(generate_systemd_unit "$target" "$depg" "$logg")
@@ -561,6 +598,35 @@ cmd_systemd() {
 HEADER
         echo "$unit"
         return
+    fi
+
+    # Preflight: data dirs must exist before we write a unit that points at
+    # them — otherwise graphui loads zero nodes and renders an empty
+    # dashboard with no obvious cause.
+    local bundle="$target/$BUNDLE_DIR"
+    local missing=()
+    [[ -d "$depg" ]] || missing+=("DEPGRAPH_DATA_DIR=$depg")
+    [[ -d "$logg" ]] || missing+=("LOGIGRAPH_DATA_DIR=$logg")
+    if [[ ${#missing[@]} -gt 0 ]]; then
+        err "refusing to write unit — data dir(s) do not exist:"
+        printf '    %s\n' "${missing[@]}" >&2
+        err "pass --depgraph-data-dir / --logigraph-data-dir, or fix --project layout"
+        exit 1
+    fi
+
+    # Preflight: ensure the venv binary the unit will point at actually
+    # exists. cmd_install creates this, but if graphui was moved/relocated
+    # after install (e.g. tools/graphui → tools/knowledge-graph/graphui), the
+    # venv won't be at the new path. Bootstrap it now so the unit doesn't
+    # crash-loop with status=203/EXEC after restart.
+    local g="$bundle/graphui"
+    if [[ ! -x "$g/.venv/bin/uvicorn" ]]; then
+        [[ -d "$g" ]] || die "graphui directory missing at $g — run '$0 install --target $target' first"
+        log "graphui venv missing at $g/.venv; bootstrapping"
+        python3 -m venv "$g/.venv"
+        "$g/.venv/bin/pip" install --quiet --upgrade pip
+        "$g/.venv/bin/pip" install --quiet -r "$g/requirements.txt"
+        ok "graphui venv ready at $g/.venv"
     fi
 
     # --apply path: idempotent.
