@@ -101,8 +101,13 @@ This section is the source of truth for what to do when a user asks for knowledg
 ### When the user asks: "Add a new tracked repo"
 
 1. Read the current `<data-repo>/depgraph/project.toml`.
-2. Add a new `[repos.<key>]` table with required `path` and an `extractor` array — e.g. `["python3", "{data_dir}/extractors/extract_<key>.py"]`. Set `files_arg = "--only"` if the extractor takes `--only <file>` flags per touched file; omit otherwise.
-3. Author the extractor file in `<data-repo>/depgraph/extractors/`. Copy structure from an existing extractor in the same data dir if one exists.
+2. Add a new `[repos.<key>]` table. Use a framework language extractor:
+   - **Python:** `extractor = ["python3", "{kg_dir}/depgraph/extractors/generic/python/extract.py"]`. Available detectors: `fastapi`, `sqlalchemy`, `pydantic`, `pytest`, `service`.
+   - **TypeScript/JavaScript:** `extractor = ["npx", "tsx", "{kg_dir}/depgraph/extractors/generic/typescript/extract.ts"]`. Available detectors: `react`, `vitest`, `route-calls`, `service`.
+   - **Go:** `extractor = ["python3", "{kg_dir}/depgraph/extractors/generic/go/extract.py"]`. No shipped detectors; primitives only.
+   - **Rust:** `extractor = ["python3", "{kg_dir}/depgraph/extractors/generic/rust/extract.py"]`. No shipped detectors.
+   List the wanted detectors via `detectors = [...]`. Set `files_arg = "--only"` so the post-edit hook can target a single file.
+3. If the project needs framework recognition the shipped detectors don't cover, author a project-local detector at `<data-repo>/depgraph/extractors/detectors/<name>.py` (or `.ts`). Copy the `TEMPLATE_detector.*` from the matching language dir. See `CONTRIBUTING-detectors.md` to upstream it as a PR.
 4. Run `bin/depgraph regen` and confirm nodes appear under `<data-repo>/depgraph/nodes/`.
 5. If logigraph rules will claim against the new repo, also add the `[repos.<key>]` table to `<data-repo>/logigraph/project.toml` so path-classification works for the logigraph hook.
 
