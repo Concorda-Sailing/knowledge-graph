@@ -515,7 +515,7 @@ async function main() {
 
   const files = only ? [only] : Array.from(discoverFiles(repoPath, excludes));
   const tsMorphSourceByFile = new Map<string, TsMorphSourceFile>();
-  let total = 0, labeled = 0, skipped = 0;
+  let total = 0, relabels = 0, detectorNodes = 0, detectorEdges = 0, skipped = 0;
   const allNodes: Primitive[] = [];
 
   for (const f of files) {
@@ -546,7 +546,16 @@ async function main() {
       try { muts.push(...d.detect(sf, prims, ctx)); }
       catch (e) { console.error(`detector_error: ${d.name} on ${rel}: ${e}`); }
     }
-    labeled += muts.filter(m => m.type === "relabel").length;
+    // Break detector output down by mutation type. The previous metric
+    // only counted "relabel" mutations, but the current detector set
+    // (react, route-calls, service, vitest) emits "node" mutations to
+    // add components/hooks/route_calls/tests on top of the AST primitives,
+    // so the metric always read 0 and the regen summary was misleading.
+    for (const m of muts) {
+      if (m.type === "relabel") relabels++;
+      else if (m.type === "node") detectorNodes++;
+      else if (m.type === "edge") detectorEdges++;
+    }
     const nodes = applyMutations(prims, muts);
     allNodes.push(...nodes);
     total += nodes.length;
@@ -556,7 +565,7 @@ async function main() {
   writeNodes(canonical, dataDir);
   console.log(
     `wrote ${canonical.length} canonical nodes ` +
-    `(${labeled} labeled by detectors, ${total} primitives), ` +
+    `(${total} primitives; from detectors: ${relabels} relabels, ${detectorNodes} nodes, ${detectorEdges} edges), ` +
     `skipped ${skipped} files`,
   );
 }
