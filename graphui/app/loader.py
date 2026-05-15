@@ -1,9 +1,13 @@
 """Load depgraph + logigraph indexes into in-memory dicts.
 
 Single source of truth: the JSON files on disk at the data dirs pointed
-at by DEPGRAPH_DATA_DIR and LOGIGRAPH_DATA_DIR. We re-read on each
-request so the UI tracks regen output without restart. At ~1500 nodes
-the cost is negligible (~50ms cold).
+at by DEPGRAPH_DATA_DIR and LOGIGRAPH_DATA_DIR. The heavy loaders
+(`load_depgraph_nodes`, `load_dependents`, `load_logigraph_nodes`,
+`load_meta`) cache their result at module scope, keyed on the mtime of
+the corresponding `nodes/_meta.json`. Reconcile writes that file at the
+end of a regen, so a fresh extraction invalidates the cache without a
+graphui restart. Tests reset cache state by reloading the module via
+the `loader` fixture.
 """
 from __future__ import annotations
 
@@ -40,6 +44,31 @@ LOGIGRAPH = _resolve("LOGIGRAPH_DATA_DIR")
 
 DEPGRAPH_NODES = DEPGRAPH / "nodes"
 LOGIGRAPH_NODES = LOGIGRAPH / "nodes"
+
+
+# Cache state for the heavy loaders. Each entry is (cache_key, value).
+# cache_key is the mtime of the relevant `nodes/_meta.json`; reconcile
+# rewrites that file at the end of every regen, so a fresh extraction
+# automatically invalidates the cache on the next request.
+_DEPGRAPH_DEPS_CACHE: tuple[float, dict[str, list[dict]]] | None = None
+_DEPGRAPH_NODES_CACHE: tuple[float, list[dict]] | None = None
+_LOGIGRAPH_NODES_CACHE: tuple[float, dict[str, list[dict]]] | None = None
+_META_CACHE: tuple[tuple[float, float], dict[str, Any]] | None = None
+_REPO_AGGREGATES_CACHE: tuple[tuple[float, float], dict[str, dict]] | None = None
+
+
+def _depgraph_meta_mtime() -> float:
+    try:
+        return (DEPGRAPH_NODES / "_meta.json").stat().st_mtime
+    except OSError:
+        return 0.0
+
+
+def _logigraph_meta_mtime() -> float:
+    try:
+        return (LOGIGRAPH_NODES / "_meta.json").stat().st_mtime
+    except OSError:
+        return 0.0
 
 # Rollup logic is shared with depgraph + logigraph; import from the
 # sibling depgraph repo. Graphui has no `lib` package of its own, so a
@@ -246,11 +275,18 @@ def commit_history(repo_root: Path, rel_paths: list[str], limit: int = 20) -> li
 
 
 def load_dependents() -> dict[str, list[dict]]:
+    global _DEPGRAPH_DEPS_CACHE
+    mt = _depgraph_meta_mtime()
+    if _DEPGRAPH_DEPS_CACHE is not None and _DEPGRAPH_DEPS_CACHE[0] == mt:
+        return _DEPGRAPH_DEPS_CACHE[1]
     p = DEPGRAPH_NODES / "_index" / "dependents.json"
     if not p.exists():
-        return {}
-    idx = json.loads(p.read_text())
-    return idx.get("by_target") or {}
+        out: dict[str, list[dict]] = {}
+    else:
+        idx = json.loads(p.read_text())
+        out = idx.get("by_target") or {}
+    _DEPGRAPH_DEPS_CACHE = (mt, out)
+    return out
 
 
 def load_logigraph_by_code() -> dict[str, list[str]]:
@@ -264,6 +300,10 @@ def load_logigraph_by_code() -> dict[str, list[str]]:
 
 def load_meta() -> dict[str, Any]:
     """Read both meta files."""
+    global _META_CACHE
+    key = (_depgraph_meta_mtime(), _logigraph_meta_mtime())
+    if _META_CACHE is not None and _META_CACHE[0] == key:
+        return _META_CACHE[1]
     out: dict[str, Any] = {"depgraph": {}, "logigraph": {}}
     for label, p in (
         ("depgraph", DEPGRAPH_NODES / "_meta.json"),
@@ -274,12 +314,17 @@ def load_meta() -> dict[str, Any]:
                 out[label] = json.loads(p.read_text())
             except (OSError, json.JSONDecodeError):
                 pass
+    _META_CACHE = (key, out)
     return out
 
 
 def load_depgraph_nodes() -> list[dict]:
     """Read every depgraph node file and enrich with derived fields:
     fan_out, tier, dossier_state, commits_30d. Sorted by id."""
+    global _DEPGRAPH_NODES_CACHE
+    mt = _depgraph_meta_mtime()
+    if _DEPGRAPH_NODES_CACHE is not None and _DEPGRAPH_NODES_CACHE[0] == mt:
+        return _DEPGRAPH_NODES_CACHE[1]
     deps = load_dependents()
     nodes: list[dict] = []
     for nf in DEPGRAPH_NODES.rglob("*.json"):
@@ -300,12 +345,17 @@ def load_depgraph_nodes() -> list[dict]:
         src = d.get("source") or {}
         nodes.append(d)
     nodes.sort(key=lambda n: n["id"])
+    _DEPGRAPH_NODES_CACHE = (mt, nodes)
     return nodes
 
 
 def load_logigraph_nodes() -> dict[str, list[dict]]:
     """Returns {'rules': [...], 'domain': [...], 'processes': [...]} with
     derived dossier_state."""
+    global _LOGIGRAPH_NODES_CACHE
+    mt = _logigraph_meta_mtime()
+    if _LOGIGRAPH_NODES_CACHE is not None and _LOGIGRAPH_NODES_CACHE[0] == mt:
+        return _LOGIGRAPH_NODES_CACHE[1]
     out: dict[str, list[dict]] = {"rules": [], "domain": [], "processes": []}
     for kind, sub in (("rules", "rules"), ("domain", "domain"), ("processes", "processes")):
         d = LOGIGRAPH_NODES / sub
@@ -328,6 +378,7 @@ def load_logigraph_nodes() -> dict[str, list[dict]]:
                 else:
                     node["fan_out"] = len(node.get("claims_code") or [])
             out[kind].append(node)
+    _LOGIGRAPH_NODES_CACHE = (mt, out)
     return out
 
 
@@ -353,7 +404,14 @@ def repo_summary() -> list[dict]:
     """One entry per source repo seen in depgraph nodes' source.repo field.
     Returns: [{basename, node_count, state_counts: {current: n, ...},
                current_pct, has_stale, kinds: [{kind, count}, ...]}]
-    Sorted by node_count desc."""
+    Sorted by node_count desc.
+
+    All graph-derived per-repo aggregates (areas, cross-repo dep counts,
+    cross_cuts) come from a single cached pass via `_repo_aggregates`; only
+    activity (git log), languages (filesystem walk), and external_pkgs
+    (per-repo package.json) require any per-repo I/O.
+    """
+    aggregates = _repo_aggregates()
     by_repo: dict[str, dict] = {}
     for n in load_depgraph_nodes():
         src = n.get("source") or {}
@@ -383,12 +441,13 @@ def repo_summary() -> list[dict]:
             [{"kind": k, "count": v} for k, v in r["kinds"].items()],
             key=lambda x: -x["count"],
         )
-        # --- enrichments added in Plan A ---
+        agg = aggregates.get(r["basename"], {})
         r["activity"] = repo_activity(r["basename"])
         r["languages"] = repo_languages(r["basename"])
-        r["areas"] = repo_areas(r["basename"])
-        r["dep_counts"] = repo_dep_counts(r["basename"])
-        r["cross_cuts"] = repo_cross_cuts(r["basename"])
+        r["areas"] = agg.get("areas", [])
+        dep_nodes = agg.get("dep_counts_nodes") or {"inbound_repos": 0, "outbound_repos": 0}
+        r["dep_counts"] = {**dep_nodes, "external_pkgs": _repo_external_pkgs(r["basename"])}
+        r["cross_cuts"] = agg.get("cross_cuts") or {"rules": [], "processes": [], "domain": []}
         # dead_code_score: low push frequency + zero inbound + many stale claims.
         age = r["activity"]["last_push_age_days"] or 0
         inbound = r["dep_counts"]["inbound_repos"]
@@ -1627,23 +1686,166 @@ def repo_languages(basename: str) -> list[dict]:
     return out
 
 
+def _repo_external_pkgs(basename: str) -> int:
+    """Count packages declared in the repo's `package.json` deps + dev-deps,
+    `requirements.txt` lines, and `pyproject.toml` `[project].dependencies`.
+    Touches the source repo's own files, so it's the only per-repo I/O that
+    `_repo_aggregates` can't fold into a single pass over node data."""
+    repo = _repo_path(basename)
+    if repo is None:
+        return 0
+    ext = 0
+    pkg = repo / "package.json"
+    if pkg.exists():
+        try:
+            row = json.loads(pkg.read_text())
+            ext += len(row.get("dependencies") or {})
+            ext += len(row.get("devDependencies") or {})
+        except (OSError, json.JSONDecodeError):
+            pass
+    reqs = repo / "requirements.txt"
+    if reqs.exists():
+        ext += sum(
+            1 for l in reqs.read_text(errors="ignore").splitlines()
+            if l.strip() and not l.strip().startswith("#")
+        )
+    pyproj = repo / "pyproject.toml"
+    if pyproj.exists():
+        txt = pyproj.read_text(errors="ignore")
+        # crude: count lines under a [project] dependencies array; good enough for v1.
+        in_deps = False
+        for line in txt.splitlines():
+            s = line.strip()
+            if s.startswith("dependencies"):
+                in_deps = True
+                continue
+            if in_deps:
+                if s.startswith("]"):
+                    in_deps = False
+                    continue
+                if s.startswith('"') or s.startswith("'"):
+                    ext += 1
+    return ext
+
+
+def _repo_aggregates() -> dict[str, dict]:
+    """Per-repo aggregates computed in one pass over depgraph nodes + the
+    dependents index + logigraph nodes. Cached per regen.
+
+    Replaces the prior pattern where `repo_summary` called `repo_areas`,
+    `repo_dep_counts`, and `repo_cross_cuts` once per repo — each of which
+    walked the full node corpus on its own. That was O(N × R); this is O(N).
+
+    Returns: {basename: {areas, dep_counts_nodes, cross_cuts}} where
+      - areas: list[{dir, node_count}] sorted by node_count desc
+      - dep_counts_nodes: {inbound_repos, outbound_repos} (no external_pkgs;
+        that depends on the source repo's own files, not graph data)
+      - cross_cuts: {rules, processes, domain} — sorted id lists
+    """
+    global _REPO_AGGREGATES_CACHE
+    key = (_depgraph_meta_mtime(), _logigraph_meta_mtime())
+    if _REPO_AGGREGATES_CACHE is not None and _REPO_AGGREGATES_CACHE[0] == key:
+        return _REPO_AGGREGATES_CACHE[1]
+
+    nodes = load_depgraph_nodes()
+    dependents = load_dependents()
+    lg = load_logigraph_nodes()
+
+    # Endpoint nodes have ids like `GET::/api/foo` (method-prefixed); the
+    # leading id segment is the verb, not the repo. Only `source.repo` is
+    # authoritative.
+    repo_by_id: dict[str, str] = {}
+    area_counts: dict[str, dict[str, int]] = {}
+    seen_repos: set[str] = set()
+    for n in nodes:
+        nid = n.get("id")
+        src = n.get("source") or {}
+        basename = src.get("repo")
+        if not basename:
+            continue
+        seen_repos.add(basename)
+        if nid:
+            repo_by_id[nid] = basename
+        path = src.get("path") or ""
+        head = path.split("/", 1)[0] if "/" in path else path
+        if head:
+            buckets = area_counts.setdefault(basename, {})
+            buckets[head] = buckets.get(head, 0) + 1
+
+    inbound: dict[str, set[str]] = {b: set() for b in seen_repos}
+    outbound: dict[str, set[str]] = {b: set() for b in seen_repos}
+    for target_id, dependers in dependents.items():
+        target_repo = repo_by_id.get(target_id)
+        if not target_repo:
+            continue
+        for d in dependers:
+            dep_repo = repo_by_id.get(d.get("source") or "")
+            if not dep_repo or dep_repo == target_repo:
+                continue
+            inbound[target_repo].add(dep_repo)
+            outbound.setdefault(dep_repo, set()).add(target_repo)
+
+    cross: dict[str, dict[str, set[str]]] = {
+        b: {"rules": set(), "processes": set(), "domain": set()}
+        for b in seen_repos
+    }
+    for r in lg["rules"]:
+        touched: set[str] = set()
+        for c in r.get("claims_code", []) or []:
+            did = c.get("depgraph_id") or ""
+            head = did.split("::", 1)[0]
+            if head:
+                touched.add(head)
+        for basename in touched:
+            slot = cross.setdefault(basename, {"rules": set(), "processes": set(), "domain": set()})
+            slot["rules"].add(r["id"])
+            for ref in (r.get("references_domain") or []):
+                slot["domain"].add(ref)
+    for p in lg["processes"]:
+        touched_per_step: list[tuple[set[str], list[str]]] = []
+        for step in p.get("steps", []) or []:
+            touched: set[str] = set()
+            for c in step.get("claims_code", []) or []:
+                did = c.get("depgraph_id") or ""
+                head = did.split("::", 1)[0]
+                if head:
+                    touched.add(head)
+            if touched:
+                touched_per_step.append((touched, step.get("references_domain") or []))
+        for touched, refs in touched_per_step:
+            for basename in touched:
+                slot = cross.setdefault(basename, {"rules": set(), "processes": set(), "domain": set()})
+                slot["processes"].add(p["id"])
+                for ref in refs:
+                    slot["domain"].add(ref)
+
+    out: dict[str, dict] = {}
+    for basename in seen_repos | set(cross.keys()):
+        areas = area_counts.get(basename, {})
+        out[basename] = {
+            "areas": [
+                {"dir": d, "node_count": c}
+                for d, c in sorted(areas.items(), key=lambda kv: kv[1], reverse=True)
+            ],
+            "dep_counts_nodes": {
+                "inbound_repos": len(inbound.get(basename, set())),
+                "outbound_repos": len(outbound.get(basename, set())),
+            },
+            "cross_cuts": {
+                "rules": sorted(cross[basename]["rules"]) if basename in cross else [],
+                "processes": sorted(cross[basename]["processes"]) if basename in cross else [],
+                "domain": sorted(cross[basename]["domain"]) if basename in cross else [],
+            },
+        }
+
+    _REPO_AGGREGATES_CACHE = (key, out)
+    return out
+
+
 def repo_areas(basename: str) -> list[dict]:
     """Return top-level directories in `basename` that contain at least one
     tracked node, ordered by node_count desc. Each entry: {dir, node_count}."""
-    counts: dict[str, int] = {}
-    for n in load_depgraph_nodes():
-        src = (n.get("source") or {})
-        if src.get("repo") != basename:
-            continue
-        path = src.get("path") or ""
-        head = path.split("/", 1)[0] if "/" in path else path
-        if not head:
-            continue
-        counts[head] = counts.get(head, 0) + 1
-    return [
-        {"dir": d, "node_count": c}
-        for d, c in sorted(counts.items(), key=lambda kv: kv[1], reverse=True)
-    ]
+    return _repo_aggregates().get(basename, {}).get("areas", [])
 
 
 def repo_dep_counts(basename: str) -> dict:
@@ -1655,100 +1857,17 @@ def repo_dep_counts(basename: str) -> dict:
       - external_pkgs: # of packages declared in `basename/package.json` deps
         + `basename/requirements.txt` lines + `basename/pyproject.toml` deps.
     """
-    inbound: set[str] = set()
-    outbound: set[str] = set()
-    dependents = load_dependents()  # by_target: target_id -> [dependent dicts]
-    # Look up each node's actual source.repo, not the id's leading segment.
-    # Endpoint nodes have ids like `GET::/api/foo` (method-prefixed); only the
-    # node's source.repo field has the right answer ("concorda-api" etc.).
-    repo_by_id: dict[str, str] = {}
-    for n in load_depgraph_nodes():
-        nid = n.get("id")
-        r = (n.get("source") or {}).get("repo")
-        if nid and r:
-            repo_by_id[nid] = r
-    for target_id, dependers in dependents.items():
-        target_repo = repo_by_id.get(target_id)
-        if not target_repo:
-            continue
-        for d in dependers:
-            dep_repo = repo_by_id.get(d.get("source") or "")
-            if not dep_repo or dep_repo == target_repo:
-                continue
-            if target_repo == basename and dep_repo != basename:
-                inbound.add(dep_repo)
-            if dep_repo == basename and target_repo != basename:
-                outbound.add(target_repo)
-
-    ext = 0
-    repo = _repo_path(basename)
-    if repo is not None:
-        pkg = repo / "package.json"
-        if pkg.exists():
-            try:
-                row = json.loads(pkg.read_text())
-                ext += len(row.get("dependencies") or {})
-                ext += len(row.get("devDependencies") or {})
-            except (OSError, json.JSONDecodeError):
-                pass
-        reqs = repo / "requirements.txt"
-        if reqs.exists():
-            ext += sum(
-                1 for l in reqs.read_text(errors="ignore").splitlines()
-                if l.strip() and not l.strip().startswith("#")
-            )
-        pyproj = repo / "pyproject.toml"
-        if pyproj.exists():
-            txt = pyproj.read_text(errors="ignore")
-            # crude: count lines under a [project] dependencies array; good enough for v1.
-            in_deps = False
-            for line in txt.splitlines():
-                s = line.strip()
-                if s.startswith("dependencies"):
-                    in_deps = True
-                    continue
-                if in_deps:
-                    if s.startswith("]"):
-                        in_deps = False
-                        continue
-                    if s.startswith('"') or s.startswith("'"):
-                        ext += 1
-    return {"inbound_repos": len(inbound), "outbound_repos": len(outbound), "external_pkgs": ext}
+    agg = _repo_aggregates().get(basename, {}).get("dep_counts_nodes") or {
+        "inbound_repos": 0, "outbound_repos": 0,
+    }
+    return {**agg, "external_pkgs": _repo_external_pkgs(basename)}
 
 
 def repo_cross_cuts(basename: str) -> dict:
     """List the rule/process/domain ids that touch any node in `basename`.
     Returns id-lists (not counts) so the repo card can name a few inline."""
-    lg = load_logigraph_nodes()
-    rule_ids: set[str] = set()
-    proc_ids: set[str] = set()
-    domain_ids: set[str] = set()
-
-    for r in lg["rules"]:
-        for c in r.get("claims_code", []) or []:
-            did = c.get("depgraph_id") or ""
-            if did.startswith(f"{basename}::"):
-                rule_ids.add(r["id"])
-                for ref in (r.get("references_domain") or []):
-                    domain_ids.add(ref)
-                break
-    for p in lg["processes"]:
-        for step in p.get("steps", []) or []:
-            hit = False
-            for c in step.get("claims_code", []) or []:
-                did = c.get("depgraph_id") or ""
-                if did.startswith(f"{basename}::"):
-                    proc_ids.add(p["id"])
-                    for ref in (step.get("references_domain") or []):
-                        domain_ids.add(ref)
-                    hit = True
-                    break
-            if hit:
-                break
-    return {
-        "rules": sorted(rule_ids),
-        "processes": sorted(proc_ids),
-        "domain": sorted(domain_ids),
+    return _repo_aggregates().get(basename, {}).get("cross_cuts") or {
+        "rules": [], "processes": [], "domain": [],
     }
 
 
