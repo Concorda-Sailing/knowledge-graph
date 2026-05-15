@@ -34,3 +34,21 @@ def test_run_deterministic_reports_precision_recall(tmp_path: Path):
     assert report["passed"] is True  # superset is OK; only declared expectations are checked
     assert report["precision"]["function"] == 1.0
     assert report["recall"]["function"] == 1.0
+
+
+from extractors.eval.judge import write_judgment_package
+
+
+def test_judgment_package_contains_source_and_emitted_nodes(tmp_path: Path):
+    case = tmp_path / "c"
+    (case / "source").mkdir(parents=True)
+    (case / "source" / "a.py").write_text("def hi(): pass\n")
+    (case / "expected.json").write_text("{}")
+    (case / "case.toml").write_text('detectors = []\nlanguage = "python"\n')
+    (case / "judgments").mkdir(exist_ok=True)
+    out = write_judgment_package(case)
+    assert out.name == "pending.md"
+    text = out.read_text()
+    assert "def hi(): pass" in text
+    assert "## Emitted nodes" in text
+    assert "## Judgment prompt" in text
