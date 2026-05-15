@@ -163,27 +163,8 @@ def cmd_orphans(args: argparse.Namespace) -> int:
 
 
 def cmd_validate(args: argparse.Namespace) -> int:
-    try:
-        import jsonschema  # type: ignore[import-untyped]
-    except ImportError:
-        print("jsonschema not installed; install with: pip install jsonschema", file=sys.stderr)
-        return 1
-    # Schema travels with the tool framework; node data lives in DEPGRAPH.
-    schema = json.loads((TOOL_ROOT / "schema" / "node.schema.json").read_text())
-    bad = 0
-    for node_file in NODES.rglob("*.json"):
-        if node_file.name.startswith("_") or any(p.startswith("_") for p in node_file.parts):
-            continue
-        try:
-            data = json.loads(node_file.read_text())
-            jsonschema.validate(data, schema)
-        except (json.JSONDecodeError, jsonschema.ValidationError) as e:
-            print(f"INVALID {node_file}: {e}", file=sys.stderr)
-            bad += 1
-    if bad:
-        return 1
-    print("all nodes valid")
-    return 0
+    from lib.cli.validate import cmd_validate as _impl
+    return _impl(args, _CTX)
 
 
 def cmd_commit_summary(args: argparse.Namespace) -> int:
