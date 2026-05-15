@@ -153,7 +153,7 @@ EOF
 Create `depgraph/tests/extractors/test_python_detector_api.py`:
 
 ```python
-from depgraph.extractors.generic.python.detector_api import (
+from extractors.generic.python.detector_api import (
     RelabelNode, AddEdge, AddNode, DetectorContext, Detector,
 )
 
@@ -296,7 +296,7 @@ Create `depgraph/tests/extractors/test_python_extractor.py`:
 
 ```python
 from pathlib import Path
-from depgraph.extractors.generic.python.extract import (
+from extractors.generic.python.extract import (
     discover_files, parse_file, DEFAULT_EXCLUDES,
 )
 
@@ -429,7 +429,7 @@ EOF
 Append to `depgraph/tests/extractors/test_python_extractor.py`:
 
 ```python
-from depgraph.extractors.generic.python.extract import emit_primitives
+from extractors.generic.python.extract import emit_primitives
 
 
 def test_emit_module_primitive(tmp_repo: Path):
@@ -628,10 +628,10 @@ import json
 import subprocess
 import sys
 
-from depgraph.extractors.generic.python.extract import (
+from extractors.generic.python.extract import (
     load_detectors, apply_mutations, write_nodes,
 )
-from depgraph.extractors.generic.python.detector_api import RelabelNode, AddNode
+from extractors.generic.python.detector_api import RelabelNode, AddNode
 
 
 def test_load_detector_from_framework_dir():
@@ -913,7 +913,7 @@ from __future__ import annotations
 import ast
 from typing import Any
 
-from depgraph.extractors.generic.python.detector_api import (
+from extractors.generic.python.detector_api import (
     Detector, DetectorContext, Mutation,
     RelabelNode, AddEdge, AddNode,
 )
@@ -1025,11 +1025,11 @@ Create `depgraph/tests/extractors/test_python_detectors.py`:
 import ast
 from pathlib import Path
 
-from depgraph.extractors.generic.python.detector_api import (
+from extractors.generic.python.detector_api import (
     DetectorContext, RelabelNode,
 )
-from depgraph.extractors.generic.python.detectors.fastapi import FastAPIDetector
-from depgraph.extractors.generic.python.extract import emit_primitives
+from extractors.generic.python.detectors.fastapi import FastAPIDetector
+from extractors.generic.python.extract import emit_primitives
 
 
 def _run(src: str):
@@ -1108,7 +1108,7 @@ from __future__ import annotations
 import ast
 from typing import Any
 
-from depgraph.extractors.generic.python.detector_api import (
+from extractors.generic.python.detector_api import (
     Detector, DetectorContext, Mutation, RelabelNode,
 )
 
@@ -1222,7 +1222,7 @@ Run: `grep -n -B 2 -A 25 'tablename\|DeclarativeBase\|kind.*model' /home/lgreenl
 Append to `depgraph/tests/extractors/test_python_detectors.py`:
 
 ```python
-from depgraph.extractors.generic.python.detectors.sqlalchemy import SQLAlchemyDetector
+from extractors.generic.python.detectors.sqlalchemy import SQLAlchemyDetector
 
 
 def _run_sa(src: str):
@@ -1275,7 +1275,7 @@ from __future__ import annotations
 import ast
 from typing import Any
 
-from depgraph.extractors.generic.python.detector_api import (
+from extractors.generic.python.detector_api import (
     Detector, DetectorContext, Mutation, RelabelNode,
 )
 
@@ -1373,7 +1373,7 @@ Run: `grep -n -B 2 -A 25 'BaseModel\|kind.*schema\|fields' /home/lgreenlee/conco
 Append:
 
 ```python
-from depgraph.extractors.generic.python.detectors.pydantic import PydanticDetector
+from extractors.generic.python.detectors.pydantic import PydanticDetector
 
 
 def _run_pd(src: str):
@@ -1412,7 +1412,7 @@ from __future__ import annotations
 import ast
 from typing import Any
 
-from depgraph.extractors.generic.python.detector_api import (
+from extractors.generic.python.detector_api import (
     Detector, DetectorContext, Mutation, RelabelNode,
 )
 
@@ -1485,7 +1485,7 @@ EOF
 Append:
 
 ```python
-from depgraph.extractors.generic.python.detectors.pytest import PytestDetector
+from extractors.generic.python.detectors.pytest import PytestDetector
 
 
 def _run_pt(src: str, rel="test_a.py"):
@@ -1537,7 +1537,7 @@ import ast
 from typing import Any
 from pathlib import PurePosixPath
 
-from depgraph.extractors.generic.python.detector_api import (
+from extractors.generic.python.detector_api import (
     Detector, DetectorContext, Mutation, RelabelNode,
 )
 
@@ -2663,7 +2663,7 @@ from typing import Any, Iterable
 import tree_sitter_go
 from tree_sitter import Language, Parser, Tree, Node
 
-from depgraph.extractors.generic.go.detector_api import (
+from extractors.generic.go.detector_api import (
     Detector, DetectorContext, Mutation, RelabelNode, AddEdge, AddNode,
 )
 
@@ -2873,7 +2873,7 @@ Create `depgraph/extractors/generic/go/TEMPLATE_detector.py`:
 from __future__ import annotations
 from typing import Any
 from tree_sitter import Tree
-from depgraph.extractors.generic.go.detector_api import (
+from extractors.generic.go.detector_api import (
     Detector, DetectorContext, Mutation, RelabelNode, AddEdge, AddNode,
 )
 
@@ -3060,9 +3060,9 @@ def walk(node: Node, current_fn_id: str | None):
         walk(child, current_fn_id)
 ```
 
-Everything else (`load_detectors`, `apply_mutations`, `_KIND_DIR`, `write_nodes`, `main`) is identical to Go's `extract.py` with `from depgraph.extractors.generic.rust.detector_api import …`.
+Everything else (`load_detectors`, `apply_mutations`, `_KIND_DIR`, `write_nodes`, `main`) is identical to Go's `extract.py` with `from extractors.generic.rust.detector_api import …`.
 
-Create `depgraph/extractors/generic/rust/TEMPLATE_detector.py`: same as Go's, with `from depgraph.extractors.generic.rust.detector_api import …`.
+Create `depgraph/extractors/generic/rust/TEMPLATE_detector.py`: same as Go's, with `from extractors.generic.rust.detector_api import …`.
 
 Create `depgraph/extractors/generic/rust/README.md`: same shape as Go's README, swap "Go" → "Rust" and the example command path.
 
@@ -3108,7 +3108,7 @@ Add to or create `depgraph/tests/test_config.py`:
 ```python
 from pathlib import Path
 
-from depgraph.lib.config import resolve_extractor_command, repo_detectors
+from lib.config import resolve_extractor_command, repo_detectors
 
 
 def test_kg_dir_substitution(tmp_path):
@@ -3186,7 +3186,7 @@ Identify where the extractor command is built for each `[repos.*]`.
 
 For each repo's extractor invocation, after the existing substitutions:
 
-- Read `detectors = repo_detectors(repo_cfg)` from `depgraph.lib.config`.
+- Read `detectors = repo_detectors(repo_cfg)` from `lib.config`.
 - If non-empty, append `["--detectors", ",".join(detectors)]` to the command.
 - Append `["--detector-path", str(data_dir / "extractors" / "detectors")]` unconditionally — even with no detectors enabled this is a no-op.
 
@@ -3273,7 +3273,7 @@ from pathlib import Path
 
 import pytest
 
-from depgraph.extractors.eval.harness import (
+from extractors.eval.harness import (
     EvalCase, load_case, run_deterministic,
 )
 
@@ -3440,7 +3440,7 @@ def main(argv=None) -> int:
             if not rpt["passed"]:
                 any_failed = True
         else:
-            from depgraph.extractors.eval.judge import write_judgment_package
+            from extractors.eval.judge import write_judgment_package
             out = write_judgment_package(c)
             print(f"judgment package written to {out}")
     return 1 if any_failed else 0
@@ -3484,7 +3484,7 @@ EOF
 Append:
 
 ```python
-from depgraph.extractors.eval.judge import write_judgment_package
+from extractors.eval.judge import write_judgment_package
 
 
 def test_judgment_package_contains_source_and_emitted_nodes(tmp_path: Path):
@@ -3518,7 +3518,7 @@ import json
 import tempfile
 from pathlib import Path
 
-from depgraph.extractors.eval.harness import load_case, _run_extractor, _collect_node_ids
+from extractors.eval.harness import load_case, _run_extractor, _collect_node_ids
 
 
 PROMPT = """## Judgment prompt
@@ -3773,11 +3773,11 @@ Only declared expectations are checked. Omitted fields = "don't care."
 
 ```bash
 # Deterministic (gates PRs):
-python3 -m depgraph.extractors.eval.harness run python --case _seed_imports
-python3 -m depgraph.extractors.eval.harness run python   # all python cases
+python3 -m extractors.eval.harness run python --case _seed_imports
+python3 -m extractors.eval.harness run python   # all python cases
 
 # Judgment (advisory, hand-reviewed in a Claude Code session):
-python3 -m depgraph.extractors.eval.harness judge python --case _seed_fastapi
+python3 -m extractors.eval.harness judge python --case _seed_fastapi
 # Read corpus/python/_seed_fastapi/judgments/pending.md and save your
 # judgment to corpus/python/_seed_fastapi/judgments/<YYYY-MM-DD>.md
 ```
@@ -3791,10 +3791,10 @@ python3 -m depgraph.extractors.eval.harness judge python --case _seed_fastapi
 
 - [ ] **Step 8: Verify all cases pass**
 
-Run: `python3 -m depgraph.extractors.eval.harness run python`
-Run: `python3 -m depgraph.extractors.eval.harness run typescript`
-Run: `python3 -m depgraph.extractors.eval.harness run go`
-Run: `python3 -m depgraph.extractors.eval.harness run rust`
+Run: `python3 -m extractors.eval.harness run python`
+Run: `python3 -m extractors.eval.harness run typescript`
+Run: `python3 -m extractors.eval.harness run go`
+Run: `python3 -m extractors.eval.harness run rust`
 
 Expected: each prints JSON reports with `"passed": true`.
 
@@ -3841,7 +3841,7 @@ import os
     reason="KG_EVAL=1 to run full eval corpus",
 )
 def test_all_seed_cases_pass():
-    from depgraph.extractors.eval.harness import run_deterministic
+    from extractors.eval.harness import run_deterministic
     corpus = Path(__file__).resolve().parents[2] / "depgraph" / "extractors" / "eval" / "corpus"
     failures = []
     for lang_dir in corpus.iterdir():
@@ -4260,7 +4260,7 @@ This guide covers the PR process for upstreaming a new detector.
 2. **Implement `detect()`**. The contract is documented in `detector_api.{py,ts}`. Detectors must be pure functions of their inputs — no I/O, no globals, no side effects. Exceptions are caught at the extractor boundary, but a noisy detector hurts everyone.
 3. **Add tests** in `depgraph/tests/extractors/test_<lang>_detectors.py`. Cover: the happy path; the negative case (no false positives on unrelated constructs); one realistic edge case from the framework you're recognizing.
 4. **Add an eval case** under `depgraph/extractors/eval/corpus/<lang>/_seed_<name>/`. Tiny `source/` tree; `expected.json` listing the kinds your detector produces; `case.toml` with `language` and `detectors`. The case becomes part of CI from then on.
-5. **Run the deterministic harness**: `python3 -m depgraph.extractors.eval.harness run <lang> --case _seed_<name>` — must report `passed: true`.
+5. **Run the deterministic harness**: `python3 -m extractors.eval.harness run <lang> --case _seed_<name>` — must report `passed: true`.
 6. **Open a PR** with: detector source, tests, eval case, and a short PR description explaining what framework you're recognizing and what node kind(s) you produce. Include a link to upstream docs for the framework if you can.
 
 ## Acceptance criteria
