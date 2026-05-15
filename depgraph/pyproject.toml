@@ -18,8 +18,9 @@ dependencies = [
 [project.optional-dependencies]
 dev = ["pytest>=7.0"]
 
-[tool.setuptools]
-packages = ["lib", "hooks", "schema", "extractors", "tests"]
+[tool.setuptools.packages.find]
+include = ["depgraph*"]
+exclude = ["tests*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
