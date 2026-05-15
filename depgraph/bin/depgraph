@@ -1208,6 +1208,22 @@ def cmd_repo_list(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_repo_remove(args: argparse.Namespace) -> int:
+    cfg_path = DEPGRAPH / "project.toml"
+    if not cfg_path.exists():
+        print(f"no project.toml at {cfg_path}", file=sys.stderr)
+        return 1
+    repos = project_repos(DEPGRAPH)
+    if args.key not in repos:
+        print(f"[repos.{args.key}] not found in {cfg_path}", file=sys.stderr)
+        return 1
+    text = cfg_path.read_text()
+    text = _strip_existing_repo_block(text, args.key).rstrip() + "\n"
+    cfg_path.write_text(text)
+    print(f"removed [repos.{args.key}] from {cfg_path}")
+    return 0
+
+
 def cmd_self_check(args: argparse.Namespace) -> int:
     """Smoke-test: emit a fake PreToolUse payload and assert the hook produces something.
     The payload's file_path is synthesized from the first configured [repos.*] table."""
@@ -1592,6 +1608,10 @@ def main() -> int:
 
     p_rlist = sub.add_parser("repo-list", help="List configured [repos.*] entries")
     p_rlist.set_defaults(func=cmd_repo_list)
+
+    p_rrm = sub.add_parser("repo-remove", help="Remove a [repos.<key>] entry from project.toml")
+    p_rrm.add_argument("key", help="Repo key to remove")
+    p_rrm.set_defaults(func=cmd_repo_remove)
 
     args = parser.parse_args()
     return args.func(args)
