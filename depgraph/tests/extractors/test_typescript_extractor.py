@@ -192,3 +192,47 @@ def test_vitest_handles_property_access_verbs(tmp_repo, tmp_data_dir):
     tests = _read_nodes(tmp_data_dir, "tests")
     names = sorted(t.get("name") for t in tests)
     assert names == ["only", "skipped"]
+
+
+def test_service_relabels_function_in_lib(tmp_repo, tmp_data_dir):
+    (tmp_repo / "lib").mkdir()
+    (tmp_repo / "lib" / "api.ts").write_text(
+        "export function fetchUsers() { return [] }\n"
+    )
+    r = _run(tmp_repo, tmp_data_dir, detectors="service")
+    assert r.returncode == 0, r.stderr
+    svcs = _read_nodes(tmp_data_dir, "services")
+    assert any(s["name"] == "fetchUsers" for s in svcs)
+
+
+def test_service_relabels_function_in_pages(tmp_repo, tmp_data_dir):
+    (tmp_repo / "pages").mkdir()
+    (tmp_repo / "pages" / "dashboard.ts").write_text(
+        "export function navigateToDashboard() { return null }\n"
+    )
+    r = _run(tmp_repo, tmp_data_dir, detectors="service")
+    assert r.returncode == 0, r.stderr
+    svcs = _read_nodes(tmp_data_dir, "services")
+    assert any(s["name"] == "navigateToDashboard" for s in svcs)
+
+
+def test_service_skips_underscore_prefix(tmp_repo, tmp_data_dir):
+    (tmp_repo / "lib").mkdir()
+    (tmp_repo / "lib" / "helpers.ts").write_text(
+        "function _internal() {}\nexport function pub() {}\n"
+    )
+    r = _run(tmp_repo, tmp_data_dir, detectors="service")
+    assert r.returncode == 0, r.stderr
+    svcs = _read_nodes(tmp_data_dir, "services")
+    names = [s["name"] for s in svcs]
+    assert "pub" in names
+    assert "_internal" not in names
+
+
+def test_service_ignores_non_service_path(tmp_repo, tmp_data_dir):
+    (tmp_repo / "components").mkdir()
+    (tmp_repo / "components" / "x.ts").write_text("export function foo() {}\n")
+    r = _run(tmp_repo, tmp_data_dir, detectors="service")
+    assert r.returncode == 0, r.stderr
+    svcs = _read_nodes(tmp_data_dir, "services")
+    assert not any(s["name"] == "foo" for s in svcs)

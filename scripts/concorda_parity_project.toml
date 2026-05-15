@@ -13,4 +13,9 @@ files_arg = "--only"
 [repos.web]
 path = "~/concorda-web"
 extractor = ["npx", "tsx", "{kg_dir}/depgraph/extractors/generic/typescript/extract.ts"]
-detectors = ["react", "vitest", "route-calls"]
+detectors = ["react", "vitest", "route-calls", "service"]
+
+[repos.test]
+path = "~/concorda-test"
+extractor = ["npx", "tsx", "{kg_dir}/depgraph/extractors/generic/typescript/extract.ts"]
+detectors = ["vitest", "service"]
