@@ -151,23 +151,37 @@ def primary_repo_path(data_dir: Path) -> Optional[Path]:
 
 
 def render_extractor(repo_info: dict, data_dir: Path) -> Optional[list[str]]:
-    """Apply {data_dir}/{path}/{framework_dir} substitutions to the extractor token list.
+    """Apply {data_dir}/{path}/{framework_dir}/{kg_dir} substitutions to the extractor token list.
     Returns None if the repo has no extractor configured.
 
     Available substitutions:
         {data_dir}      — the project data dir (e.g. ~/project/depgraph)
         {path}          — the repo's resolved filesystem path
         {framework_dir} — the depgraph framework root (parent of lib/)
+        {kg_dir}        — the knowledge-graph repo root (parent of depgraph/)
     """
     extractor = repo_info.get("extractor")
     if not extractor:
         return None
+    _lib_dir = Path(__file__).resolve().parent
     subs = {
         "data_dir": str(data_dir),
         "path": str(repo_info["path"]),
-        "framework_dir": str(Path(__file__).resolve().parent.parent),
+        "framework_dir": str(_lib_dir.parent),
+        "kg_dir": str(_lib_dir.parent.parent),
     }
     return [token.format(**subs) for token in extractor]
+
+
+def repo_detectors(repo_cfg: dict) -> list[str]:
+    """Return the detectors list for a [repos.*] table; default empty.
+
+    Raises ValueError if `detectors` is present but is not a list.
+    """
+    val = repo_cfg.get("detectors", [])
+    if not isinstance(val, list):
+        raise ValueError(f"detectors must be a list, got {type(val).__name__}")
+    return list(val)
 
 
 def repo_basenames(data_dir: Path) -> set[str]:
