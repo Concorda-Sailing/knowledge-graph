@@ -274,6 +274,71 @@ def _write_toml_key(cfg_path: Path, section: str, key: str, value: str) -> None:
     cfg_path.write_text(text)
 
 
+def _cmd_health(args: argparse.Namespace) -> int:
+    import os
+    import subprocess
+    try:
+        proj = _resolved(args)
+    except resolve.ProjectResolutionError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+
+    tool_root = Path(__file__).resolve().parents[2]
+    overall = 0
+
+    print(f"## {proj.name or '(unregistered)'} health\n")
+
+    # depgraph
+    print("### depgraph")
+    if proj.depgraph_dir.exists():
+        rc = subprocess.run(
+            [str(tool_root / "depgraph" / "bin" / "depgraph"), "health"],
+            env={**os.environ, "DEPGRAPH_DATA_DIR": str(proj.depgraph_dir)},
+        ).returncode
+        overall |= rc
+    else:
+        print(f"  (no depgraph dir at {proj.depgraph_dir})")
+        overall |= 1
+    print()
+
+    # logigraph
+    print("### logigraph")
+    if proj.logigraph_dir.exists():
+        rc = subprocess.run(
+            [str(tool_root / "logigraph" / "bin" / "logigraph"), "health"],
+            env={**os.environ, "LOGIGRAPH_DATA_DIR": str(proj.logigraph_dir)},
+        ).returncode
+        overall |= rc
+    else:
+        print(f"  (no logigraph dir at {proj.logigraph_dir})")
+        overall |= 1
+    print()
+
+    # Per-repo path-exists
+    print("### repos")
+    depgraph_proj = proj.depgraph_dir / "project.toml"
+    if depgraph_proj.exists():
+        import tomllib
+        cfg = tomllib.loads(depgraph_proj.read_text())
+        repos = cfg.get("repos") or {}
+        if repos:
+            for key, val in repos.items():
+                if not isinstance(val, dict):
+                    continue
+                path = Path(str(val.get("path", ""))).expanduser()
+                ok = path.exists()
+                mark = "✓" if ok else "✗"
+                print(f"  {mark} {key:<20} {path}")
+                if not ok:
+                    overall |= 1
+        else:
+            print("  (no repos configured)")
+    else:
+        print(f"  (no depgraph project.toml at {depgraph_proj})")
+
+    return overall
+
+
 def register(sub: argparse._SubParsersAction) -> None:
     p = sub.add_parser("project", help="Per-project config and registry.")
     p.add_argument("--project", help="Project name (overrides env/cwd/default).")
@@ -330,3 +395,6 @@ def register(sub: argparse._SubParsersAction) -> None:
     p_set.add_argument("field")
     p_set.add_argument("value")
     p_set.set_defaults(func=_cmd_set)
+
+    p_health = proj_sub.add_parser("health", help="Cross-subsystem health (depgraph + logigraph + repo paths).")
+    p_health.set_defaults(func=_cmd_health)

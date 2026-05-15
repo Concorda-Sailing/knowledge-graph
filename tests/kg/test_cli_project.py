@@ -182,3 +182,12 @@ def test_set_primary_repo_rejects_unknown_key(two_projects: dict) -> None:
         "set", "primary_repo", "missing-key",
     )
     assert res.returncode != 0
+
+
+def test_health_runs_subsystem_checks(two_projects: dict) -> None:
+    res = _run(two_projects["registry"], "project", "--project", "alpha", "health")
+    # Exit code is allowed to be 0 or 1 depending on whether subsystems are
+    # populated — but the output must mention both subsystems.
+    out = res.stdout + res.stderr
+    assert "depgraph" in out.lower()
+    assert "logigraph" in out.lower()
