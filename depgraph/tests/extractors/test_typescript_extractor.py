@@ -67,3 +67,33 @@ def test_ts_emits_import_edge(tmp_repo, tmp_data_dir):
     assert r.returncode == 0, r.stderr
     imports = _read_nodes(tmp_data_dir, "imports")
     assert any(e["target"] == "./b" for e in imports)
+
+
+def test_react_component_relabeled(tmp_repo, tmp_data_dir):
+    (tmp_repo / "C.tsx").write_text(
+        "export function MyButton() { return <button>hi</button> }\n"
+    )
+    r = _run(tmp_repo, tmp_data_dir, detectors="react")
+    assert r.returncode == 0, r.stderr
+    comps = _read_nodes(tmp_data_dir, "components")
+    assert any(c["name"] == "MyButton" for c in comps)
+
+
+def test_react_hook_relabeled(tmp_repo, tmp_data_dir):
+    (tmp_repo / "h.ts").write_text(
+        "import { useState } from 'react'\n"
+        "export function useThing() { const [x, set] = useState(0); return x }\n"
+    )
+    r = _run(tmp_repo, tmp_data_dir, detectors="react")
+    assert r.returncode == 0, r.stderr
+    hooks = _read_nodes(tmp_data_dir, "hooks")
+    assert any(h["name"] == "useThing" for h in hooks)
+
+
+def test_react_ignores_lowercase_function(tmp_repo, tmp_data_dir):
+    (tmp_repo / "u.ts").write_text("export function helper() { return 1 }\n")
+    r = _run(tmp_repo, tmp_data_dir, detectors="react")
+    assert r.returncode == 0, r.stderr
+    comps = _read_nodes(tmp_data_dir, "components")
+    hooks = _read_nodes(tmp_data_dir, "hooks")
+    assert not any(c["name"] == "helper" for c in comps + hooks)
