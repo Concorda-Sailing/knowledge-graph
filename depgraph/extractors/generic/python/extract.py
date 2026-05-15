@@ -231,8 +231,16 @@ _KIND_DIR = {
 }
 
 
+_MAX_FILENAME = 200  # bytes; ext4/xfs allow 255; leave headroom for ".json"
+
+
 def _safe_filename(node_id: str) -> str:
-    return node_id.replace("/", "__").replace(":", "__") + ".json"
+    stem = node_id.replace("/", "__").replace(":", "__")
+    if len(stem) > _MAX_FILENAME:
+        import hashlib
+        digest = hashlib.sha1(stem.encode()).hexdigest()[:12]
+        stem = stem[:_MAX_FILENAME] + "__" + digest
+    return stem + ".json"
 
 
 def write_nodes(nodes: list[dict], data_dir: Path) -> None:

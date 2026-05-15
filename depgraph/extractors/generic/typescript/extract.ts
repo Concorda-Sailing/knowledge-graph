@@ -110,8 +110,18 @@ const KIND_DIR: Record<string, string> = {
   import_edge: "imports", call_edge: "calls",
 };
 
+const MAX_STEM = 200;
+
 function safeFilename(id: string): string {
-  return id.replace(/\//g, "__").replace(/:/g, "__") + ".json";
+  let stem = id.replace(/\//g, "__").replace(/:/g, "__");
+  if (stem.length > MAX_STEM) {
+    // Use a simple djb2-style hash for the truncation suffix so the filename
+    // is still deterministic and collision-resistant without needing crypto.
+    let h = 5381;
+    for (let i = 0; i < stem.length; i++) h = ((h * 33) ^ stem.charCodeAt(i)) >>> 0;
+    stem = stem.slice(0, MAX_STEM) + "__" + h.toString(16).padStart(8, "0");
+  }
+  return stem + ".json";
 }
 
 function writeNodes(nodes: Primitive[], dataDir: string): void {
