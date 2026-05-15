@@ -14,7 +14,7 @@ if str(_DEPGRAPH_ROOT) not in _sys.path:
     _sys.path.insert(0, str(_DEPGRAPH_ROOT))
 
 import ast
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Iterator
 
 
@@ -242,7 +242,6 @@ def _safe_filename(node_id: str) -> str:
     # Canonical IDs (post-canonicalize) use `::` as separator. Route them
     # through slugify_id_py so the on-disk filename matches pre-flip.
     if "::" in node_id:
-        from extractors.generic.python.canonical import slugify_id_py
         stem = slugify_id_py(node_id)
     else:
         stem = node_id.replace("/", "__").replace(":", "__")
@@ -282,10 +281,7 @@ PRIMITIVE_KINDS_TO_DROP = {
 }
 
 
-def _is_under(path: str, top: str) -> bool:
-    from pathlib import PurePosixPath
-    parts = PurePosixPath(path).parts
-    return bool(parts) and parts[0] == top
+_EXTRACTOR_STAMP = "extract_api.py"
 
 
 def _canonicalize_endpoint(n, *, primitives, sym_idx, repo_key):
@@ -331,7 +327,7 @@ def _canonicalize_endpoint(n, *, primitives, sym_idx, repo_key):
         "external_consumers": [],
         "tests": [],
         "dossier": f"dossiers/endpoints/{slugify_id_py(cid)}.md",
-        "extractor": "extract_api.py",
+        "extractor": _EXTRACTOR_STAMP,
         "warnings": [],
     }
     if response_type_name is None and method != "DELETE":
@@ -372,7 +368,7 @@ def _canonicalize_model(n, *, repo_key):
         "external_consumers": [],
         "tests": [],
         "dossier": f"dossiers/models/{slugify_id_py(cid)}.md",
-        "extractor": "extract_api.py",
+        "extractor": _EXTRACTOR_STAMP,
         "warnings": [],
     }
 
@@ -402,7 +398,7 @@ def _canonicalize_schema(n, *, repo_key):
         "external_consumers": [],
         "tests": [],
         "dossier": f"dossiers/schemas/{slugify_id_py(cid)}.md",
-        "extractor": "extract_api.py",
+        "extractor": _EXTRACTOR_STAMP,
         "warnings": [],
     }
 
@@ -432,7 +428,7 @@ def _canonicalize_service(n, *, repo_key):
         "external_consumers": [],
         "tests": [],
         "dossier": f"dossiers/services/{slugify_id_py(cid)}.md",
-        "extractor": "extract_api.py",
+        "extractor": _EXTRACTOR_STAMP,
         "warnings": [],
     }
 
@@ -441,7 +437,6 @@ def _accept_model(n: dict) -> bool:
     """Pre-flip extract_model_nodes only scans <repo>/models/**, skipping
     __init__.py and base.py. Mirror that here so detector emissions from
     elsewhere don't leak through."""
-    from pathlib import PurePosixPath
     parts = PurePosixPath(n["file"]).parts
     if not parts or parts[0] != "models":
         return False
@@ -452,7 +447,6 @@ def _accept_model(n: dict) -> bool:
 
 
 def _accept_schema(n: dict) -> bool:
-    from pathlib import PurePosixPath
     parts = PurePosixPath(n["file"]).parts
     if not parts or parts[0] != "schemas":
         return False
@@ -462,7 +456,6 @@ def _accept_schema(n: dict) -> bool:
 
 
 def _accept_service(n: dict) -> bool:
-    from pathlib import PurePosixPath
     parts = PurePosixPath(n["file"]).parts
     if not parts or parts[0] not in ("services", "utils"):
         return False
