@@ -103,3 +103,56 @@ def test_default_registry_path_is_in_claude_dir() -> None:
     """Without KG_REGISTRY_PATH, default is ~/.claude/kg-graphs.toml."""
     os.environ.pop("KG_REGISTRY_PATH", None)
     assert registry.path() == Path.home() / ".claude" / "kg-graphs.toml"
+
+
+def test_load_default_returns_none_when_unset(tmp_registry: Path) -> None:
+    assert registry.load_default() is None
+
+
+def test_load_default_returns_none_when_file_missing(tmp_registry: Path) -> None:
+    assert not tmp_registry.exists()
+    assert registry.load_default() is None
+
+
+def test_save_default_then_load(tmp_registry: Path, tmp_path: Path) -> None:
+    graph_dir = tmp_path / "concorda-knowledge-graph"
+    graph_dir.mkdir()
+    registry.add(name="concorda", path=graph_dir)
+
+    registry.save_default("concorda")
+    assert registry.load_default() == "concorda"
+
+
+def test_save_default_rejects_unregistered_name(tmp_registry: Path) -> None:
+    with pytest.raises(ValueError, match="not registered"):
+        registry.save_default("nope")
+
+
+def test_clear_default(tmp_registry: Path, tmp_path: Path) -> None:
+    graph_dir = tmp_path / "g"
+    graph_dir.mkdir()
+    registry.add(name="g", path=graph_dir)
+    registry.save_default("g")
+    assert registry.load_default() == "g"
+
+    registry.clear_default()
+    assert registry.load_default() is None
+
+
+def test_default_persists_through_add(tmp_registry: Path, tmp_path: Path) -> None:
+    (tmp_path / "a").mkdir()
+    (tmp_path / "b").mkdir()
+    registry.add(name="a", path=tmp_path / "a")
+    registry.save_default("a")
+
+    registry.add(name="b", path=tmp_path / "b")
+    assert registry.load_default() == "a"
+
+
+def test_default_cleared_when_target_removed(tmp_registry: Path, tmp_path: Path) -> None:
+    (tmp_path / "a").mkdir()
+    registry.add(name="a", path=tmp_path / "a")
+    registry.save_default("a")
+
+    registry.remove("a")
+    assert registry.load_default() is None
