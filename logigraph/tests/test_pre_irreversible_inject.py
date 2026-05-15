@@ -169,3 +169,96 @@ def test_chained_pipe_no_space():
 def test_unbalanced_quotes_returns_empty():
     """Unparseable shell — return [] rather than crashing or false-flagging."""
     assert detect_bash('echo "unterminated') == []
+
+
+# ----- block-then-allow flow: first hit denies + writes ack, retry consumes -----
+
+
+import json as _json
+import os as _os
+import subprocess as _subprocess
+import sys as _sys
+
+
+_HOOK = REPO / "hooks" / "pre_irreversible_inject.py"
+
+
+def _invoke_hook(tool_name: str, tool_input: dict, ack_dir: Path, ttl: int = 120):
+    env = _os.environ.copy()
+    env["KG_PRE_IRREVERSIBLE_ACK_DIR"] = str(ack_dir)
+    env["KG_PRE_IRREVERSIBLE_TTL"] = str(ttl)
+    payload = {"tool_name": tool_name, "tool_input": tool_input}
+    return _subprocess.run(
+        [_sys.executable, str(_HOOK)],
+        input=_json.dumps(payload),
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+
+
+def test_first_hit_denies_and_writes_ack(tmp_path):
+    """First flagged call: hook must emit permissionDecision=deny and create
+    an ack-file keyed by the command hash."""
+    ack_dir = tmp_path / "ack"
+    r = _invoke_hook("Bash", {"command": "rm -rf /tmp/whatever"}, ack_dir)
+    assert r.returncode == 0, r.stderr
+    out = _json.loads(r.stdout)
+    hso = out["hookSpecificOutput"]
+    assert hso["permissionDecision"] == "deny"
+    assert "Goal" in hso["permissionDecisionReason"]
+    acks = list(ack_dir.iterdir())
+    assert len(acks) == 1
+
+
+def test_retry_consumes_ack_and_allows(tmp_path):
+    """Second identical call (within TTL) must exit 0 with empty stdout and
+    consume the ack-file so a third call would block again."""
+    ack_dir = tmp_path / "ack"
+    cmd = {"command": "rm -rf /tmp/whatever"}
+    first = _invoke_hook("Bash", cmd, ack_dir)
+    assert _json.loads(first.stdout)["hookSpecificOutput"]["permissionDecision"] == "deny"
+
+    second = _invoke_hook("Bash", cmd, ack_dir)
+    assert second.returncode == 0
+    assert second.stdout.strip() == "", f"expected empty stdout, got: {second.stdout!r}"
+    assert list(ack_dir.iterdir()) == []
+
+    # Third call: ack is gone, must block again.
+    third = _invoke_hook("Bash", cmd, ack_dir)
+    assert _json.loads(third.stdout)["hookSpecificOutput"]["permissionDecision"] == "deny"
+
+
+def test_expired_ack_does_not_allow(tmp_path):
+    """An ack-file older than TTL should be treated as absent."""
+    ack_dir = tmp_path / "ack"
+    cmd = {"command": "rm -rf /tmp/whatever"}
+    first = _invoke_hook("Bash", cmd, ack_dir, ttl=120)
+    assert _json.loads(first.stdout)["hookSpecificOutput"]["permissionDecision"] == "deny"
+
+    # Backdate the ack-file beyond TTL.
+    ack_file = next(ack_dir.iterdir())
+    stale = ack_file.stat().st_mtime - 3600
+    _os.utime(ack_file, (stale, stale))
+
+    retry = _invoke_hook("Bash", cmd, ack_dir, ttl=120)
+    assert _json.loads(retry.stdout)["hookSpecificOutput"]["permissionDecision"] == "deny"
+
+
+def test_different_commands_have_independent_acks(tmp_path):
+    """Acking command A must not allow command B."""
+    ack_dir = tmp_path / "ack"
+    a = _invoke_hook("Bash", {"command": "rm -rf /tmp/a"}, ack_dir)
+    assert _json.loads(a.stdout)["hookSpecificOutput"]["permissionDecision"] == "deny"
+    b = _invoke_hook("Bash", {"command": "rm -rf /tmp/b"}, ack_dir)
+    assert _json.loads(b.stdout)["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert len(list(ack_dir.iterdir())) == 2
+
+
+def test_non_flagged_command_passes(tmp_path):
+    """Non-destructive commands should pass with no output, no ack."""
+    ack_dir = tmp_path / "ack"
+    r = _invoke_hook("Bash", {"command": "ls /tmp"}, ack_dir)
+    assert r.returncode == 0
+    assert r.stdout.strip() == ""
+    assert not ack_dir.exists() or list(ack_dir.iterdir()) == []

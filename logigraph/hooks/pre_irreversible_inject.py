@@ -29,10 +29,59 @@ Failure mode handling:
 
 from __future__ import annotations
 
+import hashlib
 import json
+import os
 import re
 import shlex
 import sys
+import time
+from pathlib import Path
+
+
+# Ack-file directory: a deny written by this hook drops a marker keyed by
+# tool-call hash; the next identical call within TTL consumes the marker
+# and is allowed through. Single-use — each fresh intent re-blocks once.
+_ACK_DIR = Path(
+    os.environ.get("KG_PRE_IRREVERSIBLE_ACK_DIR")
+    or (Path.home() / ".cache" / "kg" / "pre-irreversible-ack")
+)
+_ACK_TTL_SECONDS = int(os.environ.get("KG_PRE_IRREVERSIBLE_TTL", "120"))
+
+
+def _command_key(tool_name: str, tool_input: dict) -> str:
+    canon = json.dumps({"tool": tool_name, "input": tool_input}, sort_keys=True)
+    return hashlib.sha256(canon.encode("utf-8")).hexdigest()[:16]
+
+
+def _ack_path(key: str) -> Path:
+    return _ACK_DIR / f"{key}.ack"
+
+
+def _try_consume_ack(key: str) -> bool:
+    """If a non-expired ack-file exists for `key`, delete it and return True.
+    Otherwise return False (and clean up any stale ack-file)."""
+    f = _ack_path(key)
+    try:
+        st = f.stat()
+    except FileNotFoundError:
+        return False
+    except OSError:
+        return False
+    age = time.time() - st.st_mtime
+    try:
+        f.unlink()
+    except OSError:
+        pass
+    return age <= _ACK_TTL_SECONDS
+
+
+def _write_ack(key: str) -> None:
+    try:
+        _ACK_DIR.mkdir(parents=True, exist_ok=True)
+        _ack_path(key).write_text("")
+    except OSError:
+        pass
 
 
 # Shell control operators that start a new command segment.
@@ -215,6 +264,21 @@ def emit_warning(message: str) -> None:
     )
 
 
+def emit_deny(reason: str) -> None:
+    """Block the tool call. `reason` is fed to the model verbatim so the
+    structured 'state goal/preconditions/recovery' prompt lands as the
+    failure context — not as a separate appended note."""
+    emit(
+        {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": reason,
+            }
+        }
+    )
+
+
 def detect_bash(command: str) -> list[str]:
     """Return human-readable labels for irreversibility patterns matched
     in a Bash command. Empty list means no match.
@@ -317,14 +381,13 @@ def main() -> int:
     else:
         return 0
 
-    emit(
-        {
-            "hookSpecificOutput": {
-                "hookEventName": "PreToolUse",
-                "additionalContext": body,
-            }
-        }
-    )
+    key = _command_key(tool_name, tool_input)
+    if _try_consume_ack(key):
+        # The model already saw a block for this exact call (and presumably
+        # stated goal/preconditions/recovery). Let the retry through.
+        return 0
+    _write_ack(key)
+    emit_deny(body)
     return 0
 
 
