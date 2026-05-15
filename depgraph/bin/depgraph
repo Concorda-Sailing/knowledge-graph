@@ -158,38 +158,8 @@ def cmd_dependents(args: argparse.Namespace) -> int:
 
 
 def cmd_orphans(args: argparse.Namespace) -> int:
-    orphans = []
-    basename_to_path = basename_path_map(DEPGRAPH)
-    for node_file in NODES.rglob("*.json"):
-        if node_file.name.startswith("_") or any(p.startswith("_") for p in node_file.parts):
-            continue
-        try:
-            data = json.loads(node_file.read_text())
-        except (OSError, json.JSONDecodeError):
-            continue
-        src = data.get("source") or {}
-        repo, rel = src.get("repo"), src.get("path")
-        # No source path at all → not an orphan, just an abstract node (rare).
-        if not repo or not rel:
-            continue
-        repo_path = basename_to_path.get(repo)
-        if repo_path is None:
-            continue  # Unknown repo — don't claim it's orphan.
-        if not (repo_path / rel).exists():
-            orphans.append((node_file, data["id"]))
-    if not orphans:
-        print("no orphans")
-        return 0
-    for path, nid in orphans:
-        print(f"orphan: {nid}  ({path.relative_to(DEPGRAPH)})")
-    if args.purge:
-        archive = NODES / "_archive"
-        archive.mkdir(exist_ok=True)
-        for path, _ in orphans:
-            target = archive / path.name
-            path.rename(target)
-            print(f"  archived → {target.relative_to(DEPGRAPH)}")
-    return 0
+    from lib.cli.orphans import cmd_orphans as _impl
+    return _impl(args, _CTX)
 
 
 def cmd_validate(args: argparse.Namespace) -> int:
