@@ -58,6 +58,12 @@ TELEMETRY_DIR = DEPGRAPH / "telemetry"
 INJECTIONS_LOG = TELEMETRY_DIR / "injections.jsonl"
 ACKS_LOG = TELEMETRY_DIR / "acknowledgments.jsonl"
 
+# Phase 2: build a Context that extracted handlers receive instead of
+# reaching for module globals. Subsequent extractions remove the
+# globals; this Context bridges old and new during the transition.
+from lib.cli.context import Context as _Context  # noqa: E402
+_CTX = _Context.from_data_dir(DEPGRAPH)
+
 
 def mark_regen_in_progress() -> None:
     """Defect #2: write a regen marker so the hook can surface 'graph being
@@ -102,44 +108,8 @@ def load_dependents_index() -> dict[str, list[dict]]:
 
 
 def cmd_regen(args: argparse.Namespace) -> int:
-    """Run each [repos.<key>].extractor from project.toml, then reconcile.
-    The legacy four-extractor dispatch table is gone — repos without an
-    extractor configured are skipped with a note.
-
-    Inject DEPGRAPH_DATA_DIR into the subprocess env so extractors target the
-    resolved data dir even when the user invoked `depgraph regen` via cwd
-    discovery rather than an explicit env var. Without this, extractors fall
-    back to their own (often stale) defaults and write to a different dir
-    than reconcile reads from — a silent failure mode."""
-    mark_regen_in_progress()
-    env = {**os.environ, "DEPGRAPH_DATA_DIR": str(DEPGRAPH)}
-    failed: list[str] = []
-    for key, info in project_repos(DEPGRAPH).items():
-        cmd = render_extractor(info, DEPGRAPH)
-        if cmd is None:
-            print(f"--- {key} (no extractor configured; skipping)")
-            continue
-        cmd += [
-            "--repo-key", key,
-            "--repo-path", str(info["path"]),
-            "--data-dir", str(DEPGRAPH),
-        ]
-        detectors = repo_detectors(info)
-        if detectors:
-            cmd += ["--detectors", ",".join(detectors)]
-        cmd += ["--detector-path", str(DEPGRAPH / "extractors" / "detectors")]
-        print(f"--- {key}")
-        rc = subprocess.call(cmd, env=env)
-        if rc != 0:
-            failed.append(key)
-    print("--- reconcile")
-    rc = subprocess.call([FRAMEWORK_PYTHON, str(TOOL_ROOT / "extractors" / "reconcile.py")], env=env)
-    if rc != 0:
-        failed.append("reconcile")
-    if failed:
-        print(f"\nFAILED stages: {', '.join(failed)}", file=sys.stderr)
-        return 1
-    return 0
+    from lib.cli.regen import cmd_regen as _impl
+    return _impl(args, _CTX)
 
 
 def find_nodes_for_target(target: str) -> list[Path]:
