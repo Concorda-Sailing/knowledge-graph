@@ -193,6 +193,87 @@ def _cmd_remove_repo(args: argparse.Namespace) -> int:
     return _delegate_to_depgraph(proj, "repo-remove", args.key)
 
 
+_SET_WHITELIST = {
+    "primary_repo":         {"toml": "depgraph/project.toml", "section": "project", "key": "primary_repo"},
+    "logigraph.data_dir":   {"toml": "depgraph/project.toml", "section": "logigraph", "key": "data_dir"},
+    "memory.dir":           {"toml": "depgraph/project.toml", "section": "memory", "key": "dir"},
+}
+
+
+def _cmd_set(args: argparse.Namespace) -> int:
+    if args.field not in _SET_WHITELIST:
+        print(
+            f"Error: '{args.field}' is not in whitelist. Allowed: "
+            f"{', '.join(sorted(_SET_WHITELIST))}",
+            file=sys.stderr,
+        )
+        return 1
+    try:
+        proj = _resolved(args)
+    except resolve.ProjectResolutionError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+
+    spec = _SET_WHITELIST[args.field]
+    cfg_path = proj.data_dir / spec["toml"]
+    if not cfg_path.exists():
+        print(f"Error: {cfg_path} does not exist", file=sys.stderr)
+        return 1
+
+    # Validation for specific fields
+    if args.field == "primary_repo":
+        existing = tomllib.loads(cfg_path.read_text())
+        repos = existing.get("repos") or {}
+        if args.value not in repos:
+            print(
+                f"Error: primary_repo='{args.value}' but no [repos.{args.value}] table. "
+                f"Configured: {sorted(repos)}",
+                file=sys.stderr,
+            )
+            return 1
+
+    _write_toml_key(cfg_path, spec["section"], spec["key"], args.value)
+    print(f"set {args.field} = {args.value!r} in {cfg_path}")
+    return 0
+
+
+def _write_toml_key(cfg_path: Path, section: str, key: str, value: str) -> None:
+    """Idempotently set [section] key = "value" in cfg_path. Preserves other content."""
+    import re
+    text = cfg_path.read_text()
+    section_header = f"[{section}]"
+    new_line = f'{key} = "{value}"'
+
+    if section_header not in text:
+        # Append new section at end.
+        if not text.endswith("\n"):
+            text += "\n"
+        text += f"\n{section_header}\n{new_line}\n"
+        cfg_path.write_text(text)
+        return
+
+    # Find the section body — from header up to next top-level [ or EOF.
+    pattern_section = re.compile(
+        r"(\[" + re.escape(section) + r"\][^\n]*\n)((?:(?!^\[).*\n?)*)",
+        re.MULTILINE,
+    )
+    m = pattern_section.search(text)
+    if not m:
+        # Should not happen given the header check above, but fall through.
+        text += f"\n{section_header}\n{new_line}\n"
+        cfg_path.write_text(text)
+        return
+
+    body = m.group(2)
+    key_re = re.compile(r"^" + re.escape(key) + r"\s*=.*$", re.MULTILINE)
+    if key_re.search(body):
+        new_body = key_re.sub(new_line, body)
+    else:
+        new_body = body.rstrip() + ("\n" if body.rstrip() else "") + new_line + "\n"
+    text = text[: m.start(2)] + new_body + text[m.end(2):]
+    cfg_path.write_text(text)
+
+
 def register(sub: argparse._SubParsersAction) -> None:
     p = sub.add_parser("project", help="Per-project config and registry.")
     p.add_argument("--project", help="Project name (overrides env/cwd/default).")
@@ -241,3 +322,11 @@ def register(sub: argparse._SubParsersAction) -> None:
     p_rr = proj_sub.add_parser("remove-repo", help="Remove a [repos.<key>] entry.")
     p_rr.add_argument("key")
     p_rr.set_defaults(func=_cmd_remove_repo)
+
+    p_set = proj_sub.add_parser(
+        "set",
+        help=f"Set a project.toml field. Whitelisted: {', '.join(sorted(_SET_WHITELIST))}.",
+    )
+    p_set.add_argument("field")
+    p_set.add_argument("value")
+    p_set.set_defaults(func=_cmd_set)

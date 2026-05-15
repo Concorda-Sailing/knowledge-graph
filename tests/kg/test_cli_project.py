@@ -150,3 +150,35 @@ def test_remove_repo_via_kg_project(two_projects: dict) -> None:
     assert res.returncode == 0
     cfg_text = (two_projects["alpha"] / "depgraph" / "project.toml").read_text()
     assert "[repos.api]" not in cfg_text
+
+
+def test_set_primary_repo(two_projects: dict) -> None:
+    # Add a repo first so primary_repo has a valid target.
+    _run(
+        two_projects["registry"], "project", "--project", "alpha",
+        "add-repo", "api", str(two_projects["tmp_path"] / "fake"),
+    )
+    res = _run(
+        two_projects["registry"], "project", "--project", "alpha",
+        "set", "primary_repo", "api",
+    )
+    assert res.returncode == 0, f"stderr: {res.stderr}"
+    cfg = (two_projects["alpha"] / "depgraph" / "project.toml").read_text()
+    assert 'primary_repo = "api"' in cfg
+
+
+def test_set_rejects_non_whitelist_field(two_projects: dict) -> None:
+    res = _run(
+        two_projects["registry"], "project", "--project", "alpha",
+        "set", "wild_field", "value",
+    )
+    assert res.returncode != 0
+    assert "not in whitelist" in res.stderr.lower()
+
+
+def test_set_primary_repo_rejects_unknown_key(two_projects: dict) -> None:
+    res = _run(
+        two_projects["registry"], "project", "--project", "alpha",
+        "set", "primary_repo", "missing-key",
+    )
+    assert res.returncode != 0
