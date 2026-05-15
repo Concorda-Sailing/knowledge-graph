@@ -1,0 +1,36 @@
+import json
+from pathlib import Path
+
+import pytest
+
+from extractors.eval.harness import (
+    EvalCase, load_case, run_deterministic,
+)
+
+
+def test_load_case_parses_files(tmp_path: Path):
+    case = tmp_path / "case1"
+    (case / "source").mkdir(parents=True)
+    (case / "source" / "a.py").write_text("def hi(): pass\n")
+    (case / "expected.json").write_text(json.dumps({
+        "nodes": {"function": ["r:a.py:hi"]},
+    }))
+    (case / "case.toml").write_text('detectors = []\nlanguage = "python"\n')
+    c = load_case(case)
+    assert isinstance(c, EvalCase)
+    assert c.language == "python"
+    assert c.expected["nodes"]["function"] == ["r:a.py:hi"]
+
+
+def test_run_deterministic_reports_precision_recall(tmp_path: Path):
+    case = tmp_path / "c"
+    (case / "source").mkdir(parents=True)
+    (case / "source" / "a.py").write_text("def hi(): pass\ndef ho(): pass\n")
+    (case / "expected.json").write_text(json.dumps({
+        "nodes": {"function": ["r:a.py:hi"]},  # intentionally incomplete
+    }))
+    (case / "case.toml").write_text('detectors = []\nlanguage = "python"\n')
+    report = run_deterministic(case, repo_key="r")
+    assert report["passed"] is True  # superset is OK; only declared expectations are checked
+    assert report["precision"]["function"] == 1.0
+    assert report["recall"]["function"] == 1.0
