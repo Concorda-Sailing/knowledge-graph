@@ -56,7 +56,7 @@ This section is the source of truth for what to do when a user asks for knowledg
 ├── depgraph/      bin/, hooks/, extractors/reconcile.py, lib/config.py, schema/
 ├── logigraph/     bin/, hooks/, extractors/reconcile.py, lib/config.py, schema/
 ├── graphui/       app/, .venv/       (FastAPI viewer)
-├── install.sh                        ← installer + project scaffolder
+├── install.sh                        ← alias for `kg install` (impl in kg/cli/install/)
 └── README.md                         ← this file
 
 <project>-knowledge-graph/            (per-project data — one repo per project)

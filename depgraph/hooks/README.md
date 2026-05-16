@@ -18,14 +18,14 @@ Add to `~/.claude/settings.json` (or per-project `.claude/settings.json`):
       {
         "matcher": "Edit|Write|MultiEdit",
         "hooks": [
-          { "type": "command", "command": "python3 ~/tools/depgraph/hooks/pre_edit_inject.py" }
+          { "type": "command", "command": "python3 ~/tools/knowledge-graph/depgraph/hooks/pre_edit_inject.py" }
         ]
       }
     ],
     "Stop": [
       {
         "hooks": [
-          { "type": "command", "command": "python3 ~/tools/depgraph/hooks/post_edit_regen.py" }
+          { "type": "command", "command": "python3 ~/tools/knowledge-graph/depgraph/hooks/post_edit_regen.py" }
         ]
       }
     ]
