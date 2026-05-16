@@ -435,6 +435,20 @@ class PrimitiveKind(str, Enum):
     VARIABLE = "variable"
 
 
+# NOTE on dataclasses vs dicts:
+# The dataclasses below (Source, Signature, Attributes, Edge, Primitive)
+# document the wire-format shape. At runtime, extractors emit *dicts*, not
+# dataclass instances — this keeps JSON serialization and language-bridge
+# (TS extractor) compatibility simple. The dataclasses are consumed by:
+#   - `validate_primitive()` / `validate_edge()` (operate on dicts)
+#   - human readers who want a single place to see the schema
+#   - type checkers when in-process tooling (reconcile, classification)
+#     wraps a dict in `Primitive(**d)` for typed access — done sparingly.
+# If you find yourself reaching for `Primitive(...)` everywhere, that's a
+# signal to make extractors emit instances directly and add `to_dict()`
+# at serialization boundaries instead.
+
+
 @dataclass
 class Source:
     repo: str
@@ -1062,6 +1076,8 @@ Each fixture directory contains:
 - `expected.json` — ground truth: primitive ids + edges + classification decisions
 - `verification.md` — reviewer's log (see template in plan)
 
+**`repo-path` convention.** The test harness passes the *fixture root* (NOT `fixture/src`) as `--repo-path`. The extractor walks recursively, so source files at `<fixture>/src/foo.ts` are emitted with path `src/foo.ts` and ids like `fixture::src/foo.ts::Bar`. This convention is identical across all phases (TS, Python, SQL). Fixture authors: write your `expected.json` ids with the `src/` prefix.
+
 ## Inventory
 
 ### Phase 1 — TS primitives (primitives_ts/)
@@ -1114,15 +1130,23 @@ Each fixture directory contains:
 - util_deep_transitive — endpoint → util A → util B → util C; all must classify
 - classification_conflict_logged — function satisfying two kinds; conflict recorded
 
-### Kitchen sink (kitchen_sink/)
+### Kitchen sink (kitchen_sink/) — structurally distinct
+
+Unlike the per-phase fixtures above (each focused on one pattern), the kitchen-sink is a single assembled mini-project covering all kinds. It has its own internal structure (`api/`, `web/`, `db/` subdirs) instead of the standard `src/` layout, and a single `expected.json` capturing the corpus-wide kind distribution + invariants.
+
 - ~30 files across api/, web/, db/. Distribution: 5 endpoints, 4 services, 6 utils, 2 hooks, 3 components, 8 schemas, 5 models, 4 tests. End-to-end gate before Concorda regen.
 ```
 
 - [ ] **Step 2: Commit the scaffold**
 
 ```bash
-mkdir -p depgraph/tests/fixtures/wild/{primitives_ts,primitives_py,edges,sql,classification,kitchen_sink}
-for d in depgraph/tests/fixtures/wild/*/; do touch "$d.gitkeep"; done
+mkdir -p depgraph/tests/fixtures/wild/{primitives_ts,primitives_py,edges,sql,classification}
+mkdir -p depgraph/tests/fixtures/wild/kitchen_sink/{api,web,db}
+for d in depgraph/tests/fixtures/wild/{primitives_ts,primitives_py,edges,sql,classification}/; do
+  touch "$d.gitkeep"
+done
+# Kitchen-sink gets a placeholder README; Task 6.5 fills in the project.
+echo "# Kitchen-sink mini-project — populated by Task 6.5" > depgraph/tests/fixtures/wild/kitchen_sink/README.md
 git add depgraph/tests/fixtures/wild/
 git commit -m "depgraph/tests: scaffold wild corpus directory + master index"
 ```
@@ -2799,6 +2823,10 @@ def _variable_primitives(node: ast.Assign | ast.AnnAssign,
     else:
         targets = node.targets
         type_ann = None
+    # RHS value text — needed by the SQL cross-ref pass to read
+    # `__tablename__ = "users"`. For AnnAssign the value may be absent
+    # (`x: int` with no initializer); record None in that case.
+    value_text = ast.unparse(node.value) if node.value is not None else None
     for tgt in targets:
         if not isinstance(tgt, ast.Name):
             continue
@@ -2807,12 +2835,19 @@ def _variable_primitives(node: ast.Assign | ast.AnnAssign,
             schema_id=canonical_id(repo_key, rel_path, symbol),
             primitive="variable", name=symbol, owner=owner,
             repo=repo_key, path=rel_path, line=node.lineno, end_line=node.end_lineno or node.lineno,
-            signature={"type_annotation": type_ann},
+            signature={"type_annotation": type_ann, "value_text": value_text},
             attributes_overrides={"mutable": tgt.id != tgt.id.upper(),
                                   "instantiable": False, "inheritable": False},
-            structural_payload={"kind": "variable", "name": symbol, "type": type_ann},
+            # Per spec: hash includes name + signature + body. For a
+            # variable the "body" is its initializer expression.
+            structural_payload={"primitive": "variable", "name": symbol,
+                                  "signature": {"type_annotation": type_ann,
+                                                  "value_text": value_text},
+                                  "body_text": value_text or ""},
         )
 ```
+
+> Note: `signature.value_text` is the canonical place for the RHS expression text. The SQL cross-reference pass (Task 4.5) reads it to recover `__tablename__ = "users"` → the string `"users"`. Future passes can use it for similar literal-extraction needs (e.g., enum value sets).
 
 - [ ] **Step 4: Run, verify pass.**
 
@@ -2883,7 +2918,7 @@ def _fixtures():
 @pytest.mark.parametrize("fixture", _fixtures(), ids=lambda f: f.name)
 def test_wild_primitives_match_expected(fixture):
     expected = json.loads((fixture / "expected.json").read_text())
-    actual = list(extract_repo(repo_key="fixture", repo_path=fixture / "src"))
+    actual = list(extract_repo(repo_key="fixture", repo_path=fixture))
     actual_ids = {p["id"] for p in actual}
     expected_ids = {p["id"] for p in expected["primitives"]}
     missing = expected_ids - actual_ids
@@ -2894,7 +2929,7 @@ def test_wild_primitives_match_expected(fixture):
 @pytest.mark.parametrize("fixture", _fixtures(), ids=lambda f: f.name)
 def test_wild_edges_subset_of_actual(fixture):
     expected = json.loads((fixture / "expected.json").read_text())
-    actual = list(extract_repo(repo_key="fixture", repo_path=fixture / "src"))
+    actual = list(extract_repo(repo_key="fixture", repo_path=fixture))
     actual_edges = {(p["id"], e["kind"], e["target"])
                     for p in actual for e in p.get("edges_out", [])}
     for e in expected.get("edges", []):
@@ -3325,13 +3360,43 @@ def test_reexport_resolves_to_origin_with_fuzzy_confidence():
     assert any(e["target"].endswith("::foo") for e in foo_imports), foo_imports
 ```
 
-- [ ] **Step 5: Run, verify fail. Implement. Verify pass.**
+- [ ] **Step 5: Convention — import edges carry `local_binding`**
 
-TS: walk `sf.getImportDeclarations()`. For each named import, resolve the module specifier through ts-morph's `Project` initialized with the fixture's `tsconfig.json` (so its `compilerOptions.paths` apply); use `imp.getModuleSpecifierSourceFile()` which honors path aliases. If a tsconfig exists at the repo root, load it via `new Project({ tsConfigFilePath: ... })`; otherwise default config + the repo's files. Non-resolved imports (true externals or unmapped) emit `confidence: "unresolved"` and target `external::npm::<package>::<symbol>` derived from the bare specifier.
+Every `imports` edge **must** include a `local_binding` field — the name the imported symbol is bound to in the importing module. Downstream passes (intra-function type binding in Phase 3.4; db_access in Phase 4.6) read this to resolve identifiers in source bodies to imported class ids.
 
-Re-exports: walk `sf.getExportDeclarations()` separately. For `export { foo } from "./b"`, emit an `imports` edge from the re-exporting module to `<target-module>::foo` with `confidence: "fuzzy"`. A consumer's `import { foo } from "./barrel"` looks up the resolved target via the same module-specifier path; if barrel re-exports foo, the resolution chases one hop. Deeper chains stay `fuzzy` for v0 — full transitive resolution is a follow-up.
+Concretely:
 
-Python: walk `ast.Import` and `ast.ImportFrom`. For `ImportFrom` with `level > 0` (relative), resolve from the module's directory + N parents per the `level`. For absolute imports, match the dot-joined name against the corpus's module index (paths converted to dotted form: `concorda_api/routers/events.py` → `concorda_api.routers.events`). For unresolved targets, emit `external::pypi::<root-package>::<symbol>` where root-package is the first dotted segment.
+| Source | Edge fields |
+|---|---|
+| `from .models import User` | `target: "<repo>::models.py::User"`, `local_binding: "User"` |
+| `from .models import User as TheUser` | `target: "<repo>::models.py::User"`, `local_binding: "TheUser"` |
+| `import requests` | `target: "external::pypi::requests"`, `local_binding: "requests"` |
+| `import requests as r` | `target: "external::pypi::requests"`, `local_binding: "r"` |
+| TS `import { foo } from "./b"` | `target: "<repo>::b.ts::foo"`, `local_binding: "foo"` |
+| TS `import { foo as bar } from "./b"` | `target: "<repo>::b.ts::foo"`, `local_binding: "bar"` |
+| TS `import * as Mod from "./b"` | `target: "<repo>::b.ts"`, `local_binding: "Mod"` |
+| TS `import Default from "./b"` | `target: "<repo>::b.ts::default"`, `local_binding: "Default"` |
+
+Test gate:
+
+```python
+def test_aliased_import_records_local_binding():
+    # Fixture: from .b import foo as bar
+    prims = list(extract_repo(repo_key="fixture", repo_path=FIXTURE_DIR / "imports_aliased"))
+    mod = next(p for p in prims if p["source"]["path"] == "a.py" and p["primitive"] == "module")
+    edge = next(e for e in mod["edges_out"] if e["kind"] == "imports" and "foo" in e["target"])
+    assert edge["local_binding"] == "bar"
+```
+
+(Add a small `imports_aliased/` fixture: `a.py` with `from .b import foo as bar` plus `b.py` with `def foo(): pass`.)
+
+- [ ] **Step 6: Run, verify fail. Implement. Verify pass.**
+
+TS: walk `sf.getImportDeclarations()`. For each named import, resolve the module specifier through ts-morph's `Project` initialized with the fixture's `tsconfig.json` (so its `compilerOptions.paths` apply); use `imp.getModuleSpecifierSourceFile()` which honors path aliases. For each import specifier, the local binding is `specifier.getAliasNode()?.getText() ?? specifier.getName()`. Non-resolved imports emit `confidence: "unresolved"` and target `external::npm::<package>::<symbol>`.
+
+Re-exports: walk `sf.getExportDeclarations()` separately. For `export { foo } from "./b"`, emit an `imports` edge from the re-exporting module to `<target-module>::foo` with `confidence: "fuzzy"` and `local_binding: "foo"` (or the alias). A consumer's `import { foo } from "./barrel"` looks up the resolved target via the same module-specifier path; if barrel re-exports foo, the resolution chases one hop. Deeper chains stay `fuzzy` for v0.
+
+Python: walk `ast.Import` and `ast.ImportFrom`. For `ImportFrom` with `level > 0` (relative), resolve from the module's directory + N parents per the `level`. For each `alias` node in `node.names`, `local_binding = alias.asname or alias.name`. For absolute imports, match the dot-joined name against the corpus's module index (paths converted to dotted form: `concorda_api/routers/events.py` → `concorda_api.routers.events`). For unresolved targets, emit `external::pypi::<root-package>::<symbol>` where root-package is the first dotted segment.
 
 - [ ] **Step 6: Commit**
 
@@ -3483,17 +3548,19 @@ def _attach_call_edges(primitives: list[dict],
         if p["primitive"] == "function" and p.get("owner") in classes_by_id:
             methods_by_class.setdefault(p["owner"], {})[p["name"].split(".")[-1]] = p["id"]
 
-    # Imports: from the module primitive's edges_out, build local-name -> target-id
+    # Imports: from each module primitive's edges_out, build local-binding -> target-id.
+    # Phase 3.3 records the local-binding name on each import edge as
+    # `local_binding` (handles aliased imports correctly).
     imports_by_path: dict[str, dict[str, str]] = {}
     for p in primitives:
         if p["primitive"] != "module":
             continue
         for e in p["edges_out"]:
-            if e["kind"] == "imports":
-                # `via` carries the local-name; convention to set up in Task 3.3
-                local_name = e.get("via")
-                if local_name:
-                    imports_by_path.setdefault(p["source"]["path"], {})[local_name] = e["target"]
+            if e["kind"] != "imports":
+                continue
+            local_binding = e.get("local_binding")
+            if local_binding:
+                imports_by_path.setdefault(p["source"]["path"], {})[local_binding] = e["target"]
 
     for path, tree in trees_by_path.items():
         local_names = local_by_path.get(path, {})
@@ -3634,6 +3701,13 @@ import functools
 @functools.lru_cache()
 def decorated():
     pass
+
+def local_dec(fn):
+    return fn
+
+@local_dec
+def locally_decorated():
+    pass
 ```
 
 - [ ] **Step 2: Failing tests**
@@ -3651,23 +3725,44 @@ def test_assigns_edge_py():
     assigns = [e for e in writer["edges_out"] if e["kind"] == "assigns"]
     assert any(e["target"] == "fixture::src.py::GLOBAL" for e in assigns)
 
-def test_decorates_edge_py():
-    """The decorator `functools.lru_cache()` should produce a `decorates`
-    edge from the decorator source to the decorated function. Source for
-    an external decorator is the external terminal; for a locally-defined
-    decorator it'd be the local function id."""
+def test_decorates_edge_local_decorator_py():
+    """A local decorator (`@local_dec`) produces a `decorates` edge from
+    the decorator function primitive to the decorated function. External
+    decorators (`@functools.lru_cache`) do NOT produce an edge — they're
+    captured in `signature.decorators` instead, since the edge taxonomy
+    disallows external terminals as edge sources."""
+    prims = list(extract_repo(repo_key="fixture", repo_path=FIXTURE_DIR / "references"))
+    locally_decorated = next(p for p in prims if p["name"] == "locally_decorated")
+    local_dec = next(p for p in prims if p["name"] == "local_dec")
+
+    # Local decorator → edge present, source is local_dec
+    incoming = [
+        e for src_p in prims for e in src_p["edges_out"]
+        if e["kind"] == "decorates" and e["target"] == locally_decorated["id"]
+    ]
+    assert incoming, "expected a decorates edge into `locally_decorated`"
+    src_ids = {p["id"] for p in prims for e in p["edges_out"]
+               if e["kind"] == "decorates" and e["target"] == locally_decorated["id"]}
+    assert local_dec["id"] in src_ids
+
+
+def test_external_decorator_not_an_edge_py():
+    """`@functools.lru_cache()` records in signature.decorators but does
+    not produce a decorates edge (no external-as-source edges)."""
     prims = list(extract_repo(repo_key="fixture", repo_path=FIXTURE_DIR / "references"))
     decorated = next(p for p in prims if p["name"] == "decorated")
-    incoming_decorates = [
+
+    # Captured in signature
+    assert any("functools" in d or "lru_cache" in d
+               for d in decorated["signature"]["decorators"])
+    # No incoming decorates edge
+    incoming = [
         e for src_p in prims for e in src_p["edges_out"]
         if e["kind"] == "decorates" and e["target"] == decorated["id"]
     ]
-    assert incoming_decorates, "expected a decorates edge into `decorated`"
-    # Decorator source for `functools.lru_cache` resolves to external terminal
-    sources = {(p["id"], e["target"]) for p in prims for e in p["edges_out"]
-               if e["kind"] == "decorates" and e["target"] == decorated["id"]}
-    src_ids = {sid for sid, _ in sources}
-    assert any("functools" in sid for sid in src_ids), src_ids
+    assert incoming == [], (
+        f"external decorator should not emit a decorates edge; got: {incoming}"
+    )
 ```
 
 - [ ] **Step 3: TS fixture + tests**
@@ -3755,6 +3850,12 @@ def _attach_decorator_edges(primitives, *, trees_by_path, imports_by_path):
         if p.get("owner") is None and p["primitive"] in {"class", "function", "variable"}:
             local_by_path.setdefault(p["source"]["path"], {})[p["name"]] = p["id"]
 
+    # The edge taxonomy disallows external terminals as edge sources, so
+    # `decorates` edges are only emitted for **locally-defined** decorators.
+    # External decorators (e.g., @functools.lru_cache, @pytest.fixture) are
+    # captured in the function/class primitive's `signature.decorators`
+    # name list — that's the canonical place for them. No separate edge.
+    primitives_by_id = {q["id"]: q for q in primitives}
     for p in primitives:
         if p["primitive"] not in {"class", "function"}:
             continue
@@ -3765,29 +3866,16 @@ def _attach_decorator_edges(primitives, *, trees_by_path, imports_by_path):
         locals_ = local_by_path.get(path, {})
         imports = imports_by_path.get(path, {})
         for dec in decorators:
-            # Match the head of the dotted name against local + imported names
             head = dec.split(".")[0]
             source_id = locals_.get(head) or imports.get(head)
             if source_id is None:
-                source_id = f"external::unresolved::{dec}"
-            # Emit decorates edge from source → target. Find the source
-            # primitive and append the edge to its edges_out (not the
-            # decorated primitive's).
-            source_prim = next((q for q in primitives if q["id"] == source_id), None)
+                # External — no edge; presence already in signature.decorators
+                continue
+            if source_id.startswith("external::"):
+                # Imported from external package — same rule: no edge.
+                continue
+            source_prim = primitives_by_id.get(source_id)
             if source_prim is None:
-                # External terminal — record edge on a synthetic "external"
-                # bucket primitive? For simplicity emit it on the *target*
-                # under a `decorated_by` reverse-kind. Simplest path: emit
-                # on the decorated target as `references` from the dec
-                # source. But the spec says decorates source = decorator.
-                # Compromise for v0: emit on the decorated primitive with
-                # `via: decorator_external`.
-                p["edges_out"].append({
-                    "target": source_id, "kind": "references",
-                    "via": "decorator_external",
-                    "where": f"{path}:{p['source']['line']}",
-                    "confidence": "exact",
-                })
                 continue
             source_prim["edges_out"].append({
                 "target": p["id"], "kind": "decorates",
@@ -4057,7 +4145,7 @@ def _run(fixture):
     if any(f.suffix in {".ts", ".tsx", ".js"} for f in (fixture / "src").iterdir()):
         proc = subprocess.run([
             "npx", "tsx", str(TS_EXTRACTOR),
-            "--repo-key", "fixture", "--repo-path", str(fixture / "src"),
+            "--repo-key", "fixture", "--repo-path", str(fixture),
             "--format", "ndjson",
         ], capture_output=True, text=True, check=True, cwd=TS_EXTRACTOR.parent)
         return [json.loads(l) for l in proc.stdout.splitlines() if l.strip()]
@@ -4441,13 +4529,19 @@ def _handle_alter(node: exp.AlterTable) -> list[Operation]:
             ))
         elif isinstance(action, exp.AlterColumn):
             # ALTER COLUMN can change type, default, or nullability. Each
-            # surfaces as a different field on the action node.
+            # surfaces as a different arg on the action node. sqlglot's
+            # exact representation varies — be defensive: check both
+            # string-equality and isinstance for the NOT-NULL drop marker.
             col = action.this.name if hasattr(action.this, "name") else str(action.this)
             new_type = action.args.get("dtype")
             new_default = action.args.get("default")
-            drop_null = action.args.get("drop") and action.args["drop"] in ("NOT NULL",
-                                                                              exp.NotNullColumnConstraint)
-            set_null = action.args.get("allow_null")
+            drop = action.args.get("drop")
+            drops_not_null = drop is not None and (
+                drop == "NOT NULL"
+                or isinstance(drop, exp.NotNullColumnConstraint)
+                or (hasattr(drop, "sql") and "NOT NULL" in drop.sql().upper())
+            )
+            allow_null = action.args.get("allow_null")
             if new_type is not None:
                 ops.append(Operation(kind="alter_column_type", table=table,
                                        column_name=col, new_type=new_type.sql()))
@@ -4455,13 +4549,13 @@ def _handle_alter(node: exp.AlterTable) -> list[Operation]:
                 ops.append(Operation(kind="alter_column_default", table=table,
                                        column_name=col,
                                        new_default=new_default.sql() if hasattr(new_default, "sql") else str(new_default)))
-            if drop_null:
+            if drops_not_null:
                 ops.append(Operation(kind="alter_column_nullable", table=table,
                                        column_name=col, new_nullable=True))
-            if set_null is not None:
+            if allow_null is not None:
                 ops.append(Operation(kind="alter_column_nullable", table=table,
                                        column_name=col,
-                                       new_nullable=bool(set_null)))
+                                       new_nullable=bool(allow_null)))
     return ops
 
 
@@ -5335,7 +5429,10 @@ def attach_model_schema_references(primitives: list[dict]) -> list[dict]:
         if (p["primitive"] == "variable"
                 and p.get("owner") in classes_by_id
                 and p["name"].endswith(".__tablename__")):
-            tablename_value = _literal_from_annotation(p["signature"].get("type_annotation"))
+            # Task 2.3 records the RHS as signature.value_text. For
+            # `__tablename__ = "users"`, value_text is `'"users"'` (the
+            # string with quotes preserved by ast.unparse).
+            tablename_value = _string_literal(p["signature"].get("value_text"))
             if tablename_value:
                 tablename_by_class[p["owner"]] = tablename_value
 
@@ -5353,19 +5450,19 @@ def attach_model_schema_references(primitives: list[dict]) -> list[dict]:
     return primitives
 
 
-def _literal_from_annotation(text: str | None) -> str | None:
-    """Phase 2 records class-scope Assign RHS as signature.type_annotation.
-    For `__tablename__ = "users"`, that text is `"users"` (with quotes)."""
-    if not text:
+def _string_literal(value_text: str | None) -> str | None:
+    """Unwrap a Python string literal expression to its content. Inputs come
+    from `ast.unparse(node.value)`, so `"users"` → `users`. Non-literal
+    expressions (concatenations, format strings) return None — we don't
+    evaluate dynamic table names."""
+    if not value_text:
         return None
-    text = text.strip()
+    text = value_text.strip()
     if (text.startswith('"') and text.endswith('"')) or \
        (text.startswith("'") and text.endswith("'")):
         return text[1:-1]
     return None
 ```
-
-> Note for Phase 2 retro: the Python extractor needs to record the RHS expression text for class-scope `Assign` / `AnnAssign` nodes in the variable primitive's `signature.type_annotation` field (or a new `signature.value_text` field — author's choice; keep tests aligned). Add this when implementing Phase 2 Task 2.3 if not already present.
 
 - [ ] **Step 5: Run, verify pass + commit**
 
@@ -5558,13 +5655,21 @@ def attach_db_access_edges(primitives: list[dict], *, repo_path: Path) -> list[d
             if p["primitive"] == "class" and p.get("owner") is None:
                 local_names[p["name"]] = p["id"]
 
-        # Imported names: scan imports edges on the module primitive
+        # Imported names: scan imports edges on the module primitive.
+        # Per the import-edge convention (Phase 3.3), each import edge
+        # carries `local_binding` = the name as bound in the importing
+        # file. For `from X import User as TheUser`, local_binding =
+        # "TheUser"; for unaliased imports, it equals the target symbol.
         module = next((p for p in prims_in_file if p["primitive"] == "module"), None)
         if module:
             for e in module["edges_out"]:
-                if e["kind"] == "imports" and e["target"] in py_classes_by_id:
-                    imported_cls = py_classes_by_id[e["target"]]
-                    local_names[imported_cls["name"]] = e["target"]
+                if e["kind"] != "imports":
+                    continue
+                if e["target"] not in py_classes_by_id:
+                    continue
+                imported_cls = py_classes_by_id[e["target"]]
+                local_binding = e.get("local_binding") or imported_cls["name"]
+                local_names[local_binding] = e["target"]
 
         source_text = (repo_path / path).read_text()
         try:
@@ -6964,7 +7069,7 @@ git commit -m "depgraph: Phase 5 wild corpus (8 classification edge fixtures + C
 - Modify: `depgraph/extractors/reconcile.py` (rewrite for v2)
 - Modify: `kg/cli/depgraph/regen.py` (or wherever regen lives) — invoke new extractors per language registry
 - Delete: `depgraph/extractors/generic/` (whole subtree)
-- Create: `kg/cli/depgraph/migrate_logigraph_claims.py` (one-shot script for Task 6.6)
+- Create: `kg/cli/depgraph/migrate_logigraph_claims.py` (one-shot script for Task 6.8)
 - Test: `depgraph/tests/test_reconcile_v2.py` (full end-to-end against a tiny synthetic project)
 - Test: `depgraph/tests/test_regen_determinism.py` (CI gate: regen twice → identical output)
 
@@ -7305,7 +7410,7 @@ git add depgraph/project.toml
 git commit -m "depgraph: migrate project.toml to v2 (languages + include/exclude paths)"
 ```
 
-### Task 6.4.5: Kitchen-sink end-to-end Claude verification
+### Task 6.5: Kitchen-sink end-to-end Claude verification
 
 The kitchen-sink fixture is the framework's last gate before any real consumer (Concorda) is touched. Unlike per-phase wild fixtures, this one runs the full pipeline — extract → edges → SQL pipeline → cross-ref → db_access → classify → reconcile — and the gate is "the framework, validated independently on synthetic-pathological code, also produces a sane corpus on a multi-language mini-project."
 
@@ -7492,7 +7597,7 @@ git add depgraph/tests/fixtures/wild/kitchen_sink/ \
 git commit -m "depgraph: kitchen-sink end-to-end gate + Claude verification"
 ```
 
-### Task 6.5: Regen Concorda corpus
+### Task 6.6: Regen Concorda corpus
 
 - [ ] **Step 1: Backup current Concorda corpus**
 
@@ -7528,7 +7633,7 @@ git add depgraph/
 git commit -m "depgraph: regen on layered substrate (v2 schema, JS/TS/Python)"
 ```
 
-### Task 6.6: Determinism CI gate
+### Task 6.7: Determinism CI gate
 
 Regen twice, diff the output directories — they must be byte-identical. Guards against accidental non-determinism (set iteration, time-of-day fields, etc.).
 
@@ -7599,7 +7704,7 @@ git add depgraph/tests/test_regen_determinism.py
 git commit -m "depgraph: regen determinism CI gate"
 ```
 
-### Task 6.7: Logigraph claim migration
+### Task 6.8: Logigraph claim migration
 
 Build the auto-rewrite script before manually triaging. Most stale claims will fall into one of three buckets:
 
@@ -7756,7 +7861,7 @@ git commit -m "logigraph: auto-migrate claims to v2 depgraph corpus; CANDIDATES.
 
 If regen blows the 30s budget by more than 2x in real Concorda, profile before optimizing — usual suspects are: `ast.unparse(node)` on huge nodes for body_text, repeated `re.compile` in a hot loop, or per-file ts-morph project init (use one Project for the repo).
 
-**Determinism gate** (Phase 6.6) does **not** add real runtime — it runs twice in the suite but on a tiny synthetic project.
+**Determinism gate** (Task 6.7) does **not** add real runtime — it runs twice in the suite but on a tiny synthetic project.
 
 **Incremental regen (out of scope for v0, noted for the future).**
 
