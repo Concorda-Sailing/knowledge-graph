@@ -50,9 +50,15 @@ depgraph/
       model.py                                    NEW
       util.py                                     NEW
       test_kind.py                                NEW   (avoids pytest name clash)
+    sql/
+      __init__.py                                 NEW
+      parser.py                                   NEW   sqlglot wrapper → Operations
+      migration.py                                NEW   Python migration file recognition + SQL string extraction
+      reconcile.py                                NEW   replay ordered ops → final schema primitives
+      cross_ref.py                                NEW   ORM model → schema reference post-pass
     system_stub/
       __init__.py                                 NEW
-      db_access.py                                NEW   SQLAlchemy / cursor patterns
+      db_access.py                                NEW   db_access edges target schema primitives
     reconcile.py                                  REW   rewritten for v2 schema
   extractors/
     typescript/                                   NEW   replaces generic/typescript
@@ -67,6 +73,9 @@ depgraph/
       extract.py                                  NEW   primitives only
       edges.py                                    NEW   edge resolution
       canonical.py                                NEW   id + hash rules
+    sql/                                          NEW   language-registry entry for standalone .sql files
+      __init__.py                                 NEW
+      extract.py                                  NEW   walks .sql files (no-op for Concorda; framework-correct)
     generic/                                      DEL   delete in Phase 6 cutover
   tests/
     extractors/
@@ -92,8 +101,17 @@ depgraph/
       test_classifier_model.py                    NEW
       test_classifier_util.py                     NEW
       test_classifier_test_kind.py                NEW
-      test_db_access_stub.py                      NEW
+      test_db_access.py                           NEW
       test_reconcile_v2.py                        NEW
+      sql/
+        test_parser.py                            NEW
+        test_migration.py                         NEW
+        test_reconcile.py                         NEW
+        test_cross_ref.py                         NEW
+        fixtures/
+          migrations/                             NEW   small synthetic migrations
+          orm_models/                             NEW
+          schemas/                                NEW   standalone .sql fixtures (optional)
 ```
 
 ### Output format (target — v2 schema)
@@ -180,7 +198,7 @@ Edges are stored embedded on each primitive's `edges_out`. Reverse index (`by_ta
 | 1 | TS primitives extractor | Primitive coverage tests | Legacy still works for Python |
 | 2 | Python primitives extractor | Primitive coverage tests | Legacy still works for TS until cutover |
 | 3 | L2 edge resolution (TS + Python) | Per-edge-kind tests | Phases 1+2 run together if both done |
-| 4 | L3 db_access stub | SQLAlchemy / cursor recognition tests | n/a |
+| 4 | Schema extraction (SQL parser + migration recognition + reconciliation + ORM↔schema cross-ref + db_access targeting schemas) | Parser ops, migration metadata, reconciliation, cross-ref, db_access edge tests | n/a |
 | 5 | Classification engine | Per-kind classifier tests | n/a |
 | 6 | Cutover: reconcile + CLI wiring, delete legacy, regen Concorda | Integration test against real Concorda corpus | Final |
 
@@ -598,11 +616,12 @@ from depgraph.lib.language_registry import (
 FRAMEWORK_TOML = Path(__file__).resolve().parents[2] / "languages.toml"
 
 
-def test_load_shipped_languages_includes_ts_and_py():
+def test_load_shipped_languages_includes_ts_py_sql():
     langs = load_languages(FRAMEWORK_TOML)
     names = {l.name for l in langs}
     assert "typescript" in names
     assert "python" in names
+    assert "sql" in names
 
 
 def test_typescript_extensions():
@@ -617,9 +636,15 @@ def test_python_extensions():
     assert py.extensions == [".py"]
 
 
+def test_sql_extensions():
+    langs = {l.name: l for l in load_languages(FRAMEWORK_TOML)}
+    s = langs["sql"]
+    assert s.extensions == [".sql"]
+
+
 def test_extractor_path_resolves_under_framework_root():
     langs = {l.name: l for l in load_languages(FRAMEWORK_TOML)}
-    for name in ("typescript", "python"):
+    for name in ("typescript", "python", "sql"):
         l = langs[name]
         assert l.extractor.exists(), f"{name} extractor missing: {l.extractor}"
 ```
@@ -638,6 +663,11 @@ runtime = "node"
 [languages.python]
 extensions = [".py"]
 extractor = "depgraph/extractors/python/extract.py"
+runtime = "python"
+
+[languages.sql]
+extensions = [".sql"]
+extractor = "depgraph/extractors/sql/extract.py"
 runtime = "python"
 ```
 
@@ -681,16 +711,18 @@ def load_languages(toml_path: Path) -> list[Language]:
 The registry test asserts the extractor files exist. Phase 1 / 2 fill these with real code; for now they're empty placeholders.
 
 ```bash
-mkdir -p depgraph/extractors/typescript depgraph/extractors/python
+mkdir -p depgraph/extractors/typescript depgraph/extractors/python depgraph/extractors/sql
 touch depgraph/extractors/typescript/extract.ts
 touch depgraph/extractors/python/extract.py
-echo '"""TS extractor — implemented in Phase 1."""' > depgraph/extractors/python/__init__.py
+touch depgraph/extractors/sql/extract.py
+echo '"""Python extractor — implemented in Phase 2."""' > depgraph/extractors/python/__init__.py
+echo '"""SQL extractor — implemented in Phase 4 (standalone .sql files; migration-embedded SQL is in depgraph/lib/sql/)."""' > depgraph/extractors/sql/__init__.py
 ```
 
 - [ ] **Step 5: Run tests**
 
 Run: `pytest depgraph/tests/lib/test_language_registry.py -v`
-Expected: 4 tests pass.
+Expected: 5 tests pass.
 
 - [ ] **Step 6: Commit**
 
@@ -698,8 +730,8 @@ Expected: 4 tests pass.
 git add depgraph/languages.toml depgraph/lib/language_registry.py \
         depgraph/tests/lib/test_language_registry.py \
         depgraph/extractors/typescript/extract.ts \
-        depgraph/extractors/python/extract.py depgraph/extractors/python/__init__.py
-git commit -m "depgraph: v2 language registry (languages.toml + loader)"
+        depgraph/extractors/python/ depgraph/extractors/sql/
+git commit -m "depgraph: v2 language registry (typescript + python + sql)"
 ```
 
 ### Task 0.5: Mark legacy extractors as frozen
@@ -2718,89 +2750,1200 @@ git commit -m "depgraph/extractors: edge schema validation gate"
 
 ---
 
-## Phase 4 — L3 Thin Stub: db_access
+## Phase 4 — Schema Extraction from Actual Artifacts
 
-The classifier needs `db_access` edges to recognize a service. We implement the minimum needed for JS/TS/Python: SQLAlchemy session method calls and raw `cursor.execute` calls in Python. (TypeScript ORMs are mostly schema-language-sourced — Prisma — which is out of this scope; we accept that TS service classification will be evidence-light in this pass.)
+**Goal:** Extract the database schema from where it actually lives. For Concorda that is 65+ `CREATE TABLE` statements inside Python migration files (plus `ALTER TABLE`, `CREATE INDEX`, `DROP TABLE`, etc.). The schema primitives become first-class corpus nodes. ORM mapper classes (SQLAlchemy `class User(Base)`) are downstream observers that `references → schema` after a cross-reference pass.
+
+**Detection goals (each gets a test):**
+
+1. `CREATE TABLE foo (...)` → class primitive `kind: "schema"`, columns → variable primitives owned by the table.
+2. `CREATE TABLE IF NOT EXISTS foo (...)` → same shape (idempotent variant).
+3. Column types resolve from SQL (`VARCHAR(128)` → type_annotation `"VARCHAR(128)"`, `INTEGER NOT NULL` → annotation `"INTEGER"`, attributes `{nullable: false}`).
+4. `PRIMARY KEY` and `FOREIGN KEY` constraints → attributes on the table primitive (`primary_key: ["id"]`, `foreign_keys: [{column: "user_id", references: "users.id"}]`).
+5. `CREATE INDEX foo ON bar(baz)` → `references` edge from index name to the column primitive; no primitive emitted for the index itself.
+6. `ALTER TABLE foo ADD COLUMN bar TEXT` → after reconciliation, the `foo` table primitive includes `bar` in its columns.
+7. `ALTER TABLE foo DROP COLUMN bar` → after reconciliation, `bar` is absent from `foo`.
+8. `DROP TABLE foo` → after reconciliation, the `foo` table primitive is archived (not present in the live corpus).
+9. Migration file ordinal prefix (`047_organization_region.py` → `migration_order: 47`).
+10. Non-prefixed migration filename (`add_event_regatta_id.py`) → `migration_order: null` (excluded from ordered replay; documented limitation).
+11. SQL extracted from `text("...")` inside `conn.execute(text(...))` → parsed and treated as an operation in the containing migration.
+12. SQL extracted from f-strings inside `text(f"...")` → parsed if the f-string's interpolations resolve to literal values at the call site (string concat / .format with literal args also OK); skipped with a `warnings` entry on the migration module if interpolations are dynamic.
+13. Python class with `__tablename__ = "X"` and `extends → Base` → emits a `references` edge to the schema-sourced class whose name matches `X`.
+14. `session.query(User)` resolves `User` (Python class) → follows `references → User` (schema) → emits `db_access` edge targeting the schema primitive.
+15. Raw `conn.execute(text("SELECT ... FROM users ..."))` outside migration files → parsed; `db_access` edges emitted to each referenced table primitive.
 
 **Files:**
+- Create: `depgraph/extractors/sql/extract.py` (language-registry entry for standalone `.sql` files; no-op for Concorda but framework-correct)
+- Create: `depgraph/lib/sql/__init__.py`
+- Create: `depgraph/lib/sql/parser.py` (sqlglot wrapper → structured operations)
+- Create: `depgraph/lib/sql/migration.py` (Python migration recognition + SQL string extraction)
+- Create: `depgraph/lib/sql/reconcile.py` (replay ordered operations → final schema primitives)
+- Create: `depgraph/lib/sql/cross_ref.py` (ORM model → schema reference post-pass)
 - Create: `depgraph/lib/system_stub/__init__.py`
-- Create: `depgraph/lib/system_stub/db_access.py`
-- Test: `depgraph/tests/lib/test_db_access_stub.py`
+- Create: `depgraph/lib/system_stub/db_access.py` (rewritten: resolves to schema primitives, not synthetic terminals)
+- Test: `depgraph/tests/lib/sql/test_parser.py`
+- Test: `depgraph/tests/lib/sql/test_migration.py`
+- Test: `depgraph/tests/lib/sql/test_reconcile.py`
+- Test: `depgraph/tests/lib/sql/test_cross_ref.py`
+- Test: `depgraph/tests/lib/test_db_access.py`
+- Test fixtures: `depgraph/tests/lib/sql/fixtures/migrations/{001..}_*.py`
+- Test fixtures: `depgraph/tests/lib/sql/fixtures/schemas/*.sql`
 
-### Task 4.1: SQLAlchemy session db_access (Python)
+### Task 4.1: SQL parser library (sqlglot wrapper)
 
-A function that calls `session.query(...)`, `session.add(...)`, `session.commit()`, `session.execute(...)`, or `cursor.execute(...)` emits a `db_access` edge (system-level edge stored under `edges_out` like other edges; targets a synthetic terminal `external::pypi::sqlalchemy::Session.<method>` or the table primitive once SQL extraction exists in a later pass).
+The parser takes a SQL string and returns a list of structured operations. Operations carry enough metadata for downstream layers to build primitives and references.
 
-For this pass, target is the synthetic terminal (since we have no schema-language extraction in scope).
+- [ ] **Step 1: Add sqlglot to depgraph dependencies**
 
-- [ ] **Step 1: Fixture**
-
-```python
-# depgraph/tests/extractors/fixtures/edges_py/db_access/src.py
-def get_user(session, user_id):
-    return session.query(User).filter(User.id == user_id).first()
-
-def save_user(session, user):
-    session.add(user)
-    session.commit()
+```bash
+cd /home/lgreenlee/tools/knowledge-graph/depgraph
+echo "sqlglot>=23.0.0" >> requirements.txt
+pip install -r requirements.txt
 ```
 
 - [ ] **Step 2: Write failing test**
 
 ```python
-# depgraph/tests/lib/test_db_access_stub.py
+# depgraph/tests/lib/sql/test_parser.py
+from depgraph.lib.sql.parser import parse_operations, Operation
+
+
+def test_create_table_emits_create_op():
+    sql = """
+    CREATE TABLE users (
+        id INTEGER PRIMARY KEY,
+        email VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """
+    ops = parse_operations(sql)
+    assert len(ops) == 1
+    op = ops[0]
+    assert op.kind == "create_table"
+    assert op.table == "users"
+    assert op.columns == [
+        {"name": "id", "type": "INTEGER", "nullable": True,
+         "default": None, "primary_key": True},
+        {"name": "email", "type": "VARCHAR(255)", "nullable": False,
+         "default": None, "primary_key": False},
+        {"name": "created_at", "type": "TIMESTAMP", "nullable": True,
+         "default": "CURRENT_TIMESTAMP", "primary_key": False},
+    ]
+
+
+def test_create_table_if_not_exists():
+    ops = parse_operations("CREATE TABLE IF NOT EXISTS foo (id INTEGER)")
+    assert ops[0].kind == "create_table"
+    assert ops[0].table == "foo"
+    assert ops[0].if_not_exists is True
+
+
+def test_foreign_key_recorded():
+    sql = """
+    CREATE TABLE event_crew (
+        id INTEGER PRIMARY KEY,
+        event_id INTEGER NOT NULL,
+        FOREIGN KEY (event_id) REFERENCES events(id)
+    )
+    """
+    op = parse_operations(sql)[0]
+    assert op.foreign_keys == [
+        {"column": "event_id", "references_table": "events", "references_column": "id"}
+    ]
+
+
+def test_alter_table_add_column():
+    op = parse_operations("ALTER TABLE users ADD COLUMN role VARCHAR(50)")[0]
+    assert op.kind == "alter_add_column"
+    assert op.table == "users"
+    assert op.column == {"name": "role", "type": "VARCHAR(50)", "nullable": True,
+                          "default": None, "primary_key": False}
+
+
+def test_alter_table_drop_column():
+    op = parse_operations("ALTER TABLE users DROP COLUMN legacy_field")[0]
+    assert op.kind == "alter_drop_column"
+    assert op.table == "users"
+    assert op.column_name == "legacy_field"
+
+
+def test_drop_table():
+    op = parse_operations("DROP TABLE old_audit_log")[0]
+    assert op.kind == "drop_table"
+    assert op.table == "old_audit_log"
+
+
+def test_create_index():
+    op = parse_operations("CREATE INDEX idx_users_email ON users(email)")[0]
+    assert op.kind == "create_index"
+    assert op.index_name == "idx_users_email"
+    assert op.table == "users"
+    assert op.columns_indexed == ["email"]
+
+
+def test_multiple_statements_in_one_string():
+    sql = """
+    CREATE TABLE a (id INTEGER);
+    CREATE TABLE b (id INTEGER);
+    """
+    ops = parse_operations(sql)
+    assert [op.table for op in ops] == ["a", "b"]
+
+
+def test_select_statement_returns_empty_for_ddl_parser():
+    """Parser is DDL-focused; SELECTs return no operations.
+    The db_access logic uses a different parse path for SELECT/UPDATE/etc."""
+    ops = parse_operations("SELECT * FROM users")
+    assert ops == []
+```
+
+- [ ] **Step 3: Run, verify fail**
+
+Run: `pytest depgraph/tests/lib/sql/test_parser.py -v`
+Expected: ImportError (module doesn't exist).
+
+- [ ] **Step 4: Implement `depgraph/lib/sql/parser.py`**
+
+```python
+"""SQL DDL parser — extracts structured operations from SQL text.
+
+Built on sqlglot for cross-dialect tolerance (sqlite, postgres, mysql).
+Returns Operation dataclasses; downstream layers convert to primitives.
+"""
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Any
+
+import sqlglot
+from sqlglot import expressions as exp
+
+
+@dataclass
+class Operation:
+    kind: str   # create_table | alter_add_column | alter_drop_column |
+                # drop_table | create_index | create_view | rename_table
+    table: str | None = None
+    if_not_exists: bool = False
+    columns: list[dict[str, Any]] = field(default_factory=list)
+    foreign_keys: list[dict[str, str]] = field(default_factory=list)
+    column: dict[str, Any] | None = None
+    column_name: str | None = None
+    index_name: str | None = None
+    columns_indexed: list[str] = field(default_factory=list)
+    new_name: str | None = None
+
+
+def parse_operations(sql_text: str, *, dialect: str = "sqlite") -> list[Operation]:
+    """Parse one or more SQL statements. Non-DDL statements are skipped."""
+    ops: list[Operation] = []
+    for parsed in sqlglot.parse(sql_text, dialect=dialect):
+        if parsed is None:
+            continue
+        if isinstance(parsed, exp.Create):
+            ops.append(_handle_create(parsed))
+        elif isinstance(parsed, exp.AlterTable):
+            ops.extend(_handle_alter(parsed))
+        elif isinstance(parsed, exp.Drop):
+            ops.append(_handle_drop(parsed))
+        # SELECT / UPDATE / INSERT / DELETE handled by db_access path, not here.
+    return [op for op in ops if op is not None]
+
+
+def _column_dict(coldef: exp.ColumnDef) -> dict[str, Any]:
+    name = coldef.name
+    type_expr = coldef.args.get("kind")
+    type_text = type_expr.sql() if type_expr else "UNKNOWN"
+    constraints = coldef.args.get("constraints") or []
+    nullable = True
+    primary_key = False
+    default = None
+    for c in constraints:
+        ck = c.kind if hasattr(c, "kind") else None
+        if isinstance(ck, exp.NotNullColumnConstraint):
+            nullable = False
+        elif isinstance(ck, exp.PrimaryKeyColumnConstraint):
+            primary_key = True
+        elif isinstance(ck, exp.DefaultColumnConstraint):
+            default = ck.this.sql() if ck.this else None
+    return {"name": name, "type": type_text, "nullable": nullable,
+            "default": default, "primary_key": primary_key}
+
+
+def _handle_create(node: exp.Create) -> Operation:
+    target = node.args.get("kind", "").upper()
+    if target == "TABLE":
+        schema = node.this
+        table_name = schema.this.name if hasattr(schema.this, "name") else schema.name
+        columns = []
+        foreign_keys = []
+        for col in schema.expressions:
+            if isinstance(col, exp.ColumnDef):
+                columns.append(_column_dict(col))
+            elif isinstance(col, exp.PrimaryKey):
+                # PRIMARY KEY (a, b) at table level
+                pk_cols = [c.name for c in col.expressions]
+                for cd in columns:
+                    if cd["name"] in pk_cols:
+                        cd["primary_key"] = True
+            elif isinstance(col, exp.ForeignKey):
+                local_cols = [c.name for c in col.expressions]
+                ref = col.args.get("reference")
+                if ref:
+                    ref_table = ref.this.this.name if hasattr(ref.this, "this") else ""
+                    ref_cols = [e.name for e in (ref.this.expressions or [])]
+                    for lc, rc in zip(local_cols, ref_cols or [""]):
+                        foreign_keys.append({"column": lc, "references_table": ref_table,
+                                              "references_column": rc})
+        return Operation(kind="create_table", table=table_name,
+                          if_not_exists=bool(node.args.get("exists")),
+                          columns=columns, foreign_keys=foreign_keys)
+    if target == "INDEX":
+        index_name = node.this.this.name if hasattr(node.this, "this") else ""
+        params = node.args.get("params") or {}
+        table = ""
+        cols = []
+        if hasattr(node, "args"):
+            schema = node.args.get("this")
+            if hasattr(schema, "args"):
+                tbl = schema.args.get("table")
+                if tbl:
+                    table = tbl.name
+                for e in (schema.expressions or []):
+                    if hasattr(e, "name"):
+                        cols.append(e.name)
+        return Operation(kind="create_index", index_name=index_name,
+                          table=table, columns_indexed=cols)
+    if target == "VIEW":
+        return Operation(kind="create_view", table=node.this.name)
+    return Operation(kind="unsupported_create")
+
+
+def _handle_alter(node: exp.AlterTable) -> list[Operation]:
+    table = node.this.name
+    ops: list[Operation] = []
+    for action in (node.args.get("actions") or []):
+        if isinstance(action, exp.ColumnDef):
+            ops.append(Operation(kind="alter_add_column", table=table,
+                                  column=_column_dict(action)))
+        elif isinstance(action, exp.Drop):
+            ops.append(Operation(kind="alter_drop_column", table=table,
+                                  column_name=action.this.name if hasattr(action.this, "name") else str(action.this)))
+        elif isinstance(action, exp.RenameTable):
+            ops.append(Operation(kind="rename_table", table=table,
+                                  new_name=action.this.name))
+    return ops
+
+
+def _handle_drop(node: exp.Drop) -> Operation:
+    target = node.args.get("kind", "").upper()
+    if target == "TABLE":
+        return Operation(kind="drop_table", table=node.this.name)
+    return Operation(kind=f"drop_{target.lower()}", table=node.this.name)
+```
+
+> Note: sqlglot's AST shape varies by dialect and version. The implementation above tracks sqlglot 23.x. If a test fails on a particular construct, inspect the parsed tree with `print(parsed.dump())` and adjust the navigation. The Operation dataclass is the contract; how we get there is a sqlglot-version detail.
+
+- [ ] **Step 5: Run, verify pass**
+
+Run: `pytest depgraph/tests/lib/sql/test_parser.py -v`
+Expected: 9 tests PASS. (If sqlglot's AST navigation differs from what's above, adjust `_handle_create` / `_handle_alter` until tests pass — the test assertions are the contract.)
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add depgraph/lib/sql/__init__.py depgraph/lib/sql/parser.py \
+        depgraph/tests/lib/sql/test_parser.py depgraph/requirements.txt
+git commit -m "depgraph/lib/sql: SQL DDL parser (sqlglot-backed, returns structured Operations)"
+```
+
+### Task 4.2: Migration file recognition + SQL string extraction
+
+A migration is a Python file that performs schema changes. We recognize it by path (`migrations/*.py`) and content (contains at least one `text("...")` call passed to an `execute`-like callable). The extractor walks the AST, pulls each SQL string, runs it through `parse_operations`, and produces a list of `MigrationOperation` records attached to the migration module.
+
+- [ ] **Step 1: Build fixture migrations**
+
+```python
+# depgraph/tests/lib/sql/fixtures/migrations/001_create_users.py
+from sqlalchemy import text
+
+def migrate(engine):
+    with engine.connect() as conn:
+        conn.execute(text("""
+            CREATE TABLE users (
+                id INTEGER PRIMARY KEY,
+                email VARCHAR(255) NOT NULL
+            )
+        """))
+```
+
+```python
+# depgraph/tests/lib/sql/fixtures/migrations/002_add_role.py
+from sqlalchemy import text
+
+def migrate(engine):
+    with engine.connect() as conn:
+        conn.execute(text("ALTER TABLE users ADD COLUMN role VARCHAR(50)"))
+```
+
+```python
+# depgraph/tests/lib/sql/fixtures/migrations/003_drop_legacy_index.py
+from sqlalchemy import text
+
+def migrate(engine):
+    with engine.connect() as conn:
+        conn.execute(text("CREATE INDEX idx_users_email ON users(email)"))
+```
+
+```python
+# depgraph/tests/lib/sql/fixtures/migrations/add_unnumbered_thing.py
+from sqlalchemy import text
+
+def migrate(engine):
+    with engine.connect() as conn:
+        conn.execute(text("ALTER TABLE users ADD COLUMN bio TEXT"))
+```
+
+```python
+# depgraph/tests/lib/sql/fixtures/migrations/004_dynamic_sql.py
+from sqlalchemy import text
+
+def migrate(engine, cols):
+    cols_sql = ", ".join(cols)
+    # Dynamic interpolation — extractor should record a warning, not parse.
+    with engine.connect() as conn:
+        conn.execute(text(f"CREATE TABLE dynamic ({cols_sql})"))
+```
+
+- [ ] **Step 2: Write failing test**
+
+```python
+# depgraph/tests/lib/sql/test_migration.py
 from pathlib import Path
-from depgraph.extractors.python.extract import extract_repo
-from depgraph.lib.system_stub.db_access import attach_db_access_edges
+from depgraph.lib.sql.migration import (
+    is_migration_file, extract_migration, MigrationFile,
+)
 
-FIXTURE = Path(__file__).resolve().parents[1] / "extractors/fixtures/edges_py/db_access"
+FIXTURES = Path(__file__).parent / "fixtures" / "migrations"
 
-def test_sqlalchemy_session_query_recognized():
-    prims = list(extract_repo(repo_key="fixture", repo_path=FIXTURE))
-    attach_db_access_edges(prims, repo_path=FIXTURE)
-    fn = next(p for p in prims if p["name"] == "get_user")
-    dba = [e for e in fn["edges_out"] if e["kind"] == "db_access"]
-    assert any("query" in e["via"] for e in dba)
 
-def test_sqlalchemy_session_add_recognized():
-    prims = list(extract_repo(repo_key="fixture", repo_path=FIXTURE))
-    attach_db_access_edges(prims, repo_path=FIXTURE)
-    fn = next(p for p in prims if p["name"] == "save_user")
-    dba = [e for e in fn["edges_out"] if e["kind"] == "db_access"]
-    methods = {e["via"] for e in dba}
-    assert "session.add" in methods or "add" in methods
-    assert "session.commit" in methods or "commit" in methods
+def test_recognizes_numbered_migration():
+    assert is_migration_file(FIXTURES / "001_create_users.py") is True
+
+
+def test_recognizes_unnumbered_migration_with_sql():
+    assert is_migration_file(FIXTURES / "add_unnumbered_thing.py") is True
+
+
+def test_rejects_non_migration_python():
+    """A Python file outside a migrations/ directory or without text() calls."""
+    p = FIXTURES.parent / "not_a_migration.py"
+    p.write_text("def foo(): return 1\n")
+    try:
+        assert is_migration_file(p) is False
+    finally:
+        p.unlink()
+
+
+def test_extract_migration_order_from_prefix():
+    m = extract_migration(FIXTURES / "001_create_users.py")
+    assert m.migration_order == 1
+    assert m.operations[0].kind == "create_table"
+    assert m.operations[0].table == "users"
+
+
+def test_extract_migration_order_null_for_unnumbered():
+    m = extract_migration(FIXTURES / "add_unnumbered_thing.py")
+    assert m.migration_order is None
+    assert m.operations[0].kind == "alter_add_column"
+
+
+def test_extract_records_text_call_line():
+    m = extract_migration(FIXTURES / "001_create_users.py")
+    # The text(...) call is on line 5 in the fixture
+    assert m.operations[0].source_line >= 5
+    assert m.operations[0].source_line <= 12  # within the text(...) block
+
+
+def test_dynamic_sql_recorded_as_warning_not_parsed():
+    m = extract_migration(FIXTURES / "004_dynamic_sql.py")
+    assert m.operations == []
+    assert any("dynamic" in w.lower() or "interpolation" in w.lower()
+               for w in m.warnings)
 ```
 
 - [ ] **Step 3: Run, verify fail.**
 
-- [ ] **Step 4: Implement `depgraph/lib/system_stub/db_access.py`**
+- [ ] **Step 4: Implement `depgraph/lib/sql/migration.py`**
 
 ```python
-"""Thin L3 stub — recognize SQLAlchemy session + cursor patterns.
+"""Recognize Python migration files and extract embedded SQL.
 
-This is *not* full L3 system-edge extraction. It exists to feed the
-service classifier's evidence requirement (function with at least one
-db_access / queue_produce / etc. edge).
+Migration files are Python modules that execute SQL strings against a
+database connection. Concorda's convention: `migrations/NNN_<slug>.py`
+with a `migrate()` function that calls `conn.execute(text("..."))`.
+"""
+from __future__ import annotations
 
-Full L3 extraction (DSL-sourced schema targets, ORM-client method
-resolution) is a later pass.
+import ast
+import re
+from dataclasses import dataclass, field
+from pathlib import Path
+
+from depgraph.lib.sql.parser import Operation, parse_operations
+
+
+_ORDINAL_PREFIX = re.compile(r"^(\d+)_")
+
+
+@dataclass
+class MigrationOperation:
+    """An Operation plus the source location it was extracted from."""
+    operation: Operation
+    source_line: int
+    raw_sql: str
+
+    # Convenience pass-throughs so tests can read `mo.kind` not `mo.operation.kind`
+    @property
+    def kind(self) -> str:
+        return self.operation.kind
+
+    @property
+    def table(self) -> str | None:
+        return self.operation.table
+
+
+@dataclass
+class MigrationFile:
+    path: Path
+    migration_order: int | None
+    operations: list[MigrationOperation] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+
+
+def is_migration_file(path: Path) -> bool:
+    """Path is in a migrations/ directory AND contains a text(...) call."""
+    if "migrations" not in path.parts:
+        return False
+    if path.suffix != ".py":
+        return False
+    try:
+        tree = ast.parse(path.read_text())
+    except SyntaxError:
+        return False
+    for node in ast.walk(tree):
+        if (isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Name)
+                and node.func.id == "text"):
+            return True
+    return False
+
+
+def extract_migration(path: Path) -> MigrationFile:
+    """Parse a migration file, extract every SQL string from text(...) calls,
+    parse each into Operations, return MigrationFile with line metadata."""
+    order = None
+    m = _ORDINAL_PREFIX.match(path.name)
+    if m:
+        order = int(m.group(1))
+
+    tree = ast.parse(path.read_text())
+    result = MigrationFile(path=path, migration_order=order)
+
+    for node in ast.walk(tree):
+        if not (isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Name)
+                and node.func.id == "text"):
+            continue
+        arg = node.args[0] if node.args else None
+        if arg is None:
+            continue
+        sql_text, dynamic_reason = _extract_string(arg)
+        if dynamic_reason:
+            result.warnings.append(
+                f"line {node.lineno}: dynamic SQL skipped ({dynamic_reason})")
+            continue
+        ops = parse_operations(sql_text)
+        for op in ops:
+            result.operations.append(MigrationOperation(
+                operation=op, source_line=node.lineno, raw_sql=sql_text,
+            ))
+    return result
+
+
+def _extract_string(expr: ast.expr) -> tuple[str, str | None]:
+    """Return (sql_text, dynamic_reason). dynamic_reason is non-None when
+    the expression can't be reduced to a literal string at parse time."""
+    if isinstance(expr, ast.Constant) and isinstance(expr.value, str):
+        return expr.value, None
+    if isinstance(expr, ast.JoinedStr):  # f-string
+        parts = []
+        for v in expr.values:
+            if isinstance(v, ast.Constant) and isinstance(v.value, str):
+                parts.append(v.value)
+            else:
+                return "", "f-string interpolation"
+        return "".join(parts), None
+    if isinstance(expr, ast.BinOp) and isinstance(expr.op, ast.Add):
+        l, lr = _extract_string(expr.left)
+        r, rr = _extract_string(expr.right)
+        if lr or rr:
+            return "", lr or rr
+        return l + r, None
+    return "", "non-literal SQL expression"
+```
+
+- [ ] **Step 5: Run, verify pass**
+
+```bash
+pytest depgraph/tests/lib/sql/test_migration.py -v
+```
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add depgraph/lib/sql/migration.py depgraph/tests/lib/sql/test_migration.py \
+        depgraph/tests/lib/sql/fixtures/migrations/
+git commit -m "depgraph/lib/sql: migration file recognition + embedded SQL extraction"
+```
+
+### Task 4.3: Schema reconciliation across ordered migrations
+
+After all migration files are extracted, replay their operations in `migration_order` to produce the final-state schema primitives. Tables added by an early `CREATE TABLE` and modified by later `ALTER TABLE` end up with the union of columns. Columns dropped by `ALTER TABLE DROP COLUMN` disappear. Tables dropped by `DROP TABLE` are archived (not present in the live corpus). Unordered migrations (filename without ordinal prefix) replay after the ordered ones in filename order.
+
+- [ ] **Step 1: Write failing test**
+
+```python
+# depgraph/tests/lib/sql/test_reconcile.py
+from pathlib import Path
+from depgraph.lib.sql.migration import extract_migration
+from depgraph.lib.sql.reconcile import reconcile_schema, SchemaPrimitive
+
+FIXTURES = Path(__file__).parent / "fixtures" / "migrations"
+
+
+def _load_all():
+    files = sorted(FIXTURES.glob("*.py"))
+    return [extract_migration(f) for f in files]
+
+
+def test_create_table_produces_schema_primitive():
+    migrations = _load_all()
+    tables = {t.name: t for t in reconcile_schema(migrations, repo_key="fixture")}
+    assert "users" in tables
+    user = tables["users"]
+    assert user.kind == "schema"
+    assert {col["name"] for col in user.columns} == {"id", "email", "role", "bio"}
+
+
+def test_alter_add_column_extends_table():
+    migrations = _load_all()
+    tables = {t.name: t for t in reconcile_schema(migrations, repo_key="fixture")}
+    user = tables["users"]
+    role = next(c for c in user.columns if c["name"] == "role")
+    assert role["type"] == "VARCHAR(50)"
+
+
+def test_unnumbered_migration_runs_after_ordered():
+    """add_unnumbered_thing.py adds `bio` to users. It has no ordinal,
+    so it runs after the ordered migrations. The final `users` table
+    must include `bio`."""
+    migrations = _load_all()
+    tables = {t.name: t for t in reconcile_schema(migrations, repo_key="fixture")}
+    bio = next(c for c in tables["users"].columns if c["name"] == "bio")
+    assert bio["type"] == "TEXT"
+
+
+def test_schema_primitive_id_shape():
+    migrations = _load_all()
+    tables = {t.name: t for t in reconcile_schema(migrations, repo_key="fixture")}
+    user = tables["users"]
+    assert user.id == "fixture::schema::users"
+
+
+def test_schema_primitive_source_points_at_creating_migration():
+    """The schema primitive's source.path is the migration that CREATE'd it.
+    Later ALTER migrations are recorded as additional `defines` edges, but
+    the primitive's source field stays anchored to its origin."""
+    migrations = _load_all()
+    tables = {t.name: t for t in reconcile_schema(migrations, repo_key="fixture")}
+    user = tables["users"]
+    assert user.source["path"].endswith("001_create_users.py")
+```
+
+- [ ] **Step 2: Run, verify fail.**
+
+- [ ] **Step 3: Implement `depgraph/lib/sql/reconcile.py`**
+
+```python
+"""Replay ordered migration operations to produce final-state schema primitives.
+
+Input: list of MigrationFile (each with operations[] + migration_order).
+Output: list of SchemaPrimitive (one per surviving table).
+
+Ordering rules:
+- Migrations with `migration_order != None` run first, sorted by that int.
+- Migrations with `migration_order == None` run after, sorted by filename.
+- Tables touched by later `ALTER TABLE` accumulate the column changes.
+- Tables dropped by `DROP TABLE` are removed from the output set.
+- `CREATE INDEX` emits a references edge from the table primitive to the
+  indexed column (stored on the table's `attributes.indexes[]`).
+"""
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Any
+
+from depgraph.lib.sql.migration import MigrationFile
+
+
+@dataclass
+class SchemaPrimitive:
+    """A reconciled table after replaying all migrations."""
+    id: str
+    name: str
+    kind: str = "schema"
+    primitive: str = "class"
+    columns: list[dict[str, Any]] = field(default_factory=list)
+    foreign_keys: list[dict[str, str]] = field(default_factory=list)
+    indexes: list[dict[str, Any]] = field(default_factory=list)
+    source: dict[str, Any] = field(default_factory=dict)
+    defined_by: list[str] = field(default_factory=list)  # migration paths
+    schema_version: int = 2
+
+
+def _ordered(migrations: list[MigrationFile]) -> list[MigrationFile]:
+    numbered = sorted(
+        [m for m in migrations if m.migration_order is not None],
+        key=lambda m: m.migration_order,
+    )
+    unnumbered = sorted(
+        [m for m in migrations if m.migration_order is None],
+        key=lambda m: m.path.name,
+    )
+    return numbered + unnumbered
+
+
+def reconcile_schema(migrations: list[MigrationFile], *, repo_key: str) -> list[SchemaPrimitive]:
+    tables: dict[str, SchemaPrimitive] = {}
+
+    for migration in _ordered(migrations):
+        mig_path = str(migration.path)
+        for mo in migration.operations:
+            op = mo.operation
+            if op.kind == "create_table":
+                if op.table in tables:
+                    # IF NOT EXISTS — silently skip; otherwise overwrite would
+                    # be a data loss, so we log it as a defined_by event.
+                    if op.if_not_exists:
+                        tables[op.table].defined_by.append(mig_path)
+                        continue
+                tables[op.table] = SchemaPrimitive(
+                    id=f"{repo_key}::schema::{op.table}",
+                    name=op.table,
+                    columns=list(op.columns),
+                    foreign_keys=list(op.foreign_keys),
+                    source={
+                        "repo": repo_key,
+                        "path": migration.path.relative_to(migration.path.parent.parent).as_posix(),
+                        "language": "sql",
+                        "line": mo.source_line,
+                        "end_line": mo.source_line,
+                    },
+                    defined_by=[mig_path],
+                )
+            elif op.kind == "alter_add_column":
+                tbl = tables.get(op.table)
+                if tbl is None:
+                    continue  # ALTER on a table we never saw; treat as no-op
+                tbl.columns.append(op.column)
+                tbl.defined_by.append(mig_path)
+            elif op.kind == "alter_drop_column":
+                tbl = tables.get(op.table)
+                if tbl is None:
+                    continue
+                tbl.columns = [c for c in tbl.columns if c["name"] != op.column_name]
+                tbl.defined_by.append(mig_path)
+            elif op.kind == "drop_table":
+                tables.pop(op.table, None)
+            elif op.kind == "rename_table":
+                tbl = tables.pop(op.table, None)
+                if tbl is None:
+                    continue
+                tbl.name = op.new_name
+                tbl.id = f"{repo_key}::schema::{op.new_name}"
+                tbl.defined_by.append(mig_path)
+                tables[op.new_name] = tbl
+            elif op.kind == "create_index":
+                tbl = tables.get(op.table)
+                if tbl is None:
+                    continue
+                tbl.indexes.append({"name": op.index_name, "columns": op.columns_indexed})
+                tbl.defined_by.append(mig_path)
+
+    return list(tables.values())
+```
+
+- [ ] **Step 4: Run, verify pass + commit**
+
+```bash
+pytest depgraph/tests/lib/sql/test_reconcile.py -v
+git add depgraph/lib/sql/reconcile.py depgraph/tests/lib/sql/test_reconcile.py
+git commit -m "depgraph/lib/sql: schema reconciliation over ordered migrations"
+```
+
+### Task 4.4: Emit schema primitives + per-statement primitive ids
+
+The reconciled `SchemaPrimitive` dataclass needs to convert into the wire-format primitive shape that the rest of the pipeline reads. Plus each per-column primitive needs its own id so logigraph claims can target individual columns ("the email column is unique").
+
+- [ ] **Step 1: Write failing test**
+
+```python
+# depgraph/tests/lib/sql/test_reconcile.py (append)
+from depgraph.lib.sql.reconcile import schema_to_primitives
+
+def test_schema_to_primitives_table_class_plus_column_variables():
+    migrations = _load_all()
+    tables = reconcile_schema(migrations, repo_key="fixture")
+    prims = schema_to_primitives(tables)
+    # One class per table
+    classes = [p for p in prims if p["primitive"] == "class"]
+    assert {p["name"] for p in classes} == {"users"}
+    # One variable per column (id, email, role, bio)
+    variables = [p for p in prims if p["primitive"] == "variable"]
+    assert {p["name"] for p in variables} == {
+        "users.id", "users.email", "users.role", "users.bio",
+    }
+    # Column variables owned by table class
+    email = next(v for v in variables if v["name"] == "users.email")
+    assert email["owner"] == "fixture::schema::users"
+    assert email["signature"]["type_annotation"] == "VARCHAR(255)"
+    assert email["attributes"]["nullable"] is False
+
+
+def test_table_primitive_has_kind_schema():
+    migrations = _load_all()
+    tables = reconcile_schema(migrations, repo_key="fixture")
+    prims = schema_to_primitives(tables)
+    classes = [p for p in prims if p["primitive"] == "class"]
+    assert all(p["kind"] == "schema" for p in classes)
+
+
+def test_column_primitive_id_format():
+    migrations = _load_all()
+    tables = reconcile_schema(migrations, repo_key="fixture")
+    prims = schema_to_primitives(tables)
+    email = next(p for p in prims if p["name"] == "users.email")
+    assert email["id"] == "fixture::schema::users.email"
+```
+
+- [ ] **Step 2: Run, verify fail.**
+
+- [ ] **Step 3: Extend `depgraph/lib/sql/reconcile.py`**
+
+Add to the bottom of the file:
+
+```python
+EXTRACTOR_TAG = "depgraph/lib/sql/reconcile.py@2026-05-16"
+
+
+def schema_to_primitives(tables: list[SchemaPrimitive]) -> list[dict]:
+    """Convert SchemaPrimitive dataclasses into wire-format primitive dicts.
+    One class primitive per table; one variable primitive per column."""
+    prims: list[dict] = []
+    for t in tables:
+        table_id = t.id
+        table_prim = {
+            "schema_version": 2,
+            "id": table_id,
+            "primitive": "class",
+            "name": t.name,
+            "owner": None,
+            "source": dict(t.source),
+            "signature": {"decorators": []},
+            "attributes": {
+                "abstract": False, "generated": False, "external": False,
+                "template_parameters": [], "macro": False, "mutable": False,
+                "instantiable": True, "inheritable": False,
+                "primary_key": [c["name"] for c in t.columns if c.get("primary_key")],
+                "foreign_keys": list(t.foreign_keys),
+                "indexes": list(t.indexes),
+                "defined_by": list(t.defined_by),
+            },
+            "edges_out": [],
+            "structural_hash": _hash({"kind": "schema", "name": t.name,
+                                       "columns": [(c["name"], c["type"]) for c in t.columns],
+                                       "fks": t.foreign_keys}),
+            "kind": "schema",
+            "extractor": EXTRACTOR_TAG,
+        }
+        prims.append(table_prim)
+
+        for c in t.columns:
+            col_id = f"{table_id}.{c['name']}"
+            prims.append({
+                "schema_version": 2,
+                "id": col_id,
+                "primitive": "variable",
+                "name": f"{t.name}.{c['name']}",
+                "owner": table_id,
+                "source": dict(t.source),
+                "signature": {"type_annotation": c["type"]},
+                "attributes": {
+                    "abstract": False, "generated": False, "external": False,
+                    "template_parameters": [], "macro": False,
+                    "mutable": True, "instantiable": False, "inheritable": False,
+                    "nullable": c["nullable"], "primary_key": c.get("primary_key", False),
+                    "default": c.get("default"),
+                },
+                "edges_out": [],
+                "structural_hash": _hash({"kind": "column", "name": c["name"],
+                                            "type": c["type"], "nullable": c["nullable"]}),
+                "kind": None,
+                "extractor": EXTRACTOR_TAG,
+            })
+    return prims
+
+
+def _hash(payload):
+    import hashlib, json
+    return hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()
+```
+
+- [ ] **Step 4: Run, verify pass + commit**
+
+### Task 4.5: ORM model → schema cross-reference
+
+After the Python extractor has emitted ORM model classes (Python `class User(Base): __tablename__ = "users"`) and the SQL pipeline has emitted schema primitives, a post-pass connects them via `references` edges.
+
+- [ ] **Step 1: Fixture**
+
+```python
+# depgraph/tests/lib/sql/fixtures/orm_models/models/user.py
+from .base import Base
+
+class User(Base):
+    __tablename__ = "users"
+    # In real ORM models columns are defined here too, but we only need
+    # tablename for the cross-reference test.
+```
+
+```python
+# depgraph/tests/lib/sql/fixtures/orm_models/models/base.py
+class Base:
+    pass
+```
+
+- [ ] **Step 2: Write failing test**
+
+```python
+# depgraph/tests/lib/sql/test_cross_ref.py
+from pathlib import Path
+from depgraph.extractors.python.extract import extract_repo
+from depgraph.lib.sql.cross_ref import attach_model_schema_references
+
+FIXTURES = Path(__file__).parent / "fixtures"
+
+
+def test_model_class_references_matching_schema():
+    """User Python class with __tablename__='users' references the
+    SQL-sourced users table."""
+    py_prims = list(extract_repo(repo_key="fixture",
+                                  repo_path=FIXTURES / "orm_models"))
+    schema_prims = [{
+        "id": "fixture::schema::users",
+        "primitive": "class", "name": "users", "owner": None,
+        "source": {"repo": "fixture", "path": "schema/users",
+                   "language": "sql", "line": 1, "end_line": 1},
+        "signature": {}, "attributes": {}, "edges_out": [],
+        "structural_hash": "0", "kind": "schema",
+        "extractor": "test", "schema_version": 2,
+    }]
+    all_prims = py_prims + schema_prims
+    attach_model_schema_references(all_prims)
+    user_class = next(p for p in all_prims
+                      if p["name"] == "User" and p["primitive"] == "class")
+    refs = [e for e in user_class["edges_out"] if e["kind"] == "references"]
+    assert any(e["target"] == "fixture::schema::users" for e in refs)
+
+
+def test_model_with_no_tablename_no_reference():
+    """A Python class without __tablename__ does not get a schema reference,
+    even if a matching schema primitive exists by name."""
+    py_prims = [{
+        "id": "fixture::orm/other.py::Other",
+        "primitive": "class", "name": "Other", "owner": None,
+        "source": {"repo": "fixture", "path": "orm/other.py",
+                   "language": "python", "line": 1, "end_line": 2},
+        "signature": {}, "attributes": {}, "edges_out": [],
+        "structural_hash": "0", "kind": None,
+        "extractor": "test", "schema_version": 2,
+    }]
+    schema_prims = [{
+        "id": "fixture::schema::Other", "primitive": "class", "name": "Other",
+        "owner": None,
+        "source": {"repo": "fixture", "path": "schema/Other",
+                   "language": "sql", "line": 1, "end_line": 1},
+        "signature": {}, "attributes": {}, "edges_out": [],
+        "structural_hash": "0", "kind": "schema",
+        "extractor": "test", "schema_version": 2,
+    }]
+    all_prims = py_prims + schema_prims
+    attach_model_schema_references(all_prims)
+    other = py_prims[0]
+    refs = [e for e in other["edges_out"] if e["kind"] == "references"]
+    assert refs == []
+```
+
+- [ ] **Step 3: Run, verify fail.**
+
+- [ ] **Step 4: Implement `depgraph/lib/sql/cross_ref.py`**
+
+```python
+"""Cross-reference ORM mapper classes to their schema-sourced counterparts.
+
+For each Python class that has a class-scoped variable `__tablename__`
+bound to a string literal AND extends a known ORM base class, emit a
+`references` edge to the schema primitive whose name matches.
+
+The variable primitive for `__tablename__` is produced by Phase 2;
+its value is recorded in `signature.type_annotation` (which holds the
+RHS expression text for class-scoped Assigns).
 """
 from __future__ import annotations
 
 import ast
 from pathlib import Path
 
-_SQLALCHEMY_METHODS = {"query", "add", "commit", "execute", "scalars",
-                       "scalar", "delete", "merge", "flush", "rollback"}
+
+def attach_model_schema_references(primitives: list[dict]) -> list[dict]:
+    """In-place: append `references` edges from each ORM model class to
+    the schema-sourced class with matching name."""
+    schema_by_name: dict[str, str] = {
+        p["id"].split("::schema::", 1)[-1]: p["id"]
+        for p in primitives
+        if p.get("kind") == "schema" and "::schema::" in p["id"]
+        and p["primitive"] == "class"
+    }
+    if not schema_by_name:
+        return primitives
+
+    # Index Python class primitives by their id and find their __tablename__
+    classes_by_id = {
+        p["id"]: p for p in primitives
+        if p["primitive"] == "class" and p["source"]["language"] == "python"
+    }
+    tablename_by_class: dict[str, str] = {}
+    for p in primitives:
+        if (p["primitive"] == "variable"
+                and p.get("owner") in classes_by_id
+                and p["name"].endswith(".__tablename__")):
+            tablename_value = _literal_from_annotation(p["signature"].get("type_annotation"))
+            if tablename_value:
+                tablename_by_class[p["owner"]] = tablename_value
+
+    for class_id, tablename in tablename_by_class.items():
+        schema_id = schema_by_name.get(tablename)
+        if not schema_id:
+            continue
+        cls = classes_by_id[class_id]
+        cls["edges_out"].append({
+            "target": schema_id, "kind": "references",
+            "via": "__tablename__",
+            "where": f"{cls['source']['path']}:{cls['source']['line']}",
+            "confidence": "exact",
+        })
+    return primitives
+
+
+def _literal_from_annotation(text: str | None) -> str | None:
+    """Phase 2 records class-scope Assign RHS as signature.type_annotation.
+    For `__tablename__ = "users"`, that text is `"users"` (with quotes)."""
+    if not text:
+        return None
+    text = text.strip()
+    if (text.startswith('"') and text.endswith('"')) or \
+       (text.startswith("'") and text.endswith("'")):
+        return text[1:-1]
+    return None
+```
+
+> Note for Phase 2 retro: the Python extractor needs to record the RHS expression text for class-scope `Assign` / `AnnAssign` nodes in the variable primitive's `signature.type_annotation` field (or a new `signature.value_text` field — author's choice; keep tests aligned). Add this when implementing Phase 2 Task 2.3 if not already present.
+
+- [ ] **Step 5: Run, verify pass + commit**
+
+```bash
+pytest depgraph/tests/lib/sql/test_cross_ref.py -v
+git add depgraph/lib/sql/cross_ref.py depgraph/tests/lib/sql/test_cross_ref.py \
+        depgraph/tests/lib/sql/fixtures/orm_models/
+git commit -m "depgraph/lib/sql: ORM model → schema reference post-pass"
+```
+
+### Task 4.6: db_access edges target schema-sourced primitives
+
+The final piece: when the recognizer sees `session.query(User)` in a Python function body, it resolves `User` to the local Python class primitive, follows the `references` edge to the schema primitive, and emits the `db_access` edge targeting the schema. This replaces the synthetic-terminal stub.
+
+- [ ] **Step 1: Fixture**
+
+```python
+# depgraph/tests/lib/test_db_access_fixtures/src.py
+from sqlalchemy.orm import Session
+from .models import User  # ORM model class
+
+def get_user(session: Session, user_id):
+    return session.query(User).filter(User.id == user_id).first()
+
+def save_user(session: Session, user):
+    session.add(user)
+    session.commit()
+```
+
+```python
+# depgraph/tests/lib/test_db_access_fixtures/models.py
+class Base: pass
+
+class User(Base):
+    __tablename__ = "users"
+```
+
+- [ ] **Step 2: Write failing test**
+
+```python
+# depgraph/tests/lib/test_db_access.py
+from pathlib import Path
+from depgraph.extractors.python.extract import extract_repo
+from depgraph.lib.sql.cross_ref import attach_model_schema_references
+from depgraph.lib.system_stub.db_access import attach_db_access_edges
+
+FIXTURE = Path(__file__).parent / "test_db_access_fixtures"
+
+
+def _setup_corpus():
+    """Extract Python primitives + add a schema primitive for the users table."""
+    py_prims = list(extract_repo(repo_key="fixture", repo_path=FIXTURE))
+    schema_prim = {
+        "id": "fixture::schema::users", "primitive": "class", "name": "users",
+        "owner": None,
+        "source": {"repo": "fixture", "path": "schema/users",
+                   "language": "sql", "line": 1, "end_line": 1},
+        "signature": {}, "attributes": {}, "edges_out": [],
+        "structural_hash": "0", "kind": "schema",
+        "extractor": "test", "schema_version": 2,
+    }
+    all_prims = py_prims + [schema_prim]
+    attach_model_schema_references(all_prims)
+    return all_prims
+
+
+def test_session_query_targets_schema_primitive():
+    prims = _setup_corpus()
+    attach_db_access_edges(prims, repo_path=FIXTURE)
+    fn = next(p for p in prims if p["name"] == "get_user")
+    dba = [e for e in fn["edges_out"] if e["kind"] == "db_access"]
+    targets = {e["target"] for e in dba}
+    assert "fixture::schema::users" in targets
+
+
+def test_session_add_targets_schema_primitive_via_inferred_type():
+    """`session.add(user)` — `user` is a function parameter typed `User`.
+    Resolve via the parameter annotation if present; otherwise emit
+    unresolved with the function name as `via`."""
+    prims = _setup_corpus()
+    attach_db_access_edges(prims, repo_path=FIXTURE)
+    fn = next(p for p in prims if p["name"] == "save_user")
+    dba = [e for e in fn["edges_out"] if e["kind"] == "db_access"]
+    # save_user's `user` param has no type annotation in the fixture, so
+    # session.add(user) resolves as unresolved.
+    add_edges = [e for e in dba if "add" in e["via"]]
+    assert any(e["confidence"] == "unresolved" for e in add_edges)
+
+
+def test_orphan_query_target_emits_unresolved():
+    """session.query(NotInCorpus) — emit edge with confidence=unresolved."""
+    # Synthetic test using a class name we haven't extracted
+    prims = _setup_corpus()
+    # Inject a function that queries an unknown class
+    prims.append({
+        "id": "fixture::misc.py::strange_query", "primitive": "function",
+        "name": "strange_query", "owner": None,
+        "source": {"repo": "fixture", "path": "misc.py",
+                   "language": "python", "line": 1, "end_line": 3},
+        "signature": {"parameters": [], "return_type": None,
+                       "is_async": False, "decorators": []},
+        "attributes": {}, "edges_out": [], "structural_hash": "0",
+        "kind": None, "extractor": "test", "schema_version": 2,
+    })
+    (FIXTURE / "misc.py").write_text(
+        "def strange_query(session):\n"
+        "    return session.query(NoSuchClass).all()\n"
+    )
+    try:
+        attach_db_access_edges(prims, repo_path=FIXTURE)
+        fn = next(p for p in prims if p["name"] == "strange_query")
+        dba = [e for e in fn["edges_out"] if e["kind"] == "db_access"]
+        assert any(e["confidence"] == "unresolved" for e in dba)
+    finally:
+        (FIXTURE / "misc.py").unlink()
+```
+
+- [ ] **Step 3: Run, verify fail.**
+
+- [ ] **Step 4: Implement `depgraph/lib/system_stub/db_access.py`** (rewrite — replaces the synthetic-terminal version)
+
+```python
+"""db_access edge recognition — targets schema-sourced primitives.
+
+The pipeline:
+  1. Recognize `session.query(X)`, `db.add(x)`, `cursor.execute(text("..."))`
+     and similar SDK patterns inside Python function bodies.
+  2. Resolve the argument to a Python class primitive (via local symbol
+     index + import resolution).
+  3. Follow the Python class's `references → schema` edge to find the
+     schema primitive.
+  4. Emit db_access edge from the calling function to the schema primitive
+     with confidence=exact.
+
+Fallbacks:
+- If the argument doesn't resolve to a known class, emit confidence=unresolved
+  with the function name as `via` and no target (or `external::unknown` if a
+  target field is required).
+- If the argument resolves to a Python class with no schema reference, emit
+  confidence=unresolved targeting the Python class.
+- For `cursor.execute(text("SELECT ... FROM users ..."))` (raw SQL outside
+  migrations), parse the SQL with sqlglot, identify each referenced table,
+  emit one db_access edge per table.
+"""
+from __future__ import annotations
+
+import ast
+import re
+from pathlib import Path
+
+import sqlglot
+from sqlglot import expressions as exp
+
+
+_SESSION_METHODS = {"query", "add", "commit", "execute", "scalars",
+                     "scalar", "delete", "merge", "flush", "rollback"}
+_CURSOR_METHODS = {"execute", "executemany", "fetchone", "fetchall", "fetchmany"}
 
 
 def attach_db_access_edges(primitives: list[dict], *, repo_path: Path) -> list[dict]:
-    """Re-parse each Python source file once, walk function bodies, append
-    db_access edges for SQLAlchemy session and DB-API cursor calls.
+    schema_by_name = {
+        p["name"]: p["id"] for p in primitives
+        if p.get("kind") == "schema" and p["primitive"] == "class"
+    }
+    # Python class id -> schema id (via references edges)
+    py_class_to_schema: dict[str, str] = {}
+    py_classes_by_id: dict[str, dict] = {}
+    for p in primitives:
+        if p["primitive"] == "class" and p["source"]["language"] == "python":
+            py_classes_by_id[p["id"]] = p
+            for e in p["edges_out"]:
+                if e["kind"] == "references" and e["target"] in schema_by_name.values():
+                    py_class_to_schema[p["id"]] = e["target"]
 
-    Mutates `primitives` in place; returns the same list for chaining.
-    """
+    # Build a per-file local-name -> python-class-id index
     by_path: dict[str, list[dict]] = {}
     for p in primitives:
         if p["source"]["language"] != "python":
@@ -2808,107 +3951,180 @@ def attach_db_access_edges(primitives: list[dict], *, repo_path: Path) -> list[d
         by_path.setdefault(p["source"]["path"], []).append(p)
 
     for path, prims_in_file in by_path.items():
+        local_names: dict[str, str] = {}
+        for p in prims_in_file:
+            if p["primitive"] == "class" and p.get("owner") is None:
+                local_names[p["name"]] = p["id"]
+
+        # Imported names: scan imports edges on the module primitive
+        module = next((p for p in prims_in_file if p["primitive"] == "module"), None)
+        if module:
+            for e in module["edges_out"]:
+                if e["kind"] == "imports" and e["target"] in py_classes_by_id:
+                    imported_cls = py_classes_by_id[e["target"]]
+                    local_names[imported_cls["name"]] = e["target"]
+
         source_text = (repo_path / path).read_text()
-        tree = ast.parse(source_text)
+        try:
+            tree = ast.parse(source_text)
+        except SyntaxError:
+            continue
         fn_by_line = {p["source"]["line"]: p
                       for p in prims_in_file if p["primitive"] == "function"}
 
-        # First pass: identify variable names that hold a cursor (assigned
-        # from a `.cursor()` call). Used so `cur.execute(...)` after
-        # `cur = conn.cursor()` is recognized as db_access.
-        cursor_names_per_fn: dict[int, set[str]] = {}
-        for fn_node in ast.walk(tree):
-            if not isinstance(fn_node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                continue
-            cursor_names: set[str] = set()
-            for sub in ast.walk(fn_node):
-                if (isinstance(sub, ast.Assign)
-                        and isinstance(sub.value, ast.Call)
-                        and isinstance(sub.value.func, ast.Attribute)
-                        and sub.value.func.attr == "cursor"):
-                    for tgt in sub.targets:
-                        if isinstance(tgt, ast.Name):
-                            cursor_names.add(tgt.id)
-            cursor_names_per_fn[fn_node.lineno] = cursor_names
-
-        # Second pass: emit db_access edges
         for fn_node in ast.walk(tree):
             if not isinstance(fn_node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 continue
             fn_prim = fn_by_line.get(fn_node.lineno)
             if not fn_prim:
                 continue
-            cursor_names = cursor_names_per_fn.get(fn_node.lineno, set())
+            # Track local variable types from parameter annotations
+            param_types: dict[str, str] = {}
+            for arg in fn_node.args.args:
+                if arg.annotation is not None:
+                    ann = ast.unparse(arg.annotation)
+                    param_types[arg.arg] = ann.split("[")[0].strip()
+
             for sub in ast.walk(fn_node):
                 if not isinstance(sub, ast.Call):
                     continue
-                if not isinstance(sub.func, ast.Attribute):
-                    continue
-                method = sub.func.attr
-                receiver_text = ast.unparse(sub.func.value)
-                receiver_root = receiver_text.split(".")[0]
-
-                # Pattern A: SQLAlchemy session-style methods
-                if method in _SQLALCHEMY_METHODS:
-                    target = f"external::pypi::sqlalchemy::Session.{method}"
-                # Pattern B: DB-API cursor.execute / cursor.fetchone etc.
-                elif method in {"execute", "executemany", "fetchone", "fetchall", "fetchmany"} \
-                        and (receiver_root in cursor_names or "cur" in receiver_root.lower()):
-                    target = f"external::python-dbapi::Cursor.{method}"
-                else:
-                    continue
-
-                fn_prim["edges_out"].append({
-                    "target": target, "kind": "db_access",
-                    "via": f"{receiver_text}.{method}",
-                    "where": f"{path}:{sub.lineno}",
-                    "confidence": "exact",
-                })
+                if isinstance(sub.func, ast.Attribute):
+                    method = sub.func.attr
+                    receiver = ast.unparse(sub.func.value)
+                    # Pattern A: session.<method>(...)
+                    if method in _SESSION_METHODS:
+                        _emit_session_edge(fn_prim, sub, method, receiver, path,
+                                            local_names, py_class_to_schema, param_types)
+                    # Pattern B: cursor.execute(text("..."))
+                    if method in _CURSOR_METHODS:
+                        _emit_cursor_edge(fn_prim, sub, method, receiver, path,
+                                           schema_by_name)
     return primitives
+
+
+def _emit_session_edge(fn_prim, call, method, receiver, path,
+                       local_names, py_class_to_schema, param_types):
+    """Resolve session.<method>(<arg>) target and emit edge."""
+    arg = call.args[0] if call.args else None
+    target_id, confidence = None, "unresolved"
+
+    if isinstance(arg, ast.Name):
+        # session.query(User) — resolve `User` via local names
+        class_id = local_names.get(arg.id)
+        if class_id and class_id in py_class_to_schema:
+            target_id, confidence = py_class_to_schema[class_id], "exact"
+        elif arg.id in param_types:
+            # session.add(user) where user: User
+            class_id = local_names.get(param_types[arg.id])
+            if class_id and class_id in py_class_to_schema:
+                target_id, confidence = py_class_to_schema[class_id], "exact"
+    # else: text() call, attribute access, dynamic — unresolved
+
+    fn_prim["edges_out"].append({
+        "target": target_id or "external::unknown::db_target",
+        "kind": "db_access",
+        "via": f"{receiver}.{method}",
+        "where": f"{path}:{call.lineno}",
+        "confidence": confidence,
+    })
+
+
+def _emit_cursor_edge(fn_prim, call, method, receiver, path, schema_by_name):
+    """For cursor.execute(text("SELECT ... FROM <table>")), parse SQL and
+    emit one edge per referenced table that resolves to a schema primitive."""
+    arg = call.args[0] if call.args else None
+    sql_text = None
+    if isinstance(arg, ast.Call) and isinstance(arg.func, ast.Name) and arg.func.id == "text":
+        if arg.args and isinstance(arg.args[0], ast.Constant) and isinstance(arg.args[0].value, str):
+            sql_text = arg.args[0].value
+    elif isinstance(arg, ast.Constant) and isinstance(arg.value, str):
+        sql_text = arg.value
+
+    if not sql_text:
+        fn_prim["edges_out"].append({
+            "target": "external::unknown::db_target", "kind": "db_access",
+            "via": f"{receiver}.{method}", "where": f"{path}:{call.lineno}",
+            "confidence": "unresolved",
+        })
+        return
+
+    tables = _tables_referenced_by_sql(sql_text)
+    if not tables:
+        fn_prim["edges_out"].append({
+            "target": "external::unknown::db_target", "kind": "db_access",
+            "via": f"{receiver}.{method}", "where": f"{path}:{call.lineno}",
+            "confidence": "unresolved",
+        })
+        return
+
+    for table_name in tables:
+        target_id = schema_by_name.get(table_name)
+        if target_id:
+            fn_prim["edges_out"].append({
+                "target": target_id, "kind": "db_access",
+                "via": f"{receiver}.{method}(SQL)",
+                "where": f"{path}:{call.lineno}",
+                "confidence": "exact",
+            })
+        else:
+            fn_prim["edges_out"].append({
+                "target": f"external::unknown::table::{table_name}",
+                "kind": "db_access", "via": f"{receiver}.{method}(SQL)",
+                "where": f"{path}:{call.lineno}", "confidence": "unresolved",
+            })
+
+
+def _tables_referenced_by_sql(sql_text: str) -> list[str]:
+    """Return the list of table names that the SQL reads from or writes to."""
+    try:
+        parsed = sqlglot.parse(sql_text, dialect="sqlite")
+    except sqlglot.errors.ParseError:
+        return []
+    names: list[str] = []
+    for stmt in parsed:
+        if stmt is None:
+            continue
+        for tbl in stmt.find_all(exp.Table):
+            names.append(tbl.name)
+    # Deduplicate while preserving order
+    seen, out = set(), []
+    for n in names:
+        if n not in seen:
+            seen.add(n); out.append(n)
+    return out
 ```
 
 - [ ] **Step 5: Run, verify pass + commit**
 
 ```bash
-pytest depgraph/tests/lib/test_db_access_stub.py -v
-git add depgraph/lib/system_stub/ depgraph/tests/lib/test_db_access_stub.py \
-        depgraph/tests/extractors/fixtures/edges_py/db_access/
-git commit -m "depgraph: L3 stub — SQLAlchemy db_access edge recognition (Python)"
+pytest depgraph/tests/lib/test_db_access.py -v
+git add depgraph/lib/system_stub/ depgraph/tests/lib/test_db_access.py \
+        depgraph/tests/lib/test_db_access_fixtures/
+git commit -m "depgraph/system_stub: db_access edges target schema primitives via ORM model references"
 ```
 
-### Task 4.2: Raw cursor.execute pattern
+### Task 4.7: Schema validation sweep — emitted schema primitives validate
 
-- [ ] **Step 1: Fixture + test**
-
-Fixture adds:
+- [ ] **Step 1: Add sweep test**
 
 ```python
-def raw_query(conn, uid):
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM users WHERE id = %s", (uid,))
-    return cur.fetchone()
+# depgraph/tests/lib/sql/test_reconcile.py (append)
+from depgraph.lib.primitives import validate_primitive
+
+def test_all_schema_primitives_validate():
+    migrations = _load_all()
+    tables = reconcile_schema(migrations, repo_key="fixture")
+    prims = schema_to_primitives(tables)
+    for p in prims:
+        errors = validate_primitive(p)
+        assert not errors, f"{p['id']}: {errors}"
 ```
 
-Test:
-
-```python
-def test_raw_cursor_execute_recognized():
-    prims = list(extract_repo(repo_key="fixture", repo_path=FIXTURE))
-    attach_db_access_edges(prims, repo_path=FIXTURE)
-    fn = next(p for p in prims if p["name"] == "raw_query")
-    dba = [e for e in fn["edges_out"] if e["kind"] == "db_access"]
-    assert any("execute" in e["via"] for e in dba)
-```
-
-- [ ] **Step 2: Confirm — Task 4.1's `attach_db_access_edges` already implements the cursor recognition path (the "Pattern B" branch + the cursor-name pre-pass). No code change needed; this task adds the second test fixture and asserts the existing implementation covers it.**
-
-- [ ] **Step 3: Run, verify pass + commit**
+- [ ] **Step 2: Run, verify pass + commit**
 
 ```bash
-pytest depgraph/tests/lib/test_db_access_stub.py::test_raw_cursor_execute_recognized -v
-git add depgraph/tests/extractors/fixtures/edges_py/db_access/ \
-        depgraph/tests/lib/test_db_access_stub.py
-git commit -m "depgraph: L3 stub — DB-API cursor.execute recognition (Python)"
+pytest depgraph/tests/lib/sql/test_reconcile.py::test_all_schema_primitives_validate -v
+git commit -m "depgraph/lib/sql: schema validation gate for emitted schema primitives"
 ```
 
 ---
@@ -3013,9 +4229,16 @@ def classify_corpus(primitives: list[dict],
                     config: ClassificationConfig | None = None) -> dict[str, Decision]:
     config = config or default_config()
     by_source, by_target = _build_edge_indexes(primitives)
-    decisions: dict[str, Decision] = {
-        p["id"]: Decision(kind=None, rule="unclassified") for p in primitives
-    }
+    # Initialize from any kind already set by the extractor (e.g. SQL
+    # extractor sets kind: "schema" on table primitives — that's not a
+    # derived decision, it's intrinsic to the source language).
+    decisions: dict[str, Decision] = {}
+    for p in primitives:
+        if p.get("kind"):
+            decisions[p["id"]] = Decision(kind=p["kind"], rule="extractor_set",
+                                           evidence=[{"reason": "kind set by extractor"}])
+        else:
+            decisions[p["id"]] = Decision(kind=None, rule="unclassified")
     for classifier in _CLASSIFIERS:
         kind_name = classifier.KIND
         classifier_decisions = classifier.classify(
@@ -3367,55 +4590,141 @@ def classify(primitives, *, by_source, by_target, config, decisions_so_far):
 
 - [ ] **Step 3: Run, verify pass + commit.**
 
-### Task 5.6: Model classifier
+### Task 5.6: Model classifier — requires schema reference
 
-- [ ] **Step 1: Test**
+Per the spec's resolved model/schema split (2026-05-16): a class is `model` only if it BOTH extends a known ORM base AND has a `references` edge to a `schema`-kind primitive. A class that extends Base but lacks a schema reference is an *orphan mapper* — surfaces as unclassified with a `warnings` entry (signal for "we have an ORM model for a table we never extracted"). A class with `kind: "schema"` set by the SQL extractor is NOT a model and is skipped by this classifier.
+
+- [ ] **Step 1: Tests**
 
 ```python
-# test_classifier_model.py
-def test_class_extending_orm_base_is_model():
-    user_class = {
+# depgraph/tests/lib/test_classifier_model.py
+from depgraph.lib.classification.engine import classify_corpus
+
+
+def _user_class(edges_out):
+    return {
         "id": "r::models/user.py::User", "primitive": "class", "name": "User",
         "owner": None,
-        "source": {"path": "models/user.py", "line": 1, "end_line": 1, "language": "python", "repo": "r"},
+        "source": {"path": "models/user.py", "line": 1, "end_line": 1,
+                   "language": "python", "repo": "r"},
         "signature": {"decorators": []}, "attributes": {},
-        "edges_out": [{"target": "external::pypi::sqlalchemy::DeclarativeBase",
-                       "kind": "extends", "via": "class_decl", "where": "models/user.py:1", "confidence": "exact"}],
-        "structural_hash": "0", "kind": None, "extractor": "t", "schema_version": 2,
+        "edges_out": edges_out, "structural_hash": "0", "kind": None,
+        "extractor": "t", "schema_version": 2,
     }
-    from depgraph.lib.classification.engine import classify_corpus
-    decisions = classify_corpus([user_class])
-    assert decisions["r::models/user.py::User"].kind == "model"
+
+
+def _users_schema():
+    return {
+        "id": "r::schema::users", "primitive": "class", "name": "users",
+        "owner": None,
+        "source": {"path": "schema/users", "line": 1, "end_line": 1,
+                   "language": "sql", "repo": "r"},
+        "signature": {}, "attributes": {}, "edges_out": [],
+        "structural_hash": "0", "kind": "schema",
+        "extractor": "t", "schema_version": 2,
+    }
+
+
+def test_orm_class_with_schema_reference_is_model():
+    user = _user_class([
+        {"target": "external::pypi::sqlalchemy::Base", "kind": "extends",
+         "via": "class_decl", "where": "models/user.py:1", "confidence": "exact"},
+        {"target": "r::schema::users", "kind": "references",
+         "via": "__tablename__", "where": "models/user.py:2", "confidence": "exact"},
+    ])
+    decisions = classify_corpus([user, _users_schema()])
+    assert decisions[user["id"]].kind == "model"
+    # schema primitive's kind was set by the extractor; classifier doesn't change it
+    assert decisions["r::schema::users"].kind == "schema"
+
+
+def test_orm_class_without_schema_reference_is_not_model():
+    """Extends Base but no references → schema. Treated as orphan mapper."""
+    user = _user_class([
+        {"target": "external::pypi::sqlalchemy::Base", "kind": "extends",
+         "via": "class_decl", "where": "models/user.py:1", "confidence": "exact"},
+    ])
+    decisions = classify_corpus([user])
+    assert decisions[user["id"]].kind != "model"
+
+
+def test_schema_primitive_not_classified_as_model():
+    schema = _users_schema()
+    decisions = classify_corpus([schema])
+    assert decisions[schema["id"]].kind == "schema"
+
+
+def test_class_with_schema_reference_but_no_orm_extends_is_not_model():
+    """References → schema alone isn't enough; must also extend an ORM base.
+    Otherwise any class that mentions a schema in a type hint would be a model."""
+    cls = _user_class([
+        {"target": "r::schema::users", "kind": "references",
+         "via": "type_hint", "where": "models/user.py:1", "confidence": "exact"},
+    ])
+    decisions = classify_corpus([cls])
+    assert decisions[cls["id"]].kind != "model"
 ```
 
 - [ ] **Step 2: Implement**
 
 ```python
-# lib/classification/model.py
+# depgraph/lib/classification/model.py
+"""Model classifier — ORM mapper class that observes a schema.
+
+Requires BOTH:
+  1. `extends` edge to a known ORM base class (config.orm_base_classes).
+  2. `references` edge to a primitive whose kind == "schema".
+
+Classes already classified as `schema` (by the SQL extractor) are skipped.
+"""
+from __future__ import annotations
+
 KIND = "model"
 
 
 def classify(primitives, *, by_source, by_target, config, decisions_so_far):
+    schema_ids = {p["id"] for p in primitives if p.get("kind") == "schema"}
+
     decisions = {}
     for p in primitives:
         if p["primitive"] != "class":
             continue
+        if p.get("kind") == "schema":
+            # Already labeled schema by extractor; not a model
+            continue
+
+        extends_orm = False
+        orm_base_evidence = None
+        schema_ref = None
         for e in by_source.get(p["id"], []):
-            if e["kind"] != "extends":
-                continue
-            # The target id might be external::pypi::sqlalchemy::Base or a local
-            # primitive whose name is one of the ORM base names.
-            target_last = e["target"].split("::")[-1]
-            if target_last in config.orm_base_classes:
-                decisions[p["id"]] = {
-                    "rule": "extends_orm_base",
-                    "evidence": [{"base": target_last, "via": e["via"]}],
-                }
-                break
+            if e["kind"] == "extends":
+                target_last = e["target"].split("::")[-1]
+                if target_last in config.orm_base_classes:
+                    extends_orm = True
+                    orm_base_evidence = {"base": target_last, "via": e["via"]}
+            elif e["kind"] == "references" and e["target"] in schema_ids:
+                schema_ref = {"schema": e["target"], "via": e["via"]}
+
+        if extends_orm and schema_ref is not None:
+            decisions[p["id"]] = {
+                "rule": "orm_mapper_with_schema_reference",
+                "evidence": [orm_base_evidence, schema_ref],
+            }
+        # extends_orm without schema_ref: orphan mapper. We could surface
+        # a warning here; engine writes that into Decision.conflicts if
+        # we extend the API for it. Out of scope for this task — the
+        # `kind` stays None and graphui can query "classes extending an
+        # ORM base but unclassified" separately.
     return decisions
 ```
 
-- [ ] **Step 3: Run, verify pass + commit.**
+- [ ] **Step 3: Run, verify pass + commit**
+
+```bash
+pytest depgraph/tests/lib/test_classifier_model.py -v
+git add depgraph/lib/classification/model.py depgraph/tests/lib/test_classifier_model.py
+git commit -m "depgraph/classification: model requires both ORM base extends AND schema reference"
+```
 
 ### Task 5.7: Util + Test classifiers
 
@@ -3600,7 +4909,8 @@ from depgraph.extractors.python.canonical import slugify_id
 
 _KIND_DIRS = {
     "component": "components", "hook": "hooks", "endpoint": "endpoints",
-    "service": "services", "model": "models", "test": "tests", "util": "utils",
+    "service": "services", "model": "models", "schema": "schemas",
+    "test": "tests", "util": "utils",
 }
 _PRIMITIVE_DIRS = {
     "module": "modules", "package": "packages", "class": "classes",
@@ -3697,12 +5007,19 @@ Delete the legacy reconcile functions that fed pre-flip-shape concerns: `_join_r
 - [ ] **Step 3: Implement regen entry point**
 
 The user-facing CLI is `kg depgraph regen`. It must:
-1. Load `project.toml` (gives `repos.*` paths + per-repo `include_paths` / `languages`).
-2. For each repo × language, invoke the language's extractor (per `languages.toml`) and collect primitives + edges.
-3. Run the L3 stub (Python only).
-4. Run the classification engine.
-5. Write all primitives to disk via `write_classified`.
-6. Run reconcile to build indexes.
+
+1. Load `project.toml` (gives `repos.*` paths + per-repo `include_paths` / `languages` / `migrations_dirs`).
+2. For each repo × language, invoke the language's extractor per `languages.toml` and collect primitives + edges.
+3. **SQL pipeline.** For each repo with `sql` in `languages`:
+   a. Run the standalone `.sql` extractor against any `.sql` files (no-op for Concorda).
+   b. For each path in `migrations_dirs`, walk recursively: `is_migration_file(p)` → `extract_migration(p)` → collect `MigrationFile`s.
+   c. `reconcile_schema(migration_files, repo_key=...)` → `schema_to_primitives(...)` → schema-primitive corpus for that repo.
+   d. Attach `up_operations[]` to each migration module primitive (look up the module primitive by path, append the list of schema-primitive ids).
+4. **Cross-reference pass.** `attach_model_schema_references(all_primitives)` adds the `references` edges from ORM model classes to schema primitives.
+5. **`db_access` pass.** `attach_db_access_edges(all_primitives, repo_path=...)` adds db_access edges that target schema primitives where the chain resolves.
+6. **Classification engine.** Runs over the unified corpus; produces decisions; schema primitives keep their `kind: "schema"` (set by the SQL extractor).
+7. Write all primitives to disk via `write_classified`.
+8. Run reconcile (Task 6.1's rewritten version) to build `_index/by_source.json` + `by_target.json`.
 
 - [ ] **Step 4: Run end-to-end, verify pass + commit**
 
@@ -3825,9 +5142,14 @@ data_dir = "~/concorda-knowledge-graph/logigraph"
 
 [repos.concorda-api]
 path = "~/concorda-api"
-languages = ["python"]
-include_paths = ["**/*.py"]
+languages = ["python", "sql"]
+include_paths = ["**/*.py", "**/*.sql"]
 exclude_paths = ["**/__pycache__/**", "**/.venv/**", "**/venv/**", "**/tests/**"]
+# The migrations directory contains Python files with embedded SQL.
+# The SQL pipeline (depgraph/lib/sql/) recognizes these and extracts
+# their schema operations; no special config needed beyond `sql` in
+# languages above.
+migrations_dirs = ["migrations"]
 
 [repos.concorda-web]
 path = "~/concorda-web"
@@ -3963,7 +5285,8 @@ The decorator list should be dotted-name strings (e.g., `"router.post"` not `"ro
 Documented here so the engineer doesn't accidentally pick up adjacent work:
 
 - Go, Rust, C, C++ extractors (deferred to a later pass per spec scope decision 2026-05-16)
-- Schema-language extractors: SQL, Prisma, OpenAPI, GraphQL, JSON Schema, Protobuf (deferred)
-- Full L3 system-edge taxonomy: webhook_publish/subscribe, queue_produce/consume, cache_access, file_storage_access, notification_send, observability_emit, feature_flag_check, auth_trust, schedule_trigger, config_read, env_share, external_service_call (deferred; only db_access stubbed in this pass)
-- Logigraph L3-claim support (deferred; this pass only resolves the L1 claim shape)
-- Graphui changes — assumes graphui's existing reads from `nodes/<kind>/` keep working; if not, a separate plan addresses it.
+- Schema-language extractors other than SQL: Prisma DSL, OpenAPI, GraphQL SDL, JSON Schema, Protobuf (deferred; their pattern is the same as the SQL pipeline — register the language, write a DSL parser, emit schema primitives — so adding them later is incremental)
+- Document-store schemas (MongoDB, Firestore, DynamoDB shape inference): not in scope. Future approach uses JSON Schema files or Pydantic/Marshmallow validators as the schema source.
+- Full L3 system-edge taxonomy beyond `db_access`: `webhook_publish/subscribe`, `queue_produce/consume`, `cache_access`, `file_storage_access`, `notification_send`, `observability_emit`, `feature_flag_check`, `auth_trust`, `schedule_trigger`, `config_read`, `env_share`, `external_service_call` (deferred; only `db_access` lands in this pass — it's the substrate the service classifier requires)
+- Logigraph L3-claim support (deferred; this pass only resolves the L1 claim shape, plus schema-primitive claim targets via the existing `claims_code` field — schema primitive ids are stable L1-shaped strings)
+- Graphui changes — assumes graphui's existing reads from `nodes/<kind>/` keep working with `nodes/schema/` added for the new schema kind. If not, a separate plan addresses it.
