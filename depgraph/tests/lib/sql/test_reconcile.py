@@ -204,3 +204,16 @@ def test_column_primitive_id_format():
     prims = schema_to_primitives(tables)
     email = next(p for p in prims if p["name"] == "users.email")
     assert email["id"] == "fixture::schema::users.email"
+
+
+# ── Task 4.8: Schema validation sweep ─────────────────────────────────────────
+from depgraph.lib.primitives import validate_primitive
+
+
+def test_all_schema_primitives_validate():
+    migrations = _load_all()
+    tables = reconcile_schema(migrations, repo_key="fixture")
+    prims = schema_to_primitives(tables)
+    for p in prims:
+        errors = validate_primitive(p)
+        assert not errors, f"{p['id']}: {errors}"
