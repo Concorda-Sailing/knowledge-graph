@@ -103,13 +103,32 @@ def test_react_hook_relabeled(tmp_repo, tmp_data_dir):
 
 
 def test_react_ignores_lowercase_function(tmp_repo, tmp_data_dir):
-    # Lowercase top-level functions classify as `service`, not component/hook.
+    # Non-React names (lowercase, non-`use<Capital>`) are not the react
+    # detector's responsibility. They should not appear in any kind dir.
+    # Service-kind nodes for these names come from the dedicated `service`
+    # detector (path-filtered), not from `react`.
     (tmp_repo / "u.ts").write_text("export function helper() { return 1 }\n")
     r = _run(tmp_repo, tmp_data_dir, detectors="react")
     assert r.returncode == 0, r.stderr
     comps = _read_nodes(tmp_data_dir, "components")
     hooks = _read_nodes(tmp_data_dir, "hooks")
-    assert "helper" not in _symbols(comps + hooks)
+    svcs = _read_nodes(tmp_data_dir, "services")
+    assert "helper" not in _symbols(comps + hooks + svcs)
+
+
+def test_react_does_not_emit_object_literal_api_clients(tmp_repo, tmp_data_dir):
+    # `export const profileApi = { get: () => ... }` used to emit
+    # `profileApi.get` as a service from `react`. That belonged in a
+    # path-aware detector; `react` is components and hooks only.
+    (tmp_repo / "client.ts").write_text(
+        "export const profileApi = { get: () => 1, post: () => 2 }\n"
+    )
+    r = _run(tmp_repo, tmp_data_dir, detectors="react")
+    assert r.returncode == 0, r.stderr
+    svcs = _read_nodes(tmp_data_dir, "services")
+    syms = _symbols(svcs)
+    assert "profileApi.get" not in syms
+    assert "profileApi.post" not in syms
 
 
 def test_react_component_forwardref(tmp_repo, tmp_data_dir):

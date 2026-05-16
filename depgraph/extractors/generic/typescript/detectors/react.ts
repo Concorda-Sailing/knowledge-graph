@@ -1,8 +1,15 @@
-/** React detector — ports buildEmissions() from pre-flip extract_web.ts.
+/** React detector — emits AddNode mutations for React components and hooks.
+ *
+ *  Scope: only React-y kinds (`component` and `hook`). Service-kind nodes
+ *  are not the React detector's business — they live under the `service`
+ *  detector, which has a path filter and a conceptual grounding. Mixing
+ *  "any lowercase exported function" into this detector previously dragged
+ *  every utility / action creator / vendored helper into the service node
+ *  set regardless of whether the repo was a React app at all.
  *
  *  Emits AddNode mutations carrying all metadata needed by canonicalize():
- *    - fullName     : the symbol name (e.g. "Foo" or "apiClient.get")
- *    - kind         : "component" | "hook" | "service" (decided here)
+ *    - fullName     : the symbol name (e.g. "Foo")
+ *    - kind         : "component" | "hook"
  *    - line         : symbol node start line
  *    - text         : first 1024 chars of symbolNode.getText() for the hash
  *    - scopePos     : start position of the *scope* node used for edge
@@ -13,22 +20,25 @@
  *  ts-morph Node and walk its descendants for depends_on attribution. */
 
 import * as ts from "typescript";
-import { Node, SyntaxKind } from "ts-morph";
+import { Node } from "ts-morph";
 import {
   Detector, DetectorContext, Mutation, Primitive,
 } from "../detector_api.js";
 
 const HOC_NAMES = new Set(["forwardRef", "memo"]);
 
-function classify(name: string): "component" | "hook" | "service" {
+/** Classify a top-level name into a React kind. Returns null for names
+ *  that aren't React components or hooks — those are not this detector's
+ *  responsibility. */
+function classify(name: string): "component" | "hook" | null {
   if (/^use[A-Z]/.test(name)) return "hook";
   if (/^[A-Z]/.test(name)) return "component";
-  return "service";
+  return null;
 }
 
 interface Candidate {
   fullName: string;
-  kind: "component" | "hook" | "service";
+  kind: "component" | "hook";
   symbolPos: number;
   symbolEnd: number;
   scopePos: number;
@@ -71,9 +81,11 @@ export class ReactDetector implements Detector {
     for (const decl of tsf.getFunctions()) {
       const name = decl.getName();
       if (!name) continue;
+      const kind = classify(name);
+      if (kind === null) continue;
       muts.push(emit({
         fullName: name,
-        kind: classify(name),
+        kind,
         symbolPos: decl.getStart(),
         symbolEnd: decl.getEnd(),
         scopePos: decl.getStart(),
@@ -89,11 +101,13 @@ export class ReactDetector implements Detector {
         const init = varDecl.getInitializer();
         if (!name || !init) continue;
         if (!directlyExported && !reExportedNames.has(name)) continue;
+        const kind = classify(name);
+        if (kind === null) continue;
 
         if (Node.isArrowFunction(init) || Node.isFunctionExpression(init)) {
           muts.push(emit({
             fullName: name,
-            kind: classify(name),
+            kind,
             symbolPos: varDecl.getStart(),
             symbolEnd: varDecl.getEnd(),
             scopePos: init.getStart(),
@@ -115,7 +129,7 @@ export class ReactDetector implements Detector {
               if (Node.isArrowFunction(arg0) || Node.isFunctionExpression(arg0)) {
                 muts.push(emit({
                   fullName: name,
-                  kind: classify(name),
+                  kind,
                   symbolPos: varDecl.getStart(),
                   symbolEnd: varDecl.getEnd(),
                   scopePos: arg0.getStart(),
@@ -131,7 +145,7 @@ export class ReactDetector implements Detector {
         if (Node.isPropertyAccessExpression(init)) {
           muts.push(emit({
             fullName: name,
-            kind: classify(name),
+            kind,
             symbolPos: varDecl.getStart(),
             symbolEnd: varDecl.getEnd(),
             scopePos: varDecl.getStart(),
@@ -140,36 +154,10 @@ export class ReactDetector implements Detector {
           continue;
         }
 
-        // Object literal: `export const profileApi = { get: () => ... }`.
-        if (Node.isObjectLiteralExpression(init)) {
-          for (const prop of init.getProperties()) {
-            if (Node.isPropertyAssignment(prop)) {
-              const propName = prop.getName();
-              const propInit = prop.getInitializer();
-              if (!propInit) continue;
-              if (Node.isArrowFunction(propInit) || Node.isFunctionExpression(propInit)) {
-                muts.push(emit({
-                  fullName: `${name}.${propName}`,
-                  kind: "service",
-                  symbolPos: prop.getStart(),
-                  symbolEnd: prop.getEnd(),
-                  scopePos: propInit.getStart(),
-                  scopeEnd: propInit.getEnd(),
-                }, ctx));
-              }
-            } else if (Node.isMethodDeclaration(prop)) {
-              const propName = prop.getName();
-              muts.push(emit({
-                fullName: `${name}.${propName}`,
-                kind: "service",
-                symbolPos: prop.getStart(),
-                symbolEnd: prop.getEnd(),
-                scopePos: prop.getStart(),
-                scopeEnd: prop.getEnd(),
-              }, ctx));
-            }
-          }
-        }
+        // Object-literal API clients (`export const profileApi = { ... }`)
+        // used to emit `kind: "service"` here. That belonged in a dedicated
+        // detector with a path filter, not in `react`. A future
+        // `api-client` detector can revive the capture if needed.
       }
     }
 
