@@ -150,11 +150,9 @@ def _cmd_remove(args: argparse.Namespace) -> int:
 
 
 def _cmd_init(args: argparse.Namespace) -> int:
-    """Phase 1: shell out to install.sh init <path>."""
-    import subprocess
-    tool_root = Path(__file__).resolve().parents[2]
-    installer = tool_root / "install.sh"
-    return subprocess.run([str(installer), "init", args.path]).returncode
+    """Phase 4: call the Python init handler directly."""
+    from kg.cli.install.init import cmd_init
+    return cmd_init(args)
 
 
 def _cmd_add_repo(args: argparse.Namespace) -> int:

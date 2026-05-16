@@ -6,6 +6,8 @@ so kg.cli.install does no project resolution — it's a transparent
 wrapper that unifies the help surface.
 
 Phase 4 ports install.sh's logic to Python under this module.
+Subcommands with native Python handlers are dispatched directly;
+everything else still subprocesses into install.sh (replaced P4T3-P4T8).
 """
 from __future__ import annotations
 
@@ -13,8 +15,17 @@ import argparse
 import os
 from pathlib import Path
 
+from kg.cli.install import init as _init_mod
+
 
 def _run_installer(args: argparse.Namespace, extra: list[str]) -> int:
+    # Subcommands that have native Python handlers dispatch directly.
+    if extra and extra[0] == "init":
+        init_parser = argparse.ArgumentParser(prog="kg install init")
+        init_parser.add_argument("path")
+        init_args = init_parser.parse_args(extra[1:])
+        return _init_mod.cmd_init(init_args)
+    # Fall through: subprocess shim for everything else.
     tool_root = Path(__file__).resolve().parents[3]
     installer = tool_root / "install.sh"
     os.execvpe(str(installer), [str(installer), *extra], os.environ.copy())
