@@ -11,6 +11,8 @@ from pathlib import Path
 
 import pytest
 
+from depgraph.lib.edges import validate_edge
+
 FIXTURE_DIR = Path(__file__).parent / "fixtures" / "edges_ts"
 EXTRACTOR = Path(__file__).resolve().parents[2] / "extractors" / "typescript" / "extract.ts"
 
@@ -176,3 +178,45 @@ def test_tests_edge_to_subject_only():
     assert "fixture::src/test_helpers.ts::makeFixture" not in targets
     # framework primitives must NOT be targets either
     assert not any("vitest" in t for t in targets)
+
+
+# ---------------------------------------------------------------------------
+# Task 3.7: Edge schema validation sweep (TS)
+# ---------------------------------------------------------------------------
+
+def _load_all_ts_fixtures() -> list[dict]:
+    """Load primitives from all edges_ts fixtures into one flat list."""
+    all_prims: list[dict] = []
+    for scenario in FIXTURE_DIR.iterdir():
+        if not scenario.is_dir():
+            continue
+        all_prims.extend(run_extractor(scenario.name))
+    return all_prims
+
+
+def test_all_emitted_edges_validate_ts():
+    """Every edge emitted by any TS fixture must pass schema validation.
+
+    Builds (source_kind, target_kind) from the corpus's primitives_by_id,
+    passes each edge through validate_edge. External terminals (unresolved
+    targets) have target_kind=None, which validate_edge allows.
+    """
+    prims = _load_all_ts_fixtures()
+    primitives_by_id = {p["id"]: p for p in prims}
+
+    errors_found = []
+    for p in prims:
+        for e in p["edges_out"]:
+            validation_input = {**e, "source_kind": p["primitive"]}
+            tgt = primitives_by_id.get(e["target"])
+            if tgt:
+                validation_input["target_kind"] = tgt["primitive"]
+            errs = validate_edge(validation_input)
+            if errs:
+                errors_found.append((p["id"], e["target"], errs))
+
+    assert not errors_found, (
+        f"{len(errors_found)} edge(s) failed validation:\n"
+        + "\n".join(f"  {src} -> {tgt}: {errs}"
+                    for src, tgt, errs in errors_found[:10])
+    )
