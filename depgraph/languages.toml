@@ -1,0 +1,17 @@
+# Language registry — what extractor runs against which file types.
+# Per-project project.toml may add or override entries.
+
+[languages.typescript]
+extensions = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]
+extractor = "depgraph/extractors/typescript/extract.ts"
+runtime = "node"
+
+[languages.python]
+extensions = [".py"]
+extractor = "depgraph/extractors/python/extract.py"
+runtime = "python"
+
+[languages.sql]
+extensions = [".sql"]
+extractor = "depgraph/extractors/sql/extract.py"
+runtime = "python"
