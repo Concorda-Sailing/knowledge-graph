@@ -467,14 +467,39 @@ class SignatureParameter:
 
 @dataclass
 class Signature:
+    """Shape of a primitive's "callable surface" — what hashing should
+    treat as identity-defining beyond name + body. Fields are optional
+    so different primitive kinds use the relevant subset:
+
+    Functions: parameters, return_type, is_async, decorators
+    Variables: type_annotation, value_text
+    Classes (host language): decorators, bases
+    Schema (SQL-sourced) classes additionally: primary_key, foreign_keys,
+      indexes — these are in signature because they're structurally
+      identity-defining for a table (two tables with the same columns but
+      different FKs are not the same schema).
+    """
     parameters: list[SignatureParameter] = field(default_factory=list)
     return_type: str | None = None
     is_async: bool = False
     decorators: list[str] = field(default_factory=list)
+    # Variable-specific
+    type_annotation: str | None = None
+    value_text: str | None = None
+    # Class-specific
+    bases: list[str] = field(default_factory=list)
+    # Schema-class-specific (SQL extractor)
+    primary_key: list[str] = field(default_factory=list)
+    foreign_keys: list[dict] = field(default_factory=list)
+    indexes: list[dict] = field(default_factory=list)
 
 
 @dataclass
 class Attributes:
+    """Boolean / metadata flags that don't define identity. Extra
+    schema-specific fields (nullable, default, primary_key on column
+    variables; defined_by on table classes) are allowed at runtime — the
+    dataclass enumerates the canonical fields only."""
     abstract: bool = False
     generated: bool = False
     external: bool = False
@@ -483,6 +508,12 @@ class Attributes:
     mutable: bool = True               # for variables
     instantiable: bool = True          # for classes
     inheritable: bool = True           # for classes
+    # Variable-specific (column primitives extend with these):
+    #   nullable: bool
+    #   default: str | None
+    #   primary_key: bool
+    # Table-specific:
+    #   defined_by: list[str]  (paths of migrations that touched this table)
 
 
 @dataclass
@@ -575,6 +606,16 @@ def structural_hash_payload(*, primitive: str, name: str,
     (different implementation) shift the hash; pure layout / line-number
     changes also shift it, which is acceptable for v0 (the spec says scope
     body verbatim, not normalized-AST).
+
+    The payload *shape* is identical across languages (same field names,
+    same nesting). The *values* are language-specific: Python's body_text
+    comes from `ast.unparse(node)` (full def + body), TS's comes from
+    `getBodyText()` (just the body braces). So two equivalent functions
+    in different languages produce different hashes — that's fine because
+    primitive ids are namespaced by repo + path, so cross-language hash
+    collision can't occur. The shape consistency just lets one set of
+    tooling (reconcile, the auto-migration script) reason about hashes
+    uniformly without per-language branches.
 
     Returns a dict; callers pass it to `compute_hash`.
     """
@@ -4359,7 +4400,7 @@ git commit -m "depgraph: Phase 3 wild corpus (8 edge-resolution fixtures + Claud
 1. `CREATE TABLE foo (...)` → class primitive `kind: "schema"`, columns → variable primitives owned by the table.
 2. `CREATE TABLE IF NOT EXISTS foo (...)` → same shape (idempotent variant).
 3. Column types resolve from SQL (`VARCHAR(128)` → type_annotation `"VARCHAR(128)"`, `INTEGER NOT NULL` → annotation `"INTEGER"`, attributes `{nullable: false}`).
-4. `PRIMARY KEY` and `FOREIGN KEY` constraints → attributes on the table primitive (`primary_key: ["id"]`, `foreign_keys: [{column: "user_id", references: "users.id"}]`).
+4. `PRIMARY KEY` and `FOREIGN KEY` constraints → recorded on the table primitive's `signature` (`signature.primary_key: ["id"]`, `signature.foreign_keys: [{column: "user_id", references_table: "users", references_column: "id"}]`). Placed in `signature` rather than `attributes` so they participate in `structural_hash` — two tables with the same columns but different FKs are structurally distinct.
 5. `CREATE INDEX foo ON bar(baz)` → `references` edge from index name to the column primitive; no primitive emitted for the index itself.
 6. `ALTER TABLE foo ADD COLUMN bar TEXT` → after reconciliation, the `foo` table primitive includes `bar` in its columns.
 7. `ALTER TABLE foo DROP COLUMN bar` → after reconciliation, `bar` is absent from `foo`.
@@ -7475,7 +7516,7 @@ The hook at `~/.claude/settings.json` calls `kg hook pre-edit`. That hook reads 
 3. **Filter `by_target.json` for incoming edges where the source has matching id prefix.** Surface those edges (the callers of anything in this file) in the injected context.
 4. **No match → no injection.** Hook silently no-ops; the edit proceeds. This is the right default — a file outside any tracked repo shouldn't trigger errors, just no context.
 
-For the integration test below: the fixture writes a tiny corpus to `tmp_path / "nodes"` and points `DEPGRAPH_DATA_DIR` at `tmp_path`. The test then synthesizes a fake source file under another tmp subdir whose path matches the corpus's `source.path` field directly (`api/routers.py` in this test). The hook's repo-matching step needs a project.toml; the fixture writes a minimal one alongside the corpus so the resolver finds it.
+For the integration test below: the fixture mimics the standard project layout — a project root with `project.toml` at top level, `depgraph/` as the data dir (where `DEPGRAPH_DATA_DIR` points), and the synthetic source repo (`api/`) as a sibling of `depgraph/`. The hook's resolution algorithm finds `project.toml` one level UP from `DEPGRAPH_DATA_DIR`, reads `[repos.api].path`, matches the `--file` argument against it, and surfaces matching incoming edges from `nodes/_index/by_target.json`.
 
 - [ ] **Step 1: Add a hook integration test**
 
@@ -7490,8 +7531,21 @@ import pytest
 
 @pytest.fixture
 def tiny_corpus(tmp_path):
-    """Write a tiny v2 corpus by hand (skip the full regen pipeline)."""
-    nodes = tmp_path / "nodes"
+    """Write a tiny v2 corpus matching the standard project layout:
+
+        tmp_path/
+          project_root/
+            project.toml             ← lives at project root, NOT inside data_dir
+            depgraph/                ← DEPGRAPH_DATA_DIR points here
+              nodes/...
+            api/                     ← the "repo" whose source the hook resolves against
+              routers.py
+
+    Returns the depgraph data dir (DEPGRAPH_DATA_DIR target). project.toml
+    is at `data_dir.parent / "project.toml"` per the standard layout."""
+    project_root = tmp_path / "project_root"
+    data_dir = project_root / "depgraph"
+    nodes = data_dir / "nodes"
     (nodes / "functions").mkdir(parents=True)
     (nodes / "_index").mkdir()
 
@@ -7522,19 +7576,17 @@ def tiny_corpus(tmp_path):
     (nodes / "_index/by_source.json").write_text(json.dumps({
         "api::routers.py::create_event": create_event["edges_out"]
     }))
-    return tmp_path
 
-
-def test_hook_pre_edit_surfaces_callers(tiny_corpus, tmp_path):
-    # The hook needs to map an absolute file path back to a repo+rel_path
-    # tuple. Write a project.toml alongside the corpus pointing at the
-    # source root we're about to fake.
-    src_root = tmp_path / "api"
+    # Source root that the hook will resolve against, alongside project.toml
+    # at the project root (one level UP from data_dir, per standard layout).
+    src_root = project_root / "api"
     src_root.mkdir()
-    (src_root / "routers.py").write_text("def helper(): pass\n\ndef create_event():\n    helper()\n")
-
-    project_toml = tiny_corpus / "project.toml"
-    project_toml.write_text(f"""
+    (src_root / "routers.py").write_text(
+        "def helper(): pass\n\n"
+        "def create_event():\n"
+        "    helper()\n"
+    )
+    (project_root / "project.toml").write_text(f"""
 [project]
 name = "fixture"
 
@@ -7543,11 +7595,20 @@ path = "{src_root}"
 languages = ["python"]
 """)
 
+    return data_dir   # what DEPGRAPH_DATA_DIR should point at
+
+
+def test_hook_pre_edit_surfaces_callers(tiny_corpus):
+    """The hook resolves the abs file path via project.toml (located at
+    data_dir.parent / project.toml per standard layout); finds the matching
+    repo prefix; surfaces incoming edges from by_target.json."""
+    src_root = tiny_corpus.parent / "api"
     out = subprocess.run([
         sys.executable, "-m", "kg.cli", "hook", "pre-edit",
         "--file", str(src_root / "routers.py"),
     ], capture_output=True, text=True, check=True,
-       env={"DEPGRAPH_DATA_DIR": str(tiny_corpus), "PATH": __import__("os").environ["PATH"]})
+       env={"DEPGRAPH_DATA_DIR": str(tiny_corpus),
+            "PATH": __import__("os").environ["PATH"]})
     assert "helper" in out.stdout
     assert "create_event" in out.stdout
 ```
@@ -7666,6 +7727,17 @@ Goal: a project small enough to read end-to-end (~30 files, ~1000 LOC total) but
 (Counts are exact — the test gates on them.)
 
 The mini-project's "story": a tiny event-RSVP app. Two ORM models (User, Event) + three more tables for relations (RSVP, EventTag, Tag). Endpoints for create/list/RSVP. Services do the DB work. Frontend has an event list page + RSVP button + a custom hook for fetching.
+
+**Authoring approach — iterate, don't big-bang.** Writing all 30 files and then running the gate is the wrong sequence: a count mismatch at the end requires unwinding choices across many files. Instead, author one kind at a time and verify counts incrementally:
+
+1. Write the 8 schema migrations + .sql files; run the SQL pipeline only; confirm 8 schema primitives emerge.
+2. Add the 5 ORM models in api/models/; run extract + cross-ref; confirm 5 model classifications appear.
+3. Add the 5 endpoints in api/routers/; confirm endpoint count.
+4. Add the 4 services in api/services/; verify their `db_access` edges target the expected schemas; confirm service count.
+5. Add 4 tests + 6 utils last (tests reference services; utils get pulled in by reachability).
+6. Add web/components, web/hooks last (independent of backend).
+
+Each step's diff is small enough that fixing a count mismatch is straightforward. Save the "30 files at once + run the gate + debug" path for actual real-corpus regens (Concorda) where iteration isn't an option.
 
 - [ ] **Step 2: Author `expected.json`**
 
