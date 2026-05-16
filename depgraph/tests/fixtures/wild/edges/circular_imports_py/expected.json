@@ -1,0 +1,10 @@
+{
+  "description": "Circular imports resolve without deadlock; both import edges and cross-boundary calls emit",
+  "unresolved_edges_expected": false,
+  "edges": [
+    {"source": "fixture::a.py", "kind": "imports", "target": "fixture::b.py::greet", "confidence": "exact"},
+    {"source": "fixture::b.py", "kind": "imports", "target": "fixture::a.py::hello", "confidence": "exact"},
+    {"source": "fixture::a.py::hello", "kind": "calls", "target": "fixture::b.py::greet", "confidence": "exact"},
+    {"source": "fixture::b.py::call_back", "kind": "calls", "target": "fixture::a.py::hello", "confidence": "exact"}
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "description": "Local decorators emit decorates edges; external decorators do not (captured in signature only)",
+  "unresolved_edges_expected": false,
+  "edges": [
+    {"source": "fixture::src.py::my_decorator", "kind": "decorates", "target": "fixture::src.py::local_target", "confidence": "exact"},
+    {"source": "fixture::src.py::my_class_decorator", "kind": "decorates", "target": "fixture::src.py::LocalClass", "confidence": "exact"}
+  ]
+}

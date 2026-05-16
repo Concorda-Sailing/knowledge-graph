@@ -1,0 +1,7 @@
+{
+  "description": "Monkey-patch via Attribute assignment: lambda not extracted; calls still resolve to original method",
+  "unresolved_edges_expected": false,
+  "edges": [
+    {"source": "fixture::src.py::use_it", "kind": "calls", "target": "fixture::src.py::SomeClass.method", "confidence": "exact"}
+  ]
+}

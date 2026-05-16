@@ -1,0 +1,11 @@
+{
+  "description": "Module-scope variable reads and assigns are distinct edges; AugAssign produces only assigns",
+  "unresolved_edges_expected": false,
+  "edges": [
+    {"source": "fixture::src.py::get_counter", "kind": "reads", "target": "fixture::src.py::COUNTER", "confidence": "exact"},
+    {"source": "fixture::src.py::get_name", "kind": "reads", "target": "fixture::src.py::NAME", "confidence": "exact"},
+    {"source": "fixture::src.py::increment", "kind": "assigns", "target": "fixture::src.py::COUNTER", "confidence": "exact"},
+    {"source": "fixture::src.py::reset", "kind": "assigns", "target": "fixture::src.py::COUNTER", "confidence": "exact"},
+    {"source": "fixture::src.py::reset", "kind": "assigns", "target": "fixture::src.py::NAME", "confidence": "exact"}
+  ]
+}

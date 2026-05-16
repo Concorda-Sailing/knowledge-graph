@@ -1,0 +1,7 @@
+{
+  "description": "Computed callees (getattr(obj,name)()) emit unresolved calls edges; does not crash",
+  "unresolved_edges_expected": true,
+  "edges": [
+    {"source": "fixture::src.py::dispatch_inline", "kind": "calls", "target": "external::unresolved::computed_callee", "confidence": "unresolved"}
+  ]
+}

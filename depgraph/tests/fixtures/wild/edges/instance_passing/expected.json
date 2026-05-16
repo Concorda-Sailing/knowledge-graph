@@ -1,0 +1,8 @@
+{
+  "description": "Method calls on typed parameter resolve via annotation binding",
+  "unresolved_edges_expected": false,
+  "edges": [
+    {"source": "fixture::src.py::process", "kind": "calls", "target": "fixture::src.py::Service.do_work", "confidence": "exact"},
+    {"source": "fixture::src.py::process", "kind": "calls", "target": "fixture::src.py::Service.cleanup", "confidence": "exact"}
+  ]
+}

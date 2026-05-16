@@ -1,0 +1,9 @@
+{
+  "description": "INTENTIONALLY WRONG: v0 walk-order picks B as last-assign-wins; regression target for future flow-sensitive pass",
+  "unresolved_edges_expected": false,
+  "edges": [
+    {"source": "fixture::src.py::run", "kind": "calls", "target": "fixture::src.py::B.do_work", "confidence": "exact"},
+    {"source": "fixture::src.py::run", "kind": "instantiates", "target": "fixture::src.py::A", "confidence": "exact"},
+    {"source": "fixture::src.py::run", "kind": "instantiates", "target": "fixture::src.py::B", "confidence": "exact"}
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "description": "Chained method calls drop silently in v0 (no edges from run); bare Name instantiations resolve",
+  "unresolved_edges_expected": false,
+  "edges": [
+    {"source": "fixture::src.py::Client.__init__", "kind": "instantiates", "target": "fixture::src.py::UserSet", "confidence": "exact"},
+    {"source": "fixture::src.py::UserSet.get", "kind": "instantiates", "target": "fixture::src.py::UserQuery", "confidence": "exact"}
+  ]
+}

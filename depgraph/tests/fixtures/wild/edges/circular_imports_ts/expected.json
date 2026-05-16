@@ -1,0 +1,10 @@
+{
+  "description": "Circular TS imports resolve without deadlock; both import edges and cross-boundary calls emit",
+  "unresolved_edges_expected": false,
+  "edges": [
+    {"source": "fixture::src/a.ts", "kind": "imports", "target": "fixture::src/b.ts::greet", "confidence": "exact"},
+    {"source": "fixture::src/b.ts", "kind": "imports", "target": "fixture::src/a.ts::hello", "confidence": "exact"},
+    {"source": "fixture::src/a.ts::hello", "kind": "calls", "target": "fixture::src/b.ts::greet", "confidence": "exact"},
+    {"source": "fixture::src/b.ts::callBack", "kind": "calls", "target": "fixture::src/a.ts::hello", "confidence": "exact"}
+  ]
+}

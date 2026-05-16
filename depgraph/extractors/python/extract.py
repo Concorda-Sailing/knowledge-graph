@@ -619,8 +619,12 @@ def _resolve_call_edge(call: ast.Call, *, local_names: dict, imports: dict,
         # Chained attribute (a.b.c()) — unresolved for v0
         return []
 
-    # Computed callee — unresolved
-    return []
+    # Computed callee (getattr, call[0](), etc.) — emit unresolved rather than
+    # silently dropping, so the call site is preserved in the corpus.
+    return [{"target": "external::unresolved::computed_callee",
+              "kind": "calls", "via": "computed_callee",
+              "where": f"{path}:{call.lineno}",
+              "confidence": "unresolved"}]
 
 
 # ---------------------------------------------------------------------------
