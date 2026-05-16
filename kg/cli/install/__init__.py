@@ -15,7 +15,7 @@ from pathlib import Path
 
 
 def _run_installer(args: argparse.Namespace, extra: list[str]) -> int:
-    tool_root = Path(__file__).resolve().parents[2]
+    tool_root = Path(__file__).resolve().parents[3]
     installer = tool_root / "install.sh"
     os.execvpe(str(installer), [str(installer), *extra], os.environ.copy())
 
