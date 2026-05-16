@@ -360,15 +360,26 @@ Phases 1–3 are framework work. Phases 4–5 may need framework support but per
 
 ## Open questions
 
-1. **Parity strategy.** Existing parity fixtures lock layer-1 + layer-2 output for `component`, `hook`, `service` (Python only), `model`, `schema`, `endpoint`, `test`, `route_call` from the reference corpus. Under the new model: primitive-level parity and classification-level parity are separate test gates. Open: is this acceptable, or must the existing fixtures be reproduced byte-for-byte (much harder; classification timing differs)?
-2. **Persistence model for derived nodes.** Two options: (a) write derived nodes to disk under their kind-dirs as today; (b) derive them lazily at graphui request time from layer 1 + 2 indexes. (a) preserves existing tooling; (b) is faster to iterate on classification rules. Recommendation: (a) at launch with (b) reachable later. Confirm.
-3. **Migration-attribute granularity.** A migration's `up_operations[]` could list each statement-as-primitive (one function call per CREATE / ALTER), or aggregate into one "migration step." The former is more powerful for rule claims; the latter is simpler. Lean toward statement-as-primitive but resolve in phase 1 of SQL extractor work.
+1. **Parity strategy.** ~~Existing parity fixtures lock layer-1 + layer-2 output…~~ **Resolved 2026-05-16:** no backward-compatibility constraint. The `tests/extractors/test_pre_flip_parity.py` gate and its 8 `pre_flip_nodes/*.json` fixtures are retired. Concorda's depgraph corpus is regenerated from scratch once the new pipeline lands; logigraph claims become stale en masse and are re-authored (or auto-rewritten via reconcile where the new `structural_hash` matches). New fixtures are seeded from the first clean phase-1 regen and lock the layered model going forward.
+2. **Persistence model for derived nodes.** **Resolved 2026-05-16:** option (a) — write derived nodes to disk under kind-dirs. Classifier replaces today's extractor as the writer; graphui's file-read model is unchanged. Lazy derivation (option b) stays reachable later if classifier iteration becomes painful.
+3. **Migration-attribute granularity.** A migration's `up_operations[]` could list each statement-as-primitive (one function call per CREATE / ALTER), or aggregate into one "migration step." The former is more powerful for rule claims; the latter is simpler. Lean toward statement-as-primitive but resolve in phase 1 of SQL extractor work — out of scope for the first implementation pass (see "Implementation scope" below).
+
+## Implementation scope (added 2026-05-16)
+
+First implementation pass: **JavaScript, TypeScript, Python only.** The full language registry (Go, Rust, C, C++, SQL, JSON Schema, Prisma, OpenAPI, GraphQL, Protobuf) stays the architectural target but does not ship in this pass. System-layer (L3) extractors and logigraph L3-claim support land after L1 + L2 + L3-classification on the JS/TS/Python substrate is stable.
+
+Phases for this pass:
+
+1. **L1 primitive extractors** — JS/TS (ts-morph) and Python (stdlib `ast`) emit the five primitives with full attribute set. Class methods, class fields, top-level functions, top-level variables, module + package primitives. No kind decisions.
+2. **L2 edge layer** — defines / extends / implements / calls / instantiates / references / reads / assigns / decorates / imports / tests. `includes` not relevant (no C/C++ in scope). Resolution `exact` only at launch.
+3. **L3 derived classification** — classification engine over (primitives + L2 edges) producing component / hook / endpoint / controller / service / model / schema / util / test. Service classification under JS/TS/Python uses available evidence (db client patterns, http client patterns, queue SDK patterns) emitted as a thin L3 stub specifically for classifier consumption; full L3 system edges are a later pass.
 
 ## Decision points
 
 Before phase 1 starts, the following must resolve:
 
-- [ ] Parity strategy — open question 1
-- [ ] Persistence model for derived nodes — open question 2
+- [x] Parity strategy — resolved (drop the gate; regen from scratch)
+- [x] Persistence model for derived nodes — resolved (option a, disk kind-dirs)
+- [x] Implementation language scope — resolved (JS/TS/Python first)
 
-Open question 3 resolves during SQL extractor implementation; it does not block phase 1 start for other languages.
+Open question 3 resolves later, alongside the SQL extractor work that is out of scope here.
