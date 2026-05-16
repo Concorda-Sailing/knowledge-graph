@@ -194,17 +194,82 @@ Edges are stored embedded on each primitive's `edges_out`. Reverse index (`by_ta
 
 ### Phasing summary
 
-| Phase | Goal | Tests | Cutover safe? |
-|---|---|---|---|
-| 0 | Foundation: schema, language registry, retire pre-flip gate, freeze legacy extractors | Schema validation tests | Yes (legacy still works) |
-| 1 | TS primitives extractor | Primitive coverage tests | Legacy still works for Python |
-| 2 | Python primitives extractor | Primitive coverage tests | Legacy still works for TS until cutover |
-| 3 | L2 edge resolution (TS + Python) | Per-edge-kind tests | Phases 1+2 run together if both done |
-| 4 | Schema extraction (SQL parser + migration recognition + reconciliation + ORM↔schema cross-ref + db_access targeting schemas) | Parser ops, migration metadata, reconciliation, cross-ref, db_access edge tests | n/a |
-| 5 | Classification engine | Per-kind classifier tests | n/a |
-| 6 | Cutover: graphui-compat check, reconcile + CLI wiring, delete legacy, project.toml migration, regen Concorda, determinism CI gate, logigraph claim auto-migration | Integration test, determinism gate, logigraph migration script | Final |
+| Phase | Goal | Tests | Wild gate | Cutover safe? |
+|---|---|---|---|---|
+| 0 | Foundation: schema, language registry, retire pre-flip gate, freeze legacy extractors, wild-corpus scaffold | Schema validation | 5 deterministic-component verification logs (canonical / hash / validators / collisions / registry) | Yes (legacy still works) |
+| 1 | TS primitives extractor | Primitive coverage | 8 TS pathological fixtures + Claude review | Legacy still works for Python |
+| 2 | Python primitives extractor | Primitive coverage | 8 Python pathological fixtures + Claude review | Legacy still works for TS until cutover |
+| 3 | L2 edge resolution (TS + Python) | Per-edge-kind | 8 edge-resolution fixtures + Claude review | Phases 1+2 run together if both done |
+| 4 | Schema extraction (SQL parser + migration recognition + reconciliation + ORM↔schema cross-ref + db_access targeting schemas) | Parser ops + reconciliation + cross-ref + db_access | 8 SQL/schema fixtures + Claude review | n/a |
+| 5 | Classification engine | Per-kind classifier | 8 classification fixtures + Claude review | n/a |
+| 6 | Cutover: graphui-compat check, reconcile + CLI wiring, kitchen-sink E2E, project.toml migration, regen Concorda, determinism, logigraph claim auto-migration | Integration + determinism + logigraph migration | Kitchen-sink (~30-file mini-project) + Claude end-to-end review | Final |
 
 Phases 0–5 can land independently. The world only flips in Phase 6.
+
+### Verification protocol — automated tests + Claude-reviewed wild corpus
+
+Every phase ends with two gates, both required:
+
+1. **Automated gate.** All unit + integration tests green (already in each task).
+2. **Claude gate.** Claude (or a human reviewer) reads each fixture under `depgraph/tests/fixtures/wild/<phase>/`, predicts the expected output *before* looking at `expected.json`, then diffs prediction vs expected vs actual. Each fixture carries a `verification.md` that captures the review. A phase isn't done until every fixture's `verification.md` is current and signed `✓ verified`.
+
+The Claude gate exists because automated tests assert "code does what the test expects" — they don't catch the case where the test contract itself was wrong from the start. Reading source + expected + actual together catches that.
+
+#### Wild corpus layout
+
+```
+depgraph/tests/fixtures/wild/
+  README.md                      # index — one line per fixture
+  primitives_ts/<scenario>/
+    README.md                    # 5-10 lines: what's tricky here
+    src/...                      # the source files
+    expected.json                # ground truth: primitives + edges + classifications
+    verification.md              # reviewer's log — see template below
+  primitives_py/<scenario>/...
+  edges/<scenario>/...
+  sql/<scenario>/...
+  classification/<scenario>/...
+  kitchen_sink/                  # one assembled multi-language mini-project
+    README.md
+    api/                         # Python + SQL migrations
+    web/                         # TypeScript
+    db/                          # standalone SQL
+    expected.json
+    verification.md
+```
+
+Each fixture is small and focused (one concern, typically <60 lines of source). Total inventory: ~5–10 fixtures per phase, ~40 across the framework plus the kitchen-sink.
+
+#### `verification.md` template
+
+```markdown
+# Verification log: <fixture-name>
+
+**Last reviewed:** YYYY-MM-DD by <reviewer>
+**Status:** ✓ verified | ⚠ has issues: <list>
+
+## Pre-read prediction
+*Written before looking at expected.json.* What I expect this fixture to produce:
+
+- Primitives: <list with id + kind + owner>
+- Edges: <list of (source, kind, target)>
+- Classifications: <list of (id, kind)>
+
+## Prediction vs expected.json
+- Matches: <count>
+- Discrepancies: <list with resolution>
+
+## Expected vs actual (from last regen)
+- Matches: <count>
+- Discrepancies: <list with root cause: framework bug? expected stale?>
+
+## Notes
+<anything subtle worth recording for the next reviewer>
+```
+
+#### Deterministic-component verification
+
+Components with deterministic behavior (parsers, validators, hash functions) get an independent verification log under `depgraph/tests/verification_logs/<component>.md` — Claude exercises the component with hand-crafted boundary inputs and records what it observed. See Task 0.6 for the full list.
 
 ---
 
@@ -907,6 +972,159 @@ Read the first 5 lines of `depgraph/extractors/generic/typescript/extract.ts`, t
 ```bash
 git add depgraph/extractors/generic/typescript/extract.ts depgraph/extractors/generic/python/extract.py
 git commit -m "depgraph: freeze legacy extractors pending layered rewrite"
+```
+
+### Task 0.6: Deterministic-component verification
+
+The deterministic helpers from Tasks 0.2–0.4 (id helpers, hash functions, validators, registry loader) have unit tests; this task adds a Claude-reviewed verification log per component that catches "the test was wrong from the start" — the reviewer (Claude) exercises each component with hand-crafted boundary inputs and writes down what it observed.
+
+**Files:**
+- Create: `depgraph/tests/verification_logs/canonical_helpers.md`
+- Create: `depgraph/tests/verification_logs/structural_hash.md`
+- Create: `depgraph/tests/verification_logs/validators.md`
+- Create: `depgraph/tests/verification_logs/slug_collisions.md`
+- Create: `depgraph/tests/verification_logs/language_registry.md`
+
+- [ ] **Step 1: Write verification log for canonical helpers**
+
+```markdown
+# Verification log: canonical helpers
+# depgraph/tests/verification_logs/canonical_helpers.md
+
+**Last reviewed:** YYYY-MM-DD by Claude
+**Components:** canonical_id, slugify_id, external_terminal, is_external_terminal
+
+## Inputs exercised
+| Input | Expected | Observed |
+|---|---|---|
+| canonical_id("a", "b.py", "C") | "a::b.py::C" | (fill in) |
+| canonical_id("a", "b.py", "C.m") | "a::b.py::C.m" | (fill in) |
+| canonical_id("repo with space", "b.py", "C") | "repo with space::b.py::C" | (fill in) |
+| slugify_id("a::b/c.py::D.m") | "a__b_c_py__D_m" | (fill in) |
+| slugify_id("__leading::trailing__") | "leading__trailing" | (fill in) |
+| slugify_id("unicode_é_in_path") | "unicode___in_path" | (fill in — confirm '_' replacement) |
+| external_terminal("pypi", "sqlalchemy", "Base") | "external::pypi::sqlalchemy::Base" | (fill in) |
+| is_external_terminal("external::npm::react::useState") | True | (fill in) |
+| is_external_terminal("concorda-api::routers/x.py::y") | False | (fill in) |
+
+## Observations
+- (fill in: anything surprising; e.g., does slugify collapse consecutive non-alphanumerics into a single underscore, or preserve them?)
+
+## Status
+✓ verified | ⚠ has issues: <list>
+```
+
+Run the helpers in a Python REPL (or a small scratch script) against each input row; record the observed output; mark `✓` once all match.
+
+- [ ] **Step 2: Write verification log for structural_hash**
+
+Exercise: same payload with different key insertion order → same hash; same name+signature with different body_text → different hash; same name+signature+body_text → same hash; nested dict with reordered inner keys → same hash. Record in `verification_logs/structural_hash.md`.
+
+- [ ] **Step 3: Write verification log for validators**
+
+Exercise `validate_primitive` and `validate_edge` with: minimal valid sample (no errors); each invalid variant (missing required field, wrong primitive kind, function-with-dot-no-owner, bad edge confidence, source/target kind mismatch). For each invalid case, confirm the error message names the actual problem. Record in `verification_logs/validators.md`.
+
+- [ ] **Step 4: Write verification log for slug_collisions**
+
+Construct two distinct ids that slugify identically (e.g., `r::a.b::x` and `r::a-b::x` both slugify to `r__a_b__x`); pass to `check_slug_collisions`; confirm flagged. Pass non-colliding set; confirm empty result. Record in `verification_logs/slug_collisions.md`.
+
+- [ ] **Step 5: Write verification log for language_registry**
+
+Load framework-only; load framework + per-project that adds a new language; load framework + per-project that overrides an existing language by name. For each, confirm the merged result is what would actually run when extracting. Record in `verification_logs/language_registry.md`.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add depgraph/tests/verification_logs/
+git commit -m "depgraph: Phase 0 deterministic-component verification logs"
+```
+
+### Task 0.7: Scaffold the wild corpus directory
+
+Create the directory structure and the master index so subsequent phases can drop fixtures in without re-arguing the layout.
+
+**Files:**
+- Create: `depgraph/tests/fixtures/wild/README.md`
+- Create: `depgraph/tests/fixtures/wild/{primitives_ts,primitives_py,edges,sql,classification,kitchen_sink}/.gitkeep`
+
+- [ ] **Step 1: Write the master index**
+
+```markdown
+# Wild corpus — synthetic-pathological test fixtures
+
+These fixtures aren't representative of any specific project. They're hand-crafted to exercise the corners of the framework — patterns that would break a naive extractor. Concorda is the framework's *first consumer*, not its test case; the wild corpus is what proves the framework correct.
+
+## Layout
+
+Each fixture directory contains:
+- `README.md` — what's tested + why this pattern is tricky
+- `src/` — source file(s); typically small (one file, <60 lines)
+- `expected.json` — ground truth: primitive ids + edges + classification decisions
+- `verification.md` — reviewer's log (see template in plan)
+
+## Inventory
+
+### Phase 1 — TS primitives (primitives_ts/)
+- anonymous_zoo — default-exported anonymous functions + named function expressions
+- overload_storm — function with 5 overload declarations + 1 impl; class with same
+- name_collisions — same name as instance method, static method, class field, type alias
+- decorator_stack — 3+ stacked decorators incl. parameterized
+- generics_constraints — generic class with constrained type params + generic methods
+- jsx_corners — memo + forwardRef wrapping, conditional null returns, JSX never returned
+- tsconfig_paths_complex — overlapping path aliases, nested aliases
+- re_export_chain — barrel → barrel → impl, 3 hops
+
+### Phase 2 — Python primitives (primitives_py/)
+- dunder_zoo — __init_subclass__, __set_name__, __class_getitem__, properties
+- metaclasses — metaclass=ABCMeta, class Bar(type), dynamic __new__
+- dataclass_pydantic_namedtuple — three coexisting with overlapping fields
+- nested_everything — class-in-class-in-function, function-in-class-in-function
+- decorator_factories — @functools.wraps-decorated, parameterized, stacked
+- walrus_match_pep695 — walrus + match/case + PEP 695 generics
+- if_name_main — module-level state inside if __name__ == "__main__" (should NOT extract); dynamic class via type()
+- relative_dots — `from ...pkg.sub import X` (multi-level relative)
+
+### Phase 3 — L2 edges (edges/)
+- method_call_chains — client.users.get().filter().first() chained calls
+- instance_passing — function takes typed param, calls method on it
+- dynamic_dispatch — getattr/setattr-style calls, computed callees → unresolved
+- monkey_patch — SomeClass.method = lambda — patched method exists at runtime
+- circular_imports_py — A imports B imports A
+- circular_imports_ts — same shape, TS
+- decorator_target_resolution — decorator from external lib vs local
+- read_assign_global — module-scope variable read in fn-A, assigned in fn-B
+
+### Phase 4 — SQL + schema (sql/)
+- multi_dialect_create — postgres SERIAL, mysql AUTO_INCREMENT, sqlite AUTOINCREMENT
+- alembic_op_style — uses op.create_table instead of text()
+- bare_sql_file — standalone .sql with multiple CREATE TABLE
+- self_referential_fk — node.parent_id REFERENCES node(id)
+- circular_fk — A → B → A
+- mixed_text_and_op — migration using both text() and op.* calls
+- dynamic_sql_warning — only f-string interpolated SQL → warnings, no schema
+- alter_replay_chain — CREATE → ALTER ADD → ALTER TYPE → RENAME → DROP COLUMN; final state matters
+
+### Phase 5 — Classification (classification/)
+- endpoint_AND_service_conflict — route-decorated function that also does db_access
+- hook_calling_hook_chain — useFoo → useBar → useState
+- component_HOC_wrapped — memo(forwardRef(({...}) => <div/>))
+- pseudo_test_not_test — function named test_thing outside test path + no asserts
+- orphan_model — class extends Base but no __tablename__
+- model_without_schema — class with __tablename__ but no matching schema primitive
+- util_deep_transitive — endpoint → util A → util B → util C; all must classify
+- classification_conflict_logged — function satisfying two kinds; conflict recorded
+
+### Kitchen sink (kitchen_sink/)
+- ~30 files across api/, web/, db/. Distribution: 5 endpoints, 4 services, 6 utils, 2 hooks, 3 components, 8 schemas, 5 models, 4 tests. End-to-end gate before Concorda regen.
+```
+
+- [ ] **Step 2: Commit the scaffold**
+
+```bash
+mkdir -p depgraph/tests/fixtures/wild/{primitives_ts,primitives_py,edges,sql,classification,kitchen_sink}
+for d in depgraph/tests/fixtures/wild/*/; do touch "$d.gitkeep"; done
+git add depgraph/tests/fixtures/wild/
+git commit -m "depgraph/tests: scaffold wild corpus directory + master index"
 ```
 
 ---
@@ -1975,6 +2193,161 @@ git add depgraph/tests/extractors/test_typescript_primitives.py
 git commit -m "depgraph/extractors/typescript: schema validation gate for all emitted primitives"
 ```
 
+### Task 1.9: Author wild fixtures + Claude verification
+
+The 8 wild fixtures for Phase 1 land here, each authored as a deliberately-awkward minimal project. Each gets an `expected.json` and a `verification.md` that the reviewer fills in before the phase closes.
+
+**Files:**
+- Create: `depgraph/tests/fixtures/wild/primitives_ts/{anonymous_zoo,overload_storm,name_collisions,decorator_stack,generics_constraints,jsx_corners,tsconfig_paths_complex,re_export_chain}/`
+  - Each with `README.md`, `src/`, `expected.json`, `verification.md`
+- Create: `depgraph/tests/extractors/test_typescript_wild.py`
+
+- [ ] **Step 1: Author the 8 fixtures**
+
+For each fixture, write the README first (what's tricky), then craft `src/` to exercise exactly that, then hand-compute `expected.json`. Example for `anonymous_zoo`:
+
+```markdown
+<!-- depgraph/tests/fixtures/wild/primitives_ts/anonymous_zoo/README.md -->
+# anonymous_zoo
+
+Default-exported anonymous functions, named function expressions, and
+arrow-vs-function distinction. Naive extractors that filter on
+`fn.getName()` drop these silently; the extractor must synthesize a
+stable name (`<default:<modulebasename>>`) or use the surrounding
+binding.
+```
+
+```typescript
+// depgraph/tests/fixtures/wild/primitives_ts/anonymous_zoo/src/a.ts
+export default function() { return 1; }   // anonymous default
+
+// named function expression — `inner` visible inside the body only
+export const aliased = function inner(n: number): number {
+  return n > 0 ? inner(n - 1) : 0;
+};
+
+// arrow expression
+export const arrow = (s: string) => s.length;
+```
+
+```json
+// depgraph/tests/fixtures/wild/primitives_ts/anonymous_zoo/expected.json
+{
+  "primitives": [
+    {"id": "fixture::src/a.ts", "primitive": "module", "name": "src/a.ts", "owner": null},
+    {"id": "fixture::src/a.ts::<default:a>", "primitive": "function",
+     "name": "<default:a>", "owner": null},
+    {"id": "fixture::src/a.ts::aliased", "primitive": "function",
+     "name": "aliased", "owner": null},
+    {"id": "fixture::src/a.ts::arrow", "primitive": "function",
+     "name": "arrow", "owner": null}
+  ],
+  "edges": [
+    {"source": "fixture::src/a.ts", "kind": "defines",
+     "target": "fixture::src/a.ts::<default:a>"},
+    {"source": "fixture::src/a.ts", "kind": "defines",
+     "target": "fixture::src/a.ts::aliased"},
+    {"source": "fixture::src/a.ts", "kind": "defines",
+     "target": "fixture::src/a.ts::arrow"}
+  ]
+}
+```
+
+```markdown
+<!-- depgraph/tests/fixtures/wild/primitives_ts/anonymous_zoo/verification.md -->
+# Verification log: anonymous_zoo
+
+**Last reviewed:** (fill in)
+**Status:** ⚠ pending review
+
+## Pre-read prediction
+*Written before looking at expected.json. List every primitive + edge
+you expect this fixture to produce. Don't cheat by peeking.*
+
+## Prediction vs expected.json
+- (fill in)
+
+## Expected vs actual (from last regen)
+- (fill in)
+
+## Notes
+```
+
+Repeat the same pattern for the remaining 7 fixtures. Each one focuses on the specific pattern named in `wild/README.md`.
+
+- [ ] **Step 2: Write the wild-corpus test harness**
+
+```python
+# depgraph/tests/extractors/test_typescript_wild.py
+"""Wild-corpus runner for Phase 1.
+
+For each fixture dir under wild/primitives_ts/, run the extractor and
+compare emitted primitives + edges against expected.json.
+"""
+from __future__ import annotations
+
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+
+WILD_DIR = Path(__file__).parent.parent / "fixtures" / "wild" / "primitives_ts"
+EXTRACTOR = Path(__file__).resolve().parents[2] / "extractors" / "typescript" / "extract.ts"
+
+
+def _fixtures():
+    return sorted(d for d in WILD_DIR.iterdir() if d.is_dir() and (d / "src").exists())
+
+
+def _run_extractor(fixture_root: Path) -> list[dict]:
+    proc = subprocess.run([
+        "npx", "tsx", str(EXTRACTOR),
+        "--repo-key", "fixture", "--repo-path", str(fixture_root),
+        "--format", "ndjson",
+    ], capture_output=True, text=True, check=True, cwd=EXTRACTOR.parent)
+    return [json.loads(l) for l in proc.stdout.splitlines() if l.strip()]
+
+
+@pytest.mark.parametrize("fixture", _fixtures(), ids=lambda f: f.name)
+def test_wild_fixture_primitives_match_expected(fixture):
+    expected = json.loads((fixture / "expected.json").read_text())
+    actual = _run_extractor(fixture)
+    actual_ids = {p["id"] for p in actual}
+    expected_ids = {p["id"] for p in expected["primitives"]}
+    missing = expected_ids - actual_ids
+    extra = actual_ids - expected_ids
+    assert not missing and not extra, (
+        f"{fixture.name}: missing={missing}, extra={extra}")
+
+
+@pytest.mark.parametrize("fixture", _fixtures(), ids=lambda f: f.name)
+def test_wild_fixture_edges_subset_of_actual(fixture):
+    expected = json.loads((fixture / "expected.json").read_text())
+    actual = _run_extractor(fixture)
+    actual_edges = {(p["id"], e["kind"], e["target"])
+                    for p in actual for e in p.get("edges_out", [])}
+    for e in expected.get("edges", []):
+        triple = (e["source"], e["kind"], e["target"])
+        assert triple in actual_edges, (
+            f"{fixture.name}: expected edge {triple} missing from actual")
+```
+
+- [ ] **Step 3: Claude verification pass**
+
+For each of the 8 fixtures, read `src/` end-to-end. Write the prediction section of `verification.md` *before* opening `expected.json`. Diff the prediction against expected, resolve disagreements (fix expected if it was wrong, or correct the prediction). Run the extractor; diff actual against expected. Sign `verification.md` ✓ when all three agree.
+
+If automated tests fail: fix framework, re-run, re-verify. If automated tests pass but Claude review surfaces an issue (e.g., the expected.json said only 2 primitives but the source clearly contains 3, and the framework also only emits 2 — both test and framework are wrong): fix both, re-run.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add depgraph/tests/fixtures/wild/primitives_ts/ \
+        depgraph/tests/extractors/test_typescript_wild.py
+git commit -m "depgraph: Phase 1 wild corpus (8 TS pathological fixtures + Claude review)"
+```
+
 ---
 
 ## Phase 2 — Python Primitive Extractor
@@ -2477,6 +2850,68 @@ def test_all_python_primitives_validate():
 pytest depgraph/tests/extractors/test_python_primitives.py -v
 git add depgraph/tests/extractors/test_python_primitives.py
 git commit -m "depgraph/extractors/python: schema validation gate"
+```
+
+### Task 2.5: Author wild fixtures + Claude verification
+
+Same protocol as Task 1.9, applied to Phase 2's Python pathological patterns.
+
+**Files:**
+- Create: `depgraph/tests/fixtures/wild/primitives_py/{dunder_zoo,metaclasses,dataclass_pydantic_namedtuple,nested_everything,decorator_factories,walrus_match_pep695,if_name_main,relative_dots}/`
+- Create: `depgraph/tests/extractors/test_python_wild.py`
+
+- [ ] **Step 1: Author the 8 fixtures**
+
+Follow the layout from `wild/README.md`. Each fixture: `README.md` (5–10 lines: what's tricky), `src/` (the awkward Python), `expected.json` (hand-computed primitives + edges), `verification.md` (template, status `⚠ pending review`). Example tricky case for `if_name_main`: assignments inside the `__main__` guard MUST NOT become primitives even though they're "top-level" syntactically — the test gates this.
+
+- [ ] **Step 2: Test harness**
+
+```python
+# depgraph/tests/extractors/test_python_wild.py
+import json
+from pathlib import Path
+import pytest
+from depgraph.extractors.python.extract import extract_repo
+
+WILD_DIR = Path(__file__).parent.parent / "fixtures" / "wild" / "primitives_py"
+
+
+def _fixtures():
+    return sorted(d for d in WILD_DIR.iterdir() if d.is_dir() and (d / "src").exists())
+
+
+@pytest.mark.parametrize("fixture", _fixtures(), ids=lambda f: f.name)
+def test_wild_primitives_match_expected(fixture):
+    expected = json.loads((fixture / "expected.json").read_text())
+    actual = list(extract_repo(repo_key="fixture", repo_path=fixture / "src"))
+    actual_ids = {p["id"] for p in actual}
+    expected_ids = {p["id"] for p in expected["primitives"]}
+    missing = expected_ids - actual_ids
+    extra = actual_ids - expected_ids
+    assert not missing and not extra, f"{fixture.name}: missing={missing}, extra={extra}"
+
+
+@pytest.mark.parametrize("fixture", _fixtures(), ids=lambda f: f.name)
+def test_wild_edges_subset_of_actual(fixture):
+    expected = json.loads((fixture / "expected.json").read_text())
+    actual = list(extract_repo(repo_key="fixture", repo_path=fixture / "src"))
+    actual_edges = {(p["id"], e["kind"], e["target"])
+                    for p in actual for e in p.get("edges_out", [])}
+    for e in expected.get("edges", []):
+        triple = (e["source"], e["kind"], e["target"])
+        assert triple in actual_edges, f"{fixture.name}: expected edge {triple} missing"
+```
+
+- [ ] **Step 3: Claude verification**
+
+For each fixture: read `src/` end-to-end; write the prediction section of `verification.md` *before* opening `expected.json`; diff; resolve disagreements; run extractor; diff actual; sign `✓`.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add depgraph/tests/fixtures/wild/primitives_py/ \
+        depgraph/tests/extractors/test_python_wild.py
+git commit -m "depgraph: Phase 2 wild corpus (8 Python pathological fixtures + Claude review)"
 ```
 
 ---
@@ -3574,6 +4009,98 @@ def test_all_emitted_edges_validate():
 
 ```bash
 git commit -m "depgraph/extractors: edge schema validation gate"
+```
+
+### Task 3.8: Author wild fixtures + Claude verification
+
+The 8 Phase-3 wild fixtures stress edge resolution: method calls on instance variables, chained calls, dynamic dispatch (must not crash, must mark `unresolved`), monkey-patches, circular imports, decorator targets, module-scope read/assign distinction.
+
+**Files:**
+- Create: `depgraph/tests/fixtures/wild/edges/{method_call_chains,instance_passing,dynamic_dispatch,monkey_patch,circular_imports_py,circular_imports_ts,decorator_target_resolution,read_assign_global}/`
+- Create: `depgraph/tests/extractors/test_edges_wild.py`
+
+- [ ] **Step 1: Author the 8 fixtures**
+
+Each fixture pairs source files with hand-computed expected edges. Critical assertions per fixture:
+
+- **method_call_chains**: `client.users.get().filter().first()` — first call resolves; subsequent chained calls land `fuzzy` or `unresolved` (acceptable for v0).
+- **instance_passing**: function takes typed param, calls method on it → edge resolves via param annotation.
+- **dynamic_dispatch**: `getattr(obj, name)()` — extractor produces a `calls` edge with `confidence: "unresolved"` and target `external::unresolved::*`, doesn't crash.
+- **monkey_patch**: `SomeClass.method = lambda` — the lambda IS extracted as a function primitive, but the assignment doesn't redirect existing `calls` edges (out of scope; document).
+- **circular_imports_py / circular_imports_ts**: A imports B imports A. Both modules' import edges resolve; the corpus walk doesn't deadlock.
+- **decorator_target_resolution**: `@functools.lru_cache` (external) and `@local_dec` (local function); both produce `decorates` edges, the first targeting an external terminal, the second targeting the local function id.
+- **read_assign_global**: module-scope `GLOBAL = 0`; one function reads, one writes; distinct edges emitted.
+
+- [ ] **Step 2: Test harness**
+
+```python
+# depgraph/tests/extractors/test_edges_wild.py
+"""Wild edge-resolution gate. Runs each fixture's extractor (TS or Python
+based on src/ contents), compares edges_out against expected.json."""
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+
+WILD_DIR = Path(__file__).parent.parent / "fixtures" / "wild" / "edges"
+TS_EXTRACTOR = Path(__file__).resolve().parents[2] / "extractors" / "typescript" / "extract.ts"
+
+
+def _fixtures():
+    return sorted(d for d in WILD_DIR.iterdir() if d.is_dir() and (d / "src").exists())
+
+
+def _run(fixture):
+    # Detect language from src/ contents
+    if any(f.suffix in {".ts", ".tsx", ".js"} for f in (fixture / "src").iterdir()):
+        proc = subprocess.run([
+            "npx", "tsx", str(TS_EXTRACTOR),
+            "--repo-key", "fixture", "--repo-path", str(fixture / "src"),
+            "--format", "ndjson",
+        ], capture_output=True, text=True, check=True, cwd=TS_EXTRACTOR.parent)
+        return [json.loads(l) for l in proc.stdout.splitlines() if l.strip()]
+    else:
+        from depgraph.extractors.python.extract import extract_repo
+        return list(extract_repo(repo_key="fixture", repo_path=fixture / "src"))
+
+
+@pytest.mark.parametrize("fixture", _fixtures(), ids=lambda f: f.name)
+def test_wild_edges_match_expected(fixture):
+    expected = json.loads((fixture / "expected.json").read_text())
+    actual = _run(fixture)
+    actual_edges = {(p["id"], e["kind"], e["target"], e.get("confidence"))
+                    for p in actual for e in p.get("edges_out", [])}
+    for e in expected.get("edges", []):
+        triple = (e["source"], e["kind"], e["target"], e.get("confidence", "exact"))
+        assert triple in actual_edges, f"{fixture.name}: expected edge {triple} missing"
+
+
+@pytest.mark.parametrize("fixture", _fixtures(), ids=lambda f: f.name)
+def test_wild_unresolved_edges_present_where_expected(fixture):
+    """Some fixtures (dynamic_dispatch) MUST emit unresolved edges; the
+    expected.json marks these. This test ensures we're not silently
+    dropping them."""
+    expected = json.loads((fixture / "expected.json").read_text())
+    if not expected.get("unresolved_edges_expected"):
+        return  # nothing to assert
+    actual = _run(fixture)
+    unresolved = [e for p in actual for e in p.get("edges_out", [])
+                  if e.get("confidence") == "unresolved"]
+    assert unresolved, f"{fixture.name}: expected at least one unresolved edge"
+```
+
+- [ ] **Step 3: Claude verification**
+
+Same protocol. For each fixture, especially focus on whether `dynamic_dispatch` produces an unresolved edge rather than crashing — that's a soundness-vs-completeness signal we want to preserve.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add depgraph/tests/fixtures/wild/edges/ \
+        depgraph/tests/extractors/test_edges_wild.py
+git commit -m "depgraph: Phase 3 wild corpus (8 edge-resolution fixtures + Claude review)"
 ```
 
 ---
@@ -5305,6 +5832,90 @@ pytest depgraph/tests/lib/sql/test_reconcile.py::test_all_schema_primitives_vali
 git commit -m "depgraph/lib/sql: schema validation gate for emitted schema primitives"
 ```
 
+### Task 4.9: Author wild fixtures + Claude verification
+
+The 8 Phase-4 wild fixtures exercise SQL extraction + reconciliation + cross-reference under pressure.
+
+**Files:**
+- Create: `depgraph/tests/fixtures/wild/sql/{multi_dialect_create,alembic_op_style,bare_sql_file,self_referential_fk,circular_fk,mixed_text_and_op,dynamic_sql_warning,alter_replay_chain}/`
+- Create: `depgraph/tests/lib/sql/test_sql_wild.py`
+
+- [ ] **Step 1: Author the 8 fixtures**
+
+Critical assertions per fixture:
+
+- **multi_dialect_create**: three migration files, one each in sqlite / postgres / mysql syntax, all logically equivalent (`id INTEGER PRIMARY KEY AUTOINCREMENT` vs `id SERIAL PRIMARY KEY` vs `id INT AUTO_INCREMENT PRIMARY KEY`). All three reconcile to a `users` table with identical column structure.
+- **alembic_op_style**: a migration using `op.create_table("users", sa.Column("id", sa.Integer))`. The migration recognizer + SQL pipeline must produce a `users` schema primitive even though no `text(...)` call appears. *Note: if Alembic-style is out of v0 scope, document that explicitly in this fixture's README and mark expected.json with `unsupported: true`; the test asserts the warning instead.*
+- **bare_sql_file**: a standalone `.sql` file with 3 CREATE TABLE statements. The SQL language extractor (from Task 0.4's language registry) must walk it; expected.json lists 3 schema primitives.
+- **self_referential_fk**: `CREATE TABLE node (id INT, parent_id INT REFERENCES node(id))`. After reconciliation, the `node` schema's `foreign_keys` includes `parent_id → node.id`.
+- **circular_fk**: tables A and B with FKs to each other (legal in postgres with deferred constraints; the parser must not crash).
+- **mixed_text_and_op**: migration uses both `text("CREATE TABLE x ...")` and `op.add_column(...)`. Both paths fire; the resulting schema includes both shapes.
+- **dynamic_sql_warning**: migration with `text(f"CREATE TABLE {table_name} (...)")` only. Expected: zero schema primitives, one warning entry on the migration module mentioning the line number.
+- **alter_replay_chain**: a 6-migration sequence: CREATE → ALTER ADD col → ALTER TYPE col → RENAME col → DROP col → DROP TABLE. After replay, the table is absent (drop wins). A simpler control sequence ending without the final DROP confirms incremental reconciliation worked.
+
+- [ ] **Step 2: Test harness**
+
+```python
+# depgraph/tests/lib/sql/test_sql_wild.py
+import json
+from pathlib import Path
+import pytest
+
+from depgraph.lib.sql.migration import extract_migration, is_migration_file
+from depgraph.lib.sql.reconcile import reconcile_schema, schema_to_primitives
+
+WILD_DIR = Path(__file__).parent.parent.parent / "fixtures" / "wild" / "sql"
+
+
+def _fixtures():
+    return sorted(d for d in WILD_DIR.iterdir() if d.is_dir() and (d / "src").exists())
+
+
+@pytest.mark.parametrize("fixture", _fixtures(), ids=lambda f: f.name)
+def test_wild_schema_matches_expected(fixture):
+    expected = json.loads((fixture / "expected.json").read_text())
+    src = fixture / "src"
+    migrations = [extract_migration(p) for p in sorted(src.rglob("*.py"))
+                  if is_migration_file(p)]
+    tables = reconcile_schema(migrations, repo_key="fixture")
+    actual = {t.name: t for t in tables}
+    expected_tables = {t["name"]: t for t in expected.get("tables", [])}
+    assert set(actual) == set(expected_tables), (
+        f"{fixture.name}: tables mismatch: actual={set(actual)} expected={set(expected_tables)}"
+    )
+    for name, t_actual in actual.items():
+        t_expected = expected_tables[name]
+        actual_cols = {c["name"] for c in t_actual.columns}
+        expected_cols = set(t_expected["columns"])
+        assert actual_cols == expected_cols, (
+            f"{fixture.name}/{name}: columns mismatch: actual={actual_cols} expected={expected_cols}"
+        )
+
+
+@pytest.mark.parametrize("fixture", _fixtures(), ids=lambda f: f.name)
+def test_wild_warnings_match_expected(fixture):
+    expected = json.loads((fixture / "expected.json").read_text())
+    expected_warnings = expected.get("expect_warnings", False)
+    src = fixture / "src"
+    migrations = [extract_migration(p) for p in sorted(src.rglob("*.py"))
+                  if is_migration_file(p)]
+    has_warnings = any(m.warnings for m in migrations)
+    if expected_warnings:
+        assert has_warnings, f"{fixture.name}: expected warnings but got none"
+```
+
+- [ ] **Step 3: Claude verification**
+
+Especially scrutinize multi-dialect: it's the most likely to expose sqlglot version drift. Read each fixture's SQL, write down what columns each table should have, compare to expected.json, then to actual. Record the sqlglot version in `verification.md` so a future reviewer knows which version the gate was last sanity-checked against.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add depgraph/tests/fixtures/wild/sql/ \
+        depgraph/tests/lib/sql/test_sql_wild.py
+git commit -m "depgraph: Phase 4 wild corpus (8 SQL pathological fixtures + Claude review)"
+```
+
 ---
 
 ## Phase 5 — Classification Engine
@@ -6268,6 +6879,81 @@ def write_classified(primitives, decisions, *, data_dir: Path) -> None:
 
 - [ ] **Step 3: Run, verify pass + commit.**
 
+### Task 5.9: Author wild fixtures + Claude verification
+
+The 8 Phase-5 wild fixtures stress classification at the corners. These are also the *most* important to Claude-review by hand because classification is the most rule-shaped part of the system and the easiest place for "the test was wrong" to slip through.
+
+**Files:**
+- Create: `depgraph/tests/fixtures/wild/classification/{endpoint_AND_service_conflict,hook_calling_hook_chain,component_HOC_wrapped,pseudo_test_not_test,orphan_model,model_without_schema,util_deep_transitive,classification_conflict_logged}/`
+- Create: `depgraph/tests/lib/test_classification_wild.py`
+
+- [ ] **Step 1: Author the 8 fixtures**
+
+Critical assertions per fixture:
+
+- **endpoint_AND_service_conflict**: a function with `@router.get` decorator that *also* makes a `session.query(...)` call directly. Must classify as `endpoint`; `Decision.conflicts` must include `"service"`.
+- **hook_calling_hook_chain**: `useFoo` → `useBar` → `useState`. All three classify as `hook`.
+- **component_HOC_wrapped**: `const Card = memo(forwardRef(({...}, ref) => <div ref={ref}/>))`. The outer binding `Card` must classify as component. (Open question to surface in verification.md: which primitive carries `kind: component` — the top-level `Card` or the inner arrow? Document the decision.)
+- **pseudo_test_not_test**: function named `test_calculate` inside `lib/calculations.py` (NOT a test path), no asserts in body. Must NOT classify as test.
+- **orphan_model**: class extends `Base` but no `__tablename__`. Must NOT classify as model. (Surface in `verification.md`: did the framework log a warning? If yes, document where.)
+- **model_without_schema**: class with `__tablename__ = "users"` but no `users` schema in corpus. References edge target is unresolved; class must NOT classify as model.
+- **util_deep_transitive**: endpoint → A → B → C → D. All four interior functions classify as util via the reachability BFS in one pass.
+- **classification_conflict_logged**: a hand-crafted edge case satisfying both `endpoint` and `model` predicates (extremely unusual but possible). Test asserts `Decision.conflicts` is populated; engine doesn't crash.
+
+- [ ] **Step 2: Test harness**
+
+```python
+# depgraph/tests/lib/test_classification_wild.py
+import json
+from pathlib import Path
+import pytest
+
+from depgraph.lib.classification.engine import classify_corpus
+
+WILD_DIR = Path(__file__).parent.parent / "fixtures" / "wild" / "classification"
+
+
+def _fixtures():
+    return sorted(d for d in WILD_DIR.iterdir() if d.is_dir() and (d / "src").exists())
+
+
+def _build_corpus(fixture):
+    """Each classification fixture pre-builds its corpus inline as a JSON
+    file `corpus.json` (since we don't want to re-run extraction for every
+    fixture). The corpus represents what Phases 1-4 would have produced."""
+    return json.loads((fixture / "corpus.json").read_text())
+
+
+@pytest.mark.parametrize("fixture", _fixtures(), ids=lambda f: f.name)
+def test_wild_classifications_match_expected(fixture):
+    expected = json.loads((fixture / "expected.json").read_text())
+    corpus = _build_corpus(fixture)
+    decisions = classify_corpus(corpus)
+    expected_decisions = {e["id"]: e["kind"] for e in expected["classifications"]}
+    for prim_id, expected_kind in expected_decisions.items():
+        assert decisions[prim_id].kind == expected_kind, (
+            f"{fixture.name}: {prim_id} expected {expected_kind} "
+            f"got {decisions[prim_id].kind}"
+        )
+    for ec in expected.get("conflicts", []):
+        assert ec["kind"] in decisions[ec["id"]].conflicts, (
+            f"{fixture.name}: expected conflict {ec} not in "
+            f"{decisions[ec['id']].conflicts}"
+        )
+```
+
+- [ ] **Step 3: Claude verification**
+
+For each fixture, *especially* `pseudo_test_not_test` and `orphan_model`: write the prediction in `verification.md` of what the classifier *should* decide based on the spec rule, then compare. These are the cases where a sloppy implementation would over-classify; the Claude review is the gate.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add depgraph/tests/fixtures/wild/classification/ \
+        depgraph/tests/lib/test_classification_wild.py
+git commit -m "depgraph: Phase 5 wild corpus (8 classification edge fixtures + Claude review)"
+```
+
 ---
 
 ## Phase 6 — Cutover
@@ -6619,6 +7305,193 @@ git add depgraph/project.toml
 git commit -m "depgraph: migrate project.toml to v2 (languages + include/exclude paths)"
 ```
 
+### Task 6.4.5: Kitchen-sink end-to-end Claude verification
+
+The kitchen-sink fixture is the framework's last gate before any real consumer (Concorda) is touched. Unlike per-phase wild fixtures, this one runs the full pipeline — extract → edges → SQL pipeline → cross-ref → db_access → classify → reconcile — and the gate is "the framework, validated independently on synthetic-pathological code, also produces a sane corpus on a multi-language mini-project."
+
+**Files:**
+- Create: `depgraph/tests/fixtures/wild/kitchen_sink/`
+  - `README.md` — what's in the project + the expected kind distribution
+  - `api/` — Python (FastAPI-shaped: routers, models, services, utils, tests)
+  - `web/` — TypeScript (Next.js-shaped: components, hooks, API clients, tests)
+  - `db/` — standalone `.sql` schemas + migrations subdir under `api/`
+  - `expected.json` — kind-count distribution + key invariants
+  - `verification.md` — end-to-end review log
+- Create: `depgraph/tests/test_kitchen_sink.py`
+
+- [ ] **Step 1: Author the kitchen-sink mini-project**
+
+Goal: a project small enough to read end-to-end (~30 files, ~1000 LOC total) but large enough that all kinds appear and classification distribution is non-trivial. Target distribution:
+
+| Kind | Count | Source |
+|---|---|---|
+| schema | 8 | 5 in migrations/, 3 in db/*.sql |
+| model | 5 | api/models/*.py with `__tablename__` |
+| endpoint | 5 | api/routers/*.py with route decorators |
+| service | 4 | api/services/*.py with db_access edges, called from endpoints |
+| util | 6 | shared helpers reachable from classified kinds |
+| component | 3 | web/components/*.tsx returning JSX |
+| hook | 2 | web/hooks/use*.ts |
+| test | 4 | api/tests/test_*.py + web/__tests__/*.test.tsx |
+
+(Counts are exact — the test gates on them.)
+
+The mini-project's "story": a tiny event-RSVP app. Two ORM models (User, Event) + three more tables for relations (RSVP, EventTag, Tag). Endpoints for create/list/RSVP. Services do the DB work. Frontend has an event list page + RSVP button + a custom hook for fetching.
+
+- [ ] **Step 2: Author `expected.json`**
+
+```json
+{
+  "kind_counts": {
+    "schema": 8, "model": 5, "endpoint": 5, "service": 4,
+    "util": 6, "component": 3, "hook": 2, "test": 4
+  },
+  "invariants": [
+    "every model has exactly one references→schema edge via __tablename__",
+    "every endpoint has at least one calls edge into a service or util",
+    "every service has at least one db_access edge targeting a schema",
+    "every component has signature.returns_jsx = true",
+    "every hook has at least one calls edge to another hook or React built-in",
+    "every test has at least one tests edge to a non-test function",
+    "no orphan edges (every non-external target resolves to a primitive)",
+    "no slug collisions",
+    "two consecutive regens produce byte-identical output"
+  ],
+  "spot_check_classifications": [
+    {"id": "fixture::api/routers/events.py::create_event", "kind": "endpoint"},
+    {"id": "fixture::api/services/events.py::create_event_service", "kind": "service"},
+    {"id": "fixture::api/utils/format.py::format_date", "kind": "util"},
+    {"id": "fixture::web/components/EventCard.tsx::EventCard", "kind": "component"},
+    {"id": "fixture::web/hooks/useEvents.ts::useEvents", "kind": "hook"},
+    {"id": "fixture::api/models/event.py::Event", "kind": "model"},
+    {"id": "fixture::schema::events", "kind": "schema"}
+  ]
+}
+```
+
+- [ ] **Step 3: Test harness**
+
+```python
+# depgraph/tests/test_kitchen_sink.py
+"""End-to-end gate on the kitchen-sink mini-project.
+
+Runs the full pipeline (extract → edges → SQL → cross-ref → db_access →
+classify → reconcile) and asserts kind distribution + invariants."""
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+
+FIXTURE = Path(__file__).parent / "fixtures" / "wild" / "kitchen_sink"
+
+
+@pytest.fixture(scope="module")
+def regen_kitchen_sink(tmp_path_factory):
+    out = tmp_path_factory.mktemp("kitchen_sink_corpus")
+    subprocess.run([
+        sys.executable, "-m", "kg.cli", "depgraph", "regen",
+        "--data-dir", str(out),
+        "--project-toml", str(FIXTURE / "project.toml"),
+    ], check=True)
+    return out
+
+
+def _load_all_nodes(data_dir: Path):
+    nodes = []
+    for p in (data_dir / "nodes").rglob("*.json"):
+        if p.name.startswith("_") or "_index" in p.parts:
+            continue
+        nodes.append(json.loads(p.read_text()))
+    return nodes
+
+
+def test_kitchen_sink_kind_distribution(regen_kitchen_sink):
+    expected = json.loads((FIXTURE / "expected.json").read_text())
+    nodes = _load_all_nodes(regen_kitchen_sink)
+    counts: dict[str, int] = {}
+    for n in nodes:
+        if n.get("kind"):
+            counts[n["kind"]] = counts.get(n["kind"], 0) + 1
+    for kind, expected_count in expected["kind_counts"].items():
+        assert counts.get(kind) == expected_count, (
+            f"{kind}: expected {expected_count}, got {counts.get(kind, 0)}"
+        )
+
+
+def test_kitchen_sink_spot_check_classifications(regen_kitchen_sink):
+    expected = json.loads((FIXTURE / "expected.json").read_text())
+    by_id = {n["id"]: n for n in _load_all_nodes(regen_kitchen_sink)}
+    for check in expected["spot_check_classifications"]:
+        actual_kind = by_id.get(check["id"], {}).get("kind")
+        assert actual_kind == check["kind"], (
+            f"{check['id']}: expected kind={check['kind']}, got {actual_kind}"
+        )
+
+
+def test_kitchen_sink_no_orphan_edges(regen_kitchen_sink):
+    """Every non-external edge target must resolve."""
+    nodes = _load_all_nodes(regen_kitchen_sink)
+    by_id = {n["id"]: n for n in nodes}
+    orphans = []
+    for n in nodes:
+        for e in n.get("edges_out", []):
+            tgt = e["target"]
+            if tgt.startswith("external::"):
+                continue
+            if tgt not in by_id:
+                orphans.append({"source": n["id"], "target": tgt, "kind": e["kind"]})
+    assert not orphans, f"orphan edges: {orphans}"
+
+
+def test_kitchen_sink_models_reference_schemas(regen_kitchen_sink):
+    """Invariant: every model has exactly one references→schema edge."""
+    nodes = _load_all_nodes(regen_kitchen_sink)
+    by_id = {n["id"]: n for n in nodes}
+    for n in nodes:
+        if n.get("kind") != "model":
+            continue
+        schema_refs = [e for e in n.get("edges_out", [])
+                       if e["kind"] == "references"
+                          and by_id.get(e["target"], {}).get("kind") == "schema"]
+        assert len(schema_refs) == 1, (
+            f"model {n['id']} has {len(schema_refs)} schema refs, expected 1"
+        )
+
+
+def test_kitchen_sink_determinism(regen_kitchen_sink, tmp_path):
+    """Second regen must produce identical output."""
+    import filecmp
+    second = tmp_path / "second"
+    subprocess.run([
+        sys.executable, "-m", "kg.cli", "depgraph", "regen",
+        "--data-dir", str(second),
+        "--project-toml", str(FIXTURE / "project.toml"),
+    ], check=True)
+    cmp = filecmp.dircmp(regen_kitchen_sink, second)
+    assert not cmp.diff_files, f"kitchen-sink non-deterministic: {cmp.diff_files}"
+```
+
+- [ ] **Step 4: Claude end-to-end verification**
+
+The most important review step in the entire plan. Time-budget: a full reading pass through the kitchen-sink before signing.
+
+1. Read every file under `kitchen_sink/api/` and `kitchen_sink/web/`. For each, write a one-line summary in `verification.md`: "what does this file contribute?"
+2. Manually compute what kinds each function/class should be. Compare to `expected.json`'s `spot_check_classifications`.
+3. Run the regen. Read the produced corpus directory by directory. For each `nodes/<kind>/`, list the slugified filenames; cross-reference against your kind-count predictions.
+4. Pick 3 randomly-chosen edges from `nodes/_index/by_target.json`. For each, trace back to the source file and confirm the edge represents a real relationship.
+5. Confirm the determinism gate passed.
+6. Sign `verification.md` with full inventory, observed kind distribution, any discrepancies + their resolution.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add depgraph/tests/fixtures/wild/kitchen_sink/ \
+        depgraph/tests/test_kitchen_sink.py
+git commit -m "depgraph: kitchen-sink end-to-end gate + Claude verification"
+```
+
 ### Task 6.5: Regen Concorda corpus
 
 - [ ] **Step 1: Backup current Concorda corpus**
@@ -6901,14 +7774,30 @@ Land this incremental mode only when the full-regen budget becomes painful in re
 
 ## Done definition
 
+**Automated gates:**
+
 - All tests in `depgraph/tests/` pass (`pytest depgraph/tests -v`)
 - `depgraph/extractors/generic/` is deleted
 - `depgraph/extractors/{typescript,python,sql}/` are the production extractors
-- Concorda corpus has been regenerated on v2 schema with no validation errors
 - Determinism CI gate (`test_regen_determinism.py`) passes — two consecutive regens produce byte-identical output
+- Kitchen-sink gate (`test_kitchen_sink.py`) passes — kind distribution matches, no orphan edges, every model references a schema, determinism holds at the assembled-pipeline level
+- All per-phase wild-corpus tests (`test_typescript_wild`, `test_python_wild`, `test_edges_wild`, `test_sql_wild`, `test_classification_wild`) pass
+
+**Claude/reviewer-signed gates:**
+
+- Every fixture under `depgraph/tests/fixtures/wild/` has a current `verification.md` signed `✓ verified` (~40 fixtures + 1 kitchen-sink)
+- Every component under `depgraph/tests/verification_logs/` has a current log signed `✓ verified` (5 components from Task 0.6)
+- Kitchen-sink end-to-end verification log records the manually-traced edge spot-checks
+
+**Consumer-side gates (Concorda):**
+
+- Concorda corpus has been regenerated on v2 schema with no validation errors
 - Logigraph claims are reconciled: auto-migrated where structural_hash matches, flagged in `CANDIDATES.md` where not
 - Hook still injects context on Edit/Write/MultiEdit (tested against a real file edit on Concorda)
 - graphui surfaces the new `schemas/` kind dir + v2 primitive-type dirs without code change required
+
+**Spec gate:**
+
 - `docs/superpowers/specs/2026-05-15-layered-substrate-design.md` decision-point checkboxes are all checked
 
 ---
