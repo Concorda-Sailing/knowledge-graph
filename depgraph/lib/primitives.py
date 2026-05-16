@@ -129,19 +129,26 @@ def canonical_id(repo: str, path: str, symbol: str) -> str:
     return f"{repo}::{path}::{symbol}"
 
 
-def external_terminal(*, ecosystem: str, package: str, symbol: str) -> str:
+def external_terminal(*, ecosystem: str, package: str | None = None, symbol: str) -> str:
     """Canonical external-terminal id.
 
-    Format: `external::<ecosystem>::<package>::<symbol>`. Examples:
-      external::pypi::sqlalchemy::DeclarativeBase
-      external::npm::react::useState
-      external::python-dbapi::Cursor.execute
+    Format: `external::<ecosystem>::[<package>::]<symbol>`. The package
+    segment is omitted when None or empty — for ecosystems that aren't
+    package-organized (Python DB-API; the synthetic "unresolved"
+    ecosystem; vendored code) the 3-segment form is canonical.
 
-    Use `unresolved` ecosystem when import resolution failed and we don't
-    know what the target is, just its surface name:
-      external::unresolved::<symbol>
+    Examples:
+      external::pypi::sqlalchemy::DeclarativeBase    (4-segment)
+      external::npm::react::useState                  (4-segment)
+      external::python-dbapi::Cursor.execute          (3-segment, no package)
+      external::unresolved::Foo                       (3-segment, no package)
+
+    Use the `unresolved` ecosystem when import resolution failed and you
+    know only the surface name.
     """
-    return f"external::{ecosystem}::{package}::{symbol}"
+    if package:
+        return f"external::{ecosystem}::{package}::{symbol}"
+    return f"external::{ecosystem}::{symbol}"
 
 
 def is_external_terminal(node_id: str) -> bool:
@@ -163,10 +170,14 @@ def check_slug_collisions(primitives: list[dict]) -> list[str]:
     overwrite each other on disk. Reconcile calls this once per regen
     over the full primitive list; corpora with paths containing spaces
     or unicode are the most likely to trigger.
+
+    Duplicate ids (same id twice) are NOT flagged here — that's a
+    different problem (duplicate primitives), surfaced by reconcile's
+    by-id index build.
     """
-    by_slug: dict[str, list[str]] = {}
+    by_slug: dict[str, set[str]] = {}
     for p in primitives:
-        by_slug.setdefault(slugify_id_for_filename(p["id"]), []).append(p["id"])
+        by_slug.setdefault(slugify_id_for_filename(p["id"]), set()).add(p["id"])
     return [
         f"slug collision: ids {sorted(ids)} all slugify to {slug!r}"
         for slug, ids in by_slug.items() if len(ids) > 1

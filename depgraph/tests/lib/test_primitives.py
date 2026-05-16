@@ -45,6 +45,20 @@ def test_external_terminal_format():
     assert not is_external_terminal("concorda-api::routers/events.py::create_event")
 
 
+def test_external_terminal_no_package_3_segment():
+    """For ecosystems without packages (DB-API, unresolved), produce a
+    3-segment id rather than collapsing to malformed external::eco::::sym."""
+    from depgraph.lib.primitives import external_terminal
+    assert external_terminal(ecosystem="unresolved", symbol="Foo") == \
+        "external::unresolved::Foo"
+    assert external_terminal(ecosystem="python-dbapi", package=None,
+                              symbol="Cursor.execute") == \
+        "external::python-dbapi::Cursor.execute"
+    assert external_terminal(ecosystem="unresolved", package="",
+                              symbol="Foo") == \
+        "external::unresolved::Foo"
+
+
 def test_structural_hash_payload_includes_body():
     from depgraph.lib.primitives import structural_hash_payload, compute_hash
     a = compute_hash(structural_hash_payload(
@@ -91,5 +105,16 @@ def test_slug_collision_helper_clean_corpus():
     primitives = [
         {"id": "r::foo.py::A"},
         {"id": "r::foo.py::B"},
+    ]
+    assert check_slug_collisions(primitives) == []
+
+
+def test_slug_collision_ignores_duplicate_ids():
+    """Duplicate ids aren't slug collisions — they're a separate concern
+    (duplicate primitives), surfaced elsewhere."""
+    from depgraph.lib.primitives import check_slug_collisions
+    primitives = [
+        {"id": "r::a.py::Foo"},
+        {"id": "r::a.py::Foo"},  # duplicate
     ]
     assert check_slug_collisions(primitives) == []

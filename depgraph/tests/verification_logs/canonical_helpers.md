@@ -18,7 +18,7 @@ Discrepancies between Predicted and Observed (if any) are noted at the bottom.
 | `canonical_id("a", "path/to/module.py", "MyClass")` | `"a::path/to/module.py::MyClass"` | `'a::path/to/module.py::MyClass'` |
 | `external_terminal(ecosystem="pypi", package="sqlalchemy", symbol="Base")` | `"external::pypi::sqlalchemy::Base"` | `'external::pypi::sqlalchemy::Base'` |
 | `external_terminal(ecosystem="npm", package="react", symbol="useState")` | `"external::npm::react::useState"` | `'external::npm::react::useState'` |
-| `external_terminal(ecosystem="unresolved", package="", symbol="Cursor.execute")` | `"external::unresolved::Cursor.execute"` (assumed package would be skipped if empty) | `'external::unresolved::::Cursor.execute'` — **WRONG** — double `::` from empty package segment |
+| `external_terminal(ecosystem="unresolved", package="", symbol="Cursor.execute")` | `"external::unresolved::Cursor.execute"` (assumed package would be skipped if empty) | `'external::unresolved::Cursor.execute'` ✓ (fixed) |
 | `is_external_terminal("external::npm::react::useState")` | `True` | `True` |
 | `is_external_terminal("concorda-api::routers/events.py::create")` | `False` | `False` |
 | `is_external_terminal("external::")` | `True` (starts with "external::") | `True` |
@@ -32,20 +32,16 @@ Discrepancies between Predicted and Observed (if any) are noted at the bottom.
 
 ## Observations
 
-**Finding 1 — `external_terminal` with empty package produces malformed id:**
-`external_terminal(ecosystem="unresolved", package="", symbol="Cursor.execute")` emits
-`'external::unresolved::::Cursor.execute'` — a double `::`. This is valid Python (f-string just
-concatenates) but the resulting id is not parseable by any splitter that expects exactly three
-`::` separators after `external`. The docstring example shows `external::python-dbapi::Cursor.execute`
-which omits the package segment. The function signature requires all three keyword args; callers
-who want the two-segment form have no way to call it correctly. Either the signature should allow
-`package=""` and collapse the empty segment, or the docstring example is misleading. Flagging as
-a latent bug — not a crash, but produces an id that won't round-trip cleanly.
+**Finding 1 — `external_terminal` with empty package produced malformed id (FIXED):**
+`external_terminal(ecosystem="unresolved", package="", symbol="Cursor.execute")` previously emitted
+`'external::unresolved::::Cursor.execute'` — a double `::`. Fixed by making `package` optional;
+`None` or empty string elides the segment, producing the correct 3-segment form. See
+"Implementation defects fixed" section below.
 
 **Finding 2 — `is_external_terminal` is case-sensitive:**
 The prefix check uses a bare string literal `"external::"` so `"External::..."` returns `False`.
-This is probably correct behavior (ids are canonical-lowercase), but callers extracting ids from
-mixed-case sources would silently miss these. Not a bug in isolation — worth documenting.
+This is correct behavior (ids are canonical-lowercase). Callers extracting ids from mixed-case
+sources should normalise before calling. Not a bug.
 
 **Finding 3 — `slugify_id_for_filename` allows Unicode letters through:**
 `é`, `ñ`, `ü`, and any Unicode letter satisfying `str.isalnum()` pass the character filter. The
@@ -55,5 +51,21 @@ differ from one generated on a case-insensitive macOS filesystem if any Unicode 
 Worth noting for future collision detection — two ids with composed vs. decomposed Unicode could
 produce the same visual slug but different byte sequences, defeating collision detection.
 
+## Implementation defects fixed during verification
+
+**Bug surfaced by Finding 1:** The verification prediction for
+`external_terminal(ecosystem="unresolved", package="", symbol="Cursor.execute")` expected
+`"external::unresolved::Cursor.execute"` (3-segment). The observed output was
+`"external::unresolved::::Cursor.execute"` — a double `::` from the empty package segment being
+interpolated verbatim.
+
+Root cause: `package` was a required positional keyword arg with no conditional logic; the
+f-string always emitted all four segments.
+
+Fix: made `package` optional (`str | None = None`); when falsy the segment is omitted.
+Companion test `test_external_terminal_no_package_3_segment` added to `test_primitives.py`.
+
+Committed in: TBD (commit SHA appended after commit)
+
 ## Status
-✓ verified — 3 predictions were wrong (documented above); none are crashes but Finding 1 is a latent design defect worth tracking.
+✓ verified — Finding 1 (malformed external_terminal id) was a real bug and has been fixed. Findings 2 and 3 are by-design behavior, documented for future reference.
