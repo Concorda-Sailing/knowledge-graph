@@ -2,6 +2,13 @@
 
 Notable user-visible changes to the knowledge-graph framework.
 
+## 2026-05-16 — Post-Phase-5 cleanup
+
+- **lib namespace rename.** Phases 2-3 left both `depgraph/lib/` and `logigraph/lib/` reachable as the unqualified `lib` package, forcing a runtime `sys.modules` eviction in `kg/cli/logigraph.py` and a `_PatchedModule` hack in `tests/conftest.py`. Both `depgraph/` and `logigraph/` now have `__init__.py` markers and all imports are fully-qualified (`from depgraph.lib.X` / `from logigraph.lib.X`). 78 files touched, 403 tests still pass. The eviction logic is gone; `tests/conftest.py` is back to 18 LOC.
+- **`kg add` strictness unification.** Legacy `kg add` now uses the same permissive `[project].name`-only requirement as `kg project add`. Backward-compatible with the existing strict-schema tests (their fixtures include the extra fields anyway).
+- **`docs/CLI.md` refresh.** depgraph/logigraph/install sections reflect the Phase-2/3/4 native dispatch and the install.sh-as-alias state.
+- **New tests.** End-to-end `kg install bootstrap` integration test; programmatic byte-for-byte parity regression between `bin/depgraph` and `kg depgraph` (same for logigraph). 8 parity cases all green.
+
 ## 2026-05-16 — Phase 5: shared infrastructure
 
 - New `kg/shared/` package hosts cross-graph helpers (`git_commit_if_changed`, `default_actor`, `load_telemetry_events`). depgraph and logigraph re-export these via their `lib/cli/_shared.py` to preserve backward-compat names.
@@ -50,7 +57,5 @@ Notable user-visible changes to the knowledge-graph framework.
 
 ## Known deferred work
 
-- **`lib` namespace overlap.** Both `depgraph/lib/` and `logigraph/lib/` are imported as the unqualified `lib` package. Phase 3 added a `tests/conftest.py` eviction hack and a similar runtime eviction in `kg/cli/logigraph.py` to work around the collision. Cleaner long-term fix: rename one or both to unique top-level package names (e.g. `depgraph_lib`, `logigraph_lib`). 82+ imports across extractors, hooks, and tests would need updating — deferred until that area is touched for another reason.
-- **`kg add` strictness vs `kg project add`** — UNIFIED in this changelog's surrounding work. (Both now use the permissive path that only requires `[project].name`.)
 - **`depgraph validate --strict`** flag is wired but unused by the handler. Pre-existing from before this work; preserved verbatim through Phase 2.
 - **`logigraph context` quirk on `rule::nonexistent`** — emits the missing-rule WARN to stderr instead of the "no rules apply" stdout message. Pre-existing from before this work; preserved through Phase 3.
