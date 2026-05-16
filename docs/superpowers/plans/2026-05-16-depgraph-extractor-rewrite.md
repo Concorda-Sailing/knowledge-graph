@@ -1991,20 +1991,27 @@ function variablePrimitive(
   node: { getStartLineNumber(): number; getEndLineNumber(): number },
   name: string, owner: string | null, mutable: boolean,
   type_annotation: string | null,
+  value_text: string | null,
   repoKey: string, relPath: string,
 ): Primitive {
   const symbol = owner ? `${owner.split("::").pop()}.${name}` : name;
+  const signature = { type_annotation, value_text };
   return {
     schema_version: 2, id: canonicalId(repoKey, relPath, symbol),
     primitive: "variable", name: symbol, owner,
     source: { repo: repoKey, path: relPath, language: "typescript",
               line: node.getStartLineNumber(), end_line: node.getEndLineNumber() },
-    signature: { type_annotation },
+    signature,
     attributes: { abstract: false, generated: false, external: false,
                   template_parameters: [], macro: false, mutable,
                   instantiable: false, inheritable: false },
     edges_out: [],
-    structural_hash: structuralHash({ kind: "variable", symbol, mutable, type_annotation }),
+    // Per spec: name + signature + scope body. For a variable the "body"
+    // is its initializer expression. Same payload shape as Python.
+    structural_hash: structuralHash({
+      primitive: "variable", name: symbol,
+      signature, body_text: value_text ?? "",
+    }),
     kind: null,
     extractor: EXTRACTOR_TAG,
   };
@@ -2021,6 +2028,7 @@ function extractVariables(sf: SourceFile, repoKey: string, relPath: string): Pri
       out.push(variablePrimitive(decl, decl.getName(), null,
         declKind !== "const",
         decl.getTypeNode()?.getText() ?? null,
+        init?.getText() ?? null,
         repoKey, relPath));
     }
   }
@@ -2031,6 +2039,7 @@ function extractVariables(sf: SourceFile, repoKey: string, relPath: string): Pri
       out.push(variablePrimitive(prop, prop.getName(), classId,
         !prop.isReadonly(),
         prop.getTypeNode()?.getText() ?? null,
+        prop.getInitializer()?.getText() ?? null,
         repoKey, relPath));
     }
   }
@@ -2162,9 +2171,15 @@ function extractObjectLiteralApiClients(sf: SourceFile, repoKey: string, relPath
             return_type: fnNode.getReturnTypeNode?.()?.getText() ?? null,
             is_async: fnNode.isAsync?.() ?? false,
             decorators: [],
-          }, repoKey, relPath));
+            returns_jsx: bodyHasJsx(fnNode),
+          }, bodyText(fnNode), repoKey, relPath));
         } else if (Node.isPropertyAssignment(prop)) {
-          out.push(variablePrimitive(prop, prop.getName(), classId, true, null, repoKey, relPath));
+          // Plain property: `endpoint: "/users"` etc. Capture the RHS
+          // text so cross-language clients of structural_hash see the
+          // value, matching Python's value_text convention.
+          const initText = (prop as any).getInitializer()?.getText() ?? null;
+          out.push(variablePrimitive(prop, prop.getName(), classId, true,
+            null, initText, repoKey, relPath));
         }
       }
     }
@@ -3381,14 +3396,37 @@ Test gate:
 
 ```python
 def test_aliased_import_records_local_binding():
-    # Fixture: from .b import foo as bar
     prims = list(extract_repo(repo_key="fixture", repo_path=FIXTURE_DIR / "imports_aliased"))
     mod = next(p for p in prims if p["source"]["path"] == "a.py" and p["primitive"] == "module")
     edge = next(e for e in mod["edges_out"] if e["kind"] == "imports" and "foo" in e["target"])
     assert edge["local_binding"] == "bar"
 ```
 
-(Add a small `imports_aliased/` fixture: `a.py` with `from .b import foo as bar` plus `b.py` with `def foo(): pass`.)
+Required fixture for the test (create alongside the other imports fixtures):
+
+```python
+# depgraph/tests/extractors/fixtures/edges_py/imports_aliased/a.py
+from .b import foo as bar
+```
+
+```python
+# depgraph/tests/extractors/fixtures/edges_py/imports_aliased/b.py
+def foo(): pass
+```
+
+A parallel TS fixture lives under `depgraph/tests/extractors/fixtures/edges_ts/imports_aliased/`:
+
+```typescript
+// src/a.ts
+import { foo as bar } from "./b.js";
+```
+
+```typescript
+// src/b.ts
+export function foo() {}
+```
+
+With a TS test mirroring the Python one (asserts `edge.local_binding === "bar"`).
 
 - [ ] **Step 6: Run, verify fail. Implement. Verify pass.**
 
@@ -5398,8 +5436,8 @@ bound to a string literal AND extends a known ORM base class, emit a
 `references` edge to the schema primitive whose name matches.
 
 The variable primitive for `__tablename__` is produced by Phase 2;
-its value is recorded in `signature.type_annotation` (which holds the
-RHS expression text for class-scoped Assigns).
+its RHS expression is recorded in `signature.value_text` (the canonical
+field for raw initializer text, set by Task 2.3's `_variable_primitives`).
 """
 from __future__ import annotations
 
@@ -5604,7 +5642,7 @@ The pipeline:
 
 Fallbacks:
 - If the argument doesn't resolve to a known class, emit confidence=unresolved
-  with the function name as `via` and no target (or `external::unknown` if a
+  with the function name as `via` and no target (or `external::unresolved::<symbol>` if a
   target field is required).
 - If the argument resolves to a Python class with no schema reference, emit
   confidence=unresolved targeting the Python class.
@@ -5728,7 +5766,7 @@ def _emit_session_edge(fn_prim, call, method, receiver, path,
     # else: text() call, attribute access, dynamic — unresolved
 
     fn_prim["edges_out"].append({
-        "target": target_id or "external::unknown::db_target",
+        "target": target_id or "external::unresolved::db_target",
         "kind": "db_access",
         "via": f"{receiver}.{method}",
         "where": f"{path}:{call.lineno}",
@@ -5749,7 +5787,7 @@ def _emit_cursor_edge(fn_prim, call, method, receiver, path, schema_by_name):
 
     if not sql_text:
         fn_prim["edges_out"].append({
-            "target": "external::unknown::db_target", "kind": "db_access",
+            "target": "external::unresolved::db_target", "kind": "db_access",
             "via": f"{receiver}.{method}", "where": f"{path}:{call.lineno}",
             "confidence": "unresolved",
         })
@@ -5758,7 +5796,7 @@ def _emit_cursor_edge(fn_prim, call, method, receiver, path, schema_by_name):
     tables = _tables_referenced_by_sql(sql_text)
     if not tables:
         fn_prim["edges_out"].append({
-            "target": "external::unknown::db_target", "kind": "db_access",
+            "target": "external::unresolved::db_target", "kind": "db_access",
             "via": f"{receiver}.{method}", "where": f"{path}:{call.lineno}",
             "confidence": "unresolved",
         })
@@ -5775,7 +5813,7 @@ def _emit_cursor_edge(fn_prim, call, method, receiver, path, schema_by_name):
             })
         else:
             fn_prim["edges_out"].append({
-                "target": f"external::unknown::table::{table_name}",
+                "target": f"external::unresolved::table::{table_name}",
                 "kind": "db_access", "via": f"{receiver}.{method}(SQL)",
                 "where": f"{path}:{call.lineno}", "confidence": "unresolved",
             })
@@ -7241,20 +7279,37 @@ Delete the legacy reconcile functions that fed pre-flip-shape concerns: `_join_r
 
 - [ ] **Step 3: Implement regen entry point**
 
-The user-facing CLI is `kg depgraph regen`. It must:
+The user-facing CLI is `kg depgraph regen`. Supports two invocation modes:
 
-1. Load `project.toml` (gives `repos.*` paths + per-repo `include_paths` / `languages` / `migrations_dirs`).
-2. For each repo × language, invoke the language's extractor per `languages.toml` and collect primitives + edges.
-3. **SQL pipeline.** For each repo with `sql` in `languages`:
+**Mode A — multi-repo via project.toml** (the production path used for Concorda + kitchen-sink):
+```
+kg depgraph regen --data-dir <out> [--project-toml <path>]
+```
+If `--project-toml` is omitted, regen searches cwd-ancestors for `project.toml` (matching the existing kg project-resolution behavior). All `[repos.*]` blocks are processed.
+
+**Mode B — single-repo direct invocation** (used by determinism CI test, useful for ad-hoc regens of a single repo without authoring a project.toml):
+```
+kg depgraph regen --data-dir <out> --repo-key <key> --repo-path <path> [--languages typescript,python,sql]
+```
+If `--languages` is omitted, infer from the file extensions present (TS files → typescript, .py → python, .sql → sql). No migration handling in Mode B unless explicitly enabled via `--migrations-dir <path>`.
+
+Mode A is the canonical CLI for real corpora. Mode B is a developer ergonomics affordance.
+
+Implementation steps:
+
+1. Parse flags; decide mode based on whether `--repo-key` is present.
+2. Mode A: Load `project.toml` (gives `repos.*` paths + per-repo `include_paths` / `languages` / `migrations_dirs`). Mode B: synthesize a single-repo config from the CLI args.
+3. For each repo × language, invoke the language's extractor per `languages.toml` and collect primitives + edges.
+4. **SQL pipeline.** For each repo with `sql` in `languages`:
    a. Run the standalone `.sql` extractor against any `.sql` files (no-op for Concorda).
-   b. For each path in `migrations_dirs`, walk recursively: `is_migration_file(p)` → `extract_migration(p)` → collect `MigrationFile`s.
+   b. For each path in `migrations_dirs` (Mode A) or `--migrations-dir` (Mode B, if given), walk recursively: `is_migration_file(p)` → `extract_migration(p)` → collect `MigrationFile`s.
    c. `reconcile_schema(migration_files, repo_key=...)` → `schema_to_primitives(...)` → schema-primitive corpus for that repo.
    d. Attach `up_operations[]` to each migration module primitive (look up the module primitive by path, append the list of schema-primitive ids).
-4. **Cross-reference pass.** `attach_model_schema_references(all_primitives)` adds the `references` edges from ORM model classes to schema primitives.
-5. **`db_access` pass.** `attach_db_access_edges(all_primitives, repo_path=...)` adds db_access edges that target schema primitives where the chain resolves.
-6. **Classification engine.** Runs over the unified corpus; produces decisions; schema primitives keep their `kind: "schema"` (set by the SQL extractor).
-7. Write all primitives to disk via `write_classified`.
-8. Run reconcile (Task 6.1's rewritten version) to build `_index/by_source.json` + `by_target.json`.
+5. **Cross-reference pass.** `attach_model_schema_references(all_primitives)` adds the `references` edges from ORM model classes to schema primitives.
+6. **`db_access` pass.** `attach_db_access_edges(all_primitives, repo_path=...)` adds db_access edges that target schema primitives where the chain resolves.
+7. **Classification engine.** Runs over the unified corpus; produces decisions; schema primitives keep their `kind: "schema"` (set by the SQL extractor).
+8. Write all primitives to disk via `write_classified`.
+9. Run reconcile (Task 6.1's rewritten version) to build `_index/by_source.json` + `by_target.json`.
 
 - [ ] **Step 4: Run end-to-end, verify pass + commit**
 
@@ -7417,9 +7472,11 @@ The kitchen-sink fixture is the framework's last gate before any real consumer (
 **Files:**
 - Create: `depgraph/tests/fixtures/wild/kitchen_sink/`
   - `README.md` — what's in the project + the expected kind distribution
+  - `project.toml` — multi-repo config the test reads via `--project-toml`; declares the `api/`, `web/` "repos" pointing at the subdirs of this fixture, with `languages = ["python", "sql"]` for api and `languages = ["typescript"]` for web; `migrations_dirs = ["migrations"]` for api
   - `api/` — Python (FastAPI-shaped: routers, models, services, utils, tests)
+  - `api/migrations/` — Python migrations with embedded `text("CREATE TABLE …")` calls
   - `web/` — TypeScript (Next.js-shaped: components, hooks, API clients, tests)
-  - `db/` — standalone `.sql` schemas + migrations subdir under `api/`
+  - `db/` — standalone `.sql` schemas (subset of tables that aren't migration-sourced)
   - `expected.json` — kind-count distribution + key invariants
   - `verification.md` — end-to-end review log
 - Create: `depgraph/tests/test_kitchen_sink.py`
