@@ -531,6 +531,27 @@ function attachImportsEdges(
     }
   }
 
+  // Build re-export map: module rel-path -> {exportedName -> origin-symbol-id}
+  // This allows one-hop re-export resolution for consumers of barrels.
+  const reexportMap = new Map<string, Map<string, string>>();
+  for (const sf of sourceFiles) {
+    const rel = relative(repoPath, sf.getFilePath());
+    for (const exp of sf.getExportDeclarations()) {
+      if (!exp.hasModuleSpecifier()) continue;
+      const targetSf2 = exp.getModuleSpecifierSourceFile();
+      const targetRel2 = targetSf2 ? relative(repoPath, targetSf2.getFilePath()) : null;
+      if (!targetRel2) continue;
+      const targetSyms2 = symByPath.get(targetRel2) ?? new Map();
+      for (const spec of exp.getNamedExports()) {
+        const exportedName = spec.getName();
+        const symId = targetSyms2.get(exportedName);
+        const originId = symId ?? `${repoKey}::${targetRel2}::${exportedName}`;
+        if (!reexportMap.has(rel)) reexportMap.set(rel, new Map());
+        reexportMap.get(rel)!.set(exportedName, originId);
+      }
+    }
+  }
+
   for (const sf of sourceFiles) {
     const rel = relative(repoPath, sf.getFilePath());
     const modPrim = modByPath.get(rel);
@@ -541,6 +562,7 @@ function attachImportsEdges(
       const targetSf = imp.getModuleSpecifierSourceFile();
       const targetRel = targetSf ? relative(repoPath, targetSf.getFilePath()) : null;
       const targetSyms = targetRel ? (symByPath.get(targetRel) ?? new Map()) : new Map();
+      const targetReexports = targetRel ? (reexportMap.get(targetRel) ?? new Map()) : new Map();
 
       const defaultImport = imp.getDefaultImport();
       if (defaultImport) {
@@ -583,8 +605,15 @@ function attachImportsEdges(
             target = symId;
             confidence = "exact";
           } else {
-            target = `${repoKey}::${targetRel}`;
-            confidence = "exact";
+            // One-hop re-export chase: symbol may be re-exported from another module
+            const reexportId = targetReexports.get(importedName);
+            if (reexportId) {
+              target = reexportId;
+              confidence = "fuzzy";
+            } else {
+              target = `${repoKey}::${targetRel}`;
+              confidence = "exact";
+            }
           }
         } else {
           // Unresolved external
@@ -821,15 +850,20 @@ function main() {
   // Initialize Project — try to find tsconfig.json in repo root for path alias support
   const tsconfigPath = `${repoPath}/tsconfig.json`;
   let project: Project;
+  let hasTsconfig = false;
   try {
-    const { statSync: st } = require("node:fs");
-    st(tsconfigPath);
+    statSync(tsconfigPath);
+    hasTsconfig = true;
+  } catch {
+    hasTsconfig = false;
+  }
+  if (hasTsconfig) {
     project = new Project({ tsConfigFilePath: tsconfigPath, skipAddingFilesFromTsConfig: false });
-    // Also add any files not covered by tsconfig
+    // Also add any source files not covered by tsconfig's include globs
     for (const f of listSourceFiles(repoPath)) {
       if (!project.getSourceFile(f)) project.addSourceFileAtPath(f);
     }
-  } catch {
+  } else {
     project = new Project({ skipAddingFilesFromTsConfig: true });
     for (const f of listSourceFiles(repoPath)) project.addSourceFileAtPath(f);
   }
