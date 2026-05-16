@@ -7,7 +7,6 @@ native import-and-register from kg.cli.depgraph.
 from __future__ import annotations
 
 import json
-import subprocess
 import sys
 from pathlib import Path
 
@@ -16,6 +15,13 @@ _DEPGRAPH_LIB = Path(__file__).resolve().parents[1]
 if str(_DEPGRAPH_LIB) not in sys.path:
     sys.path.insert(0, str(_DEPGRAPH_LIB))
 from config import project_repos  # noqa: E402
+
+# P5T2: lifted to kg.shared for cross-graph reuse.
+_TOOL_ROOT = Path(__file__).resolve().parents[3]
+if str(_TOOL_ROOT) not in sys.path:
+    sys.path.insert(0, str(_TOOL_ROOT))
+from kg.shared.git import git_commit_if_changed as _kg_git_commit  # noqa: E402
+from kg.shared.telemetry import load_telemetry_events  # noqa: E402
 
 from .context import Context
 
@@ -97,48 +103,6 @@ def find_nodes_for_target(ctx: Context, target: str) -> list[Path]:
     return out
 
 
-def load_telemetry_events(path: Path, since_hours: int | None = None) -> list[dict]:
-    """Read a JSONL log; if since_hours is given, filter to events newer
-    than that. Returns an empty list if the file is missing or unreadable."""
-    if not path.exists():
-        return []
-    import datetime as _dt
-    cutoff = None
-    if since_hours is not None:
-        cutoff = _dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(hours=since_hours)
-    out: list[dict] = []
-    try:
-        with path.open() as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    ev = json.loads(line)
-                except json.JSONDecodeError:
-                    continue
-                if cutoff is not None:
-                    ts_str = ev.get("ts", "")
-                    try:
-                        ts = _dt.datetime.fromisoformat(ts_str)
-                    except ValueError:
-                        continue
-                    if ts < cutoff:
-                        continue
-                out.append(ev)
-    except OSError:
-        return []
-    return out
-
-
 def _depgraph_commit_if_changed(ctx: Context, paths: list[Path], message: str) -> bool:
-    rel = [str(p.relative_to(ctx.DEPGRAPH)) for p in paths]
-    subprocess.run(["git", "-C", str(ctx.DEPGRAPH), "add", *rel], check=True)
-    diff = subprocess.run(
-        ["git", "-C", str(ctx.DEPGRAPH), "diff", "--cached", "--name-only"],
-        capture_output=True, text=True,
-    )
-    if not diff.stdout.strip():
-        return False
-    subprocess.run(["git", "-C", str(ctx.DEPGRAPH), "commit", "-q", "-m", message], check=True)
-    return True
+    """Backward-compat shim; delegates to kg.shared.git.git_commit_if_changed."""
+    return _kg_git_commit(ctx.DEPGRAPH, paths, message)
