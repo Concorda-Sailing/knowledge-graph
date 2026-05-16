@@ -10,7 +10,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from kg import project as project_loader, registry
+from kg import registry
 
 
 def cmd_list(args: argparse.Namespace) -> int:
@@ -27,20 +27,38 @@ def cmd_list(args: argparse.Namespace) -> int:
 
 
 def cmd_add(args: argparse.Namespace) -> int:
+    """Back-compat alias for `kg project add`.
+
+    Matches the permissive `kg project add` semantics: requires only
+    `[project].name` in project.toml, not the full source_roots /
+    subsystems schema. (Older versions called project.load() which
+    enforced the stricter schema — but registration only needs the
+    name, so the strict check was inconsistent with `kg project add`.)
+    """
+    import tomllib
+
     graph_dir = Path(args.path).expanduser().resolve()
     if not graph_dir.exists():
         print(f"Error: path does not exist: {graph_dir}", file=sys.stderr)
         return 1
-    try:
-        proj = project_loader.load(graph_dir)
-    except FileNotFoundError as e:
-        print(f"Error: no project.toml at {graph_dir}: {e}", file=sys.stderr)
+
+    toml_path = graph_dir / "project.toml"
+    if not toml_path.exists():
+        print(f"Error: no project.toml at {graph_dir}", file=sys.stderr)
         return 1
-    except ValueError as e:
+    try:
+        data = tomllib.loads(toml_path.read_text())
+    except tomllib.TOMLDecodeError as e:
         print(f"Error: invalid project.toml: {e}", file=sys.stderr)
         return 1
+
+    name = (data.get("project") or {}).get("name")
+    if not name:
+        print(f"Error: project.toml at {graph_dir} is missing [project].name", file=sys.stderr)
+        return 1
+
     try:
-        entry = registry.add(name=proj.name, path=graph_dir)
+        entry = registry.add(name=name, path=graph_dir)
     except ValueError as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1

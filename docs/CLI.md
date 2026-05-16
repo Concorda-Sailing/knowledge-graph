@@ -54,9 +54,12 @@ Every command picks a project via this 7-step order (first match wins):
 
 ### `kg depgraph` — code-graph operations
 
-`kg depgraph <subcommand>` resolves a project, exports
-`DEPGRAPH_DATA_DIR`, and execs the existing depgraph CLI. Pass
-`--project <name>` or `--data-dir <path>` for non-default targets.
+`kg depgraph <subcommand>` resolves a project, builds a depgraph
+`Context` from the resolved data dir, and dispatches in-process via
+`depgraph.lib.cli.build_parser()`. `--help` reaches the real
+subcommand argparse surface (no longer the top-level help only).
+Pass `--project <name>` or `--data-dir <path>` for non-default
+targets.
 
 Subcommands: `regen`, `validate`, `health`, `self-check`, `stats`,
 `context`, `dependents`, `orphans`, `commit-summary`, `memory-sync`,
@@ -67,8 +70,9 @@ See `kg depgraph <cmd> --help` for full options.
 
 ### `kg logigraph` — rules-graph operations
 
-Same shim pattern as `kg depgraph`, with `LOGIGRAPH_DATA_DIR` set
-(plus `DEPGRAPH_DATA_DIR` for the cross-graph claim binding).
+Same native-dispatch pattern as `kg depgraph`. Builds a logigraph
+`Context` that includes the resolved `depgraph_dir` (logigraph
+claims bind to depgraph nodes).
 
 Subcommands: `regen`, `validate`, `health`, `self-check`, `stats`,
 `context`, `rules-for`, `fan-out`, `gaps`, `rollup`, `dossiers`,
@@ -78,8 +82,11 @@ Subcommands: `regen`, `validate`, `health`, `self-check`, `stats`,
 
 ### `kg install` — machine setup
 
-Forwards argv to `install.sh`. Subcommands: `tools`, `hooks`,
-`systemd`, `path`, `cascade`, `bootstrap`. See `kg install --help`.
+Native Python implementations under `kg/cli/install/`. Subcommands:
+`tools`, `init`, `hooks`, `systemd`, `path`, `cascade`, `bootstrap`.
+See `kg install --help`. `install.sh` is now a 10-line wrapper that
+execs `kg install` — kept for back-compat with external callers
+(docs, prior bootstrap scripts).
 
 ### `kg hook <phase>`
 
