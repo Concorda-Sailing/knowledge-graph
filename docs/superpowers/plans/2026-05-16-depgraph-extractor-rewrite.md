@@ -200,7 +200,7 @@ Edges are stored embedded on each primitive's `edges_out`. Reverse index (`by_ta
 | 3 | L2 edge resolution (TS + Python) | Per-edge-kind tests | Phases 1+2 run together if both done |
 | 4 | Schema extraction (SQL parser + migration recognition + reconciliation + ORM↔schema cross-ref + db_access targeting schemas) | Parser ops, migration metadata, reconciliation, cross-ref, db_access edge tests | n/a |
 | 5 | Classification engine | Per-kind classifier tests | n/a |
-| 6 | Cutover: reconcile + CLI wiring, delete legacy, regen Concorda | Integration test against real Concorda corpus | Final |
+| 6 | Cutover: graphui-compat check, reconcile + CLI wiring, delete legacy, project.toml migration, regen Concorda, determinism CI gate, logigraph claim auto-migration | Integration test, determinism gate, logigraph migration script | Final |
 
 Phases 0–5 can land independently. The world only flips in Phase 6.
 
@@ -297,6 +297,24 @@ def test_validate_primitive_accepts_minimal_function():
     )
     errors = validate_primitive(p.to_dict())
     assert errors == [], errors
+
+
+def test_external_terminal_format():
+    from depgraph.lib.primitives import external_terminal, is_external_terminal
+    tid = external_terminal(ecosystem="pypi", package="sqlalchemy",
+                              symbol="DeclarativeBase")
+    assert tid == "external::pypi::sqlalchemy::DeclarativeBase"
+    assert is_external_terminal(tid)
+    assert not is_external_terminal("concorda-api::routers/events.py::create_event")
+
+
+def test_structural_hash_payload_includes_body():
+    from depgraph.lib.primitives import structural_hash_payload, compute_hash
+    a = compute_hash(structural_hash_payload(
+        primitive="function", name="f", signature={}, body_text="return 1"))
+    b = compute_hash(structural_hash_payload(
+        primitive="function", name="f", signature={}, body_text="return 2"))
+    assert a != b, "body change must shift hash per spec"
 
 
 def test_validate_primitive_rejects_method_without_owner():
@@ -419,6 +437,51 @@ class Primitive:
 def canonical_id(repo: str, path: str, symbol: str) -> str:
     """`<repo>::<path>::<symbol>`. Methods use `Class.method` for symbol."""
     return f"{repo}::{path}::{symbol}"
+
+
+def external_terminal(*, ecosystem: str, package: str, symbol: str) -> str:
+    """Canonical external-terminal id.
+
+    Format: `external::<ecosystem>::<package>::<symbol>`. Examples:
+      external::pypi::sqlalchemy::DeclarativeBase
+      external::npm::react::useState
+      external::python-dbapi::Cursor.execute
+
+    Use `unresolved` ecosystem when import resolution failed and we don't
+    know what the target is, just its surface name:
+      external::unresolved::<symbol>
+    """
+    return f"external::{ecosystem}::{package}::{symbol}"
+
+
+def is_external_terminal(node_id: str) -> bool:
+    return node_id.startswith("external::")
+
+
+def structural_hash_payload(*, primitive: str, name: str,
+                              signature: dict, body_text: str = "") -> dict:
+    """Canonical structural-hash payload per spec:
+      sha256 of canonicalized name + signature + scope body.
+
+    `body_text` is the raw source text of the symbol's body — for functions
+    this is the function body, for classes the class body, for variables
+    the initializer expression. Including body_text means semantic changes
+    (different implementation) shift the hash; pure layout / line-number
+    changes also shift it, which is acceptable for v0 (the spec says scope
+    body verbatim, not normalized-AST).
+
+    Returns a dict; callers pass it to `compute_hash`.
+    """
+    return {"primitive": primitive, "name": name,
+            "signature": signature, "body_text": body_text}
+
+
+def compute_hash(payload: dict) -> str:
+    import hashlib
+    import json
+    return hashlib.sha256(
+        json.dumps(payload, sort_keys=True, default=str).encode()
+    ).hexdigest()
 
 
 _REQUIRED_FIELDS = {
@@ -1278,7 +1341,9 @@ git add depgraph/extractors/typescript/extract.ts \
 git commit -m "depgraph/extractors/typescript: emit class / interface / enum / type alias primitives"
 ```
 
-### Task 1.5: Function primitives (top-level + method + arrow-bound)
+### Task 1.5: Function primitives (top-level + method + arrow-bound + JSX detection)
+
+Includes detection goals for: anonymous default exports (`export default function(){}`, `export default () => {}`), TS method overloads (keep only the implementation signature, not the overload stubs), and JSX-return marking for the classifier downstream.
 
 - [ ] **Step 1: Create fixture**
 
@@ -1289,12 +1354,27 @@ export async function asyncFn() { return 1; }
 export const arrow = (a: string) => a.length;
 export const arrowConst: () => void = () => {};
 
+export default function() { return 1; }   // anonymous default
+
 export class Holder {
   method(x: number): string { return String(x); }
   async asyncMethod() {}
   static staticMethod() {}
   private privateMethod() {}
+
+  // TS overloads: two declarations + one implementation. Only the
+  // implementation should emit a primitive.
+  format(x: number): string;
+  format(x: string): string;
+  format(x: any): string { return String(x); }
 }
+```
+
+```tsx
+// depgraph/tests/extractors/fixtures/primitives_ts/functions/src/jsx.tsx
+export function Header(): JSX.Element { return <h1>Title</h1>; }
+export const Footer = () => <footer>©</footer>;
+export function notAComponent(): string { return "no jsx here"; }
 ```
 
 - [ ] **Step 2: Add tests**
@@ -1338,6 +1418,29 @@ def test_private_method_captured():
     prims = run_extractor("functions")
     names = {p["name"] for p in prims if p["primitive"] == "function"}
     assert "Holder.privateMethod" in names
+
+def test_anonymous_default_export_gets_synthesized_name():
+    prims = run_extractor("functions")
+    fns = {p["name"]: p for p in prims if p["primitive"] == "function"}
+    # `export default function() {}` — no source-given name. Use module basename.
+    assert "<default:all>" in fns
+    assert fns["<default:all>"]["owner"] is None
+    assert fns["<default:all>"]["signature"]["is_async"] is False
+
+def test_ts_overload_stubs_skipped_only_impl_emitted():
+    prims = run_extractor("functions")
+    formats = [p for p in prims if p["primitive"] == "function"
+               and p["name"] == "Holder.format"]
+    assert len(formats) == 1, "overload stubs should be skipped; only impl emits"
+    # The impl is the one with a body — return_type from the impl signature.
+    assert formats[0]["signature"]["return_type"] == "string"
+
+def test_jsx_returning_function_sets_attribute():
+    prims = run_extractor("functions")
+    fns = {p["name"]: p for p in prims if p["primitive"] == "function"}
+    assert fns["Header"]["signature"]["returns_jsx"] is True
+    assert fns["Footer"]["signature"]["returns_jsx"] is True
+    assert fns["notAComponent"]["signature"]["returns_jsx"] is False
 ```
 
 - [ ] **Step 3: Run, verify fail**
@@ -1350,6 +1453,19 @@ Expected: all function/method tests FAIL.
 Add to `extract.ts`:
 
 ```typescript
+function bodyHasJsx(node: { getDescendantsOfKind: (k: SyntaxKind) => any[] }): boolean {
+  return (
+    node.getDescendantsOfKind(SyntaxKind.JsxElement).length > 0 ||
+    node.getDescendantsOfKind(SyntaxKind.JsxFragment).length > 0 ||
+    node.getDescendantsOfKind(SyntaxKind.JsxSelfClosingElement).length > 0
+  );
+}
+
+function bodyText(node: { getBodyText?: () => string | undefined; getText: () => string }): string {
+  // Functions/methods expose getBodyText(); arrow/expression bodies don't.
+  return (node.getBodyText?.() ?? node.getText()) || "";
+}
+
 function functionPrimitive(
   node: { getStartLineNumber(): number; getEndLineNumber(): number },
   name: string,
@@ -1357,7 +1473,9 @@ function functionPrimitive(
   signature: { parameters: { name: string; type_annotation: string | null }[];
                return_type: string | null;
                is_async: boolean;
-               decorators: string[] },
+               decorators: string[];
+               returns_jsx: boolean },
+  body: string,
   repoKey: string, relPath: string,
 ): Primitive {
   const symbol = owner ? `${owner.split("::").pop()}.${name}` : name;
@@ -1371,7 +1489,9 @@ function functionPrimitive(
                   template_parameters: [], macro: false, mutable: false,
                   instantiable: false, inheritable: false },
     edges_out: [],
-    structural_hash: structuralHash({ kind: "function", symbol, signature }),
+    // Per spec: name + signature + scope body.
+    structural_hash: structuralHash({ primitive: "function", name: symbol,
+                                       signature, body_text: body }),
     kind: null,
     extractor: EXTRACTOR_TAG,
   };
@@ -1381,17 +1501,27 @@ function paramShape(p: any) {
   return { name: p.getName(), type_annotation: p.getTypeNode()?.getText() ?? null };
 }
 
+function moduleBasename(relPath: string): string {
+  const last = relPath.split("/").pop() ?? relPath;
+  const dot = last.lastIndexOf(".");
+  return dot === -1 ? last : last.slice(0, dot);
+}
+
 function extractFunctions(sf: SourceFile, repoKey: string, relPath: string): Primitive[] {
   const out: Primitive[] = [];
 
   for (const fn of sf.getFunctions()) {
-    if (!fn.getName()) continue;  // anonymous default exports etc.
-    out.push(functionPrimitive(fn, fn.getName()!, null, {
+    // Skip TS overload stubs (declarations without bodies). Only the
+    // implementation signature gets a primitive.
+    if (!fn.hasBody()) continue;
+    const fnName = fn.getName() ?? `<default:${moduleBasename(relPath)}>`;
+    out.push(functionPrimitive(fn, fnName, null, {
       parameters: fn.getParameters().map(paramShape),
       return_type: fn.getReturnTypeNode()?.getText() ?? null,
       is_async: fn.isAsync(),
       decorators: [],
-    }, repoKey, relPath));
+      returns_jsx: bodyHasJsx(fn),
+    }, bodyText(fn), repoKey, relPath));
   }
 
   for (const vs of sf.getVariableStatements()) {
@@ -1403,20 +1533,43 @@ function extractFunctions(sf: SourceFile, repoKey: string, relPath: string): Pri
           return_type: init.getReturnTypeNode()?.getText() ?? null,
           is_async: init.isAsync(),
           decorators: [],
-        }, repoKey, relPath));
+          returns_jsx: bodyHasJsx(init),
+        }, bodyText(init), repoKey, relPath));
       }
+    }
+  }
+
+  // `export default function(){}` / `export default () => {}` are
+  // ExportAssignment expressions whose expression is an anonymous fn.
+  for (const ea of sf.getExportAssignments()) {
+    if (ea.isExportEquals()) continue;
+    const expr = ea.getExpression();
+    if (Node.isFunctionExpression(expr) || Node.isArrowFunction(expr)) {
+      // Already handled if its name was assigned via `export default function foo(){}`.
+      if (Node.isFunctionExpression(expr) && expr.getName()) continue;
+      const synthName = `<default:${moduleBasename(relPath)}>`;
+      out.push(functionPrimitive(ea, synthName, null, {
+        parameters: expr.getParameters().map(paramShape),
+        return_type: expr.getReturnTypeNode()?.getText() ?? null,
+        is_async: expr.isAsync(),
+        decorators: [],
+        returns_jsx: bodyHasJsx(expr),
+      }, bodyText(expr), repoKey, relPath));
     }
   }
 
   for (const cls of sf.getClasses()) {
     const classId = canonicalId(repoKey, relPath, cls.getName() ?? "<anonymous>");
     for (const m of cls.getMethods()) {
+      // Skip overload stubs on methods too.
+      if (!m.hasBody()) continue;
       out.push(functionPrimitive(m, m.getName(), classId, {
         parameters: m.getParameters().map(paramShape),
         return_type: m.getReturnTypeNode()?.getText() ?? null,
         is_async: m.isAsync(),
         decorators: m.getDecorators().map((d) => d.getName()),
-      }, repoKey, relPath));
+        returns_jsx: bodyHasJsx(m),
+      }, bodyText(m), repoKey, relPath));
     }
   }
 
@@ -2084,8 +2237,10 @@ def _emit_class(node: ast.ClassDef, *, repo_key: str, rel_path: str) -> Iterator
         signature={"decorators": [_decorator_name(d) for d in node.decorator_list]},
         attributes_overrides={"abstract": False, "instantiable": True,
                               "template_parameters": tparams},
-        structural_payload={"kind": "class", "name": node.name,
-                            "bases": [ast.unparse(b) for b in node.bases]},
+        structural_payload={"primitive": "class", "name": node.name,
+                            "signature": {"decorators": [_decorator_name(d) for d in node.decorator_list],
+                                            "bases": [ast.unparse(b) for b in node.bases]},
+                            "body_text": ast.unparse(node)},
     )
     for child in node.body:
         if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -2101,20 +2256,25 @@ def _function_primitive(node: ast.FunctionDef | ast.AsyncFunctionDef,
                "default": None}
               for a in node.args.args + node.args.kwonlyargs]
     tparams = [tp.name for tp in getattr(node, "type_params", [])]
+    body_text = ast.unparse(node)  # full def + body, canonicalized by ast.unparse
+    signature = {
+        "parameters": params,
+        "return_type": _annotation_text(node.returns),
+        "is_async": isinstance(node, ast.AsyncFunctionDef),
+        "decorators": [_decorator_name(d) for d in node.decorator_list],
+    }
     return _base_primitive(
         schema_id=canonical_id(repo_key, rel_path, symbol),
         primitive="function", name=symbol, owner=owner,
         repo=repo_key, path=rel_path, line=node.lineno, end_line=node.end_lineno or node.lineno,
-        signature={
-            "parameters": params,
-            "return_type": _annotation_text(node.returns),
-            "is_async": isinstance(node, ast.AsyncFunctionDef),
-            "decorators": [_decorator_name(d) for d in node.decorator_list],
-        },
+        signature=signature,
         attributes_overrides={"template_parameters": tparams,
                               "instantiable": False, "inheritable": False},
-        structural_payload={"kind": "function", "name": symbol,
-                            "params": [p["name"] for p in params]},
+        # Per spec: name + signature + scope body. Include body so two
+        # functions with the same signature but different bodies hash
+        # differently.
+        structural_payload={"primitive": "function", "name": symbol,
+                            "signature": signature, "body_text": body_text},
     )
 
 
@@ -2516,29 +2676,86 @@ def test_python_imports():
     assert any(e["target"] == "fixture::b.py::foo" for e in imports)
 ```
 
-- [ ] **Step 3: Run, verify fail. Implement. Verify pass.**
+- [ ] **Step 3: TS path-mapping fixture (tsconfig `paths`)**
 
-TS: walk `sf.getImportDeclarations()`. For each named import, resolve module specifier to a tracked source file via ts-morph's `getModuleSpecifierSourceFile()` (works for relative imports; non-resolved imports emit `confidence: "unresolved"` and `target: external::npm::<module>::<symbol>`).
+Concorda-web uses Next.js / TS path mappings like `@/components/*`. The extractor must read `tsconfig.json` to resolve these.
 
-Python: walk `ast.Import` and `ast.ImportFrom`. For `ImportFrom`, resolve module to a tracked file via a corpus-wide module index built from the package + module set. For dotted absolute imports (`from concorda_api.routers.events import create_event`), match the dot-joined name against module paths under the repo root.
-
-- [ ] **Step 4: Commit**
-
-```bash
-git commit -m "depgraph/extractors: emit imports edges (exact for tracked targets, unresolved for external)"
+```json
+// fixtures/edges_ts/imports_with_paths/tsconfig.json
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  }
+}
 ```
 
-### Task 3.4: `calls` + `instantiates`
+```typescript
+// fixtures/edges_ts/imports_with_paths/src/app.ts
+import { greet } from "@/utils/greet.js";
+```
 
-- [ ] **Step 1: TS fixture**
+```typescript
+// fixtures/edges_ts/imports_with_paths/src/utils/greet.ts
+export function greet() {}
+```
+
+Test:
+
+```python
+def test_tsconfig_path_alias_resolves():
+    prims = run_extractor("imports_with_paths", which="edges")
+    mod = next(p for p in prims if p["source"]["path"] == "src/app.ts"
+               and p["primitive"] == "module")
+    imports = [e for e in mod["edges_out"] if e["kind"] == "imports"]
+    assert any(e["target"].startswith("fixture::src/utils/greet.ts")
+               and e["confidence"] == "exact"
+               for e in imports), imports
+```
+
+- [ ] **Step 4: Run, verify fail. Implement. Verify pass.**
+
+TS: walk `sf.getImportDeclarations()`. For each named import, resolve the module specifier through ts-morph's `Project` initialized with the fixture's `tsconfig.json` (so its `compilerOptions.paths` apply); use `imp.getModuleSpecifierSourceFile()` which honors path aliases. If a tsconfig exists at the repo root, load it via `new Project({ tsConfigFilePath: ... })`; otherwise default config + the repo's files. Non-resolved imports (true externals or unmapped) emit `confidence: "unresolved"` and target `external::npm::<package>::<symbol>` derived from the bare specifier.
+
+Re-exports (`export { foo } from "./b"`) emit an `imports` edge from the re-exporting module to the source module/symbol with `confidence: "fuzzy"` — downstream `imports` against the re-exporter aren't transitively followed in this pass; that's a v1 limitation called out in the "Out of scope" section.
+
+Python: walk `ast.Import` and `ast.ImportFrom`. For `ImportFrom` with `level > 0` (relative), resolve from the module's directory + N parents per the `level`. For absolute imports, match the dot-joined name against the corpus's module index (paths converted to dotted form: `concorda_api/routers/events.py` → `concorda_api.routers.events`). For unresolved targets, emit `external::pypi::<root-package>::<symbol>` where root-package is the first dotted segment.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add depgraph/extractors/typescript/extract.ts \
+        depgraph/extractors/python/extract.py \
+        depgraph/tests/extractors/test_typescript_edges.py \
+        depgraph/tests/extractors/test_python_edges.py \
+        depgraph/tests/extractors/fixtures/edges_ts/imports/ \
+        depgraph/tests/extractors/fixtures/edges_ts/imports_with_paths/ \
+        depgraph/tests/extractors/fixtures/edges_py/imports/
+git commit -m "depgraph/extractors: imports edges (incl. tsconfig path aliases + Python relative+absolute)"
+```
+
+### Task 3.4: `calls` + `instantiates` (with intra-function type binding)
+
+This task **must** include intra-function type binding — without it, the common Python pattern `svc = UserService(session); svc.create_user(...)` produces no `calls` edge from the host function into `UserService.create_user`, and the service classifier downstream can't reach service-shaped functions. Full whole-program type inference is out of scope; what's in scope: track `x = SomeClass(...)` and `x: SomeClass = ...` within a single function body and resolve subsequent `x.method(...)` calls.
+
+- [ ] **Step 1: TS fixture (with method-call resolution)**
 
 ```typescript
 // fixtures/edges_ts/calls/src/file.ts
 function helper(): string { return "ok"; }
-class Service {}
+
+export class Service {
+  doWork(): string { return "done"; }
+}
+
 export function root() {
   helper();
   const s = new Service();
+  s.doWork();             // intra-fn binding: s -> Service
+  const t: Service = new Service();
+  t.doWork();             // annotation also binds
 }
 ```
 
@@ -2556,17 +2773,44 @@ def test_instantiates_resolves_local_class():
     root = next(p for p in prims if p["name"] == "root")
     insts = [e for e in root["edges_out"] if e["kind"] == "instantiates"]
     assert any(e["target"] == "fixture::src/file.ts::Service" for e in insts)
+
+def test_method_call_on_instantiated_local_resolves():
+    """s = new Service(); s.doWork() — should emit a calls edge to Service.doWork."""
+    prims = run_extractor("calls", which="edges")
+    root = next(p for p in prims if p["name"] == "root")
+    calls = [e for e in root["edges_out"] if e["kind"] == "calls"]
+    assert any(e["target"] == "fixture::src/file.ts::Service.doWork" for e in calls)
+
+def test_method_call_on_annotated_local_resolves():
+    """t: Service = new Service(); t.doWork() — annotation provides the bind."""
+    prims = run_extractor("calls", which="edges")
+    root = next(p for p in prims if p["name"] == "root")
+    calls = [e for e in root["edges_out"] if e["kind"] == "calls"]
+    # Two doWork call sites — both should resolve
+    do_work_calls = [e for e in calls
+                     if e["target"] == "fixture::src/file.ts::Service.doWork"]
+    assert len(do_work_calls) >= 2
 ```
 
-- [ ] **Step 2: Python fixture**
+- [ ] **Step 2: Python fixture (with method-call resolution)**
 
 ```python
 # fixtures/edges_py/calls/src.py
 def helper(): return "ok"
-class Service: pass
+
+class Service:
+    def do_work(self):
+        return "done"
+
 def root():
     helper()
     s = Service()
+    s.do_work()             # intra-fn binding: s -> Service
+    t: Service = Service()
+    t.do_work()             # annotation also binds
+
+def handler(svc: Service):
+    svc.do_work()           # parameter annotation binds
 ```
 
 Test:
@@ -2583,34 +2827,180 @@ def test_instantiates_py():
     root = next(p for p in prims if p["name"] == "root")
     insts = [e for e in root["edges_out"] if e["kind"] == "instantiates"]
     assert any(e["target"] == "fixture::src.py::Service" for e in insts)
+
+def test_method_call_on_local_instance_py():
+    prims = list(extract_repo(repo_key="fixture", repo_path=FIXTURE_DIR / "calls"))
+    root = next(p for p in prims if p["name"] == "root")
+    calls = [e for e in root["edges_out"] if e["kind"] == "calls"]
+    do_works = [e for e in calls if e["target"] == "fixture::src.py::Service.do_work"]
+    assert len(do_works) >= 2, f"expected 2 do_work calls from root, got {do_works}"
+
+def test_method_call_on_parameter_annotation_py():
+    prims = list(extract_repo(repo_key="fixture", repo_path=FIXTURE_DIR / "calls"))
+    handler = next(p for p in prims if p["name"] == "handler")
+    calls = [e for e in handler["edges_out"] if e["kind"] == "calls"]
+    assert any(e["target"] == "fixture::src.py::Service.do_work" for e in calls)
 ```
 
-- [ ] **Step 3: Implement**
-
-For both languages, walk the function body AST. For each call expression:
-- Resolve the callee name against (a) local symbols, (b) imported names. If callee resolves to a class primitive, emit `instantiates`; if a function primitive, emit `calls`.
-- Where unresolved (dynamic dispatch, computed property access), record edge with `confidence: "unresolved"` and skip from "exact" gates.
-
-Python implementation sketch:
+- [ ] **Step 3: Implement type binding + call resolution (Python)**
 
 ```python
-def _walk_function_body_for_calls(fn_node, *, fn_primitive_id, primitives_by_name, file_imports):
-    edges = []
-    for sub in ast.walk(fn_node):
-        if isinstance(sub, ast.Call):
-            callee_name = _callee_name(sub.func)
-            target_id = primitives_by_name.get(callee_name) or file_imports.get(callee_name)
-            if not target_id:
+# depgraph/extractors/python/extract.py — add a body-edges pass
+
+def _attach_call_edges(primitives: list[dict],
+                        *, trees_by_path: dict[str, ast.Module]) -> None:
+    """For each function primitive, walk its body and emit calls /
+    instantiates edges. Resolves method calls on local variables when the
+    variable's type is known from (a) `x = SomeClass(...)` assignment,
+    (b) `x: SomeClass = ...` annotated assignment, (c) parameter
+    annotations on the enclosing function."""
+    # Index local symbols and imports per file
+    local_by_path: dict[str, dict[str, str]] = {}
+    for p in primitives:
+        if p.get("owner") is not None:
+            continue
+        if p["primitive"] not in {"class", "function", "variable"}:
+            continue
+        local_by_path.setdefault(p["source"]["path"], {})[p["name"]] = p["id"]
+
+    classes_by_id = {p["id"]: p for p in primitives if p["primitive"] == "class"}
+    fn_by_id = {p["id"]: p for p in primitives if p["primitive"] == "function"}
+
+    # Index methods: for each class, map method name -> primitive id
+    methods_by_class: dict[str, dict[str, str]] = {}
+    for p in primitives:
+        if p["primitive"] == "function" and p.get("owner") in classes_by_id:
+            methods_by_class.setdefault(p["owner"], {})[p["name"].split(".")[-1]] = p["id"]
+
+    # Imports: from the module primitive's edges_out, build local-name -> target-id
+    imports_by_path: dict[str, dict[str, str]] = {}
+    for p in primitives:
+        if p["primitive"] != "module":
+            continue
+        for e in p["edges_out"]:
+            if e["kind"] == "imports":
+                # `via` carries the local-name; convention to set up in Task 3.3
+                local_name = e.get("via")
+                if local_name:
+                    imports_by_path.setdefault(p["source"]["path"], {})[local_name] = e["target"]
+
+    for path, tree in trees_by_path.items():
+        local_names = local_by_path.get(path, {})
+        imports = imports_by_path.get(path, {})
+
+        for fn_node in ast.walk(tree):
+            if not isinstance(fn_node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 continue
-            kind = "instantiates" if _is_class_id(target_id, primitives_by_name) else "calls"
-            edges.append({"target": target_id, "kind": kind, "via": "function_call",
-                          "where": f"{file}:{sub.lineno}", "confidence": "exact"})
-    return edges
+            # Resolve the function primitive by source line
+            fn_prim = next(
+                (p for p in primitives
+                 if p["primitive"] == "function"
+                    and p["source"]["path"] == path
+                    and p["source"]["line"] == fn_node.lineno),
+                None,
+            )
+            if fn_prim is None:
+                continue
+
+            # Build initial type binding from parameter annotations
+            var_types: dict[str, str] = {}  # local_name -> class_id
+            for arg in fn_node.args.args + fn_node.args.kwonlyargs:
+                if arg.annotation is None:
+                    continue
+                ann_text = ast.unparse(arg.annotation).split("[")[0].strip()
+                target_id = local_names.get(ann_text) or imports.get(ann_text)
+                if target_id and target_id in classes_by_id:
+                    var_types[arg.arg] = target_id
+
+            # Walk body in source order; update var_types on assignments
+            for sub in ast.walk(fn_node):
+                # Pattern 1: x: SomeClass = ...
+                if isinstance(sub, ast.AnnAssign) and isinstance(sub.target, ast.Name):
+                    ann_text = ast.unparse(sub.annotation).split("[")[0].strip()
+                    cid = local_names.get(ann_text) or imports.get(ann_text)
+                    if cid and cid in classes_by_id:
+                        var_types[sub.target.id] = cid
+
+                # Pattern 2: x = SomeClass(...)
+                if (isinstance(sub, ast.Assign)
+                        and len(sub.targets) == 1
+                        and isinstance(sub.targets[0], ast.Name)
+                        and isinstance(sub.value, ast.Call)
+                        and isinstance(sub.value.func, ast.Name)):
+                    cname = sub.value.func.id
+                    cid = local_names.get(cname) or imports.get(cname)
+                    if cid and cid in classes_by_id:
+                        var_types[sub.targets[0].id] = cid
+
+                # Emit edges for each call
+                if isinstance(sub, ast.Call):
+                    edges = _resolve_call_edge(sub, local_names=local_names,
+                                                 imports=imports,
+                                                 classes_by_id=classes_by_id,
+                                                 methods_by_class=methods_by_class,
+                                                 var_types=var_types,
+                                                 path=path)
+                    fn_prim["edges_out"].extend(edges)
+
+
+def _resolve_call_edge(call: ast.Call, *, local_names, imports,
+                        classes_by_id, methods_by_class, var_types, path):
+    """Return [edge] or [] for a single Call node."""
+    if isinstance(call.func, ast.Name):
+        # Bare name: helper() or Service()
+        name = call.func.id
+        target = local_names.get(name) or imports.get(name)
+        if target is None:
+            return []
+        kind = "instantiates" if target in classes_by_id else "calls"
+        return [{"target": target, "kind": kind, "via": "function_call",
+                  "where": f"{path}:{call.lineno}", "confidence": "exact"}]
+
+    if isinstance(call.func, ast.Attribute):
+        # Method call: receiver.method
+        if isinstance(call.func.value, ast.Name):
+            recv = call.func.value.id
+            method = call.func.attr
+            recv_class_id = var_types.get(recv)
+            if recv_class_id is None:
+                # Receiver type unknown — leave unresolved
+                return [{"target": f"external::unresolved::{recv}.{method}",
+                          "kind": "calls", "via": "method_call",
+                          "where": f"{path}:{call.lineno}",
+                          "confidence": "unresolved"}]
+            method_id = methods_by_class.get(recv_class_id, {}).get(method)
+            if method_id:
+                return [{"target": method_id, "kind": "calls",
+                          "via": "method_call",
+                          "where": f"{path}:{call.lineno}",
+                          "confidence": "exact"}]
+            return [{"target": f"external::unresolved::{recv_class_id}.{method}",
+                      "kind": "calls", "via": "method_call",
+                      "where": f"{path}:{call.lineno}",
+                      "confidence": "unresolved"}]
+
+        # Chained attribute (a.b.c()) — unresolved for v0
+        return []
+
+    # Computed callee (call[0](), call.func()()) — unresolved
+    return []
 ```
 
-Same approach in TS using `descendants.filter((d) => Node.isCallExpression(d) || Node.isNewExpression(d))`.
+TypeScript implementation mirrors the same algorithm against ts-morph. Key ts-morph types: walk `fn.getDescendants()` filtering for `Node.isCallExpression` and `Node.isNewExpression`. For type binding, use `VariableDeclaration.getTypeNode()` (annotated case) and `Node.isNewExpression(decl.getInitializer())` to detect `new SomeClass(...)`. For TS, ts-morph's `Symbol`/`Type` APIs (`callExpr.getExpression().getType().getSymbol()`) can fully resolve typed receivers — use that when available for `exact` confidence, fall back to local-binding heuristics otherwise.
 
-- [ ] **Step 4: Run, verify pass + commit.**
+- [ ] **Step 4: Run, verify pass + commit**
+
+```bash
+pytest depgraph/tests/extractors/test_python_edges.py -v -k call
+pytest depgraph/tests/extractors/test_typescript_edges.py -v -k call
+git add depgraph/extractors/typescript/extract.ts \
+        depgraph/extractors/python/extract.py \
+        depgraph/tests/extractors/test_python_edges.py \
+        depgraph/tests/extractors/test_typescript_edges.py \
+        depgraph/tests/extractors/fixtures/edges_ts/calls/ \
+        depgraph/tests/extractors/fixtures/edges_py/calls/
+git commit -m "depgraph/extractors: calls/instantiates edges with intra-function type binding"
+```
 
 ### Task 3.5: `references` + `reads` + `assigns` + `decorates`
 
@@ -2656,35 +3046,53 @@ Tests check `reads` and `assigns` edges plus `decorates` from `functools.lru_cac
 
 For both languages: walk function body looking for variable access (Name in load context → reads; Name in store context → assigns). For decorators, the function/class primitive's `signature.decorators` already lists them; convert to `decorates` edges from the decorator-source (Name reference at module/import level) to the decorated target.
 
-### Task 3.6: `tests` edges
+### Task 3.6: `tests` edges (assertion-scoped)
 
-A function whose body calls a known test framework primitive is a test. The function being tested is identified by name correlation (`test_foo` → `foo`) or by explicit assertion targets.
+A test function is one whose body calls a known test framework primitive. The naive "edge from test to every imported function it calls" rule is overbroad (it edges to test helpers, framework primitives, parameter factories). Tighter rule: emit a `tests` edge only for call targets that appear **inside an assertion expression** (`expect(...).toBe(...)`, `assert <expr>`) — the function being passed to or called inside the assertion is the subject under test.
 
 - [ ] **Step 1: TS fixture (vitest)**
 
 ```typescript
 // fixtures/edges_ts/tests/src/example.test.ts
 import { describe, it, expect } from "vitest";
-import { add } from "./math.js";
+import { add, normalize } from "./math.js";
+import { makeFixture } from "./test_helpers.js";
+
 describe("add", () => {
-  it("adds", () => { expect(add(1, 2)).toBe(3); });
+  it("adds", () => {
+    const x = makeFixture();              // helper call — NOT a subject
+    expect(add(1, 2)).toBe(3);            // subject: add
+    expect(normalize("X")).toBe("x");     // subject: normalize
+  });
 });
 ```
 
 ```typescript
 // fixtures/edges_ts/tests/src/math.ts
 export function add(a: number, b: number): number { return a + b; }
+export function normalize(s: string): string { return s.toLowerCase(); }
+```
+
+```typescript
+// fixtures/edges_ts/tests/src/test_helpers.ts
+export function makeFixture() { return 42; }
 ```
 
 Test:
 
 ```python
-def test_tests_edge_to_subject():
+def test_tests_edge_to_subject_only():
     prims = run_extractor("tests", which="edges")
     test_fn = next(p for p in prims if p["primitive"] == "function"
                    and p["source"]["path"].endswith(".test.ts"))
     tests = [e for e in test_fn["edges_out"] if e["kind"] == "tests"]
-    assert any(e["target"] == "fixture::src/math.ts::add" for e in tests)
+    targets = {e["target"] for e in tests}
+    assert "fixture::src/math.ts::add" in targets
+    assert "fixture::src/math.ts::normalize" in targets
+    # helper called outside expect(...) — must NOT be a tests-edge target
+    assert "fixture::src/test_helpers.ts::makeFixture" not in targets
+    # framework primitives must NOT be targets either
+    assert not any("vitest" in t for t in targets)
 ```
 
 - [ ] **Step 2: Python fixture (pytest)**
@@ -2692,33 +3100,119 @@ def test_tests_edge_to_subject():
 ```python
 # fixtures/edges_py/tests/src/math.py
 def add(a, b): return a + b
+def normalize(s): return s.lower()
+```
+
+```python
+# fixtures/edges_py/tests/src/test_helpers.py
+def make_fixture(): return 42
 ```
 
 ```python
 # fixtures/edges_py/tests/src/test_math.py
-from .math import add
-def test_add(): assert add(1, 2) == 3
+from .math import add, normalize
+from .test_helpers import make_fixture
+
+def test_add():
+    x = make_fixture()           # helper call — NOT a subject
+    assert add(1, 2) == 3        # subject: add
+    assert normalize("X") == "x" # subject: normalize
 ```
 
 Test:
 
 ```python
-def test_tests_edge_py():
+def test_tests_edge_py_assertion_scoped():
     prims = list(extract_repo(repo_key="fixture", repo_path=FIXTURE_DIR / "tests"))
     tfn = next(p for p in prims if p["name"] == "test_add")
     tests = [e for e in tfn["edges_out"] if e["kind"] == "tests"]
-    assert any(e["target"] == "fixture::src/math.py::add" for e in tests)
+    targets = {e["target"] for e in tests}
+    assert "fixture::src/math.py::add" in targets
+    assert "fixture::src/math.py::normalize" in targets
+    # helper imported but called outside an assert — not a subject
+    assert "fixture::src/test_helpers.py::make_fixture" not in targets
 ```
 
 - [ ] **Step 3: Implement**
 
-A test function is one whose body contains a call to a known test framework primitive (`expect`, `it`, `test`, `describe` for vitest; `pytest.fixture`, `assert` in a test_*-named function for pytest). For each call inside the test function to an imported function from a non-test module, emit a `tests` edge to that target.
+Tighter recognition:
 
-The exact recognition rules:
-- TS: function inside a `*.test.ts` file → test function. `tests` edge target = each imported function that's called inside the test body.
-- Python: function whose name starts with `test_` OR has a `@pytest.fixture` decorator → test function. Same target rule.
+- A function is a "test function" if it's inside a recognized test file (`*.test.ts`, `*.test.tsx`, `*.spec.ts`, `test_*.py`, `*_test.py`) **or** has a recognized test decorator (`@pytest.fixture`, `@pytest.mark.*`).
+- For each call **inside the test function**, walk up the parent chain at the AST level. If any enclosing expression is recognized as an assertion (`Call` with `func.id in {"expect", "assert", ...}` for TS / `ast.Assert` ancestor for Python), the call's resolved target gets a `tests` edge.
+- Framework primitives (`it`, `describe`, `expect`, `test`, `pytest.fixture`, etc.) and decorator targets never get `tests` edges. Filter at emit time by checking whether the call expression's resolved target id matches a framework-name set from `config.test_framework_primitives`.
+
+Python implementation:
+
+```python
+def _attach_tests_edges(primitives, *, trees_by_path, config):
+    framework_names = set(config.test_framework_primitives)
+    for path, tree in trees_by_path.items():
+        if not _is_test_path_py(path):
+            continue
+        for fn_node in ast.walk(tree):
+            if not isinstance(fn_node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue
+            if not _is_test_function_py(fn_node):
+                continue
+            fn_prim = _find_fn_primitive(primitives, path, fn_node.lineno)
+            if fn_prim is None:
+                continue
+            # Build child->parent map once
+            parents = {}
+            for sub in ast.walk(fn_node):
+                for child in ast.iter_child_nodes(sub):
+                    parents[id(child)] = sub
+            for sub in ast.walk(fn_node):
+                if not isinstance(sub, ast.Call):
+                    continue
+                # Is this call inside an assert / inside an expect chain?
+                if not _is_assertion_scoped(sub, parents):
+                    continue
+                callee_name = _callee_name(sub.func)
+                if callee_name in framework_names:
+                    continue
+                target_id = _resolve_target_id(callee_name, path, primitives)
+                if target_id:
+                    fn_prim["edges_out"].append({
+                        "target": target_id, "kind": "tests",
+                        "via": "asserted_call",
+                        "where": f"{path}:{sub.lineno}",
+                        "confidence": "exact",
+                    })
+
+
+def _is_assertion_scoped(node, parents):
+    """Walk up from node; True if any ancestor is ast.Assert."""
+    cur = parents.get(id(node))
+    while cur is not None:
+        if isinstance(cur, ast.Assert):
+            return True
+        cur = parents.get(id(cur))
+    return False
+
+
+def _is_test_path_py(path: str) -> bool:
+    last = path.rsplit("/", 1)[-1]
+    return last.startswith("test_") or last.endswith("_test.py")
+
+
+def _is_test_function_py(fn_node) -> bool:
+    if fn_node.name.startswith("test_"):
+        return True
+    for d in fn_node.decorator_list:
+        name = _decorator_name(d)
+        if name.startswith("pytest."):
+            return True
+    return False
+```
+
+TS variant: walk for `CallExpression` nodes whose immediate-or-near-ancestor is a `CallExpression` with callee `expect`. Use ts-morph's `getAncestors()` and look for `Identifier` named `expect` or `assert`.
 
 - [ ] **Step 4: Run, verify pass + commit.**
+
+```bash
+git commit -m "depgraph/extractors: tests edges scoped to assertion expressions only"
+```
 
 ### Task 3.7: Schema validation sweep on edges
 
@@ -2867,6 +3361,46 @@ def test_alter_table_drop_column():
     assert op.column_name == "legacy_field"
 
 
+def test_alter_column_type():
+    op = parse_operations(
+        "ALTER TABLE users ALTER COLUMN email TYPE VARCHAR(255)",
+        dialect="postgres",
+    )[0]
+    assert op.kind == "alter_column_type"
+    assert op.table == "users"
+    assert op.column_name == "email"
+    assert "VARCHAR" in op.new_type.upper()
+
+
+def test_alter_column_default():
+    op = parse_operations(
+        "ALTER TABLE users ALTER COLUMN role SET DEFAULT 'member'",
+        dialect="postgres",
+    )[0]
+    assert op.kind == "alter_column_default"
+    assert op.column_name == "role"
+    assert "member" in (op.new_default or "")
+
+
+def test_alter_column_drop_not_null():
+    op = parse_operations(
+        "ALTER TABLE users ALTER COLUMN email DROP NOT NULL",
+        dialect="postgres",
+    )[0]
+    assert op.kind == "alter_column_nullable"
+    assert op.new_nullable is True
+
+
+def test_rename_column():
+    op = parse_operations(
+        "ALTER TABLE users RENAME COLUMN email_addr TO email",
+        dialect="postgres",
+    )[0]
+    assert op.kind == "rename_column"
+    assert op.column_name == "email_addr"
+    assert op.new_column_name == "email"
+
+
 def test_drop_table():
     op = parse_operations("DROP TABLE old_audit_log")[0]
     assert op.kind == "drop_table"
@@ -2922,16 +3456,22 @@ from sqlglot import expressions as exp
 @dataclass
 class Operation:
     kind: str   # create_table | alter_add_column | alter_drop_column |
-                # drop_table | create_index | create_view | rename_table
+                # alter_column_type | alter_column_default | alter_column_nullable |
+                # drop_table | create_index | create_view | rename_table |
+                # rename_column
     table: str | None = None
     if_not_exists: bool = False
     columns: list[dict[str, Any]] = field(default_factory=list)
     foreign_keys: list[dict[str, str]] = field(default_factory=list)
     column: dict[str, Any] | None = None
     column_name: str | None = None
+    new_column_name: str | None = None  # rename_column
+    new_type: str | None = None          # alter_column_type
+    new_default: str | None = None       # alter_column_default
+    new_nullable: bool | None = None     # alter_column_nullable
     index_name: str | None = None
     columns_indexed: list[str] = field(default_factory=list)
-    new_name: str | None = None
+    new_name: str | None = None          # rename_table
 
 
 def parse_operations(sql_text: str, *, dialect: str = "sqlite") -> list[Operation]:
@@ -3032,6 +3572,35 @@ def _handle_alter(node: exp.AlterTable) -> list[Operation]:
         elif isinstance(action, exp.RenameTable):
             ops.append(Operation(kind="rename_table", table=table,
                                   new_name=action.this.name))
+        elif isinstance(action, exp.RenameColumn):
+            ops.append(Operation(
+                kind="rename_column", table=table,
+                column_name=action.this.name,
+                new_column_name=action.args.get("to").name,
+            ))
+        elif isinstance(action, exp.AlterColumn):
+            # ALTER COLUMN can change type, default, or nullability. Each
+            # surfaces as a different field on the action node.
+            col = action.this.name if hasattr(action.this, "name") else str(action.this)
+            new_type = action.args.get("dtype")
+            new_default = action.args.get("default")
+            drop_null = action.args.get("drop") and action.args["drop"] in ("NOT NULL",
+                                                                              exp.NotNullColumnConstraint)
+            set_null = action.args.get("allow_null")
+            if new_type is not None:
+                ops.append(Operation(kind="alter_column_type", table=table,
+                                       column_name=col, new_type=new_type.sql()))
+            if new_default is not None:
+                ops.append(Operation(kind="alter_column_default", table=table,
+                                       column_name=col,
+                                       new_default=new_default.sql() if hasattr(new_default, "sql") else str(new_default)))
+            if drop_null:
+                ops.append(Operation(kind="alter_column_nullable", table=table,
+                                       column_name=col, new_nullable=True))
+            if set_null is not None:
+                ops.append(Operation(kind="alter_column_nullable", table=table,
+                                       column_name=col,
+                                       new_nullable=bool(set_null)))
     return ops
 
 
@@ -3369,6 +3938,119 @@ def test_schema_primitive_source_points_at_creating_migration():
     tables = {t.name: t for t in reconcile_schema(migrations, repo_key="fixture")}
     user = tables["users"]
     assert user.source["path"].endswith("001_create_users.py")
+
+
+def test_alter_column_type_updates_in_place():
+    """A migration that runs `ALTER TABLE users ALTER COLUMN email TYPE TEXT`
+    should leave the final-state column with type TEXT."""
+    from depgraph.lib.sql.migration import MigrationFile, MigrationOperation
+    from depgraph.lib.sql.parser import Operation, parse_operations
+    base = MigrationFile(
+        path=Path("/fake/001_init.py"), migration_order=1,
+        operations=[MigrationOperation(
+            operation=parse_operations(
+                "CREATE TABLE users (id INTEGER PRIMARY KEY, email VARCHAR(64))"
+            )[0],
+            source_line=1, raw_sql="",
+        )],
+    )
+    alter = MigrationFile(
+        path=Path("/fake/002_widen.py"), migration_order=2,
+        operations=[MigrationOperation(
+            operation=Operation(kind="alter_column_type", table="users",
+                                  column_name="email", new_type="VARCHAR(255)"),
+            source_line=1, raw_sql="",
+        )],
+    )
+    tables = {t.name: t for t in reconcile_schema([base, alter], repo_key="fixture")}
+    email = next(c for c in tables["users"].columns if c["name"] == "email")
+    assert email["type"] == "VARCHAR(255)"
+
+
+def test_drop_column_garbage_collects_index_and_fk():
+    """Dropping a column removes any index/FK that referenced it."""
+    from depgraph.lib.sql.migration import MigrationFile, MigrationOperation
+    from depgraph.lib.sql.parser import Operation
+    create = MigrationFile(
+        path=Path("/fake/001_init.py"), migration_order=1,
+        operations=[MigrationOperation(
+            operation=Operation(
+                kind="create_table", table="users",
+                columns=[{"name": "id", "type": "INTEGER", "nullable": False,
+                            "default": None, "primary_key": True},
+                          {"name": "team_id", "type": "INTEGER", "nullable": True,
+                            "default": None, "primary_key": False}],
+                foreign_keys=[{"column": "team_id", "references_table": "teams",
+                                 "references_column": "id"}],
+            ),
+            source_line=1, raw_sql="",
+        )],
+    )
+    add_idx = MigrationFile(
+        path=Path("/fake/002_idx.py"), migration_order=2,
+        operations=[MigrationOperation(
+            operation=Operation(kind="create_index", index_name="idx_users_team",
+                                  table="users", columns_indexed=["team_id"]),
+            source_line=1, raw_sql="",
+        )],
+    )
+    drop_col = MigrationFile(
+        path=Path("/fake/003_drop.py"), migration_order=3,
+        operations=[MigrationOperation(
+            operation=Operation(kind="alter_drop_column", table="users",
+                                  column_name="team_id"),
+            source_line=1, raw_sql="",
+        )],
+    )
+    tables = {t.name: t for t in reconcile_schema(
+        [create, add_idx, drop_col], repo_key="fixture")}
+    users = tables["users"]
+    assert all(c["name"] != "team_id" for c in users.columns)
+    assert users.indexes == [], f"orphan index left behind: {users.indexes}"
+    assert users.foreign_keys == [], f"dangling FK left behind: {users.foreign_keys}"
+
+
+def test_drop_table_clears_incoming_fks():
+    """Dropping a referenced table removes FKs pointing at it from other tables."""
+    from depgraph.lib.sql.migration import MigrationFile, MigrationOperation
+    from depgraph.lib.sql.parser import Operation
+    create_teams = MigrationFile(
+        path=Path("/fake/001.py"), migration_order=1,
+        operations=[MigrationOperation(
+            operation=Operation(kind="create_table", table="teams",
+                                  columns=[{"name": "id", "type": "INTEGER",
+                                              "nullable": False, "default": None,
+                                              "primary_key": True}]),
+            source_line=1, raw_sql="",
+        )],
+    )
+    create_users = MigrationFile(
+        path=Path("/fake/002.py"), migration_order=2,
+        operations=[MigrationOperation(
+            operation=Operation(kind="create_table", table="users",
+                                  columns=[{"name": "id", "type": "INTEGER",
+                                              "nullable": False, "default": None,
+                                              "primary_key": True},
+                                            {"name": "team_id", "type": "INTEGER",
+                                              "nullable": True, "default": None,
+                                              "primary_key": False}],
+                                  foreign_keys=[{"column": "team_id",
+                                                   "references_table": "teams",
+                                                   "references_column": "id"}]),
+            source_line=1, raw_sql="",
+        )],
+    )
+    drop_teams = MigrationFile(
+        path=Path("/fake/003.py"), migration_order=3,
+        operations=[MigrationOperation(
+            operation=Operation(kind="drop_table", table="teams"),
+            source_line=1, raw_sql="",
+        )],
+    )
+    tables = {t.name: t for t in reconcile_schema(
+        [create_teams, create_users, drop_teams], repo_key="fixture")}
+    assert "teams" not in tables
+    assert tables["users"].foreign_keys == []
 ```
 
 - [ ] **Step 2: Run, verify fail.**
@@ -3463,13 +4145,67 @@ def reconcile_schema(migrations: list[MigrationFile], *, repo_key: str) -> list[
                 if tbl is None:
                     continue
                 tbl.columns = [c for c in tbl.columns if c["name"] != op.column_name]
+                # GC: drop any index that referenced this column; drop any
+                # FK pointing at or originating from this column.
+                tbl.indexes = [idx for idx in tbl.indexes
+                               if op.column_name not in idx.get("columns", [])]
+                tbl.foreign_keys = [fk for fk in tbl.foreign_keys
+                                    if fk.get("column") != op.column_name]
+                tbl.defined_by.append(mig_path)
+            elif op.kind == "alter_column_type":
+                tbl = tables.get(op.table)
+                if tbl is None:
+                    continue
+                for c in tbl.columns:
+                    if c["name"] == op.column_name:
+                        c["type"] = op.new_type
+                tbl.defined_by.append(mig_path)
+            elif op.kind == "alter_column_default":
+                tbl = tables.get(op.table)
+                if tbl is None:
+                    continue
+                for c in tbl.columns:
+                    if c["name"] == op.column_name:
+                        c["default"] = op.new_default
+                tbl.defined_by.append(mig_path)
+            elif op.kind == "alter_column_nullable":
+                tbl = tables.get(op.table)
+                if tbl is None:
+                    continue
+                for c in tbl.columns:
+                    if c["name"] == op.column_name:
+                        c["nullable"] = bool(op.new_nullable)
+                tbl.defined_by.append(mig_path)
+            elif op.kind == "rename_column":
+                tbl = tables.get(op.table)
+                if tbl is None:
+                    continue
+                for c in tbl.columns:
+                    if c["name"] == op.column_name:
+                        c["name"] = op.new_column_name
+                # Rewrite references to the old column name in indexes / FKs
+                for idx in tbl.indexes:
+                    idx["columns"] = [op.new_column_name if n == op.column_name else n
+                                       for n in idx.get("columns", [])]
+                for fk in tbl.foreign_keys:
+                    if fk.get("column") == op.column_name:
+                        fk["column"] = op.new_column_name
                 tbl.defined_by.append(mig_path)
             elif op.kind == "drop_table":
                 tables.pop(op.table, None)
+                # GC: any other table's FK pointing at this one is now dangling.
+                for other in tables.values():
+                    other.foreign_keys = [fk for fk in other.foreign_keys
+                                           if fk.get("references_table") != op.table]
             elif op.kind == "rename_table":
                 tbl = tables.pop(op.table, None)
                 if tbl is None:
                     continue
+                # Rewrite incoming FKs from any other table that referenced the old name
+                for other in tables.values():
+                    for fk in other.foreign_keys:
+                        if fk.get("references_table") == op.table:
+                            fk["references_table"] = op.new_name
                 tbl.name = op.new_name
                 tbl.id = f"{repo_key}::schema::{op.new_name}"
                 tbl.defined_by.append(mig_path)
@@ -3858,32 +4594,37 @@ def test_session_add_targets_schema_primitive_via_inferred_type():
     assert any(e["confidence"] == "unresolved" for e in add_edges)
 
 
-def test_orphan_query_target_emits_unresolved():
-    """session.query(NotInCorpus) — emit edge with confidence=unresolved."""
-    # Synthetic test using a class name we haven't extracted
-    prims = _setup_corpus()
-    # Inject a function that queries an unknown class
-    prims.append({
-        "id": "fixture::misc.py::strange_query", "primitive": "function",
-        "name": "strange_query", "owner": None,
-        "source": {"repo": "fixture", "path": "misc.py",
-                   "language": "python", "line": 1, "end_line": 3},
-        "signature": {"parameters": [], "return_type": None,
-                       "is_async": False, "decorators": []},
-        "attributes": {}, "edges_out": [], "structural_hash": "0",
-        "kind": None, "extractor": "test", "schema_version": 2,
-    })
-    (FIXTURE / "misc.py").write_text(
+def test_orphan_query_target_emits_unresolved(tmp_path):
+    """session.query(NotInCorpus) — emit edge with confidence=unresolved.
+
+    Uses pytest's tmp_path so the test doesn't mutate the committed fixture
+    dir and can run concurrently with sibling tests."""
+    # Copy the fixture into tmp_path and add a misc.py with an unknown query
+    import shutil
+    work = tmp_path / "fixture"
+    shutil.copytree(FIXTURE, work)
+    (work / "misc.py").write_text(
         "def strange_query(session):\n"
         "    return session.query(NoSuchClass).all()\n"
     )
-    try:
-        attach_db_access_edges(prims, repo_path=FIXTURE)
-        fn = next(p for p in prims if p["name"] == "strange_query")
-        dba = [e for e in fn["edges_out"] if e["kind"] == "db_access"]
-        assert any(e["confidence"] == "unresolved" for e in dba)
-    finally:
-        (FIXTURE / "misc.py").unlink()
+
+    py_prims = list(extract_repo(repo_key="fixture", repo_path=work))
+    schema_prim = {
+        "id": "fixture::schema::users", "primitive": "class", "name": "users",
+        "owner": None,
+        "source": {"repo": "fixture", "path": "schema/users",
+                   "language": "sql", "line": 1, "end_line": 1},
+        "signature": {}, "attributes": {}, "edges_out": [],
+        "structural_hash": "0", "kind": "schema",
+        "extractor": "test", "schema_version": 2,
+    }
+    all_prims = py_prims + [schema_prim]
+    attach_model_schema_references(all_prims)
+    attach_db_access_edges(all_prims, repo_path=work)
+
+    fn = next(p for p in all_prims if p["name"] == "strange_query")
+    dba = [e for e in fn["edges_out"] if e["kind"] == "db_access"]
+    assert any(e["confidence"] == "unresolved" for e in dba)
 ```
 
 - [ ] **Step 3: Run, verify fail.**
@@ -4257,33 +4998,94 @@ def classify_corpus(primitives: list[dict],
 
 ```python
 # depgraph/lib/classification/config.py
+"""Per-language cue maps for classification rules.
+
+The classifier rule shapes are language-agnostic (e.g., "endpoint = function
+decorated by a route registration"). The *cues* are per-language. This config
+holds the cues so adding a new host language (Vue, Django, Yew, etc.) is a
+matter of extending the maps, not editing classifier code.
+"""
 from dataclasses import dataclass, field
 
 @dataclass
+class LanguageCues:
+    """Cues for one host language."""
+    route_decorators: set[str] = field(default_factory=set)
+    orm_base_classes: set[str] = field(default_factory=set)
+    test_framework_primitives: set[str] = field(default_factory=set)
+    hook_call_names: set[str] = field(default_factory=set)
+    # Vias for cross-ref edges that mean "this class is the ORM mapper for
+    # a schema." Used by the model classifier to distinguish mapper-style
+    # references from incidental type references.
+    orm_schema_link_vias: set[str] = field(default_factory=set)
+
+
+@dataclass
 class ClassificationConfig:
-    route_decorators: set[str] = field(default_factory=lambda: {
-        "router.get", "router.post", "router.put", "router.patch", "router.delete",
-        "app.get", "app.post", "app.put", "app.patch", "app.delete",
-        "router.head", "router.options",
-    })
-    orm_base_classes: set[str] = field(default_factory=lambda: {
-        "DeclarativeBase", "Base", "Model",  # SQLAlchemy
-        "BaseModel",                          # Pydantic (acts model-like)
-    })
-    test_framework_primitives: set[str] = field(default_factory=lambda: {
-        # JS/TS
-        "it", "test", "describe", "expect",
-        # Python
-        "pytest.fixture", "pytest.mark", "assert",
-    })
-    hook_call_names: set[str] = field(default_factory=lambda: {
-        "useState", "useEffect", "useMemo", "useCallback", "useRef",
-        "useContext", "useReducer", "useLayoutEffect",
-    })
+    """Aggregated cues across languages. Each classifier consumes the union
+    or per-language subset as appropriate."""
+    languages: dict[str, LanguageCues] = field(default_factory=dict)
+
+    # Aggregated views, computed on access. Used by language-agnostic
+    # classifiers (most of them).
+    @property
+    def route_decorators(self) -> set[str]:
+        return {d for lang in self.languages.values() for d in lang.route_decorators}
+
+    @property
+    def orm_base_classes(self) -> set[str]:
+        return {b for lang in self.languages.values() for b in lang.orm_base_classes}
+
+    @property
+    def test_framework_primitives(self) -> set[str]:
+        return {p for lang in self.languages.values() for p in lang.test_framework_primitives}
+
+    @property
+    def hook_call_names(self) -> set[str]:
+        return {h for lang in self.languages.values() for h in lang.hook_call_names}
+
+    @property
+    def orm_schema_link_vias(self) -> set[str]:
+        return {v for lang in self.languages.values() for v in lang.orm_schema_link_vias}
 
 
 def default_config() -> ClassificationConfig:
-    return ClassificationConfig()
+    """Cues that ship with the framework for JS/TS and Python.
+    Per-project project.toml can extend this with custom cues."""
+    return ClassificationConfig(languages={
+        "python": LanguageCues(
+            route_decorators={
+                "router.get", "router.post", "router.put", "router.patch",
+                "router.delete", "router.head", "router.options",
+                "app.get", "app.post", "app.put", "app.patch", "app.delete",
+            },
+            orm_base_classes={
+                "DeclarativeBase", "Base", "BaseModel",  # SQLAlchemy + project
+            },
+            test_framework_primitives={
+                "pytest.fixture", "pytest.mark", "pytest.raises",
+            },
+            orm_schema_link_vias={"__tablename__"},
+        ),
+        "typescript": LanguageCues(
+            # Express / Next.js API-route patterns are file-based for Next,
+            # decorator-based for some Express-extension setups. Add as needed.
+            route_decorators={
+                "app.get", "app.post", "app.put", "app.patch", "app.delete",
+                "router.get", "router.post", "router.put", "router.patch",
+                "router.delete",
+            },
+            orm_base_classes={
+                "Model", "BaseEntity",  # Prisma / TypeORM names
+            },
+            test_framework_primitives={"it", "test", "describe", "expect"},
+            hook_call_names={
+                "useState", "useEffect", "useMemo", "useCallback", "useRef",
+                "useContext", "useReducer", "useLayoutEffect",
+            },
+            orm_schema_link_vias={"__tablename__", "@@map"},  # Prisma uses @@map
+        ),
+    })
 ```
 
 Plus seven stub modules in `lib/classification/`. Each is a one-line file at this stage; subsequent tasks (5.2–5.7) replace the no-op body. Run these as a single shell block:
@@ -4375,7 +5177,7 @@ def classify(primitives, *, by_source, by_target, config, decisions_so_far):
     return decisions
 ```
 
-> NOTE: For `returns_jsx` to be available, the TS extractor needs to set it on the function signature. **Add a step in Phase 1 (Task 1.5 revisited)** that records `returns_jsx: true` when the function body contains a `JsxElement` or `JsxFragment` descendant. The engineer should retro-apply this when implementing this classifier — see "Phase 1 retro-tasks" at the end of this plan.
+> `signature.returns_jsx` is set by the TS extractor (Phase 1 Task 1.5, with its own test). No retro patching required.
 
 - [ ] **Step 3: Run, verify pass + commit.**
 
@@ -4663,6 +5465,22 @@ def test_class_with_schema_reference_but_no_orm_extends_is_not_model():
     ])
     decisions = classify_corpus([cls])
     assert decisions[cls["id"]].kind != "model"
+
+
+def test_orm_class_with_typehint_only_reference_is_not_model():
+    """Extends Base AND references schema, but `via` is a type hint — that's
+    incidental, not an ORM mapping. Must not classify as model. The
+    distinguishing marker is `via: "__tablename__"` (or another known
+    orm_schema_link_vias entry)."""
+    user = _user_class([
+        {"target": "external::pypi::sqlalchemy::Base", "kind": "extends",
+         "via": "class_decl", "where": "models/user.py:1", "confidence": "exact"},
+        {"target": "r::schema::users", "kind": "references",
+         "via": "return_type_annotation", "where": "models/user.py:5",
+         "confidence": "exact"},
+    ])
+    decisions = classify_corpus([user, _users_schema()])
+    assert decisions[user["id"]].kind != "model"
 ```
 
 - [ ] **Step 2: Implement**
@@ -4702,7 +5520,13 @@ def classify(primitives, *, by_source, by_target, config, decisions_so_far):
                 if target_last in config.orm_base_classes:
                     extends_orm = True
                     orm_base_evidence = {"base": target_last, "via": e["via"]}
-            elif e["kind"] == "references" and e["target"] in schema_ids:
+            elif (e["kind"] == "references"
+                  and e["target"] in schema_ids
+                  and e.get("via") in config.orm_schema_link_vias):
+                # Only "ORM-mapper" style references count — `via` must come
+                # from a known ORM-link marker like `__tablename__`. This
+                # prevents type-hint references (`def f(u: UserSchema)`) from
+                # turning every typed-arg class into a model.
                 schema_ref = {"schema": e["target"], "via": e["via"]}
 
         if extends_orm and schema_ref is not None:
@@ -4795,38 +5619,108 @@ def test_function_called_only_by_unclassified_is_not_util():
     assert decisions[b["id"]].kind != "util"
 ```
 
-- [ ] **Step 1b: Implement util**
+- [ ] **Step 1b: Implement util (reachability-based, transitive)**
+
+Single-pass "called by classified" misses the common case where A calls B calls endpoint — A is reachable through util B but a single pass doesn't yet know B is util. Reachability closure handles this in one go.
 
 ```python
 # lib/classification/util.py
+"""Util classifier — function transitively reachable into a classified kind.
+
+Rule: a function F is util iff
+  (a) F is not yet classified, AND
+  (b) there is a `calls`-edge path from at least one classified function
+      *into* F (i.e., classified ─calls→ … ─calls→ F).
+
+Computed by forward BFS over reversed `calls` edges starting from the
+classified set. Single pass; no fixed-point iteration needed because the
+reachable set grows monotonically.
+"""
+from __future__ import annotations
+
 KIND = "util"
 
 
 def classify(primitives, *, by_source, by_target, config, decisions_so_far):
-    """Function is util iff at least one caller is already classified
-    AND the function itself is not yet classified."""
     classified_ids = {pid for pid, dec in decisions_so_far.items() if dec.kind}
+    if not classified_ids:
+        return {}
 
-    callers_by_target: dict[str, list[str]] = {}
+    # Build callee->[callers] map (reverse of by_source for `calls` edges)
+    callees_of: dict[str, list[str]] = {}  # caller -> [callees]
     for src_id, edges in by_source.items():
         for e in edges:
             if e["kind"] == "calls":
-                callers_by_target.setdefault(e["target"], []).append(src_id)
+                callees_of.setdefault(src_id, []).append(e["target"])
 
+    # BFS: starting from classified, expand to everything they call
+    # transitively. Anything reachable that isn't already classified is util.
+    reachable: set[str] = set()
+    frontier = [pid for pid in classified_ids]
+    while frontier:
+        cur = frontier.pop()
+        for callee in callees_of.get(cur, []):
+            if callee in classified_ids or callee in reachable:
+                continue
+            reachable.add(callee)
+            frontier.append(callee)  # expand through util-of-util chains
+
+    # Look up evidence (direct classified callers) for each util
+    primitives_by_id = {p["id"]: p for p in primitives}
     decisions = {}
-    for p in primitives:
-        if p["primitive"] != "function":
+    for util_id in reachable:
+        p = primitives_by_id.get(util_id)
+        if p is None or p["primitive"] != "function":
             continue
-        if p["id"] in classified_ids:
-            continue
-        classified_callers = [c for c in callers_by_target.get(p["id"], [])
-                              if c in classified_ids]
-        if classified_callers:
-            decisions[p["id"]] = {
-                "rule": "called_by_classified",
-                "evidence": [{"caller": c} for c in classified_callers],
-            }
+        # Find all direct callers (classified OR other utils — useful for graphui)
+        direct_callers = [
+            src for src, edges in by_source.items()
+            for e in edges
+            if e["kind"] == "calls" and e["target"] == util_id
+        ]
+        decisions[util_id] = {
+            "rule": "transitive_call_target_of_classified",
+            "evidence": [{"caller": c} for c in direct_callers],
+        }
     return decisions
+```
+
+Add a third test case for the transitive scenario:
+
+```python
+# depgraph/tests/lib/test_classifier_util.py — append
+def test_transitive_util_chain():
+    """endpoint → util A → util B → util C. All three of A, B, C classify
+    as util in a single pass (no fixed-point loop needed in the engine)."""
+    endpoint = {
+        "id": "r::p.py::handler", "primitive": "function", "name": "handler",
+        "owner": None,
+        "source": {"path": "p.py", "line": 1, "end_line": 1, "language": "python", "repo": "r"},
+        "signature": {"decorators": ["router.get"]}, "attributes": {},
+        "edges_out": [{"target": "r::a.py::a_fn", "kind": "calls",
+                       "via": "fn", "where": "p.py:2", "confidence": "exact"}],
+        "structural_hash": "0", "kind": None, "extractor": "t", "schema_version": 2,
+    }
+    def util(id_, name, calls_target):
+        return {
+            "id": id_, "primitive": "function", "name": name, "owner": None,
+            "source": {"path": f"{name}.py", "line": 1, "end_line": 1, "language": "python", "repo": "r"},
+            "signature": {"decorators": []}, "attributes": {},
+            "edges_out": [{"target": calls_target, "kind": "calls",
+                            "via": "fn", "where": f"{name}.py:1", "confidence": "exact"}],
+            "structural_hash": "0", "kind": None, "extractor": "t", "schema_version": 2,
+        }
+    a = util("r::a.py::a_fn", "a_fn", "r::b.py::b_fn")
+    b = util("r::b.py::b_fn", "b_fn", "r::c.py::c_fn")
+    c = util("r::c.py::c_fn", "c_fn", "r::leaf.py::leaf")
+    leaf = util("r::leaf.py::leaf", "leaf", "r::a.py::a_fn")  # cycle: classifier must terminate
+    leaf["edges_out"] = []  # no outbound; simplifies — drop the cycle for clarity
+    decisions = classify_corpus([endpoint, a, b, c, leaf])
+    assert decisions[endpoint["id"]].kind == "endpoint"
+    assert decisions[a["id"]].kind == "util"
+    assert decisions[b["id"]].kind == "util"
+    assert decisions[c["id"]].kind == "util"
+    assert decisions[leaf["id"]].kind == "util"
 ```
 
 - [ ] **Step 2: Tests + implementation for `test_kind`**
@@ -4947,7 +5841,33 @@ def write_classified(primitives, decisions, *, data_dir: Path) -> None:
 - Modify: `depgraph/extractors/reconcile.py` (rewrite for v2)
 - Modify: `kg/cli/depgraph/regen.py` (or wherever regen lives) — invoke new extractors per language registry
 - Delete: `depgraph/extractors/generic/` (whole subtree)
+- Create: `kg/cli/depgraph/migrate_logigraph_claims.py` (one-shot script for Task 6.6)
 - Test: `depgraph/tests/test_reconcile_v2.py` (full end-to-end against a tiny synthetic project)
+- Test: `depgraph/tests/test_regen_determinism.py` (CI gate: regen twice → identical output)
+
+### Task 6.0: Pre-cutover compatibility check (graphui kind dirs)
+
+Before tearing out the legacy extractors, confirm graphui can read the new kind set including the new `schemas/` dir. graphui may hardcode a kind-dir whitelist somewhere; this task is to find it and update.
+
+- [ ] **Step 1: Locate graphui's kind-dir reader**
+
+Run: `grep -rn "components\|hooks\|endpoints\|services\|models" ~/tools/knowledge-graph/graphui/ --include="*.py" --include="*.ts" 2>/dev/null | head -20`
+
+Document where the kind-dir list lives (file + line).
+
+- [ ] **Step 2: Add `schemas` to the kind-dir list**
+
+If hardcoded, append `"schemas"` (and any new primitive-type dirs: `modules`, `packages`, `classes`, `functions`, `variables`). If config-driven, update the config.
+
+- [ ] **Step 3: Smoke-test graphui against a tiny v2 corpus**
+
+Run graphui locally pointed at a synthetic tmp corpus containing one schema + one model + one endpoint. Verify all three appear in the relevant tabs.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git commit -m "graphui: surface schemas/ kind dir + v2 primitive-type dirs"
+```
 
 ### Task 6.1: Rewrite reconcile for v2
 
@@ -5211,60 +6131,217 @@ git add depgraph/
 git commit -m "depgraph: regen on layered substrate (v2 schema, JS/TS/Python)"
 ```
 
-### Task 6.6: Logigraph reconcile
+### Task 6.6: Determinism CI gate
 
-Existing logigraph claims point at depgraph node ids. Many will have changed (or moved to different paths). Run `logigraph regen` → `logigraph gaps` to see which claims are stale.
+Regen twice, diff the output directories — they must be byte-identical. Guards against accidental non-determinism (set iteration, time-of-day fields, etc.).
 
-- [ ] **Step 1: Run**
+- [ ] **Step 1: Write the test**
+
+```python
+# depgraph/tests/test_regen_determinism.py
+"""Regen-determinism gate: two consecutive regens of the same source must
+produce byte-identical node dirs."""
+from __future__ import annotations
+
+import filecmp
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+
+
+@pytest.fixture
+def tiny_project(tmp_path):
+    src = tmp_path / "repo"
+    (src / "api").mkdir(parents=True)
+    (src / "api/routers.py").write_text(
+        "def helper(): pass\n\n"
+        "def create_event():\n"
+        "    helper()\n"
+    )
+    return src
+
+
+def _regen(repo_path: Path, data_dir: Path) -> None:
+    data_dir.mkdir(parents=True, exist_ok=True)
+    subprocess.run([
+        sys.executable, "-m", "kg.cli", "depgraph", "regen",
+        "--data-dir", str(data_dir),
+        "--repo-key", "api", "--repo-path", str(repo_path / "api"),
+    ], check=True)
+
+
+def test_two_regens_produce_identical_corpus(tiny_project, tmp_path):
+    a = tmp_path / "out_a"
+    b = tmp_path / "out_b"
+    _regen(tiny_project, a)
+    _regen(tiny_project, b)
+    cmp = filecmp.dircmp(a, b)
+    assert not cmp.diff_files, f"differing files between regens: {cmp.diff_files}"
+    assert not cmp.left_only and not cmp.right_only, (
+        f"asymmetric files: only_in_a={cmp.left_only} only_in_b={cmp.right_only}"
+    )
+    # Recurse into subdirs
+    def _walk(d):
+        if d.diff_files or d.left_only or d.right_only:
+            return False
+        return all(_walk(sub) for sub in d.subdirs.values())
+    assert _walk(cmp), "non-deterministic regen detected in subdirectories"
+```
+
+- [ ] **Step 2: Run; if it fails, find the source of non-determinism**
+
+Common culprits: `set()` iteration leaking into output ordering, timestamp fields, dict iteration across different process runs (rare in Python 3.7+ but possible across worker procs), unsorted `glob()` results.
+
+- [ ] **Step 3: Commit**
 
 ```bash
+git add depgraph/tests/test_regen_determinism.py
+git commit -m "depgraph: regen determinism CI gate"
+```
+
+### Task 6.7: Logigraph claim migration
+
+Build the auto-rewrite script before manually triaging. Most stale claims will fall into one of three buckets:
+
+1. **Hash-match**: a claim's old `depgraph_id` doesn't exist anymore but a new primitive has the same `structural_hash` — auto-rewrite the claim's `depgraph_id` to the new id.
+2. **Path-rename**: claim's `depgraph_id` is `<repo>::<old-path>::<symbol>` but a new primitive exists at `<repo>::<new-path>::<symbol>` (file moved). If structural_hash also matches, auto-rewrite; if not, surface for human review.
+3. **Truly stale**: no candidate matches. Flag in `CANDIDATES.md` for manual re-authoring.
+
+- [ ] **Step 1: Write the migration script**
+
+```python
+# kg/cli/depgraph/migrate_logigraph_claims.py
+"""Auto-rewrite stale logigraph claims after a v2 regen.
+
+Usage:
+    python -m kg.cli.depgraph.migrate_logigraph_claims \\
+        --depgraph-dir ~/concorda-knowledge-graph/depgraph \\
+        --logigraph-dir ~/concorda-knowledge-graph/logigraph \\
+        [--dry-run]
+"""
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+
+
+def load_depgraph_index(depgraph_dir: Path) -> tuple[dict[str, dict], dict[str, list[str]]]:
+    """Return (by_id, by_hash). by_hash: structural_hash -> [ids]."""
+    by_id: dict[str, dict] = {}
+    by_hash: dict[str, list[str]] = {}
+    for p in (depgraph_dir / "nodes").rglob("*.json"):
+        if p.name.startswith("_") or "_index" in p.parts:
+            continue
+        try:
+            node = json.loads(p.read_text())
+        except json.JSONDecodeError:
+            continue
+        nid = node.get("id")
+        if not nid:
+            continue
+        by_id[nid] = node
+        h = node.get("structural_hash")
+        if h:
+            by_hash.setdefault(h, []).append(nid)
+    return by_id, by_hash
+
+
+def migrate(*, depgraph_dir: Path, logigraph_dir: Path, dry_run: bool = False) -> dict:
+    by_id, by_hash = load_depgraph_index(depgraph_dir)
+    stats = {"unchanged": 0, "auto_rewritten": 0, "ambiguous": 0, "stale": 0}
+    candidates_path = logigraph_dir / "CANDIDATES.md"
+    lines = ["# Stale logigraph claims after v2 regen\n"]
+
+    for rule_path in (logigraph_dir / "nodes" / "rules").rglob("*.json"):
+        rule = json.loads(rule_path.read_text())
+        changed = False
+        for claim in rule.get("claims_code", []):
+            old_id = claim.get("depgraph_id")
+            if not old_id:
+                continue
+            if old_id in by_id:
+                stats["unchanged"] += 1
+                continue
+            old_hash = claim.get("remote_hash")
+            candidates = by_hash.get(old_hash, []) if old_hash else []
+            if len(candidates) == 1:
+                claim["depgraph_id"] = candidates[0]
+                claim["remote_hash"] = by_id[candidates[0]]["structural_hash"]
+                stats["auto_rewritten"] += 1
+                changed = True
+            elif len(candidates) > 1:
+                stats["ambiguous"] += 1
+                lines.append(f"- AMBIGUOUS in rule `{rule['id']}`: old_id "
+                              f"`{old_id}` had hash `{old_hash[:8]}…` matching "
+                              f"{len(candidates)} new primitives: {candidates}")
+            else:
+                stats["stale"] += 1
+                lines.append(f"- STALE in rule `{rule['id']}`: old_id "
+                              f"`{old_id}` has no hash match in new corpus")
+        if changed and not dry_run:
+            rule_path.write_text(json.dumps(rule, indent=2, sort_keys=True))
+
+    if (stats["ambiguous"] or stats["stale"]) and not dry_run:
+        candidates_path.write_text("\n".join(lines))
+    return stats
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--depgraph-dir", type=Path, required=True)
+    ap.add_argument("--logigraph-dir", type=Path, required=True)
+    ap.add_argument("--dry-run", action="store_true")
+    args = ap.parse_args()
+    stats = migrate(depgraph_dir=args.depgraph_dir,
+                    logigraph_dir=args.logigraph_dir,
+                    dry_run=args.dry_run)
+    print(json.dumps(stats, indent=2))
+
+
+if __name__ == "__main__":
+    main()
+```
+
+- [ ] **Step 2: Dry-run on Concorda**
+
+```bash
+python -m kg.cli.depgraph.migrate_logigraph_claims \
+    --depgraph-dir ~/concorda-knowledge-graph/depgraph \
+    --logigraph-dir ~/concorda-knowledge-graph/logigraph \
+    --dry-run
+```
+
+Expected: prints stats `{unchanged, auto_rewritten, ambiguous, stale}`. Sanity-check the numbers before the real run.
+
+- [ ] **Step 3: Real run + reconcile**
+
+```bash
+python -m kg.cli.depgraph.migrate_logigraph_claims \
+    --depgraph-dir ~/concorda-knowledge-graph/depgraph \
+    --logigraph-dir ~/concorda-knowledge-graph/logigraph
 kg logigraph regen
 kg logigraph gaps
 ```
 
-- [ ] **Step 2: Address stale claims**
+`logigraph gaps` should show zero auto-resolvable stale claims and only the `ambiguous`/`stale` entries listed in `CANDIDATES.md`.
 
-For each stale claim: either auto-rewrite if structural_hash matches a new node, or flag for manual re-authoring. Document the migration in `~/concorda-knowledge-graph/logigraph/CANDIDATES.md`.
-
-- [ ] **Step 3: Commit logigraph state**
+- [ ] **Step 4: Triage the remainder manually + commit**
 
 ```bash
 cd ~/concorda-knowledge-graph
 git add logigraph/
-git commit -m "logigraph: reconcile against v2 depgraph corpus (claim migration)"
+git commit -m "logigraph: auto-migrate claims to v2 depgraph corpus; CANDIDATES.md flags remainder"
 ```
 
 ---
 
-## Phase 1 retro-tasks (referenced from Phase 5)
+## Phase 1 retro-tasks
 
-A handful of attributes used by the classifier need to be set by the L1 extractors. Add these as in-place edits to the extractor files when the classifier task arrives.
-
-### Retro 1: TS extractor records `returns_jsx`
-
-When emitting a function primitive (Task 1.5), walk the body for any `JsxElement` / `JsxFragment` descendant. If found, set `signature.returns_jsx = true`. Otherwise omit the key.
-
-```typescript
-// inside functionPrimitive's signature construction
-const hasJsx = fn.getDescendantsOfKind(SyntaxKind.JsxElement).length > 0
-              || fn.getDescendantsOfKind(SyntaxKind.JsxFragment).length > 0
-              || fn.getDescendantsOfKind(SyntaxKind.JsxSelfClosingElement).length > 0;
-signature.returns_jsx = hasJsx ? true : false;
-```
-
-Add a corresponding test in `test_typescript_primitives.py`:
-
-```python
-def test_function_returning_jsx_records_attribute():
-    # fixture: src/component.tsx with `export function Foo() { return <div/>; }`
-    prims = run_extractor("returns_jsx")
-    foo = next(p for p in prims if p["name"] == "Foo")
-    assert foo["signature"]["returns_jsx"] is True
-```
-
-### Retro 2: Python extractor records `decorators` consistently
-
-The decorator list should be dotted-name strings (e.g., `"router.post"` not `"router.post('/events')"`). The classifier's match logic depends on this.
+*All previously-deferred retros (returns_jsx, default-export naming, overload skipping, Python decorator normalization) are folded into Phase 1 Task 1.5 and Phase 2 Task 2.3 directly. This section is intentionally empty — it remains as a heading anchor in case a future cross-link points here.*
 
 ---
 
@@ -5272,10 +6349,12 @@ The decorator list should be dotted-name strings (e.g., `"router.post"` not `"ro
 
 - All tests in `depgraph/tests/` pass (`pytest depgraph/tests -v`)
 - `depgraph/extractors/generic/` is deleted
-- `depgraph/extractors/{typescript,python}/` are the production extractors
+- `depgraph/extractors/{typescript,python,sql}/` are the production extractors
 - Concorda corpus has been regenerated on v2 schema with no validation errors
-- Logigraph claims are reconciled (stale claims either rewritten or flagged in `CANDIDATES.md`)
+- Determinism CI gate (`test_regen_determinism.py`) passes — two consecutive regens produce byte-identical output
+- Logigraph claims are reconciled: auto-migrated where structural_hash matches, flagged in `CANDIDATES.md` where not
 - Hook still injects context on Edit/Write/MultiEdit (tested against a real file edit on Concorda)
+- graphui surfaces the new `schemas/` kind dir + v2 primitive-type dirs without code change required
 - `docs/superpowers/specs/2026-05-15-layered-substrate-design.md` decision-point checkboxes are all checked
 
 ---
