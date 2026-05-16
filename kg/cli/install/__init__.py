@@ -15,6 +15,7 @@ import argparse
 import os
 from pathlib import Path
 
+from kg.cli.install import cascade as _cascade_mod
 from kg.cli.install import hooks as _hooks_mod
 from kg.cli.install import init as _init_mod
 from kg.cli.install import path as _path_mod
@@ -56,6 +57,14 @@ def _run_installer(args: argparse.Namespace, extra: list[str]) -> int:
         path_parser.add_argument("--apply", action="store_true")
         path_parser.add_argument("--force", action="store_true")
         return _path_mod.cmd_path(path_parser.parse_args(extra[1:]))
+    if extra and extra[0] == "cascade":
+        casc_parser = argparse.ArgumentParser(prog="kg install cascade")
+        casc_parser.add_argument("target_repo")
+        casc_parser.add_argument("--depgraph", default="")
+        casc_parser.add_argument("--logigraph", default="")
+        casc_parser.add_argument("--apply", action="store_true")
+        casc_parser.add_argument("--force", action="store_true")
+        return _cascade_mod.cmd_cascade(casc_parser.parse_args(extra[1:]))
     # Fall through: subprocess shim for everything else.
     tool_root = Path(__file__).resolve().parents[3]
     installer = tool_root / "install.sh"
