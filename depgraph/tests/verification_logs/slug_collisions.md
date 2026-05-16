@@ -53,7 +53,7 @@ Fix: changed accumulator to `set[str]`; duplicate ids collapse to one entry so t
 exceeds size 1 for a single id. The docstring was updated to document the dedup intent explicitly.
 Companion test `test_slug_collision_ignores_duplicate_ids` added to `test_primitives.py`.
 
-Committed in: TBD (commit SHA appended after commit)
+Committed in: d881594c
 
 ## Status
 ✓ verified — Finding 1 (false self-collision on duplicate ids) was a real bug and has been fixed. Findings 2 and 3 are by-design behavior, documented for future reference.

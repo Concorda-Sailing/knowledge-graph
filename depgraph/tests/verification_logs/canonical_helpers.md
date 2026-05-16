@@ -65,7 +65,7 @@ f-string always emitted all four segments.
 Fix: made `package` optional (`str | None = None`); when falsy the segment is omitted.
 Companion test `test_external_terminal_no_package_3_segment` added to `test_primitives.py`.
 
-Committed in: TBD (commit SHA appended after commit)
+Committed in: d881594c
 
 ## Status
 ✓ verified — Finding 1 (malformed external_terminal id) was a real bug and has been fixed. Findings 2 and 3 are by-design behavior, documented for future reference.
