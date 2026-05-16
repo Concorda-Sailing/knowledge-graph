@@ -217,72 +217,8 @@ def _check_dossier_sections(dossier_path: Path, required: tuple[str, ...]) -> li
 
 
 def cmd_validate(args: argparse.Namespace) -> int:
-    nodes = load_all_nodes()
-    bad = 0
-    stub_with_todo = 0
-
-    for nid, (path, data) in nodes.items():
-        kind = data.get("kind")
-        if kind == "domain":
-            err = _validate_json_schema(data, DOMAIN_SCHEMA)
-            if err:
-                print(f"INVALID {path}: {err}", file=sys.stderr)
-                bad += 1
-                continue
-            if data.get("subkind") == "role":
-                dossier_rel = data.get("dossier")
-                if dossier_rel:
-                    missing = _check_dossier_sections(
-                        LOGIGRAPH / dossier_rel,
-                        REQUIRED_DOMAIN_ROLE_DOSSIER_SECTIONS,
-                    )
-                    if missing and data.get("definition_status") != "stub":
-                        print(f"DOSSIER {path}: missing sections {missing}", file=sys.stderr)
-                        bad += 1
-        elif kind == "rule":
-            err = _validate_json_schema(data, RULE_SCHEMA)
-            if err:
-                print(f"INVALID {path}: {err}", file=sys.stderr)
-                bad += 1
-                continue
-            dossier_rel = data.get("dossier")
-            if dossier_rel:
-                missing = _check_dossier_sections(
-                    LOGIGRAPH / dossier_rel, REQUIRED_RULE_DOSSIER_SECTIONS
-                )
-                if missing and data.get("definition_status") != "stub":
-                    print(f"DOSSIER {path}: missing sections {missing}", file=sys.stderr)
-                    bad += 1
-        elif kind == "process":
-            err = _validate_json_schema(data, PROCESS_SCHEMA)
-            if err:
-                print(f"INVALID {path}: {err}", file=sys.stderr)
-                bad += 1
-                continue
-            # Reference-integrity: every transition.to must be an existing step id.
-            step_ids = {s["id"] for s in data.get("steps", [])}
-            for step in data.get("steps", []):
-                for tr in step.get("transitions", []) or []:
-                    if tr["to"] not in step_ids:
-                        print(
-                            f"INVALID {path}: step '{step['id']}' transitions to "
-                            f"'{tr['to']}' which is not a step in this process",
-                            file=sys.stderr,
-                        )
-                        bad += 1
-            # Dossier is intentionally optional for processes (pointer semantics).
-            # No required-sections check.
-        else:
-            print(f"UNKNOWN KIND {path}: kind={kind}", file=sys.stderr)
-            bad += 1
-
-        if data.get("definition_status") == "stub":
-            stub_with_todo += 1
-
-    if bad:
-        return 1
-    print(f"all nodes valid ({len(nodes)} total, {stub_with_todo} stub)")
-    return 0
+    from lib.cli.validate import cmd_validate as _impl
+    return _impl(args, _CTX)
 
 
 def cmd_rules_for(args: argparse.Namespace) -> int:

@@ -47,6 +47,7 @@ _SHARED_LIB_MODULES = frozenset([
     "lib.cli.context",
     "lib.cli._shared",
     "lib.cli.regen",
+    "lib.cli.validate",
 ])
 
 
