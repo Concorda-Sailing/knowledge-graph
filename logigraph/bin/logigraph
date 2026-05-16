@@ -227,18 +227,8 @@ def cmd_rules_for(args: argparse.Namespace) -> int:
 
 
 def cmd_fan_out(args: argparse.Namespace) -> int:
-    nodes = load_all_nodes()
-    rules = [(nid, data) for nid, (_, data) in nodes.items() if data.get("kind") == "rule"]
-    rules.sort(key=lambda x: -(x[1].get("fan_out") or len(x[1].get("claims_code") or [])))
-    threshold = args.threshold
-    print(f"{'fan-out':<8} rule")
-    print(f"{'-'*8} {'-'*60}")
-    for nid, data in rules:
-        fan_out = data.get("fan_out") or len(data.get("claims_code") or [])
-        if fan_out < threshold:
-            continue
-        print(f"{fan_out:<8} {nid}")
-    return 0
+    from lib.cli.fan_out import cmd_fan_out as _impl
+    return _impl(args, _CTX)
 
 
 def cmd_gaps(args: argparse.Namespace) -> int:
