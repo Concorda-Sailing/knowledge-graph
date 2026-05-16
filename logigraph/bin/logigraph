@@ -339,44 +339,8 @@ def cmd_context(args: argparse.Namespace) -> int:
 
 
 def cmd_rollup(args: argparse.Namespace) -> int:
-    """Emit the full code rollup for a logigraph domain entity.
-
-    Resolves the entity's anchor model in depgraph, then BFS over the
-    reverse-dependents index to gather every code symbol that operates
-    on the entity. Output respects --kind / --depth / --format flags."""
-    depgraph_dir = _depgraph_dir()
-    inputs = load_rollup_inputs(depgraph_dir)
-
-    nodes = load_all_nodes()  # logigraph nodes — { id: (path, data) }
-    if args.entity_id not in nodes:
-        print(f"no logigraph node with id: {args.entity_id}", file=sys.stderr)
-        return 1
-    _, domain_node = nodes[args.entity_id]
-    logigraph_index = {nid: data for nid, (_, data) in nodes.items()}
-
-    anchor = resolve_anchor(domain_node, inputs.depgraph_index, logigraph_index=logigraph_index)
-    rollup = compute_rollup(
-        anchor_id=anchor.model_id or "",
-        depgraph_index=inputs.depgraph_index,
-        dependents_index=inputs.dependents_index,
-        depth=args.depth,
-        anchor_result=anchor,
-    )
-
-    # --kind filter (post-compute so via-chains stay coherent).
-    if args.kind:
-        wanted = set(args.kind.split(","))
-        rollup = Rollup(
-            anchor=rollup.anchor,
-            by_kind={k: v for k, v in rollup.by_kind.items() if k in wanted},
-            total=sum(len(v) for k, v in rollup.by_kind.items() if k in wanted),
-        )
-
-    if args.format == "json":
-        print(json.dumps(format_rollup_json(rollup), indent=2))
-    else:
-        print(format_rollup_text(rollup, summary=False))
-    return 0
+    from lib.cli.rollup_cmd import cmd_rollup as _impl
+    return _impl(args, _CTX)
 
 
 # ===== rule pipeline =========================================================
