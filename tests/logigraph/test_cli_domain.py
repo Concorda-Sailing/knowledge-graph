@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from lib.cli.context import Context
-from lib.cli.domain import cmd_domain_bump
+from logigraph.lib.cli.context import Context
+from logigraph.lib.cli.domain import cmd_domain_bump
 
 
 @pytest.fixture

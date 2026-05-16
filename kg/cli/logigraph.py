@@ -3,35 +3,24 @@
 Phase 3 replaces the Phase-1 subprocess shim. kg now owns argparse
 end-to-end; --help reaches the real subcommand help surface; handlers
 run in-process.
+
+The lib-namespace collision that previously required a sys.modules eviction
+block inside _run() is gone: fully-qualified imports (logigraph.lib.X vs
+depgraph.lib.X) are distinct sys.modules keys and never collide.
 """
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
 from kg.cli import resolve
 
-_LOGIGRAPH_ROOT = Path(__file__).resolve().parents[2] / "logigraph"
-
-# Modules that both depgraph and logigraph ship under the same dotted names.
-# We evict these inside _run() before importing logigraph's copies so that
-# a kg depgraph X; kg logigraph Y sequence in the same process resolves
-# correctly regardless of import order.
-_SHARED_LIB_MODULES = (
-    "lib",
-    "lib.cli",
-    "lib.config",
-    "lib.cli.context",
-    "lib.cli._shared",
-    "lib.cli.regen",
-    "lib.cli.validate",
-    "lib.cli.health",
-    "lib.cli.self_check",
-    "lib.cli.stats",
-    "lib.cli.context_cmd",
-    "lib.cli.flag",
-)
+# bin/kg already adds the framework root to sys.path, so fully-qualified
+# logigraph.lib.* imports resolve without any additional sys.path mutation.
+from logigraph.lib.cli import build_parser as _logigraph_build_parser
+from logigraph.lib.cli.context import Context as _LogigraphContext
 
 
 def _run(args: argparse.Namespace, extra: list[str]) -> int:
@@ -44,27 +33,13 @@ def _run(args: argparse.Namespace, extra: list[str]) -> int:
         print(f"Error: {e}", file=sys.stderr)
         return 1
 
-    # Logigraph and depgraph both ship a `lib.cli` package; evict any
-    # depgraph entries from sys.modules before importing logigraph's.
-    for name in list(sys.modules):
-        if name in _SHARED_LIB_MODULES:
-            del sys.modules[name]
-
-    # Ensure logigraph/ is at the front of sys.path.
-    if sys.path[0] != str(_LOGIGRAPH_ROOT):
-        sys.path.insert(0, str(_LOGIGRAPH_ROOT))
-
-    from lib.cli import build_parser
-    from lib.cli.context import Context as LogigraphContext
-
-    sub_parser = build_parser()
+    sub_parser = _logigraph_build_parser()
     if extra and extra[0] in ("-h", "--help"):
         sub_parser.print_help()
         return 0
     sub_args = sub_parser.parse_args(extra)
-    import os
     os.environ["DEPGRAPH_DATA_DIR"] = str(proj.depgraph_dir)
-    ctx = LogigraphContext.from_data_dir(proj.logigraph_dir)
+    ctx = _LogigraphContext.from_data_dir(proj.logigraph_dir)
     return sub_args.func(sub_args, ctx)
 
 

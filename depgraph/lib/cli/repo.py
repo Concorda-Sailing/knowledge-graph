@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 from .context import Context
-from lib.config import project_repos, project_primary_repo
+from depgraph.lib.config import project_repos, project_primary_repo
 
 
 # ── private helpers ──────────────────────────────────────────────────────────

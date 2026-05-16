@@ -80,10 +80,10 @@ def _logigraph_meta_mtime() -> float:
 # — the three-level parent walks app/loader.py → app/ → graphui/ → kg/,
 # then steps into the sibling depgraph/ directory.
 _GRAPHUI_TOOL_ROOT = Path(__file__).resolve().parent.parent
-_DEPGRAPH_TOOL_ROOT = _GRAPHUI_TOOL_ROOT.parent / "depgraph"
-if str(_DEPGRAPH_TOOL_ROOT) not in sys.path:
-    sys.path.insert(0, str(_DEPGRAPH_TOOL_ROOT))
-from lib.rollup import (  # noqa: E402
+_FRAMEWORK_ROOT = _GRAPHUI_TOOL_ROOT.parent  # ~/tools/knowledge-graph
+if str(_FRAMEWORK_ROOT) not in sys.path:
+    sys.path.insert(0, str(_FRAMEWORK_ROOT))
+from depgraph.lib.rollup import (  # noqa: E402
     resolve_anchor,
     compute_rollup,
     Rollup,

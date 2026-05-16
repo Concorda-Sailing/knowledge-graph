@@ -11,8 +11,8 @@ from pathlib import Path
 
 import pytest
 
-from lib.cli.context import Context
-from lib.cli.self_check import cmd_self_check
+from depgraph.lib.cli.context import Context
+from depgraph.lib.cli.self_check import cmd_self_check
 
 
 def test_self_check_no_repos_exits_1(

@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from lib.cli.context import Context
-from lib.cli.rules_for import cmd_rules_for
+from logigraph.lib.cli.context import Context
+from logigraph.lib.cli.rules_for import cmd_rules_for
 
 
 @pytest.fixture

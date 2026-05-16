@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from lib.cli.context import Context
-from lib.cli.fan_out import cmd_fan_out
+from logigraph.lib.cli.context import Context
+from logigraph.lib.cli.fan_out import cmd_fan_out
 
 
 @pytest.fixture

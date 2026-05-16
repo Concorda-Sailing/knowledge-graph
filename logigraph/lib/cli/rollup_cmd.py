@@ -20,14 +20,10 @@ def cmd_rollup(args: argparse.Namespace, ctx: Context) -> int:
     reverse-dependents index to gather every code symbol that operates
     on the entity. Output respects --kind / --depth / --format flags.
 
-    Cross-graph: lib.rollup lives in depgraph/lib, not logigraph/lib.
-    Extend the lib package path on first call so the import resolves.
+    Cross-graph: depgraph.lib.rollup is importable because the framework
+    root is on sys.path (added by bin/kg or bin/logigraph at startup).
     """
-    import lib as _lib_pkg
-    depgraph_lib = str(ctx.tool_root.parent / "depgraph" / "lib")
-    if depgraph_lib not in _lib_pkg.__path__:
-        _lib_pkg.__path__.append(depgraph_lib)
-    from lib.rollup import (  # noqa: PLC0415
+    from depgraph.lib.rollup import (  # noqa: PLC0415
         compute_rollup,
         format_rollup_text,
         format_rollup_json,

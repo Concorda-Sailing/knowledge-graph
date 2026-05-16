@@ -9,8 +9,8 @@ from unittest import mock
 
 import pytest
 
-from lib.cli.context import Context
-from lib.cli.rollup_cmd import cmd_rollup
+from logigraph.lib.cli.context import Context
+from logigraph.lib.cli.rollup_cmd import cmd_rollup
 
 
 @pytest.fixture

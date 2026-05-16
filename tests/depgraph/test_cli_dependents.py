@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from lib.cli.context import Context
-from lib.cli.dependents import cmd_dependents
+from depgraph.lib.cli.context import Context
+from depgraph.lib.cli.dependents import cmd_dependents
 
 
 def _write_index(ctx: Context, by_target: dict) -> None:

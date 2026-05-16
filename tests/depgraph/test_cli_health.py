@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from lib.cli.context import Context
-from lib.cli.health import cmd_health
+from depgraph.lib.cli.context import Context
+from depgraph.lib.cli.health import cmd_health
 
 
 # ---------------------------------------------------------------------------

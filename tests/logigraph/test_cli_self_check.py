@@ -8,8 +8,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from lib.cli.context import Context
-from lib.cli.self_check import cmd_self_check
+from logigraph.lib.cli.context import Context
+from logigraph.lib.cli.self_check import cmd_self_check
 
 
 @pytest.fixture

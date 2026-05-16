@@ -20,7 +20,7 @@ from ._shared import load_dependents_index
 _DEPGRAPH_LIB = Path(__file__).resolve().parents[1]
 if str(_DEPGRAPH_LIB) not in sys.path:
     sys.path.insert(0, str(_DEPGRAPH_LIB))
-from config import project_repos, path_to_repo_relative  # noqa: E402
+from depgraph.lib.config import project_repos, path_to_repo_relative  # noqa: E402
 
 
 def cmd_commit_summary(args: argparse.Namespace, ctx: Context) -> int:

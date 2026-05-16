@@ -12,11 +12,10 @@ from pathlib import Path
 
 from kg.cli import resolve
 
-_DEPGRAPH_ROOT = Path(__file__).resolve().parents[2] / "depgraph"
-if str(_DEPGRAPH_ROOT) not in sys.path:
-    sys.path.insert(0, str(_DEPGRAPH_ROOT))
-from lib.cli import build_parser as _depgraph_build_parser  # noqa: E402
-from lib.cli.context import Context as _DepgraphContext  # noqa: E402
+# bin/kg already adds the framework root to sys.path, so fully-qualified
+# depgraph.lib.* imports resolve without any additional sys.path mutation.
+from depgraph.lib.cli import build_parser as _depgraph_build_parser
+from depgraph.lib.cli.context import Context as _DepgraphContext
 
 
 def _run(args: argparse.Namespace, extra: list[str]) -> int:

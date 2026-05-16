@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from lib.cli.context import Context
-from lib.cli.context_cmd import cmd_context
+from depgraph.lib.cli.context import Context
+from depgraph.lib.cli.context_cmd import cmd_context
 
 
 def test_context_unknown_target_returns_1(data_dir: Path, capsys) -> None:

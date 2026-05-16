@@ -1,7 +1,7 @@
 """Tests for lib.config.render_extractor — specifically the {framework_dir}
 substitution that lets project.toml reference framework-shipped extractors."""
 from pathlib import Path
-import lib.config as config
+import depgraph.lib.config as config
 
 
 def test_framework_dir_substitution():

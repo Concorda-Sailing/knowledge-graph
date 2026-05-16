@@ -10,21 +10,15 @@ import json
 import sys
 from pathlib import Path
 
-_LOGIGRAPH_LIB = Path(__file__).resolve().parents[1]
-if str(_LOGIGRAPH_LIB) not in sys.path:
-    sys.path.insert(0, str(_LOGIGRAPH_LIB))
-from config import (  # noqa: E402
+# Framework root is already on sys.path when _shared is imported (via bin/logigraph,
+# bin/kg, or tests/conftest.py). Use fully-qualified imports throughout.
+from logigraph.lib.config import (
     project_repos,
     path_to_repo_relative,
     load_project_config,
 )
-
-# P5T3: lifted to kg.shared for cross-graph reuse.
-_TOOL_ROOT_FOR_KG = Path(__file__).resolve().parents[3]
-if str(_TOOL_ROOT_FOR_KG) not in sys.path:
-    sys.path.insert(0, str(_TOOL_ROOT_FOR_KG))
-from kg.shared.git import git_commit_if_changed as _kg_git_commit, default_actor  # noqa: E402
-from kg.shared.telemetry import load_telemetry_events  # noqa: E402
+from kg.shared.git import git_commit_if_changed as _kg_git_commit, default_actor
+from kg.shared.telemetry import load_telemetry_events
 
 from .context import Context
 

@@ -1,7 +1,7 @@
 """Tests for depgraph.lib.rollup — anchor resolution + BFS + formatting."""
 from __future__ import annotations
 
-from lib.rollup import resolve_anchor, AnchorResult
+from depgraph.lib.rollup import resolve_anchor, AnchorResult
 
 
 # Minimal fixture: two model nodes, a few domain nodes, no dependents needed
@@ -154,7 +154,7 @@ def test_resolve_anchor_relationship_raises_when_logigraph_index_omitted():
         resolve_anchor(rel, _depgraph_index())
 
 
-from lib.rollup import compute_rollup, Rollup, Entry
+from depgraph.lib.rollup import compute_rollup, Rollup, Entry
 
 
 # Reverse-dependents index — same shape as nodes/_index/dependents.json's
@@ -300,7 +300,7 @@ def test_compute_rollup_handles_cycle_in_dependents_index():
     assert any(e.id == b["id"] for e in rollup.by_kind["service"])
 
 
-from lib.rollup import format_rollup_text
+from depgraph.lib.rollup import format_rollup_text
 
 
 def test_format_rollup_text_summary_caps_each_kind_at_3():
@@ -353,7 +353,7 @@ def test_format_rollup_text_summary_no_truncation_marker_when_kind_under_cap():
 
 
 def test_format_rollup_text_no_anchor_renders_one_line_signal():
-    from lib.rollup import _KIND_ORDER
+    from depgraph.lib.rollup import _KIND_ORDER
     rollup = Rollup(
         anchor=AnchorResult(None, "not_found"),
         by_kind={k: [] for k in _KIND_ORDER},
@@ -366,7 +366,7 @@ def test_format_rollup_text_no_anchor_renders_one_line_signal():
 
 
 import json
-from lib.rollup import format_rollup_json
+from depgraph.lib.rollup import format_rollup_json
 
 
 def test_format_rollup_json_round_trips_through_json_module():
@@ -392,7 +392,7 @@ def test_format_rollup_json_round_trips_through_json_module():
 import tempfile
 from pathlib import Path
 
-from lib.rollup import load_rollup_inputs, RollupInputs
+from depgraph.lib.rollup import load_rollup_inputs, RollupInputs
 
 
 def test_load_rollup_inputs_raises_when_dependents_index_missing(tmp_path: Path):

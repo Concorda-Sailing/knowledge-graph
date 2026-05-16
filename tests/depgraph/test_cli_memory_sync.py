@@ -7,8 +7,8 @@ from unittest.mock import patch
 
 import pytest
 
-from lib.cli.context import Context
-from lib.cli.memory_sync import cmd_memory_sync
+from depgraph.lib.cli.context import Context
+from depgraph.lib.cli.memory_sync import cmd_memory_sync
 
 
 # ---------------------------------------------------------------------------
@@ -72,7 +72,7 @@ def test_memory_sync_canonical_missing_returns_1(
     fake_home.mkdir()
     # canonical = fake_home / ".claude" / "projects" / <encoded> / "memory"
     # It won't exist since we haven't created it.
-    with patch("lib.cli.memory_sync.Path") as MockPath:
+    with patch("depgraph.lib.cli.memory_sync.Path") as MockPath:
         # Restore Path behaviour but redirect home()
         import pathlib
         MockPath.side_effect = pathlib.Path
@@ -110,7 +110,7 @@ def test_memory_sync_copies_files(
     ctx = Context.from_data_dir(data_dir)
 
     import pathlib
-    with patch("lib.cli.memory_sync.Path") as MockPath:
+    with patch("depgraph.lib.cli.memory_sync.Path") as MockPath:
         MockPath.side_effect = pathlib.Path
         MockPath.home.return_value = fake_home
 
@@ -149,7 +149,7 @@ def test_memory_sync_redacts_password_line(
     ctx = Context.from_data_dir(data_dir)
 
     import pathlib
-    with patch("lib.cli.memory_sync.Path") as MockPath:
+    with patch("depgraph.lib.cli.memory_sync.Path") as MockPath:
         MockPath.side_effect = pathlib.Path
         MockPath.home.return_value = fake_home
 
@@ -197,7 +197,7 @@ def test_memory_sync_removes_stale_files(
     ctx = Context.from_data_dir(data_dir)
 
     import pathlib
-    with patch("lib.cli.memory_sync.Path") as MockPath:
+    with patch("depgraph.lib.cli.memory_sync.Path") as MockPath:
         MockPath.side_effect = pathlib.Path
         MockPath.home.return_value = fake_home
 
@@ -217,7 +217,7 @@ def test_memory_sync_removes_stale_files(
 def test_register_adds_memory_sync_subparser() -> None:
     """register() attaches a 'memory-sync' subparser with the correct default func."""
     import argparse as ap
-    from lib.cli.memory_sync import register
+    from depgraph.lib.cli.memory_sync import register
 
     parser = ap.ArgumentParser()
     sub = parser.add_subparsers()

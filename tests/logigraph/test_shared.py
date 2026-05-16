@@ -11,14 +11,14 @@ from pathlib import Path
 
 import pytest
 
-from lib.cli._shared import (
+from logigraph.lib.cli._shared import (
     find_rules_for_target,
     load_all_nodes,
     load_depgraph_corpus,
     repo_relative,
     resolve_node_path,
 )
-from lib.cli.context import Context
+from logigraph.lib.cli.context import Context
 
 
 # ---------------------------------------------------------------------------

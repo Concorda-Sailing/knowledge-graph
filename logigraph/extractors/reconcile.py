@@ -41,19 +41,16 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 TOOL_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(TOOL_ROOT))
+_FRAMEWORK_ROOT = TOOL_ROOT.parent  # ~/tools/knowledge-graph
+sys.path.insert(0, str(_FRAMEWORK_ROOT))
 
-# Also expose depgraph's lib/ so lib.chunker / lib.embeddings are importable.
-_DEPGRAPH_ROOT = TOOL_ROOT.parent / "depgraph"
-if str(_DEPGRAPH_ROOT) not in sys.path:
-    sys.path.insert(0, str(_DEPGRAPH_ROOT))
-
-from lib.config import resolve_data_dir, primary_repo_path, load_project_config  # noqa: E402
+from logigraph.lib.config import resolve_data_dir, primary_repo_path, load_project_config  # noqa: E402
 
 # Embedding libs live in depgraph's lib/. ImportError → "skipped" status.
+# depgraph.lib.* is accessible because we added the framework root above.
 try:
-    from lib.chunker import chunk_text
-    from lib.embeddings import (
+    from depgraph.lib.chunker import chunk_text
+    from depgraph.lib.embeddings import (
         EmbeddingUnavailable, embed_chunks, read_index, write_index,
     )
     _EMBEDDING_AVAILABLE = True

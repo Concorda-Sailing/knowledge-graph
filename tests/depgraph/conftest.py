@@ -1,14 +1,11 @@
 """Shared fixtures for depgraph.lib.cli tests."""
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 import pytest
 
 TOOL_ROOT = Path(__file__).resolve().parents[2]
-DEPGRAPH_ROOT = TOOL_ROOT / "depgraph"
-sys.path.insert(0, str(DEPGRAPH_ROOT))
 
 
 @pytest.fixture

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from lib.cli.context import Context
+from depgraph.lib.cli.context import Context
 
 
 def test_from_data_dir_derives_paths(data_dir: Path) -> None:

@@ -11,13 +11,13 @@ from pathlib import Path
 
 import pytest
 
-from lib.cli._shared import (
+from depgraph.lib.cli._shared import (
     _depgraph_commit_if_changed,
     find_nodes_for_target,
     load_dependents_index,
     mark_regen_in_progress,
 )
-from lib.cli.context import Context
+from depgraph.lib.cli.context import Context
 
 
 # ---------------------------------------------------------------------------

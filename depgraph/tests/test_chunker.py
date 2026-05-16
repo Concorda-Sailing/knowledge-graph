@@ -5,7 +5,7 @@ Chunks short inputs to a single chunk. Long inputs get split into overlapping
 1 token ~= 4 characters (this is the fastembed-recommended back-of-envelope;
 exact bge-small tokenization gives slightly different counts but the chunker
 doesn't need precision — it just needs to not exceed the model context window)."""
-from lib.chunker import chunk_text
+from depgraph.lib.chunker import chunk_text
 
 
 def test_short_text_one_chunk():

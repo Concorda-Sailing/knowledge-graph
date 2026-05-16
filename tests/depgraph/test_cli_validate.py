@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from lib.cli.context import Context
-from lib.cli.validate import cmd_validate
+from depgraph.lib.cli.context import Context
+from depgraph.lib.cli.validate import cmd_validate
 
 
 def test_validate_empty_nodes_exits_0(

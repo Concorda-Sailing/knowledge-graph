@@ -72,7 +72,7 @@ def cmd_context(args: argparse.Namespace, ctx: Context) -> int:
 
     if entity_ids:
         try:
-            from lib.rollup import (  # noqa: PLC0415 (deferred: lib.rollup lives in depgraph)
+            from depgraph.lib.rollup import (  # noqa: PLC0415 (deferred cross-graph import)
                 compute_rollup,
                 format_rollup_text,
                 load_rollup_inputs,

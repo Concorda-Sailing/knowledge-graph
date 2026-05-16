@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from lib.cli.context import Context
-from lib.cli.dossiers import cmd_dossiers
+from logigraph.lib.cli.context import Context
+from logigraph.lib.cli.dossiers import cmd_dossiers
 
 
 @pytest.fixture

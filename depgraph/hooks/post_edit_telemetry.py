@@ -39,8 +39,9 @@ import sys
 from pathlib import Path
 
 TOOL_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(TOOL_ROOT))
-from lib.config import resolve_data_dir  # noqa: E402
+_FRAMEWORK_ROOT = TOOL_ROOT.parent  # ~/tools/knowledge-graph
+sys.path.insert(0, str(_FRAMEWORK_ROOT))
+from depgraph.lib.config import resolve_data_dir  # noqa: E402
 
 DEPGRAPH = resolve_data_dir("DEPGRAPH_DATA_DIR")
 TELEMETRY_DIR = DEPGRAPH / "telemetry"

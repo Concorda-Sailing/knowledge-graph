@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from lib.cli.context import Context
-from lib.cli.process import (
+from logigraph.lib.cli.context import Context
+from logigraph.lib.cli.process import (
     cmd_process_rank,
     cmd_process_draft,
     cmd_process_finalize,

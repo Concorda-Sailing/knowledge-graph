@@ -1,8 +1,8 @@
 """Tests for lib.config additions — {kg_dir} substitution and repo_detectors."""
 from pathlib import Path
 
-import lib.config as config
-from lib.config import repo_detectors
+import depgraph.lib.config as config
+from depgraph.lib.config import repo_detectors
 
 
 # ---------------------------------------------------------------------------

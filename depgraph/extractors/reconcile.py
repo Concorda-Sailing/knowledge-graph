@@ -33,16 +33,18 @@ import sys
 from pathlib import Path
 
 TOOL_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(TOOL_ROOT))
-from lib.config import resolve_data_dir, primary_repo_path, basename_path_map  # noqa: E402
+_FRAMEWORK_ROOT = TOOL_ROOT.parent  # ~/tools/knowledge-graph
+sys.path.insert(0, str(_FRAMEWORK_ROOT))
+from depgraph.lib.config import resolve_data_dir, primary_repo_path, basename_path_map  # noqa: E402
 
 # Embedding lib lives alongside lib.config in lib/. ImportError is the trigger
 # for "skipped" status — fastembed not installed, numpy absent, etc. The
-# sys.path insertion above must happen first so lib.chunker / lib.embeddings
-# are resolvable when reconcile.py is invoked as a subprocess.
+# sys.path insertion above must happen first so depgraph.lib.chunker /
+# depgraph.lib.embeddings are resolvable when reconcile.py is invoked as a
+# subprocess.
 try:
-    from lib.chunker import chunk_text
-    from lib.embeddings import (
+    from depgraph.lib.chunker import chunk_text
+    from depgraph.lib.embeddings import (
         EmbeddingUnavailable, embed_chunks, read_index, write_index,
     )
     _EMBEDDING_AVAILABLE = True

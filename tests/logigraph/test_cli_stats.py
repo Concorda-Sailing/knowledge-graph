@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from lib.cli.context import Context
-from lib.cli.stats import cmd_stats
+from logigraph.lib.cli.context import Context
+from logigraph.lib.cli.stats import cmd_stats
 
 
 @pytest.fixture

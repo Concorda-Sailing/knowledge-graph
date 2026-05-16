@@ -21,7 +21,7 @@ from pathlib import Path
 _DEPGRAPH_LIB = Path(__file__).resolve().parents[1]
 if str(_DEPGRAPH_LIB) not in sys.path:
     sys.path.insert(0, str(_DEPGRAPH_LIB))
-from config import load_project_config, repo_for_basename  # noqa: E402
+from depgraph.lib.config import load_project_config, repo_for_basename  # noqa: E402
 
 from ._shared import load_dependents_index, find_nodes_for_target
 from .context import Context

@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from lib.cli.context import Context
-from lib.cli.commit_summary import cmd_commit_summary
+from depgraph.lib.cli.context import Context
+from depgraph.lib.cli.commit_summary import cmd_commit_summary
 
 
 # ---------------------------------------------------------------------------

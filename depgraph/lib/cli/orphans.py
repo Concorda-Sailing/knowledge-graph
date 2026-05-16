@@ -14,7 +14,7 @@ from pathlib import Path
 _DEPGRAPH_LIB = Path(__file__).resolve().parents[1]
 if str(_DEPGRAPH_LIB) not in sys.path:
     sys.path.insert(0, str(_DEPGRAPH_LIB))
-from config import basename_path_map  # noqa: E402
+from depgraph.lib.config import basename_path_map  # noqa: E402
 
 from .context import Context
 

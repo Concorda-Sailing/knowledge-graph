@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from lib.cli.context import Context
-from lib.cli.dossier import (
+from depgraph.lib.cli.context import Context
+from depgraph.lib.cli.dossier import (
     cmd_dossier_rank,
     cmd_dossier_draft,
     cmd_dossier_finalize,

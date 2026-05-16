@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from lib.cli.context import Context
-from lib.cli.orphans import cmd_orphans
+from depgraph.lib.cli.context import Context
+from depgraph.lib.cli.orphans import cmd_orphans
 
 
 def _make_node(ctx: Context, node_id: str, repo: str, rel_path: str) -> Path:

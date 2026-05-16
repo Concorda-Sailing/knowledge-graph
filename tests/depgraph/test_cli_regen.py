@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from lib.cli.context import Context
-from lib.cli.regen import cmd_regen
+from depgraph.lib.cli.context import Context
+from depgraph.lib.cli.regen import cmd_regen
 
 
 def test_regen_on_empty_repo_set_succeeds(data_dir: Path) -> None:
@@ -29,7 +29,7 @@ def test_regen_writes_in_progress_marker(data_dir: Path) -> None:
     """Even before reconcile completes, _meta.json gains regen_status."""
     ctx = Context.from_data_dir(data_dir)
     # Manually call mark_regen_in_progress to verify it's wired right.
-    from lib.cli._shared import mark_regen_in_progress
+    from depgraph.lib.cli._shared import mark_regen_in_progress
     mark_regen_in_progress(ctx)
     meta = json.loads(ctx.CORPUS_META.read_text())
     assert meta["regen_status"] == "in_progress"

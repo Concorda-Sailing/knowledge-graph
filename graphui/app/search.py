@@ -22,10 +22,10 @@ import numpy as np
 # Reuse depgraph's lib.embeddings.read_index — same module the loader
 # already imports via the sibling-repo sys.path hack.
 _GRAPHUI_TOOL_ROOT = Path(__file__).resolve().parent.parent
-_DEPGRAPH_TOOL_ROOT = _GRAPHUI_TOOL_ROOT.parent / "depgraph"
-if str(_DEPGRAPH_TOOL_ROOT) not in sys.path:
-    sys.path.insert(0, str(_DEPGRAPH_TOOL_ROOT))
-from lib.embeddings import read_index, EmbeddingUnavailable  # noqa: E402
+_FRAMEWORK_ROOT = _GRAPHUI_TOOL_ROOT.parent  # ~/tools/knowledge-graph
+if str(_FRAMEWORK_ROOT) not in sys.path:
+    sys.path.insert(0, str(_FRAMEWORK_ROOT))
+from depgraph.lib.embeddings import read_index, EmbeddingUnavailable  # noqa: E402
 
 from . import loader  # noqa: E402
 
@@ -214,7 +214,7 @@ def search(query: str, scopes: list[str] | None,
 
     # Embed the query (lazy import — first search triggers model load).
     try:
-        from lib.embeddings import embed_chunks  # noqa: F401
+        from depgraph.lib.embeddings import embed_chunks  # noqa: F401
         q_vec = embed_chunks([q])
     except (EmbeddingUnavailable, ImportError):
         q_vec = None

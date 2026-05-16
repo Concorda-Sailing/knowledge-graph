@@ -10,18 +10,11 @@ import json
 import sys
 from pathlib import Path
 
-# Make depgraph/lib/config.py importable so _shared can use project_repos.
-_DEPGRAPH_LIB = Path(__file__).resolve().parents[1]
-if str(_DEPGRAPH_LIB) not in sys.path:
-    sys.path.insert(0, str(_DEPGRAPH_LIB))
-from config import project_repos  # noqa: E402
-
-# P5T2: lifted to kg.shared for cross-graph reuse.
-_TOOL_ROOT = Path(__file__).resolve().parents[3]
-if str(_TOOL_ROOT) not in sys.path:
-    sys.path.insert(0, str(_TOOL_ROOT))
-from kg.shared.git import git_commit_if_changed as _kg_git_commit  # noqa: E402
-from kg.shared.telemetry import load_telemetry_events  # noqa: E402
+# Framework root is already on sys.path when _shared is imported (via bin/depgraph,
+# bin/kg, or tests/conftest.py). Use fully-qualified imports throughout.
+from depgraph.lib.config import project_repos
+from kg.shared.git import git_commit_if_changed as _kg_git_commit
+from kg.shared.telemetry import load_telemetry_events
 
 from .context import Context
 

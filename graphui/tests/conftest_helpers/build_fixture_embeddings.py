@@ -12,12 +12,12 @@ test_smoke.py reading the fixture node JSON directly.
 import sys
 from pathlib import Path
 
-# Reuse depgraph's lib via the sibling-repo sys.path hack.
+# Reuse depgraph's lib via the framework root.
 HERE = Path(__file__).resolve().parent
 GRAPHUI = HERE.parent.parent
-DEPGRAPH = GRAPHUI.parent / "depgraph"
-sys.path.insert(0, str(DEPGRAPH))
-from lib.embeddings import embed_chunks, write_index  # noqa: E402
+FRAMEWORK_ROOT = GRAPHUI.parent  # ~/tools/knowledge-graph
+sys.path.insert(0, str(FRAMEWORK_ROOT))
+from depgraph.lib.embeddings import embed_chunks, write_index  # noqa: E402
 
 
 def build_depgraph_fixture():

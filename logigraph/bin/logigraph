@@ -7,13 +7,13 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-# Make logigraph/lib importable.
-_LOGIGRAPH_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(_LOGIGRAPH_ROOT))
+# Add framework root so `logigraph.lib.*` resolves as a fully-qualified package.
+_FRAMEWORK_ROOT = Path(__file__).resolve().parents[2]  # ~/tools/knowledge-graph
+sys.path.insert(0, str(_FRAMEWORK_ROOT))
 
-from lib.config import resolve_data_dir  # noqa: E402
-from lib.cli import build_parser  # noqa: E402
-from lib.cli.context import Context  # noqa: E402
+from logigraph.lib.config import resolve_data_dir  # noqa: E402
+from logigraph.lib.cli import build_parser  # noqa: E402
+from logigraph.lib.cli.context import Context  # noqa: E402
 
 
 def main() -> int:

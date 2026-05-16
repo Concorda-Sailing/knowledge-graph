@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from lib.cli.context import Context
-from lib.cli.health import cmd_health
+from logigraph.lib.cli.context import Context
+from logigraph.lib.cli.health import cmd_health
 
 
 @pytest.fixture

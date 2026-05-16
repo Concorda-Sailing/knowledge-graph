@@ -5,7 +5,7 @@ enough to be reasonable in CI); first-run download (~140 MB) caches under
 ~/.cache/huggingface — subsequent runs are fast."""
 import json
 import numpy as np
-from lib.embeddings import (
+from depgraph.lib.embeddings import (
     embed_chunks,
     write_index,
     read_index,

@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from lib.cli.context import Context
-from lib.cli.validate import cmd_validate
+from logigraph.lib.cli.context import Context
+from logigraph.lib.cli.validate import cmd_validate
 
 
 @pytest.fixture
