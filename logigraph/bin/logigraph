@@ -586,34 +586,8 @@ def cmd_rule_bump(args: argparse.Namespace) -> int:
 
 
 def cmd_domain_bump(args: argparse.Namespace) -> int:
-    """Promote a domain node's definition_status (default: → human_reviewed).
-    Updates both the JSON node and the dossier frontmatter."""
-    domain_id = args.id
-    try:
-        node_path = _domain_node_path(domain_id)
-    except ValueError as e:
-        print(str(e), file=sys.stderr)
-        return 1
-    if not node_path.exists():
-        print(f"no domain node: {node_path.relative_to(LOGIGRAPH)}", file=sys.stderr)
-        return 1
-    node = json.loads(node_path.read_text())
-    new_status = args.status
-    node["definition_status"] = new_status
-    node_path.write_text(json.dumps(node, indent=2) + "\n")
-    print(f"bumped {node_path.relative_to(LOGIGRAPH)} → definition_status: {new_status}")
-
-    dossier_path = _domain_dossier_path(domain_id)
-    actor = args.actor or _default_actor()
-    paths = [node_path]
-    if dossier_path.exists():
-        _rewrite_dossier_frontmatter(dossier_path, node.get("structural_hash", ""), new_status, actor)
-        print(f"updated {dossier_path.relative_to(LOGIGRAPH)} frontmatter")
-        paths.append(dossier_path)
-
-    prefix = "review" if new_status == "human_reviewed" else "chore(bump)"
-    _git_commit_if_changed(LOGIGRAPH, paths, f"{prefix}: {domain_id}")
-    return 0
+    from lib.cli.domain import cmd_domain_bump as _impl
+    return _impl(args, _CTX)
 
 
 def cmd_process_bump(args: argparse.Namespace) -> int:
