@@ -1,0 +1,15 @@
+{
+  "primitives": [
+    {"id": "fixture::src", "primitive": "package", "name": "src", "owner": null},
+    {"id": "fixture::src/decorated.ts", "primitive": "module", "name": "src/decorated.ts", "owner": null},
+    {"id": "fixture::src/decorated.ts::log", "primitive": "function", "name": "log", "owner": null},
+    {"id": "fixture::src/decorated.ts::Role", "primitive": "function", "name": "Role", "owner": null},
+    {"id": "fixture::src/decorated.ts::Guard", "primitive": "function", "name": "Guard", "owner": null},
+    {"id": "fixture::src/decorated.ts::Audit", "primitive": "function", "name": "Audit", "owner": null},
+    {"id": "fixture::src/decorated.ts::Deprecated", "primitive": "function", "name": "Deprecated", "owner": null},
+    {"id": "fixture::src/decorated.ts::ApiController", "primitive": "class", "name": "ApiController", "owner": null},
+    {"id": "fixture::src/decorated.ts::ApiController.handleRequest", "primitive": "function", "name": "ApiController.handleRequest", "owner": "fixture::src/decorated.ts::ApiController"},
+    {"id": "fixture::src/decorated.ts::ApiController.deleteRecord", "primitive": "function", "name": "ApiController.deleteRecord", "owner": "fixture::src/decorated.ts::ApiController"}
+  ],
+  "edges": []
+}

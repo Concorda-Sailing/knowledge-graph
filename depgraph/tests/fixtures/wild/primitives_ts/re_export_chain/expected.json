@@ -1,0 +1,13 @@
+{
+  "primitives": [
+    {"id": "fixture::src", "primitive": "package", "name": "src", "owner": null},
+    {"id": "fixture::src/impl.ts", "primitive": "module", "name": "src/impl.ts", "owner": null},
+    {"id": "fixture::src/barrel.ts", "primitive": "module", "name": "src/barrel.ts", "owner": null},
+    {"id": "fixture::src/index.ts", "primitive": "module", "name": "src/index.ts", "owner": null},
+    {"id": "fixture::src/impl.ts::Widget", "primitive": "class", "name": "Widget", "owner": null},
+    {"id": "fixture::src/impl.ts::Widget.label", "primitive": "variable", "name": "Widget.label", "owner": "fixture::src/impl.ts::Widget"},
+    {"id": "fixture::src/impl.ts::Widget.render", "primitive": "function", "name": "Widget.render", "owner": "fixture::src/impl.ts::Widget"},
+    {"id": "fixture::src/impl.ts::createWidget", "primitive": "function", "name": "createWidget", "owner": null}
+  ],
+  "edges": []
+}

@@ -1,0 +1,11 @@
+{
+  "primitives": [
+    {"id": "fixture::src", "primitive": "package", "name": "src", "owner": null},
+    {"id": "fixture::src/components.tsx", "primitive": "module", "name": "src/components.tsx", "owner": null},
+    {"id": "fixture::src/components.tsx::MemoCard", "primitive": "variable", "name": "MemoCard", "owner": null},
+    {"id": "fixture::src/components.tsx::CardList", "primitive": "function", "name": "CardList", "owner": null},
+    {"id": "fixture::src/components.tsx::MaybeCard", "primitive": "function", "name": "MaybeCard", "owner": null},
+    {"id": "fixture::src/components.tsx::sideEffectRender", "primitive": "function", "name": "sideEffectRender", "owner": null}
+  ],
+  "edges": []
+}

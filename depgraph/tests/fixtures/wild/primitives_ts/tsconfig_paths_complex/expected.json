@@ -1,0 +1,16 @@
+{
+  "primitives": [
+    {"id": "fixture::src", "primitive": "package", "name": "src", "owner": null},
+    {"id": "fixture::src/components", "primitive": "package", "name": "src/components", "owner": null},
+    {"id": "fixture::src/lib", "primitive": "package", "name": "src/lib", "owner": null},
+    {"id": "fixture::src/index.ts", "primitive": "module", "name": "src/index.ts", "owner": null},
+    {"id": "fixture::src/components/Card.ts", "primitive": "module", "name": "src/components/Card.ts", "owner": null},
+    {"id": "fixture::src/lib/utils.ts", "primitive": "module", "name": "src/lib/utils.ts", "owner": null},
+    {"id": "fixture::src/index.ts::bootstrap", "primitive": "function", "name": "bootstrap", "owner": null},
+    {"id": "fixture::src/components/Card.ts::Card", "primitive": "class", "name": "Card", "owner": null},
+    {"id": "fixture::src/components/Card.ts::Card.render", "primitive": "function", "name": "Card.render", "owner": "fixture::src/components/Card.ts::Card"},
+    {"id": "fixture::src/lib/utils.ts::formatDate", "primitive": "function", "name": "formatDate", "owner": null},
+    {"id": "fixture::src/lib/utils.ts::truncate", "primitive": "function", "name": "truncate", "owner": null}
+  ],
+  "edges": []
+}

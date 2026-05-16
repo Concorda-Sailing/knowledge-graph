@@ -1,0 +1,10 @@
+{
+  "primitives": [
+    {"id": "fixture::src", "primitive": "package", "name": "src", "owner": null},
+    {"id": "fixture::src/overloads.ts", "primitive": "module", "name": "src/overloads.ts", "owner": null},
+    {"id": "fixture::src/overloads.ts::parse", "primitive": "function", "name": "parse", "owner": null},
+    {"id": "fixture::src/overloads.ts::Formatter", "primitive": "class", "name": "Formatter", "owner": null},
+    {"id": "fixture::src/overloads.ts::Formatter.format", "primitive": "function", "name": "Formatter.format", "owner": "fixture::src/overloads.ts::Formatter"}
+  ],
+  "edges": []
+}

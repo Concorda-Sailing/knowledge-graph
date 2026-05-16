@@ -1,0 +1,12 @@
+{
+  "primitives": [
+    {"id": "fixture::src", "primitive": "package", "name": "src", "owner": null},
+    {"id": "fixture::src/collisions.ts", "primitive": "module", "name": "src/collisions.ts", "owner": null},
+    {"id": "fixture::src/collisions.ts::value", "primitive": "class", "name": "value", "owner": null},
+    {"id": "fixture::src/collisions.ts::Container", "primitive": "class", "name": "Container", "owner": null},
+    {"id": "fixture::src/collisions.ts::Container.getValue", "primitive": "function", "name": "Container.getValue", "owner": "fixture::src/collisions.ts::Container"},
+    {"id": "fixture::src/collisions.ts::Container.value:static", "primitive": "function", "name": "Container.value:static", "owner": "fixture::src/collisions.ts::Container"},
+    {"id": "fixture::src/collisions.ts::Container.value", "primitive": "variable", "name": "Container.value", "owner": "fixture::src/collisions.ts::Container"}
+  ],
+  "edges": []
+}

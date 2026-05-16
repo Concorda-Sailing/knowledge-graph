@@ -1,0 +1,14 @@
+{
+  "primitives": [
+    {"id": "fixture::src", "primitive": "package", "name": "src", "owner": null},
+    {"id": "fixture::src/generics.ts", "primitive": "module", "name": "src/generics.ts", "owner": null},
+    {"id": "fixture::src/generics.ts::Flatten", "primitive": "class", "name": "Flatten", "owner": null},
+    {"id": "fixture::src/generics.ts::Repository", "primitive": "class", "name": "Repository", "owner": null},
+    {"id": "fixture::src/generics.ts::Repository.find", "primitive": "function", "name": "Repository.find", "owner": "fixture::src/generics.ts::Repository"},
+    {"id": "fixture::src/generics.ts::Repository.set", "primitive": "function", "name": "Repository.set", "owner": "fixture::src/generics.ts::Repository"},
+    {"id": "fixture::src/generics.ts::Repository.items", "primitive": "variable", "name": "Repository.items", "owner": "fixture::src/generics.ts::Repository"},
+    {"id": "fixture::src/generics.ts::Transformer", "primitive": "class", "name": "Transformer", "owner": null},
+    {"id": "fixture::src/generics.ts::Transformer.transform", "primitive": "function", "name": "Transformer.transform", "owner": "fixture::src/generics.ts::Transformer"}
+  ],
+  "edges": []
+}
