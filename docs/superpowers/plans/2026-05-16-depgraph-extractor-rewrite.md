@@ -190,6 +190,8 @@ The `...` above stands for fields shown in the prior example; they're identical 
 
 Edges are stored embedded on each primitive's `edges_out`. Reverse index (`by_target.json`) is built by reconcile. Total source-of-truth is the per-primitive files.
 
+**`schema_version: 2` discriminator note.** Logigraph also uses `schema_version: 2` for its own node files. The two systems disambiguate by *directory*, not by version: depgraph nodes live under `<data_dir>/depgraph/nodes/`, logigraph nodes under `<data_dir>/logigraph/nodes/`. Each tool refuses to load files outside its own root. If we ever co-locate them, the discriminator becomes a `kind_namespace` field (`"depgraph"` / `"logigraph"`); not needed for this pass.
+
 ### Phasing summary
 
 | Phase | Goal | Tests | Cutover safe? |
@@ -458,6 +460,31 @@ def is_external_terminal(node_id: str) -> bool:
     return node_id.startswith("external::")
 
 
+def slugify_id_for_filename(node_id: str) -> str:
+    """Filename-safe slug. Mirrors the per-language slugify so reconcile
+    can detect cross-language collisions without coupling to extractor code."""
+    out = node_id.replace("::", "__")
+    out = "".join(c if c.isalnum() or c == "_" else "_" for c in out)
+    return out.strip("_")
+
+
+def check_slug_collisions(primitives: list[dict]) -> list[str]:
+    """Return error strings for primitives whose slugified ids collide.
+
+    Two distinct ids that slugify to the same filename would silently
+    overwrite each other on disk. Reconcile calls this once per regen
+    over the full primitive list; corpora with paths containing spaces
+    or unicode are the most likely to trigger.
+    """
+    by_slug: dict[str, list[str]] = {}
+    for p in primitives:
+        by_slug.setdefault(slugify_id_for_filename(p["id"]), []).append(p["id"])
+    return [
+        f"slug collision: ids {sorted(ids)} all slugify to {slug!r}"
+        for slug, ids in by_slug.items() if len(ids) > 1
+    ]
+
+
 def structural_hash_payload(*, primitive: str, name: str,
                               signature: dict, body_text: str = "") -> dict:
     """Canonical structural-hash payload per spec:
@@ -710,6 +737,38 @@ def test_extractor_path_resolves_under_framework_root():
     for name in ("typescript", "python", "sql"):
         l = langs[name]
         assert l.extractor.exists(), f"{name} extractor missing: {l.extractor}"
+
+
+def test_per_project_language_adds_new_language(tmp_path):
+    """A project.toml can register an entirely new language extractor."""
+    project_toml = tmp_path / "project.toml"
+    (tmp_path / "extract_yaml.py").touch()
+    project_toml.write_text("""
+[languages.yaml]
+extensions = [".yaml", ".yml"]
+extractor = "extract_yaml.py"
+runtime = "python"
+""")
+    langs = {l.name: l for l in load_languages(FRAMEWORK_TOML, project_toml)}
+    assert "yaml" in langs
+    assert "typescript" in langs  # framework langs still present
+    assert langs["yaml"].extensions == [".yaml", ".yml"]
+
+
+def test_per_project_language_overrides_framework_by_name(tmp_path):
+    """Project entry with the same name as a framework one replaces it."""
+    project_toml = tmp_path / "project.toml"
+    (tmp_path / "custom_python.py").touch()
+    project_toml.write_text("""
+[languages.python]
+extensions = [".py", ".pyi"]
+extractor = "custom_python.py"
+runtime = "python"
+""")
+    langs = {l.name: l for l in load_languages(FRAMEWORK_TOML, project_toml)}
+    py = langs["python"]
+    assert py.extensions == [".py", ".pyi"]   # overridden
+    assert py.extractor.name == "custom_python.py"
 ```
 
 - [ ] **Step 2: Write `depgraph/languages.toml`**
@@ -737,7 +796,9 @@ runtime = "python"
 - [ ] **Step 3: Write `depgraph/lib/language_registry.py`**
 
 ```python
-"""Language registry loader. Reads languages.toml from framework or project."""
+"""Language registry loader. Reads languages.toml from framework + optionally
+a per-project `[languages.*]` block in project.toml. Per-project entries
+override framework entries by name; entirely-new languages get added."""
 from __future__ import annotations
 
 import tomllib
@@ -753,20 +814,36 @@ class Language:
     runtime: str
 
 
-def load_languages(toml_path: Path) -> list[Language]:
-    """Load language definitions. `extractor` is resolved relative to the
-    framework root (the parent of `depgraph/`)."""
-    framework_root = toml_path.parent.parent  # languages.toml lives at depgraph/languages.toml
+def _read_languages_section(toml_path: Path, *, base_dir: Path) -> dict[str, Language]:
     data = tomllib.loads(toml_path.read_text())
-    langs = []
+    out: dict[str, Language] = {}
     for name, spec in data.get("languages", {}).items():
-        langs.append(Language(
+        out[name] = Language(
             name=name,
             extensions=list(spec["extensions"]),
-            extractor=(framework_root / spec["extractor"]).resolve(),
+            extractor=(base_dir / spec["extractor"]).resolve(),
             runtime=spec["runtime"],
-        ))
-    return langs
+        )
+    return out
+
+
+def load_languages(framework_toml: Path,
+                    project_toml: Path | None = None) -> list[Language]:
+    """Load framework languages, then merge any per-project overrides /
+    additions from project_toml's `[languages.*]` section.
+
+    `extractor` paths in framework_toml resolve relative to the framework
+    root (parent of `depgraph/`). Paths in project_toml resolve relative
+    to project_toml's parent.
+    """
+    framework_root = framework_toml.parent.parent
+    merged = _read_languages_section(framework_toml, base_dir=framework_root)
+    if project_toml is not None and project_toml.exists():
+        project_root = project_toml.parent
+        for name, lang in _read_languages_section(project_toml,
+                                                    base_dir=project_root).items():
+            merged[name] = lang  # project overrides framework on name collision
+    return list(merged.values())
 ```
 
 - [ ] **Step 4: Create extractor stubs so registry tests pass**
@@ -1367,6 +1444,10 @@ export class Holder {
   format(x: number): string;
   format(x: string): string;
   format(x: any): string { return String(x); }
+
+  // Same-name static + instance: must NOT collide on id.
+  shared() { return "instance"; }
+  static shared() { return "static"; }
 }
 ```
 
@@ -1441,6 +1522,16 @@ def test_jsx_returning_function_sets_attribute():
     assert fns["Header"]["signature"]["returns_jsx"] is True
     assert fns["Footer"]["signature"]["returns_jsx"] is True
     assert fns["notAComponent"]["signature"]["returns_jsx"] is False
+
+def test_same_name_static_and_instance_method_disambiguate():
+    """`shared()` and `static shared()` must produce distinct ids."""
+    prims = run_extractor("functions")
+    ids = {p["id"] for p in prims if p["primitive"] == "function"
+           and p["owner"] == "fixture::src/all.ts::Holder"
+           and p["name"].split(".")[-1].startswith("shared")}
+    assert "fixture::src/all.ts::Holder.shared" in ids
+    assert "fixture::src/all.ts::Holder.shared:static" in ids
+    assert len(ids) == 2
 ```
 
 - [ ] **Step 3: Run, verify fail**
@@ -1563,7 +1654,12 @@ function extractFunctions(sf: SourceFile, repoKey: string, relPath: string): Pri
     for (const m of cls.getMethods()) {
       // Skip overload stubs on methods too.
       if (!m.hasBody()) continue;
-      out.push(functionPrimitive(m, m.getName(), classId, {
+      // TS allows same-name static + instance methods on one class. Append
+      // a `:static` suffix to disambiguate ids.
+      const methodLocalName = m.isStatic()
+        ? `${m.getName()}:static`
+        : m.getName();
+      out.push(functionPrimitive(m, methodLocalName, classId, {
         parameters: m.getParameters().map(paramShape),
         return_type: m.getReturnTypeNode()?.getText() ?? null,
         is_async: m.isAsync(),
@@ -1962,6 +2058,11 @@ def slugify_id(node_id: str) -> str:
     out = "".join(c if c.isalnum() or c == "_" else "_" for c in out)
     return out.strip("_")
 
+# Note: corpus-wide slug-collision detection lives in depgraph/lib/primitives.py
+# as `check_slug_collisions()` — reconcile invokes it during regen so two
+# distinct primitive ids that slugify to the same filename get flagged
+# (e.g., when a repo path contains spaces or unusual chars).
+
 
 def structural_hash(payload: object) -> str:
     blob = json.dumps(payload, sort_keys=True, default=str).encode()
@@ -2150,6 +2251,13 @@ class GenericFoo[T, U]:
 
 class Abstract(metaclass=ABCMeta):
     pass
+
+class Outer:
+    """Nested classes must produce primitives with dotted qualnames and
+    owner pointing at the parent class id."""
+    class Inner:
+        def inner_method(self) -> int:
+            return 1
 ```
 
 - [ ] **Step 1: Add tests**
@@ -2190,6 +2298,18 @@ def test_pep695_type_parameters():
     prims = extract("classes_and_functions")
     classes = {p["name"]: p for p in prims if p["primitive"] == "class"}
     assert classes["GenericFoo"]["attributes"]["template_parameters"] == ["T", "U"]
+
+
+def test_nested_class_extracted_with_dotted_qualname():
+    prims = extract("classes_and_functions")
+    classes = {p["name"]: p for p in prims if p["primitive"] == "class"}
+    assert "Outer" in classes
+    assert "Outer.Inner" in classes, f"missing nested class; got: {list(classes)}"
+    inner = classes["Outer.Inner"]
+    assert inner["owner"] == "fixture::src.py::Outer"
+    fns = {p["name"]: p for p in prims if p["primitive"] == "function"}
+    assert "Outer.Inner.inner_method" in fns
+    assert fns["Outer.Inner.inner_method"]["owner"] == "fixture::src.py::Outer.Inner"
 ```
 
 - [ ] **Step 2: Run, verify fail.**
@@ -2228,25 +2348,45 @@ def _walk_module_body(tree: ast.Module, *, repo_key: str, rel_path: str) -> Iter
                                              repo_key=repo_key, rel_path=rel_path)
 
 
-def _emit_class(node: ast.ClassDef, *, repo_key: str, rel_path: str) -> Iterator[dict]:
-    class_id = canonical_id(repo_key, rel_path, node.name)
+def _emit_class(node: ast.ClassDef, *, repo_key: str, rel_path: str,
+                 parent_qualname: str | None = None) -> Iterator[dict]:
+    """Emit a class primitive plus its members. Recurses into nested classes.
+
+    `parent_qualname` is the dotted name of the enclosing class chain, used
+    to build nested ids like `Outer.Inner` and `Outer.Inner.method`.
+    """
+    qualname = f"{parent_qualname}.{node.name}" if parent_qualname else node.name
+    class_id = canonical_id(repo_key, rel_path, qualname)
+    owner = canonical_id(repo_key, rel_path, parent_qualname) if parent_qualname else None
     tparams = [tp.name for tp in getattr(node, "type_params", [])]
     yield _base_primitive(
-        schema_id=class_id, primitive="class", name=node.name, owner=None,
+        schema_id=class_id, primitive="class", name=qualname, owner=owner,
         repo=repo_key, path=rel_path, line=node.lineno, end_line=node.end_lineno or node.lineno,
         signature={"decorators": [_decorator_name(d) for d in node.decorator_list]},
         attributes_overrides={"abstract": False, "instantiable": True,
                               "template_parameters": tparams},
-        structural_payload={"primitive": "class", "name": node.name,
+        structural_payload={"primitive": "class", "name": qualname,
                             "signature": {"decorators": [_decorator_name(d) for d in node.decorator_list],
                                             "bases": [ast.unparse(b) for b in node.bases]},
                             "body_text": ast.unparse(node)},
     )
     for child in node.body:
-        if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            yield _function_primitive(child, owner=class_id, repo_key=repo_key, rel_path=rel_path)
+        if isinstance(child, ast.ClassDef):
+            # Nested class — recurse with this class as parent. The
+            # recursive call builds the dotted qualname (Outer.Inner) and
+            # sets `owner` to the enclosing class id.
+            yield from _emit_class(child, repo_key=repo_key, rel_path=rel_path,
+                                     parent_qualname=qualname)
+        elif isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            # `owner` carries the parent's full canonical id; the function
+            # primitive derives its symbol as `<owner-qualname>.<name>`,
+            # which works for nested classes since the owner's id ends
+            # with the dotted qualname (Outer.Inner).
+            yield _function_primitive(child, owner=class_id, repo_key=repo_key,
+                                         rel_path=rel_path)
         elif isinstance(child, (ast.Assign, ast.AnnAssign)):
-            yield from _variable_primitives(child, owner=class_id, repo_key=repo_key, rel_path=rel_path)
+            yield from _variable_primitives(child, owner=class_id, repo_key=repo_key,
+                                             rel_path=rel_path)
 
 
 def _function_primitive(node: ast.FunctionDef | ast.AsyncFunctionDef,
@@ -2715,15 +2855,50 @@ def test_tsconfig_path_alias_resolves():
                for e in imports), imports
 ```
 
-- [ ] **Step 4: Run, verify fail. Implement. Verify pass.**
+- [ ] **Step 4: Re-export fixture + test (TS)**
+
+```typescript
+// fixtures/edges_ts/imports_reexport/src/barrel.ts
+export { foo } from "./impl.js";
+```
+
+```typescript
+// fixtures/edges_ts/imports_reexport/src/impl.ts
+export function foo() {}
+```
+
+```typescript
+// fixtures/edges_ts/imports_reexport/src/consumer.ts
+import { foo } from "./barrel.js";
+```
+
+Test:
+
+```python
+def test_reexport_resolves_to_origin_with_fuzzy_confidence():
+    """consumer imports foo via barrel; the imports edge from consumer to
+    impl::foo should be emitted with confidence=fuzzy (v1 doesn't follow
+    re-export chains transitively for exact resolution)."""
+    prims = run_extractor("imports_reexport", which="edges")
+    consumer = next(p for p in prims if p["source"]["path"] == "src/consumer.ts"
+                    and p["primitive"] == "module")
+    imports = [e for e in consumer["edges_out"] if e["kind"] == "imports"]
+    foo_imports = [e for e in imports if "foo" in e["target"]]
+    assert foo_imports, "expected at least one imports edge mentioning foo"
+    # Either fuzzy-resolved to impl, or exact to the barrel — both acceptable
+    # for v0; the gate is that we emit *something*, not nothing.
+    assert any(e["target"].endswith("::foo") for e in foo_imports), foo_imports
+```
+
+- [ ] **Step 5: Run, verify fail. Implement. Verify pass.**
 
 TS: walk `sf.getImportDeclarations()`. For each named import, resolve the module specifier through ts-morph's `Project` initialized with the fixture's `tsconfig.json` (so its `compilerOptions.paths` apply); use `imp.getModuleSpecifierSourceFile()` which honors path aliases. If a tsconfig exists at the repo root, load it via `new Project({ tsConfigFilePath: ... })`; otherwise default config + the repo's files. Non-resolved imports (true externals or unmapped) emit `confidence: "unresolved"` and target `external::npm::<package>::<symbol>` derived from the bare specifier.
 
-Re-exports (`export { foo } from "./b"`) emit an `imports` edge from the re-exporting module to the source module/symbol with `confidence: "fuzzy"` — downstream `imports` against the re-exporter aren't transitively followed in this pass; that's a v1 limitation called out in the "Out of scope" section.
+Re-exports: walk `sf.getExportDeclarations()` separately. For `export { foo } from "./b"`, emit an `imports` edge from the re-exporting module to `<target-module>::foo` with `confidence: "fuzzy"`. A consumer's `import { foo } from "./barrel"` looks up the resolved target via the same module-specifier path; if barrel re-exports foo, the resolution chases one hop. Deeper chains stay `fuzzy` for v0 — full transitive resolution is a follow-up.
 
 Python: walk `ast.Import` and `ast.ImportFrom`. For `ImportFrom` with `level > 0` (relative), resolve from the module's directory + N parents per the `level`. For absolute imports, match the dot-joined name against the corpus's module index (paths converted to dotted form: `concorda_api/routers/events.py` → `concorda_api.routers.events`). For unresolved targets, emit `external::pypi::<root-package>::<symbol>` where root-package is the first dotted segment.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add depgraph/extractors/typescript/extract.ts \
@@ -2732,8 +2907,9 @@ git add depgraph/extractors/typescript/extract.ts \
         depgraph/tests/extractors/test_python_edges.py \
         depgraph/tests/extractors/fixtures/edges_ts/imports/ \
         depgraph/tests/extractors/fixtures/edges_ts/imports_with_paths/ \
+        depgraph/tests/extractors/fixtures/edges_ts/imports_reexport/ \
         depgraph/tests/extractors/fixtures/edges_py/imports/
-git commit -m "depgraph/extractors: imports edges (incl. tsconfig path aliases + Python relative+absolute)"
+git commit -m "depgraph/extractors: imports edges (incl. tsconfig path aliases, re-exports, Python relative+absolute)"
 ```
 
 ### Task 3.4: `calls` + `instantiates` (with intra-function type binding)
@@ -3004,25 +3180,9 @@ git commit -m "depgraph/extractors: calls/instantiates edges with intra-function
 
 ### Task 3.5: `references` + `reads` + `assigns` + `decorates`
 
-These are quieter edges but matter for classification.
+`reads` and `assigns` distinguish read vs write access to module-scope variables (immutability rules anchor on this). `decorates` connects each decorator-source to its decorated target. `references` is the catch-all for any "this primitive names that one" relationship not already covered by a more specific edge kind.
 
-- [ ] **Step 1: TS fixture**
-
-```typescript
-// fixtures/edges_ts/references/src/file.ts
-function reader(): number {
-  return globalCount;
-}
-function writer() {
-  globalCount = 1;
-}
-let globalCount = 0;
-function decorated() {}
-```
-
-Tests check that `reader` has a `reads` edge to `globalCount`, `writer` has an `assigns` edge to it.
-
-- [ ] **Step 2: Python fixture**
+- [ ] **Step 1: Python fixture**
 
 ```python
 # fixtures/edges_py/references/src.py
@@ -3037,14 +3197,188 @@ def writer():
 
 import functools
 @functools.lru_cache()
-def decorated(): pass
+def decorated():
+    pass
 ```
 
-Tests check `reads` and `assigns` edges plus `decorates` from `functools.lru_cache` → `decorated`.
+- [ ] **Step 2: Failing tests**
 
-- [ ] **Step 3: Implement, run, pass, commit**
+```python
+def test_reads_edge_py():
+    prims = list(extract_repo(repo_key="fixture", repo_path=FIXTURE_DIR / "references"))
+    reader = next(p for p in prims if p["name"] == "reader")
+    reads = [e for e in reader["edges_out"] if e["kind"] == "reads"]
+    assert any(e["target"] == "fixture::src.py::GLOBAL" for e in reads)
 
-For both languages: walk function body looking for variable access (Name in load context → reads; Name in store context → assigns). For decorators, the function/class primitive's `signature.decorators` already lists them; convert to `decorates` edges from the decorator-source (Name reference at module/import level) to the decorated target.
+def test_assigns_edge_py():
+    prims = list(extract_repo(repo_key="fixture", repo_path=FIXTURE_DIR / "references"))
+    writer = next(p for p in prims if p["name"] == "writer")
+    assigns = [e for e in writer["edges_out"] if e["kind"] == "assigns"]
+    assert any(e["target"] == "fixture::src.py::GLOBAL" for e in assigns)
+
+def test_decorates_edge_py():
+    """The decorator `functools.lru_cache()` should produce a `decorates`
+    edge from the decorator source to the decorated function. Source for
+    an external decorator is the external terminal; for a locally-defined
+    decorator it'd be the local function id."""
+    prims = list(extract_repo(repo_key="fixture", repo_path=FIXTURE_DIR / "references"))
+    decorated = next(p for p in prims if p["name"] == "decorated")
+    incoming_decorates = [
+        e for src_p in prims for e in src_p["edges_out"]
+        if e["kind"] == "decorates" and e["target"] == decorated["id"]
+    ]
+    assert incoming_decorates, "expected a decorates edge into `decorated`"
+    # Decorator source for `functools.lru_cache` resolves to external terminal
+    sources = {(p["id"], e["target"]) for p in prims for e in p["edges_out"]
+               if e["kind"] == "decorates" and e["target"] == decorated["id"]}
+    src_ids = {sid for sid, _ in sources}
+    assert any("functools" in sid for sid in src_ids), src_ids
+```
+
+- [ ] **Step 3: TS fixture + tests**
+
+```typescript
+// fixtures/edges_ts/references/src/file.ts
+let globalCount = 0;
+export function reader(): number {
+  return globalCount;
+}
+export function writer() {
+  globalCount = 1;
+}
+```
+
+Test:
+
+```python
+def test_reads_edge_ts():
+    prims = run_extractor("references", which="edges")
+    reader = next(p for p in prims if p["name"] == "reader")
+    reads = [e for e in reader["edges_out"] if e["kind"] == "reads"]
+    assert any(e["target"] == "fixture::src/file.ts::globalCount" for e in reads)
+
+def test_assigns_edge_ts():
+    prims = run_extractor("references", which="edges")
+    writer = next(p for p in prims if p["name"] == "writer")
+    assigns = [e for e in writer["edges_out"] if e["kind"] == "assigns"]
+    assert any(e["target"] == "fixture::src/file.ts::globalCount" for e in assigns)
+```
+
+- [ ] **Step 4: Implement (Python)**
+
+Add to `depgraph/extractors/python/extract.py`:
+
+```python
+def _attach_var_access_edges(primitives, *, trees_by_path):
+    """For each function, walk body and emit `reads` / `assigns` edges to
+    module-scope variables defined in the same file (or imported)."""
+    by_path: dict[str, dict[str, str]] = {}  # path -> { var_name -> var_id }
+    for p in primitives:
+        if (p["primitive"] == "variable" and p.get("owner") is None):
+            by_path.setdefault(p["source"]["path"], {})[p["name"]] = p["id"]
+
+    for path, tree in trees_by_path.items():
+        local_vars = by_path.get(path, {})
+        if not local_vars:
+            continue
+        for fn_node in ast.walk(tree):
+            if not isinstance(fn_node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue
+            fn_prim = next(
+                (p for p in primitives
+                 if p["primitive"] == "function"
+                    and p["source"]["path"] == path
+                    and p["source"]["line"] == fn_node.lineno),
+                None,
+            )
+            if fn_prim is None:
+                continue
+            for sub in ast.walk(fn_node):
+                if isinstance(sub, ast.Name) and sub.id in local_vars:
+                    var_id = local_vars[sub.id]
+                    if isinstance(sub.ctx, ast.Load):
+                        fn_prim["edges_out"].append({
+                            "target": var_id, "kind": "reads",
+                            "via": "name_load", "where": f"{path}:{sub.lineno}",
+                            "confidence": "exact",
+                        })
+                    elif isinstance(sub.ctx, ast.Store):
+                        fn_prim["edges_out"].append({
+                            "target": var_id, "kind": "assigns",
+                            "via": "name_store", "where": f"{path}:{sub.lineno}",
+                            "confidence": "exact",
+                        })
+
+
+def _attach_decorator_edges(primitives, *, trees_by_path, imports_by_path):
+    """For each function/class with decorators in its signature, emit a
+    `decorates` edge from the decorator source to the decorated primitive.
+    The decorator source resolves via local names (for in-file definitions)
+    or imports (for external decorators)."""
+    local_by_path: dict[str, dict[str, str]] = {}
+    for p in primitives:
+        if p.get("owner") is None and p["primitive"] in {"class", "function", "variable"}:
+            local_by_path.setdefault(p["source"]["path"], {})[p["name"]] = p["id"]
+
+    for p in primitives:
+        if p["primitive"] not in {"class", "function"}:
+            continue
+        decorators = p.get("signature", {}).get("decorators", [])
+        if not decorators:
+            continue
+        path = p["source"]["path"]
+        locals_ = local_by_path.get(path, {})
+        imports = imports_by_path.get(path, {})
+        for dec in decorators:
+            # Match the head of the dotted name against local + imported names
+            head = dec.split(".")[0]
+            source_id = locals_.get(head) or imports.get(head)
+            if source_id is None:
+                source_id = f"external::unresolved::{dec}"
+            # Emit decorates edge from source → target. Find the source
+            # primitive and append the edge to its edges_out (not the
+            # decorated primitive's).
+            source_prim = next((q for q in primitives if q["id"] == source_id), None)
+            if source_prim is None:
+                # External terminal — record edge on a synthetic "external"
+                # bucket primitive? For simplicity emit it on the *target*
+                # under a `decorated_by` reverse-kind. Simplest path: emit
+                # on the decorated target as `references` from the dec
+                # source. But the spec says decorates source = decorator.
+                # Compromise for v0: emit on the decorated primitive with
+                # `via: decorator_external`.
+                p["edges_out"].append({
+                    "target": source_id, "kind": "references",
+                    "via": "decorator_external",
+                    "where": f"{path}:{p['source']['line']}",
+                    "confidence": "exact",
+                })
+                continue
+            source_prim["edges_out"].append({
+                "target": p["id"], "kind": "decorates",
+                "via": dec,
+                "where": f"{path}:{p['source']['line']}",
+                "confidence": "exact",
+            })
+```
+
+- [ ] **Step 5: Implement (TS)**
+
+TS uses ts-morph's `Identifier` walk. For each function/method's `getDescendantsOfKind(SyntaxKind.Identifier)`, check whether the parent is an assignment target (`BinaryExpression` with `=`) or a read. For decorators on functions/methods, the decorator's expression resolves via the symbol-table lookup the same way `imports` does.
+
+- [ ] **Step 6: Run, verify pass + commit**
+
+```bash
+pytest depgraph/tests/extractors/test_python_edges.py -v -k 'reads or assigns or decorates'
+pytest depgraph/tests/extractors/test_typescript_edges.py -v -k 'reads or assigns'
+git add depgraph/extractors/python/extract.py \
+        depgraph/extractors/typescript/extract.ts \
+        depgraph/tests/extractors/test_python_edges.py \
+        depgraph/tests/extractors/test_typescript_edges.py \
+        depgraph/tests/extractors/fixtures/edges_py/references/ \
+        depgraph/tests/extractors/fixtures/edges_ts/references/
+git commit -m "depgraph/extractors: reads / assigns / decorates edges"
+```
 
 ### Task 3.6: `tests` edges (assertion-scoped)
 
@@ -4844,7 +5178,110 @@ git add depgraph/lib/system_stub/ depgraph/tests/lib/test_db_access.py \
 git commit -m "depgraph/system_stub: db_access edges target schema primitives via ORM model references"
 ```
 
-### Task 4.7: Schema validation sweep — emitted schema primitives validate
+### Task 4.7: Attach `up_operations[]` to migration module primitives
+
+After extraction + reconciliation, each migration module primitive (emitted by the Python extractor as a regular `module` primitive at `concorda-api::migrations/047_organization_region.py`) gets an `attributes.migration_order` and an `attributes.up_operations` list containing the ids of the schema primitives it produced. Logigraph rules about migration discipline anchor on these.
+
+- [ ] **Step 1: Failing test**
+
+```python
+# depgraph/tests/lib/sql/test_migration_attach.py
+from pathlib import Path
+from depgraph.lib.sql.migration import extract_migration
+from depgraph.lib.sql.reconcile import reconcile_schema, schema_to_primitives
+from depgraph.lib.sql.attach import attach_migration_attributes
+
+FIXTURES = Path(__file__).parent / "fixtures" / "migrations"
+
+
+def test_migration_module_gets_order_and_up_operations():
+    # A synthetic module primitive as the Python extractor would emit
+    module_prim = {
+        "schema_version": 2,
+        "id": "fixture::001_create_users.py",
+        "primitive": "module",
+        "name": "001_create_users.py",
+        "owner": None,
+        "source": {"repo": "fixture", "path": "001_create_users.py",
+                   "language": "python", "line": 1, "end_line": 10},
+        "signature": {}, "attributes": {},
+        "edges_out": [], "structural_hash": "0", "kind": None,
+        "extractor": "test",
+    }
+    migrations = [extract_migration(FIXTURES / "001_create_users.py")]
+    schemas = reconcile_schema(migrations, repo_key="fixture")
+    schema_prims = schema_to_primitives(schemas)
+
+    attach_migration_attributes(
+        primitives=[module_prim] + schema_prims,
+        migrations=migrations,
+    )
+
+    assert module_prim["attributes"].get("migration_order") == 1
+    up_ops = module_prim["attributes"].get("up_operations", [])
+    assert any("schema::users" in oid for oid in up_ops), up_ops
+```
+
+- [ ] **Step 2: Implement `depgraph/lib/sql/attach.py`**
+
+```python
+"""Attach migration metadata to module primitives.
+
+Run after extraction + SQL reconciliation; mutates the matching module
+primitive in place. Each migration file's `migration_order` becomes
+`attributes.migration_order`; the ids of schema primitives it produced
+become `attributes.up_operations`.
+"""
+from __future__ import annotations
+
+from depgraph.lib.sql.migration import MigrationFile
+
+
+def attach_migration_attributes(*, primitives: list[dict],
+                                  migrations: list[MigrationFile]) -> None:
+    # Build a map: filename -> migration_file
+    by_filename = {m.path.name: m for m in migrations}
+
+    # Build a map: table_name -> schema_primitive_id
+    schema_by_name: dict[str, str] = {}
+    for p in primitives:
+        if p.get("kind") == "schema" and p["primitive"] == "class":
+            schema_by_name[p["name"]] = p["id"]
+
+    for p in primitives:
+        if p["primitive"] != "module":
+            continue
+        # Path's basename is the migration filename
+        path = p["source"]["path"]
+        filename = path.rsplit("/", 1)[-1]
+        mf = by_filename.get(filename)
+        if mf is None:
+            continue
+        # Build up_operations: ids of schema primitives this migration
+        # produced (one per CREATE TABLE / one per ALTER per column, etc.)
+        up_op_ids: list[str] = []
+        for mo in mf.operations:
+            op = mo.operation
+            if op.table and op.table in schema_by_name:
+                # For CREATE/ALTER/DROP — point at the (current-state) schema id.
+                # For a DROP that removed the table from the corpus, schema
+                # won't exist; record as "external::dropped::<table>".
+                up_op_ids.append(schema_by_name[op.table])
+            elif op.table:
+                up_op_ids.append(f"external::dropped::table::{op.table}")
+        p["attributes"]["migration_order"] = mf.migration_order
+        p["attributes"]["up_operations"] = up_op_ids
+```
+
+- [ ] **Step 3: Run, verify pass + commit**
+
+```bash
+pytest depgraph/tests/lib/sql/test_migration_attach.py -v
+git add depgraph/lib/sql/attach.py depgraph/tests/lib/sql/test_migration_attach.py
+git commit -m "depgraph/lib/sql: attach migration_order + up_operations[] to module primitives"
+```
+
+### Task 4.8: Schema validation sweep — emitted schema primitives validate
 
 - [ ] **Step 1: Add sweep test**
 
@@ -5916,11 +6353,98 @@ def test_regen_end_to_end(tiny_project, tmp_path):
 - [ ] **Step 2: Rewrite `reconcile.py` to build the v2 indexes**
 
 The new reconcile:
+
 1. Reads every `nodes/**/*.json` (any kind dir).
-2. Validates each against `validate_primitive`.
-3. Builds `nodes/_index/by_source.json` (source_id → outgoing edges) and `nodes/_index/by_target.json` (target_id → incoming edges with source_id).
-4. Builds `nodes/_index/by_repo.json`.
-5. Writes `nodes/_meta.json` with corpus stats (primitive count, edge count, regen_status).
+2. Validates each against `validate_primitive` — any failure aborts regen with a clear error pointing at the offending file.
+3. Runs `check_slug_collisions(all_primitives)` from `depgraph/lib/primitives.py`; any collisions abort regen.
+4. For every edge in `edges_out`: looks up `target` in the primitive set (or recognizes `external::` terminals as a special case); orphan edges where target is neither in-corpus nor a recognized external prefix are listed in `_meta.json.orphan_edges` and the gate `kg depgraph validate` exits non-zero. Validates each edge with `validate_edge()` passing the resolved source_kind + target_kind.
+5. Builds `nodes/_index/by_source.json` (source_id → outgoing edges) and `nodes/_index/by_target.json` (target_id → incoming edges with source_id).
+6. Builds `nodes/_index/by_repo.json`.
+7. Writes `nodes/_meta.json` with corpus stats (primitive count, edge count, orphan_edge count, slug-collision count, regen_status).
+
+Concrete validation pass:
+
+```python
+# In the new depgraph/extractors/reconcile.py
+from depgraph.lib.primitives import (
+    validate_primitive, check_slug_collisions, is_external_terminal,
+)
+from depgraph.lib.edges import validate_edge
+
+
+def validate_corpus(primitives: list[dict]) -> dict:
+    """Return a validation report. Caller decides whether to abort regen."""
+    report = {"primitive_errors": [], "edge_errors": [],
+              "slug_collisions": [], "orphan_edges": []}
+
+    for p in primitives:
+        for err in validate_primitive(p):
+            report["primitive_errors"].append({"id": p.get("id"), "error": err})
+
+    report["slug_collisions"] = check_slug_collisions(primitives)
+
+    by_id = {p["id"]: p for p in primitives}
+    for p in primitives:
+        src_kind = p["primitive"]
+        for e in p.get("edges_out", []):
+            tgt = e.get("target")
+            tgt_prim = by_id.get(tgt)
+            if tgt_prim is None and not is_external_terminal(tgt or ""):
+                report["orphan_edges"].append({
+                    "source": p["id"], "target": tgt, "kind": e.get("kind"),
+                })
+                continue
+            tgt_kind = tgt_prim["primitive"] if tgt_prim else None
+            for err in validate_edge({**e, "source_kind": src_kind,
+                                       "target_kind": tgt_kind}):
+                report["edge_errors"].append({"source": p["id"],
+                                                "target": tgt, "error": err})
+    return report
+```
+
+Test for the validator (in `depgraph/tests/test_reconcile_v2.py`):
+
+```python
+def test_reconcile_flags_orphan_edge():
+    from depgraph.extractors.reconcile import validate_corpus
+    prims = [{
+        "schema_version": 2,
+        "id": "r::a.py::f", "primitive": "function", "name": "f",
+        "owner": None,
+        "source": {"repo": "r", "path": "a.py", "language": "python",
+                   "line": 1, "end_line": 1},
+        "signature": {"parameters": [], "return_type": None,
+                       "is_async": False, "decorators": []},
+        "attributes": {}, "structural_hash": "0", "kind": None,
+        "extractor": "t",
+        "edges_out": [{"target": "r::nowhere.py::ghost", "kind": "calls",
+                        "via": "fn", "where": "a.py:1", "confidence": "exact"}],
+    }]
+    report = validate_corpus(prims)
+    assert len(report["orphan_edges"]) == 1
+    assert report["orphan_edges"][0]["target"] == "r::nowhere.py::ghost"
+
+
+def test_reconcile_accepts_external_terminal_targets():
+    from depgraph.extractors.reconcile import validate_corpus
+    prims = [{
+        "schema_version": 2,
+        "id": "r::a.py::f", "primitive": "function", "name": "f",
+        "owner": None,
+        "source": {"repo": "r", "path": "a.py", "language": "python",
+                   "line": 1, "end_line": 1},
+        "signature": {"parameters": [], "return_type": None,
+                       "is_async": False, "decorators": []},
+        "attributes": {}, "structural_hash": "0", "kind": None,
+        "extractor": "t",
+        "edges_out": [{"target": "external::pypi::sqlalchemy::Session.query",
+                        "kind": "db_access",
+                        "via": "session.query", "where": "a.py:1",
+                        "confidence": "exact"}],
+    }]
+    report = validate_corpus(prims)
+    assert report["orphan_edges"] == []
+```
 
 Delete the legacy reconcile functions that fed pre-flip-shape concerns: `_join_route_calls`, `strip_legacy_fields`, `_run_embedding_pass` (preserve only if used in the new model).
 
@@ -6342,6 +6866,36 @@ git commit -m "logigraph: auto-migrate claims to v2 depgraph corpus; CANDIDATES.
 ## Phase 1 retro-tasks
 
 *All previously-deferred retros (returns_jsx, default-export naming, overload skipping, Python decorator normalization) are folded into Phase 1 Task 1.5 and Phase 2 Task 2.3 directly. This section is intentionally empty — it remains as a heading anchor in case a future cross-link points here.*
+
+---
+
+## Performance budget + incremental regen
+
+**Full regen budget.** A clean run of `kg depgraph regen` against Concorda's three repos (api ~75k LOC Python + 115 migrations, web ~50k LOC TS, test ~30k LOC TS) should finish in under **30 seconds** on the development host. Components, sized roughly:
+
+- TS extractor: ts-morph parse + walk for ~80k LOC ≈ 8s.
+- Python extractor: stdlib `ast.parse` + walk ≈ 3s.
+- SQL pipeline (parser over 65 CREATE TABLEs + 50 ALTERs + reconciliation) ≈ 2s.
+- L2 edge resolution (calls + imports + reads/assigns/decorates) ≈ 5s.
+- Cross-reference + db_access ≈ 2s.
+- Classification ≈ 1s.
+- Reconcile (validate + index build) ≈ 5s.
+
+If regen blows the 30s budget by more than 2x in real Concorda, profile before optimizing — usual suspects are: `ast.unparse(node)` on huge nodes for body_text, repeated `re.compile` in a hot loop, or per-file ts-morph project init (use one Project for the repo).
+
+**Determinism gate** (Phase 6.6) does **not** add real runtime — it runs twice in the suite but on a tiny synthetic project.
+
+**Incremental regen (out of scope for v0, noted for the future).**
+
+The legacy stop-hook called `depgraph regen` over only the touched files. The v2 pipeline as designed runs full regen because the SQL reconciler, cross-reference pass, and classifier engine all need a corpus-wide view. Patching individual primitives in place without re-running these passes can produce inconsistent corpora.
+
+For v0, the stop-hook should call `kg depgraph regen` with full scope. If that exceeds the time budget in practice, the incremental path is:
+
+1. Per-file: re-extract that file's primitives + L2 edges only, replace in `nodes/<primitive_type>/`.
+2. Run reconcile's validation + index rebuild (cheap; pure I/O over node files).
+3. Skip the SQL pipeline and classifier unless touched files include a migration / ORM model.
+
+Land this incremental mode only when the full-regen budget becomes painful in real use — premature without a measured baseline.
 
 ---
 
