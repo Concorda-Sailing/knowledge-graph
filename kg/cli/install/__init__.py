@@ -16,6 +16,7 @@ import os
 from pathlib import Path
 
 from kg.cli.install import init as _init_mod
+from kg.cli.install import tools as _tools_mod
 
 
 def _run_installer(args: argparse.Namespace, extra: list[str]) -> int:
@@ -25,6 +26,12 @@ def _run_installer(args: argparse.Namespace, extra: list[str]) -> int:
         init_parser.add_argument("path")
         init_args = init_parser.parse_args(extra[1:])
         return _init_mod.cmd_init(init_args)
+    if extra and extra[0] in ("tools", "install"):
+        tools_parser = argparse.ArgumentParser(prog="kg install tools")
+        tools_parser.add_argument("--target", default=str(Path.home() / "tools"))
+        tools_parser.add_argument("--data", action="append", default=[])
+        tools_args = tools_parser.parse_args(extra[1:])
+        return _tools_mod.cmd_tools(tools_args)
     # Fall through: subprocess shim for everything else.
     tool_root = Path(__file__).resolve().parents[3]
     installer = tool_root / "install.sh"
