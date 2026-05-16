@@ -73,7 +73,7 @@ class TestCmdDomainBump:
     def test_bumps_node_status(self, ctx: Context, capsys, monkeypatch) -> None:
         """Updates definition_status in the JSON node file."""
         monkeypatch.setattr(
-            "lib.cli._shared.subprocess.run",
+            "kg.shared.git.subprocess.run",
             lambda *a, **kw: type("R", (), {"returncode": 0, "stdout": "", "stderr": ""})(),
         )
         domain_id = "resource::test::to_bump"
@@ -88,7 +88,7 @@ class TestCmdDomainBump:
     def test_bumps_dossier_frontmatter(self, ctx: Context, capsys, monkeypatch) -> None:
         """When a dossier exists, its frontmatter definition_status is updated."""
         monkeypatch.setattr(
-            "lib.cli._shared.subprocess.run",
+            "kg.shared.git.subprocess.run",
             lambda *a, **kw: type("R", (), {"returncode": 0, "stdout": "", "stderr": ""})(),
         )
         domain_id = "resource::test::dossier_bump"
@@ -110,7 +110,7 @@ class TestCmdDomainBump:
     def test_prints_bumped_message(self, ctx: Context, capsys, monkeypatch) -> None:
         """Prints a confirmation line on success."""
         monkeypatch.setattr(
-            "lib.cli._shared.subprocess.run",
+            "kg.shared.git.subprocess.run",
             lambda *a, **kw: type("R", (), {"returncode": 0, "stdout": "", "stderr": ""})(),
         )
         domain_id = "role::test::print_bump"

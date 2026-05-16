@@ -7,7 +7,6 @@ native import-and-register from kg.cli.logigraph.
 from __future__ import annotations
 
 import json
-import subprocess
 import sys
 from pathlib import Path
 
@@ -19,6 +18,13 @@ from config import (  # noqa: E402
     path_to_repo_relative,
     load_project_config,
 )
+
+# P5T3: lifted to kg.shared for cross-graph reuse.
+_TOOL_ROOT_FOR_KG = Path(__file__).resolve().parents[3]
+if str(_TOOL_ROOT_FOR_KG) not in sys.path:
+    sys.path.insert(0, str(_TOOL_ROOT_FOR_KG))
+from kg.shared.git import git_commit_if_changed as _kg_git_commit, default_actor  # noqa: E402
+from kg.shared.telemetry import load_telemetry_events  # noqa: E402
 
 from .context import Context
 
@@ -202,27 +208,13 @@ def resolve_node_path(ctx: Context, node_id: str) -> Path | None:
 # ---------------------------------------------------------------------------
 
 def git_commit_if_changed(ctx: Context, paths: list[Path], message: str) -> bool:
-    """Stage given paths and commit if there's a diff. Returns True iff a
-    commit was made."""
-    rel = [str(p.relative_to(ctx.LOGIGRAPH)) for p in paths]
-    subprocess.run(["git", "-C", str(ctx.LOGIGRAPH), "add", *rel], check=True)
-    diff = subprocess.run(
-        ["git", "-C", str(ctx.LOGIGRAPH), "diff", "--cached", "--name-only"],
-        capture_output=True, text=True,
-    )
-    if not diff.stdout.strip():
-        return False
-    subprocess.run(["git", "-C", str(ctx.LOGIGRAPH), "commit", "-q", "-m", message], check=True)
-    return True
+    """Backward-compat: delegates to kg.shared.git.git_commit_if_changed with ctx.LOGIGRAPH."""
+    return _kg_git_commit(ctx.LOGIGRAPH, paths, message)
 
 
-def default_actor() -> str:
-    """Return git config user.name, or $USER, or 'unknown'."""
-    import os
-    r = subprocess.run(["git", "config", "user.name"], capture_output=True, text=True)
-    if r.returncode == 0 and r.stdout.strip():
-        return r.stdout.strip()
-    return os.environ.get("USER", "unknown")
+# default_actor is a direct re-export from kg.shared.git (imported above).
+# load_telemetry_events is a direct re-export from kg.shared.telemetry (imported above).
+_load_telemetry_events = load_telemetry_events  # backward-compat alias (underscore prefix)
 
 
 # ---------------------------------------------------------------------------

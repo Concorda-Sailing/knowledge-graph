@@ -70,7 +70,7 @@ def _minimal_domain_node(domain_id: str, **overrides) -> dict:
 
 def _stub_git(monkeypatch) -> None:
     monkeypatch.setattr(
-        "lib.cli._shared.subprocess.run",
+        "kg.shared.git.subprocess.run",
         lambda *a, **kw: type("R", (), {"returncode": 0, "stdout": "", "stderr": ""})(),
     )
 

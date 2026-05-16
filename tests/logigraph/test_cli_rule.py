@@ -296,7 +296,7 @@ class TestCmdRuleBump:
         import subprocess
         # Stub out git to avoid actual git ops
         monkeypatch.setattr(
-            "lib.cli._shared.subprocess.run",
+            "kg.shared.git.subprocess.run",
             lambda *a, **kw: type("R", (), {"returncode": 0, "stdout": "", "stderr": ""})(),
         )
         rule_id = "rule::test::to_bump"
@@ -311,7 +311,7 @@ class TestCmdRuleBump:
     def test_bumps_dossier_frontmatter(self, ctx: Context, capsys, tmp_path, monkeypatch) -> None:
         """When a dossier exists, its frontmatter definition_status is updated."""
         monkeypatch.setattr(
-            "lib.cli._shared.subprocess.run",
+            "kg.shared.git.subprocess.run",
             lambda *a, **kw: type("R", (), {"returncode": 0, "stdout": "", "stderr": ""})(),
         )
         rule_id = "rule::test::dossier_bump"
