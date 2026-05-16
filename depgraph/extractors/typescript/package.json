@@ -1,0 +1,18 @@
+{
+  "name": "@depgraph/extractor-typescript",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "extract": "tsx extract.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "ts-morph": "^22.0.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.4.0",
+    "@types/node": "^20.11.0"
+  }
+}
