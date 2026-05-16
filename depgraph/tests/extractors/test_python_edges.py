@@ -88,3 +88,61 @@ def test_method_call_on_parameter_annotation_py():
     handler = next(p for p in prims if p["name"] == "handler")
     calls = [e for e in handler["edges_out"] if e["kind"] == "calls"]
     assert any(e["target"] == "fixture::src.py::Service.do_work" for e in calls)
+
+
+# ---------------------------------------------------------------------------
+# Task 3.5: reads / assigns / decorates edges
+# ---------------------------------------------------------------------------
+
+def test_reads_edge_py():
+    prims = list(extract_repo(repo_key="fixture", repo_path=FIXTURE_DIR / "references"))
+    reader = next(p for p in prims if p["name"] == "reader")
+    reads = [e for e in reader["edges_out"] if e["kind"] == "reads"]
+    assert any(e["target"] == "fixture::src.py::GLOBAL" for e in reads)
+
+
+def test_assigns_edge_py():
+    prims = list(extract_repo(repo_key="fixture", repo_path=FIXTURE_DIR / "references"))
+    writer = next(p for p in prims if p["name"] == "writer")
+    assigns = [e for e in writer["edges_out"] if e["kind"] == "assigns"]
+    assert any(e["target"] == "fixture::src.py::GLOBAL" for e in assigns)
+
+
+def test_decorates_edge_local_decorator_py():
+    """A local decorator (`@local_dec`) produces a `decorates` edge from
+    the decorator function primitive to the decorated function. External
+    decorators (`@functools.lru_cache`) do NOT produce an edge — they're
+    captured in `signature.decorators` instead, since the edge taxonomy
+    disallows external terminals as edge sources."""
+    prims = list(extract_repo(repo_key="fixture", repo_path=FIXTURE_DIR / "references"))
+    locally_decorated = next(p for p in prims if p["name"] == "locally_decorated")
+    local_dec = next(p for p in prims if p["name"] == "local_dec")
+
+    # Local decorator → edge present, source is local_dec
+    incoming = [
+        e for src_p in prims for e in src_p["edges_out"]
+        if e["kind"] == "decorates" and e["target"] == locally_decorated["id"]
+    ]
+    assert incoming, "expected a decorates edge into `locally_decorated`"
+    src_ids = {p["id"] for p in prims for e in p["edges_out"]
+               if e["kind"] == "decorates" and e["target"] == locally_decorated["id"]}
+    assert local_dec["id"] in src_ids
+
+
+def test_external_decorator_not_an_edge_py():
+    """`@functools.lru_cache()` records in signature.decorators but does
+    not produce a decorates edge (no external-as-source edges)."""
+    prims = list(extract_repo(repo_key="fixture", repo_path=FIXTURE_DIR / "references"))
+    decorated = next(p for p in prims if p["name"] == "decorated")
+
+    # Captured in signature
+    assert any("functools" in d or "lru_cache" in d
+               for d in decorated["signature"]["decorators"])
+    # No incoming decorates edge
+    incoming = [
+        e for src_p in prims for e in src_p["edges_out"]
+        if e["kind"] == "decorates" and e["target"] == decorated["id"]
+    ]
+    assert incoming == [], (
+        f"external decorator should not emit a decorates edge; got: {incoming}"
+    )

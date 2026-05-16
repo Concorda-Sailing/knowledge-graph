@@ -832,6 +832,86 @@ function attachCallEdges(
   }
 }
 
+// ---------------------------------------------------------------------------
+// L2 edge resolution — Task 3.5: reads / assigns (TS)
+// ---------------------------------------------------------------------------
+
+function attachVarAccessEdges(
+  prims: Primitive[],
+  sourceFiles: SourceFile[],
+  repoKey: string,
+  repoPath: string,
+): void {
+  // Index module-scope variable primitives per file: name -> id
+  const varsByPath = new Map<string, Map<string, string>>();
+  for (const p of prims) {
+    if (p.primitive === "variable" && p.owner === null) {
+      if (!varsByPath.has(p.source.path)) varsByPath.set(p.source.path, new Map());
+      varsByPath.get(p.source.path)!.set(p.name, p.id);
+    }
+  }
+
+  // Index function primitives by path:line for fast lookup
+  const fnByPathAndLine = new Map<string, Primitive>();
+  for (const p of prims) {
+    if (p.primitive === "function") {
+      fnByPathAndLine.set(`${p.source.path}:${p.source.line}`, p);
+    }
+  }
+
+  for (const sf of sourceFiles) {
+    const rel = relative(repoPath, sf.getFilePath());
+    const localVars = varsByPath.get(rel);
+    if (!localVars || localVars.size === 0) continue;
+
+    // Walk all function nodes
+    const allFns = [
+      ...sf.getFunctions(),
+      ...sf.getClasses().flatMap((c) => c.getMethods()),
+      ...sf.getVariableStatements().flatMap((vs) =>
+        vs.getDeclarations().filter((d) => {
+          const init = d.getInitializer();
+          return init && (Node.isArrowFunction(init) || Node.isFunctionExpression(init));
+        })
+      ),
+    ];
+
+    for (const fnNode of allFns as any[]) {
+      const startLine = fnNode.getStartLineNumber();
+      const fnPrim = fnByPathAndLine.get(`${rel}:${startLine}`);
+      if (!fnPrim) continue;
+
+      // Walk all Identifier descendants
+      const descendants = fnNode.getDescendants?.() ?? [];
+      for (const node of descendants) {
+        if (!Node.isIdentifier(node)) continue;
+        const name = node.getText();
+        const varId = localVars.get(name);
+        if (!varId) continue;
+
+        // Determine if this is a read or write
+        const parent = node.getParent();
+        let isWrite = false;
+        if (parent && Node.isBinaryExpression(parent)) {
+          // Left-hand side of assignment: x = 1
+          const op = parent.getOperatorToken().getText();
+          if (op === "=" && parent.getLeft() === node) {
+            isWrite = true;
+          }
+        }
+
+        fnPrim.edges_out.push({
+          target: varId,
+          kind: isWrite ? "assigns" : "reads",
+          via: isWrite ? "assignment_lhs" : "identifier_read",
+          where: `${rel}:${node.getStartLineNumber()}`,
+          confidence: "exact",
+        });
+      }
+    }
+  }
+}
+
 function main() {
   const { values } = parseArgs({
     options: {
@@ -890,6 +970,7 @@ function main() {
   attachInheritanceEdges(allPrims, sourceFiles, repoKey, repoPath);
   attachImportsEdges(allPrims, sourceFiles, repoKey, repoPath);
   attachCallEdges(allPrims, sourceFiles, repoKey, repoPath);
+  attachVarAccessEdges(allPrims, sourceFiles, repoKey, repoPath);
 
   for (const p of allPrims) emit(p);
 }

@@ -90,8 +90,29 @@ def extract_repo(*, repo_key: str, repo_path: Path) -> Iterator[dict]:
     _attach_imports_edges(primitives, trees_by_path=trees_by_path, repo_key=repo_key,
                           repo_path=repo_path)
     _attach_call_edges(primitives, trees_by_path=trees_by_path)
+    _attach_var_access_edges(primitives, trees_by_path=trees_by_path)
+
+    imports_by_path = _build_imports_by_path(primitives)
+    _attach_decorator_edges(primitives, trees_by_path=trees_by_path,
+                             imports_by_path=imports_by_path)
 
     yield from primitives
+
+
+def _build_imports_by_path(primitives: list[dict]) -> dict[str, dict[str, str]]:
+    """Helper used by passes that need {path -> {local_binding -> target_id}}.
+    Reads imports edges from module primitives' edges_out."""
+    out: dict[str, dict[str, str]] = {}
+    for p in primitives:
+        if p["primitive"] != "module":
+            continue
+        for e in p["edges_out"]:
+            if e["kind"] != "imports":
+                continue
+            lb = e.get("local_binding")
+            if lb:
+                out.setdefault(p["source"]["path"], {})[lb] = e["target"]
+    return out
 
 
 def _decorator_name(dec: ast.expr) -> str:
@@ -599,3 +620,103 @@ def _resolve_call_edge(call: ast.Call, *, local_names: dict, imports: dict,
 
     # Computed callee — unresolved
     return []
+
+
+# ---------------------------------------------------------------------------
+# L2 edge resolution — Task 3.5: reads / assigns
+# ---------------------------------------------------------------------------
+
+def _attach_var_access_edges(primitives: list[dict],
+                               *, trees_by_path: dict[str, ast.Module]) -> None:
+    """For each function, walk body and emit `reads` / `assigns` edges to
+    module-scope variables defined in the same file. Function-local variables
+    are intentionally NOT tracked — only module-scope `VAR = value` style."""
+    by_path: dict[str, dict[str, str]] = {}  # path -> { var_name -> var_id }
+    for p in primitives:
+        if p["primitive"] == "variable" and p.get("owner") is None:
+            by_path.setdefault(p["source"]["path"], {})[p["name"]] = p["id"]
+
+    for path, tree in trees_by_path.items():
+        local_vars = by_path.get(path, {})
+        if not local_vars:
+            continue
+        for fn_node in ast.walk(tree):
+            if not isinstance(fn_node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue
+            fn_prim = next(
+                (p for p in primitives
+                 if p["primitive"] == "function"
+                    and p["source"]["path"] == path
+                    and p["source"]["line"] == fn_node.lineno),
+                None,
+            )
+            if fn_prim is None:
+                continue
+            for sub in ast.walk(fn_node):
+                if isinstance(sub, ast.Name) and sub.id in local_vars:
+                    var_id = local_vars[sub.id]
+                    if isinstance(sub.ctx, ast.Load):
+                        fn_prim["edges_out"].append({
+                            "target": var_id, "kind": "reads",
+                            "via": "name_load",
+                            "where": f"{path}:{sub.lineno}",
+                            "confidence": "exact",
+                        })
+                    elif isinstance(sub.ctx, ast.Store):
+                        fn_prim["edges_out"].append({
+                            "target": var_id, "kind": "assigns",
+                            "via": "name_store",
+                            "where": f"{path}:{sub.lineno}",
+                            "confidence": "exact",
+                        })
+
+
+# ---------------------------------------------------------------------------
+# L2 edge resolution — Task 3.5: decorates
+# ---------------------------------------------------------------------------
+
+def _attach_decorator_edges(primitives: list[dict],
+                              *, trees_by_path: dict[str, ast.Module],
+                              imports_by_path: dict[str, dict[str, str]]) -> None:
+    """For each function/class, if any decorator resolves to a locally-defined
+    function, emit a `decorates` edge from that decorator function to the
+    decorated primitive.
+
+    External decorators (e.g. @functools.lru_cache, @pytest.fixture) do NOT
+    produce edges — the edge taxonomy disallows external terminals as edge
+    sources. Those are captured in `signature.decorators` only.
+    """
+    local_by_path: dict[str, dict[str, str]] = {}
+    for p in primitives:
+        if p.get("owner") is None and p["primitive"] in {"class", "function", "variable"}:
+            local_by_path.setdefault(p["source"]["path"], {})[p["name"]] = p["id"]
+
+    primitives_by_id = {q["id"]: q for q in primitives}
+
+    for p in primitives:
+        if p["primitive"] not in {"class", "function"}:
+            continue
+        decorators = p.get("signature", {}).get("decorators", [])
+        if not decorators:
+            continue
+        path = p["source"]["path"]
+        locals_ = local_by_path.get(path, {})
+        imports = imports_by_path.get(path, {})
+        for dec in decorators:
+            head = dec.split(".")[0]
+            source_id = locals_.get(head) or imports.get(head)
+            if source_id is None:
+                # Completely unknown — external, no edge
+                continue
+            if source_id.startswith("external::"):
+                # Imported from external package — no edge (same rule)
+                continue
+            source_prim = primitives_by_id.get(source_id)
+            if source_prim is None:
+                continue
+            source_prim["edges_out"].append({
+                "target": p["id"], "kind": "decorates",
+                "via": dec,
+                "where": f"{path}:{p['source']['line']}",
+                "confidence": "exact",
+            })

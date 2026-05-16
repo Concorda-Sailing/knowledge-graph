@@ -140,3 +140,21 @@ def test_method_call_on_annotated_local_resolves():
     do_work_calls = [e for e in calls
                      if e["target"] == "fixture::src/file.ts::Service.doWork"]
     assert len(do_work_calls) >= 2
+
+
+# ---------------------------------------------------------------------------
+# Task 3.5: reads / assigns edges (TS)
+# ---------------------------------------------------------------------------
+
+def test_reads_edge_ts():
+    prims = run_extractor("references", which="edges")
+    reader = next(p for p in prims if p["name"] == "reader")
+    reads = [e for e in reader["edges_out"] if e["kind"] == "reads"]
+    assert any(e["target"] == "fixture::src/file.ts::globalCount" for e in reads)
+
+
+def test_assigns_edge_ts():
+    prims = run_extractor("references", which="edges")
+    writer = next(p for p in prims if p["name"] == "writer")
+    assigns = [e for e in writer["edges_out"] if e["kind"] == "assigns"]
+    assert any(e["target"] == "fixture::src/file.ts::globalCount" for e in assigns)
