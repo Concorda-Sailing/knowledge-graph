@@ -37,3 +37,41 @@ def test_module_primitive_for_each_source_file():
     assert m["id"] == "fixture::src/hello.ts"
     assert m["source"]["language"] == "typescript"
     assert m["source"]["path"] == "src/hello.ts"
+
+
+def test_class_declaration():
+    prims = run_extractor("classes")
+    classes = {p["name"]: p for p in prims if p["primitive"] == "class"}
+    assert "Concrete" in classes
+    c = classes["Concrete"]
+    assert c["attributes"]["abstract"] is False
+    assert c["attributes"]["instantiable"] is True
+
+def test_abstract_class():
+    prims = run_extractor("classes")
+    classes = {p["name"]: p for p in prims if p["primitive"] == "class"}
+    c = classes["AbstractC"]
+    assert c["attributes"]["abstract"] is True
+    assert c["attributes"]["instantiable"] is False
+
+def test_class_with_generics():
+    prims = run_extractor("classes")
+    classes = {p["name"]: p for p in prims if p["primitive"] == "class"}
+    assert classes["Generic"]["attributes"]["template_parameters"] == ["T", "U"]
+
+def test_interface_as_class():
+    prims = run_extractor("classes")
+    classes = {p["name"]: p for p in prims if p["primitive"] == "class"}
+    i = classes["IFoo"]
+    assert i["attributes"]["abstract"] is True
+    assert i["attributes"]["instantiable"] is False
+
+def test_enum_as_class():
+    prims = run_extractor("classes")
+    classes = {p["name"]: p for p in prims if p["primitive"] == "class"}
+    assert "Color" in classes
+
+def test_type_alias_as_class():
+    prims = run_extractor("classes")
+    classes = {p["name"]: p for p in prims if p["primitive"] == "class"}
+    assert classes["Json"]["attributes"]["instantiable"] is False

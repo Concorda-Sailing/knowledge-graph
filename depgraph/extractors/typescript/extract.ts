@@ -70,6 +70,61 @@ function moduleFor(sf: SourceFile, repoKey: string, repoPath: string): Primitive
   };
 }
 
+function classPrimitive(
+  node: Node,
+  name: string,
+  attrs: { abstract: boolean; instantiable: boolean; template_parameters: string[] },
+  repoKey: string, relPath: string,
+): Primitive {
+  const id = canonicalId(repoKey, relPath, name);
+  return {
+    schema_version: 2,
+    id,
+    primitive: "class",
+    name,
+    owner: null,
+    source: { repo: repoKey, path: relPath, language: "typescript",
+              line: node.getStartLineNumber(), end_line: node.getEndLineNumber() },
+    signature: { decorators: [] },
+    attributes: { abstract: attrs.abstract, generated: false, external: false,
+                  template_parameters: attrs.template_parameters, macro: false,
+                  mutable: false, instantiable: attrs.instantiable, inheritable: true },
+    edges_out: [],
+    structural_hash: structuralHash({ kind: "class", name, attrs }),
+    kind: null,
+    extractor: EXTRACTOR_TAG,
+  };
+}
+
+function extractClasses(sf: SourceFile, repoKey: string, relPath: string): Primitive[] {
+  const out: Primitive[] = [];
+  for (const cls of sf.getClasses()) {
+    out.push(classPrimitive(cls, cls.getName() ?? "<anonymous>", {
+      abstract: cls.isAbstract(),
+      instantiable: !cls.isAbstract(),
+      template_parameters: cls.getTypeParameters().map((tp) => tp.getName()),
+    }, repoKey, relPath));
+  }
+  for (const iface of sf.getInterfaces()) {
+    out.push(classPrimitive(iface, iface.getName(), {
+      abstract: true, instantiable: false,
+      template_parameters: iface.getTypeParameters().map((tp) => tp.getName()),
+    }, repoKey, relPath));
+  }
+  for (const en of sf.getEnums()) {
+    out.push(classPrimitive(en, en.getName(), {
+      abstract: false, instantiable: false, template_parameters: [],
+    }, repoKey, relPath));
+  }
+  for (const alias of sf.getTypeAliases()) {
+    out.push(classPrimitive(alias, alias.getName(), {
+      abstract: false, instantiable: false,
+      template_parameters: alias.getTypeParameters().map((tp) => tp.getName()),
+    }, repoKey, relPath));
+  }
+  return out;
+}
+
 function main() {
   const { values } = parseArgs({
     options: {
@@ -89,7 +144,9 @@ function main() {
   for (const f of listSourceFiles(repoPath)) project.addSourceFileAtPath(f);
 
   for (const sf of project.getSourceFiles()) {
+    const relPath = relative(repoPath, sf.getFilePath());
     emit(moduleFor(sf, repoKey, repoPath));
+    for (const p of extractClasses(sf, repoKey, relPath)) emit(p);
   }
 }
 
