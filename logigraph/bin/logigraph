@@ -237,9 +237,8 @@ def cmd_gaps(args: argparse.Namespace) -> int:
 
 
 def cmd_dossiers(args: argparse.Namespace) -> int:
-    """Backwards-compat alias for `stats` with no flags."""
-    args.telemetry = False
-    return cmd_stats(args)
+    from lib.cli.dossiers import cmd_dossiers as _impl
+    return _impl(args, _CTX)
 
 
 def _load_telemetry_events(path: Path, since_hours: int | None = None) -> list[dict]:
