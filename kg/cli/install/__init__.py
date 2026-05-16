@@ -17,6 +17,7 @@ from pathlib import Path
 
 from kg.cli.install import hooks as _hooks_mod
 from kg.cli.install import init as _init_mod
+from kg.cli.install import systemd as _systemd_mod
 from kg.cli.install import tools as _tools_mod
 
 
@@ -39,6 +40,14 @@ def _run_installer(args: argparse.Namespace, extra: list[str]) -> int:
         hooks_parser.add_argument("--apply", action="store_true")
         hooks_parser.add_argument("--force", action="store_true")
         return _hooks_mod.cmd_hooks(hooks_parser.parse_args(extra[1:]))
+    if extra and extra[0] == "systemd":
+        sysd_parser = argparse.ArgumentParser(prog="kg install systemd")
+        sysd_parser.add_argument("--target", default=str(Path.home() / "tools"))
+        sysd_parser.add_argument("--project")
+        sysd_parser.add_argument("--depgraph-data-dir", dest="depgraph_data_dir")
+        sysd_parser.add_argument("--logigraph-data-dir", dest="logigraph_data_dir")
+        sysd_parser.add_argument("--apply", action="store_true")
+        return _systemd_mod.cmd_systemd(sysd_parser.parse_args(extra[1:]))
     # Fall through: subprocess shim for everything else.
     tool_root = Path(__file__).resolve().parents[3]
     installer = tool_root / "install.sh"
