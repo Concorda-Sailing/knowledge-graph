@@ -1,10 +1,10 @@
+#!/usr/bin/env tsx
 /**
  * !!! FROZEN — pending replacement by depgraph/extractors/typescript/extract.ts
  * (layered substrate, schema v2). Do not extend. See docs/superpowers/plans/
  * 2026-05-16-depgraph-extractor-rewrite.md.
  */
 
-#!/usr/bin/env tsx
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
