@@ -1100,13 +1100,14 @@ Each fixture directory contains:
 - if_name_main — module-level state inside if __name__ == "__main__" (should NOT extract); dynamic class via type()
 - relative_dots — `from ...pkg.sub import X` (multi-level relative)
 
-### Phase 3 — L2 edges (edges/)
+### Phase 3 — L2 edges (edges/) — 9 fixtures
 - method_call_chains — client.users.get().filter().first() chained calls
 - instance_passing — function takes typed param, calls method on it
 - dynamic_dispatch — getattr/setattr-style calls, computed callees → unresolved
 - monkey_patch — SomeClass.method = lambda — patched method exists at runtime
 - circular_imports_py — A imports B imports A
 - circular_imports_ts — same shape, TS
+- conditional_rebinding — `if x: s = A() else: s = B(); s.do_work()` — v0 walk-order semantics produce last-assign-wins; fixture pins this (wrong-but-deterministic) behavior so a future flow-sensitive pass has a target
 - decorator_target_resolution — decorator from external lib vs local
 - read_assign_global — module-scope variable read in fn-A, assigned in fn-B
 
@@ -3941,6 +3942,123 @@ git add depgraph/extractors/python/extract.py \
 git commit -m "depgraph/extractors: reads / assigns / decorates edges"
 ```
 
+### Task 3.5b: Consolidate `extract_repo` final shape (checkpoint)
+
+Phases 2 and 3 have incrementally extended `extract_repo`. This isn't a TDD task — it's a structural checkpoint. Before moving to Phase 4, the Python extractor's `extract_repo` should look exactly like the canonical shape below. The TS extractor's `main()` follows the same outline.
+
+```python
+# depgraph/extractors/python/extract.py — canonical final shape after Phase 3
+def extract_repo(*, repo_key: str, repo_path: Path) -> Iterator[dict]:
+    primitives: list[dict] = []
+    trees_by_path: dict[str, ast.Module] = {}
+
+    # 1. Walk files; emit module / package primitives + parse + accumulate trees
+    files = sorted(_iter_py_files(repo_path))
+    package_dirs = _discover_package_dirs(files)
+    for pkg_path in sorted(package_dirs):
+        primitives.append(_package_primitive(pkg_path, repo_key))
+    for f in files:
+        rel = str(f.relative_to(repo_path))
+        text = f.read_text()
+        tree = ast.parse(text)
+        trees_by_path[rel] = tree
+        primitives.append(_module_primitive(rel, text, tree, repo_key))
+        primitives.extend(_walk_module_body(tree, repo_key=repo_key, rel_path=rel))
+
+    # 2. L2 edge passes — order matters: each depends on indexes built by
+    #    its predecessors (e.g., calls resolution uses imports edges).
+    _attach_inheritance_edges(primitives, trees_by_path=trees_by_path)
+    _attach_imports_edges(primitives, trees_by_path=trees_by_path,
+                            repo_path=repo_path)  # populates module.edges_out
+    # imports_by_path is built fresh by passes that need it; the imports
+    # edges live on each module primitive's edges_out.
+    _attach_call_edges(primitives, trees_by_path=trees_by_path)
+    _attach_var_access_edges(primitives, trees_by_path=trees_by_path)
+
+    # imports_by_path for decorator pass
+    imports_by_path = _build_imports_by_path(primitives)
+    _attach_decorator_edges(primitives, trees_by_path=trees_by_path,
+                              imports_by_path=imports_by_path)
+    _attach_tests_edges(primitives, trees_by_path=trees_by_path,
+                         config=default_classification_config())
+
+    yield from primitives
+
+
+def _build_imports_by_path(primitives: list[dict]) -> dict[str, dict[str, str]]:
+    """Helper used by passes that need {path -> {local_binding -> target_id}}.
+    Reads imports edges from module primitives' edges_out."""
+    out: dict[str, dict[str, str]] = {}
+    for p in primitives:
+        if p["primitive"] != "module":
+            continue
+        for e in p["edges_out"]:
+            if e["kind"] != "imports":
+                continue
+            lb = e.get("local_binding")
+            if lb:
+                out.setdefault(p["source"]["path"], {})[lb] = e["target"]
+    return out
+```
+
+Test: a smoke test that calls `extract_repo` against a fixture covering one primitive of each kind and one edge of each kind, asserts every attach pass ran (a non-empty `edges_out` of the expected kind on the expected primitives).
+
+```python
+# depgraph/tests/extractors/test_python_pipeline.py
+def test_extract_repo_runs_all_edge_passes(tmp_path):
+    """Sanity check: after extract_repo returns, every documented edge
+    kind has at least one instance somewhere in the corpus. Catches the
+    case where a future refactor forgets to wire in one of the attach
+    passes."""
+    repo = tmp_path / "fixture"
+    repo.mkdir()
+    (repo / "models.py").write_text("class Base: pass\n\n"
+                                      "class User(Base):\n"
+                                      "    __tablename__ = 'users'\n")
+    (repo / "service.py").write_text("from .models import User\n"
+                                       "import functools\n\n"
+                                       "GLOBAL = 0\n\n"
+                                       "def local_dec(fn): return fn\n\n"
+                                       "@local_dec\n"
+                                       "def read_global() -> int:\n"
+                                       "    return GLOBAL\n\n"
+                                       "def write_global():\n"
+                                       "    global GLOBAL\n"
+                                       "    GLOBAL = 1\n\n"
+                                       "def make_user():\n"
+                                       "    u = User()\n"
+                                       "    return u\n")
+    (repo / "test_service.py").write_text("from .service import read_global\n"
+                                            "def test_read():\n"
+                                            "    assert read_global() == 0\n")
+
+    prims = list(extract_repo(repo_key="fixture", repo_path=repo))
+    edge_kinds = {e["kind"] for p in prims for e in p["edges_out"]}
+    expected_kinds = {"defines", "extends", "imports", "calls",
+                      "instantiates", "reads", "assigns", "decorates",
+                      "tests"}
+    missing = expected_kinds - edge_kinds
+    assert not missing, f"extract_repo missed edge passes: {missing}"
+```
+
+This test is the regression gate against L5/L6 (forgotten attach passes).
+
+- [ ] **Step 1: Run the pipeline smoke test**
+
+```bash
+pytest depgraph/tests/extractors/test_python_pipeline.py -v
+```
+
+If any expected edge kind is missing, the corresponding attach pass isn't wired in. Trace back to the relevant Phase 3 task.
+
+- [ ] **Step 2: Commit**
+
+```bash
+git add depgraph/extractors/python/extract.py \
+        depgraph/tests/extractors/test_python_pipeline.py
+git commit -m "depgraph/extractors/python: pipeline smoke test + consolidated extract_repo"
+```
+
 ### Task 3.6: `tests` edges (assertion-scoped)
 
 A test function is one whose body calls a known test framework primitive. The naive "edge from test to every imported function it calls" rule is overbroad (it edges to test helpers, framework primitives, parameter factories). Tighter rule: emit a `tests` edge only for call targets that appear **inside an assertion expression** (`expect(...).toBe(...)`, `assert <expr>`) — the function being passed to or called inside the assertion is the subject under test.
@@ -4142,7 +4260,7 @@ git commit -m "depgraph/extractors: edge schema validation gate"
 The 8 Phase-3 wild fixtures stress edge resolution: method calls on instance variables, chained calls, dynamic dispatch (must not crash, must mark `unresolved`), monkey-patches, circular imports, decorator targets, module-scope read/assign distinction.
 
 **Files:**
-- Create: `depgraph/tests/fixtures/wild/edges/{method_call_chains,instance_passing,dynamic_dispatch,monkey_patch,circular_imports_py,circular_imports_ts,decorator_target_resolution,read_assign_global}/`
+- Create: `depgraph/tests/fixtures/wild/edges/{method_call_chains,instance_passing,dynamic_dispatch,monkey_patch,circular_imports_py,circular_imports_ts,conditional_rebinding,decorator_target_resolution,read_assign_global}/`
 - Create: `depgraph/tests/extractors/test_edges_wild.py`
 
 - [ ] **Step 1: Author the 8 fixtures**
@@ -4154,7 +4272,8 @@ Each fixture pairs source files with hand-computed expected edges. Critical asse
 - **dynamic_dispatch**: `getattr(obj, name)()` — extractor produces a `calls` edge with `confidence: "unresolved"` and target `external::unresolved::*`, doesn't crash.
 - **monkey_patch**: `SomeClass.method = lambda` — the lambda IS extracted as a function primitive, but the assignment doesn't redirect existing `calls` edges (out of scope; document).
 - **circular_imports_py / circular_imports_ts**: A imports B imports A. Both modules' import edges resolve; the corpus walk doesn't deadlock.
-- **decorator_target_resolution**: `@functools.lru_cache` (external) and `@local_dec` (local function); both produce `decorates` edges, the first targeting an external terminal, the second targeting the local function id.
+- **conditional_rebinding**: `if x: s = A() else: s = B(); s.do_work()`. The v0 implementation walks the AST in `ast.walk` order (BFS-ish), not control-flow order. Both Assign nodes get processed before the outer Expr-Call, so `var_types["s"]` ends up bound to whichever branch was walked last. `expected.json` asserts the deterministic-but-wrong behavior so a future flow-sensitive pass has a regression target. The fixture's `verification.md` should clearly note this is *intentionally pinned wrong* — a reviewer who reads the fixture without context might "fix" the test.
+- **decorator_target_resolution**: `@local_dec` (local function) produces a `decorates` edge from the decorator function to the target. `@functools.lru_cache` (external) produces *no* edge — external terminals can't be edge sources (decorator name is recorded in `signature.decorators` instead).
 - **read_assign_global**: module-scope `GLOBAL = 0`; one function reads, one writes; distinct edges emitted.
 
 - [ ] **Step 2: Test harness**
@@ -5273,15 +5392,35 @@ def test_column_primitive_id_format():
 Add to the bottom of the file:
 
 ```python
+from depgraph.lib.primitives import compute_hash, structural_hash_payload
+
 EXTRACTOR_TAG = "depgraph/lib/sql/reconcile.py@2026-05-16"
 
 
 def schema_to_primitives(tables: list[SchemaPrimitive]) -> list[dict]:
     """Convert SchemaPrimitive dataclasses into wire-format primitive dicts.
-    One class primitive per table; one variable primitive per column."""
+    One class primitive per table; one variable primitive per column.
+
+    Hash payloads use the spec-aligned shape (primitive / name / signature
+    / body_text) via `structural_hash_payload` — same as Python and TS
+    extractors. A schema-sourced `users` class and a Python `users` class
+    hash differently because their `signature` differs, but the *payload
+    shape* is identical across languages.
+    """
     prims: list[dict] = []
     for t in tables:
         table_id = t.id
+        table_signature = {
+            "decorators": [],
+            "primary_key": [c["name"] for c in t.columns if c.get("primary_key")],
+            "foreign_keys": list(t.foreign_keys),
+            "indexes": list(t.indexes),
+        }
+        table_body = repr([
+            {"name": c["name"], "type": c["type"], "nullable": c["nullable"],
+             "default": c.get("default")}
+            for c in t.columns
+        ])
         table_prim = {
             "schema_version": 2,
             "id": table_id,
@@ -5289,20 +5428,18 @@ def schema_to_primitives(tables: list[SchemaPrimitive]) -> list[dict]:
             "name": t.name,
             "owner": None,
             "source": dict(t.source),
-            "signature": {"decorators": []},
+            "signature": table_signature,
             "attributes": {
                 "abstract": False, "generated": False, "external": False,
                 "template_parameters": [], "macro": False, "mutable": False,
                 "instantiable": True, "inheritable": False,
-                "primary_key": [c["name"] for c in t.columns if c.get("primary_key")],
-                "foreign_keys": list(t.foreign_keys),
-                "indexes": list(t.indexes),
                 "defined_by": list(t.defined_by),
             },
             "edges_out": [],
-            "structural_hash": _hash({"kind": "schema", "name": t.name,
-                                       "columns": [(c["name"], c["type"]) for c in t.columns],
-                                       "fks": t.foreign_keys}),
+            "structural_hash": compute_hash(structural_hash_payload(
+                primitive="class", name=t.name,
+                signature=table_signature, body_text=table_body,
+            )),
             "kind": "schema",
             "extractor": EXTRACTOR_TAG,
         }
@@ -5310,6 +5447,11 @@ def schema_to_primitives(tables: list[SchemaPrimitive]) -> list[dict]:
 
         for c in t.columns:
             col_id = f"{table_id}.{c['name']}"
+            col_signature = {
+                "type_annotation": c["type"],
+                "value_text": c.get("default"),
+            }
+            col_body = c.get("default") or ""
             prims.append({
                 "schema_version": 2,
                 "id": col_id,
@@ -5317,7 +5459,7 @@ def schema_to_primitives(tables: list[SchemaPrimitive]) -> list[dict]:
                 "name": f"{t.name}.{c['name']}",
                 "owner": table_id,
                 "source": dict(t.source),
-                "signature": {"type_annotation": c["type"]},
+                "signature": col_signature,
                 "attributes": {
                     "abstract": False, "generated": False, "external": False,
                     "template_parameters": [], "macro": False,
@@ -5326,18 +5468,20 @@ def schema_to_primitives(tables: list[SchemaPrimitive]) -> list[dict]:
                     "default": c.get("default"),
                 },
                 "edges_out": [],
-                "structural_hash": _hash({"kind": "column", "name": c["name"],
-                                            "type": c["type"], "nullable": c["nullable"]}),
+                "structural_hash": compute_hash(structural_hash_payload(
+                    primitive="variable", name=f"{t.name}.{c['name']}",
+                    signature=col_signature, body_text=col_body,
+                )),
                 "kind": None,
                 "extractor": EXTRACTOR_TAG,
             })
     return prims
-
-
-def _hash(payload):
-    import hashlib, json
-    return hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()
 ```
+
+Notes:
+- Both `primary_key` and `foreign_keys` move from `attributes` into `signature` for the table primitive so they participate in hash. Two tables with the same columns but different FKs are structurally different.
+- Column nullability lives in `attributes` (cross-language invariant) but also in `signature.value_text` if a default exists — same pattern as Python's class-scope variables.
+- `_hash` private function removed; we use `compute_hash` from `depgraph/lib/primitives.py`. One implementation of the hash, period.
 
 - [ ] **Step 4: Run, verify pass + commit**
 
@@ -6274,7 +6418,8 @@ def default_config() -> ClassificationConfig:
                 "useState", "useEffect", "useMemo", "useCallback", "useRef",
                 "useContext", "useReducer", "useLayoutEffect",
             },
-            orm_schema_link_vias={"__tablename__", "@@map"},  # Prisma uses @@map
+            orm_schema_link_vias={"__tablename__"},
+            # Future: add Prisma's "@@map" once a Prisma DSL extractor lands
         ),
     })
 ```
@@ -7323,6 +7468,15 @@ git commit -m "depgraph: rewrite reconcile + regen for v2 layered substrate"
 
 The hook at `~/.claude/settings.json` calls `kg hook pre-edit`. That hook reads from `nodes/_index/by_target.json` (new shape) to surface incoming edges before edits. Update the hook's reader to consume v2 shape.
 
+**File-to-primitive resolution algorithm.** The hook receives an absolute file path (e.g., `/home/user/concorda-api/routers/events.py`) via `--file` and must look up the primitives in that file. Resolution:
+
+1. **Load project config.** Either via `DEPGRAPH_DATA_DIR` env var (test override) or the standard project resolver. From the resolved `project.toml`, build a map `{absolute_repo_path: repo_key}` from `repos.*.path`.
+2. **Match the given file path against repo prefixes.** For each `(abs_repo_path, repo_key)`, check whether the file is under it. If yes, `rel_path = file_path.relative_to(abs_repo_path)` and the primitive id prefix is `{repo_key}::{rel_path}::*`.
+3. **Filter `by_target.json` for incoming edges where the source has matching id prefix.** Surface those edges (the callers of anything in this file) in the injected context.
+4. **No match → no injection.** Hook silently no-ops; the edit proceeds. This is the right default — a file outside any tracked repo shouldn't trigger errors, just no context.
+
+For the integration test below: the fixture writes a tiny corpus to `tmp_path / "nodes"` and points `DEPGRAPH_DATA_DIR` at `tmp_path`. The test then synthesizes a fake source file under another tmp subdir whose path matches the corpus's `source.path` field directly (`api/routers.py` in this test). The hook's repo-matching step needs a project.toml; the fixture writes a minimal one alongside the corpus so the resolver finds it.
+
 - [ ] **Step 1: Add a hook integration test**
 
 ```python
@@ -7372,9 +7526,22 @@ def tiny_corpus(tmp_path):
 
 
 def test_hook_pre_edit_surfaces_callers(tiny_corpus, tmp_path):
+    # The hook needs to map an absolute file path back to a repo+rel_path
+    # tuple. Write a project.toml alongside the corpus pointing at the
+    # source root we're about to fake.
     src_root = tmp_path / "api"
     src_root.mkdir()
     (src_root / "routers.py").write_text("def helper(): pass\n\ndef create_event():\n    helper()\n")
+
+    project_toml = tiny_corpus / "project.toml"
+    project_toml.write_text(f"""
+[project]
+name = "fixture"
+
+[repos.api]
+path = "{src_root}"
+languages = ["python"]
+""")
 
     out = subprocess.run([
         sys.executable, "-m", "kg.cli", "hook", "pre-edit",
@@ -7763,11 +7930,27 @@ git commit -m "depgraph: regen determinism CI gate"
 
 ### Task 6.8: Logigraph claim migration
 
-Build the auto-rewrite script before manually triaging. Most stale claims will fall into one of three buckets:
+**Expectation-setting for the initial cutover.** This task ships an auto-migration script, but on the *first* v2 regen the script handles a much smaller fraction of claims than it does on subsequent regens. Why: the spec resolution (2026-05-16) changed the `structural_hash` payload shape (now includes `body_text` per spec). Every pre-flip claim's `remote_hash` was computed against the OLD payload, so byte-equal hash matches against the new corpus are vanishingly rare even when the underlying primitive is semantically unchanged.
 
-1. **Hash-match**: a claim's old `depgraph_id` doesn't exist anymore but a new primitive has the same `structural_hash` — auto-rewrite the claim's `depgraph_id` to the new id.
-2. **Path-rename**: claim's `depgraph_id` is `<repo>::<old-path>::<symbol>` but a new primitive exists at `<repo>::<new-path>::<symbol>` (file moved). If structural_hash also matches, auto-rewrite; if not, surface for human review.
-3. **Truly stale**: no candidate matches. Flag in `CANDIDATES.md` for manual re-authoring.
+What that means practically:
+
+| Bucket | Initial cutover | Future incremental drift |
+|---|---|---|
+| **Id-match** (depgraph_id still resolves) | Common — primitive ids are stable for top-level symbols whose path didn't move | Common — most edits don't move ids |
+| **Hash-match** (old depgraph_id missing, but a new primitive has same structural_hash) | **Rare** — hash shape changed | Common when a file moves |
+| **Name-match** (no hash match, but exactly one new primitive has the same name + repo) | Used heavily for first cutover — auto-rewrites where unambiguous | Used occasionally |
+| **Truly stale** | The bulk; surfaced in `CANDIDATES.md` for re-authoring | Rare |
+
+The script does Id-match + Hash-match + Name-match, in that priority order. On first cutover, most auto-rewrites come from the Name-match path with a confidence-degrade — the claim retains its `depgraph_id` rewrite but `remote_hash` gets refreshed to the new corpus's hash (since we couldn't match against the old).
+
+Author your expectation accordingly: the cutover requires a manual review pass over re-authored claims to confirm the Name-match auto-rewrites picked the right primitive. Don't ship the regen + auto-migration as if no human attention is required.
+
+Buckets:
+
+1. **Id-match**: claim's `depgraph_id` still exists in the new corpus → leave alone, refresh `remote_hash` to current.
+2. **Hash-match**: id missing but a new primitive has the same `structural_hash` → auto-rewrite.
+3. **Name-match**: id missing, no hash match, but exactly one new primitive has the same `name` field within the same repo → auto-rewrite, refresh `remote_hash`, log to `CANDIDATES.md` under "review me — name-match without hash agreement."
+4. **Truly stale**: no candidate by id, hash, or name → flag in `CANDIDATES.md` for manual re-authoring.
 
 - [ ] **Step 1: Write the migration script**
 
@@ -7788,10 +7971,17 @@ import json
 from pathlib import Path
 
 
-def load_depgraph_index(depgraph_dir: Path) -> tuple[dict[str, dict], dict[str, list[str]]]:
-    """Return (by_id, by_hash). by_hash: structural_hash -> [ids]."""
+def load_depgraph_index(depgraph_dir: Path) -> tuple[
+    dict[str, dict], dict[str, list[str]], dict[tuple[str, str], list[str]],
+]:
+    """Return (by_id, by_hash, by_repo_name).
+    - by_id: depgraph_id -> node
+    - by_hash: structural_hash -> [ids]
+    - by_repo_name: (repo, name) -> [ids] — name from node.name field
+    """
     by_id: dict[str, dict] = {}
     by_hash: dict[str, list[str]] = {}
+    by_repo_name: dict[tuple[str, str], list[str]] = {}
     for p in (depgraph_dir / "nodes").rglob("*.json"):
         if p.name.startswith("_") or "_index" in p.parts:
             continue
@@ -7806,14 +7996,34 @@ def load_depgraph_index(depgraph_dir: Path) -> tuple[dict[str, dict], dict[str, 
         h = node.get("structural_hash")
         if h:
             by_hash.setdefault(h, []).append(nid)
-    return by_id, by_hash
+        repo = (node.get("source") or {}).get("repo")
+        name = node.get("name")
+        if repo and name:
+            by_repo_name.setdefault((repo, name), []).append(nid)
+    return by_id, by_hash, by_repo_name
 
 
-def migrate(*, depgraph_dir: Path, logigraph_dir: Path, dry_run: bool = False) -> dict:
-    by_id, by_hash = load_depgraph_index(depgraph_dir)
-    stats = {"unchanged": 0, "auto_rewritten": 0, "ambiguous": 0, "stale": 0}
+def _old_id_components(old_id: str) -> tuple[str, str] | None:
+    """Parse `<repo>::<path>::<symbol>` into (repo, symbol). Returns None
+    for ids that don't fit the shape (e.g., external terminals)."""
+    parts = old_id.split("::")
+    if len(parts) < 3:
+        return None
+    return parts[0], parts[-1]
+
+
+def migrate(*, depgraph_dir: Path, logigraph_dir: Path,
+            dry_run: bool = False) -> dict:
+    by_id, by_hash, by_repo_name = load_depgraph_index(depgraph_dir)
+    stats = {"unchanged": 0,
+             "hash_match_rewritten": 0,
+             "name_match_rewritten": 0,
+             "ambiguous": 0,
+             "stale": 0}
     candidates_path = logigraph_dir / "CANDIDATES.md"
-    lines = ["# Stale logigraph claims after v2 regen\n"]
+    lines = ["# Stale logigraph claims after v2 regen\n",
+             "Entries marked NAME-MATCH were auto-rewritten by name; please "
+             "skim and confirm each picked the right primitive.\n"]
 
     for rule_path in (logigraph_dir / "nodes" / "rules").rglob("*.json"):
         rule = json.loads(rule_path.read_text())
@@ -7822,29 +8032,58 @@ def migrate(*, depgraph_dir: Path, logigraph_dir: Path, dry_run: bool = False) -
             old_id = claim.get("depgraph_id")
             if not old_id:
                 continue
+            # 1) Id-match
             if old_id in by_id:
+                # Refresh hash in case primitive's body shifted
+                claim["remote_hash"] = by_id[old_id]["structural_hash"]
                 stats["unchanged"] += 1
-                continue
-            old_hash = claim.get("remote_hash")
-            candidates = by_hash.get(old_hash, []) if old_hash else []
-            if len(candidates) == 1:
-                claim["depgraph_id"] = candidates[0]
-                claim["remote_hash"] = by_id[candidates[0]]["structural_hash"]
-                stats["auto_rewritten"] += 1
                 changed = True
-            elif len(candidates) > 1:
+                continue
+            # 2) Hash-match
+            old_hash = claim.get("remote_hash")
+            hash_candidates = by_hash.get(old_hash, []) if old_hash else []
+            if len(hash_candidates) == 1:
+                claim["depgraph_id"] = hash_candidates[0]
+                claim["remote_hash"] = by_id[hash_candidates[0]]["structural_hash"]
+                stats["hash_match_rewritten"] += 1
+                changed = True
+                continue
+            if len(hash_candidates) > 1:
                 stats["ambiguous"] += 1
-                lines.append(f"- AMBIGUOUS in rule `{rule['id']}`: old_id "
-                              f"`{old_id}` had hash `{old_hash[:8]}…` matching "
-                              f"{len(candidates)} new primitives: {candidates}")
-            else:
+                lines.append(f"- AMBIGUOUS-HASH in rule `{rule['id']}`: old_id "
+                              f"`{old_id}` hash matches {len(hash_candidates)} primitives")
+                continue
+            # 3) Name-match — initial-cutover workhorse
+            comps = _old_id_components(old_id)
+            if comps is None:
                 stats["stale"] += 1
-                lines.append(f"- STALE in rule `{rule['id']}`: old_id "
-                              f"`{old_id}` has no hash match in new corpus")
+                lines.append(f"- STALE in rule `{rule['id']}`: `{old_id}` unparseable")
+                continue
+            repo, name = comps
+            name_candidates = by_repo_name.get((repo, name), [])
+            if len(name_candidates) == 1:
+                claim["depgraph_id"] = name_candidates[0]
+                claim["remote_hash"] = by_id[name_candidates[0]]["structural_hash"]
+                stats["name_match_rewritten"] += 1
+                lines.append(f"- NAME-MATCH in rule `{rule['id']}`: `{old_id}` "
+                              f"→ `{name_candidates[0]}` (review and confirm)")
+                changed = True
+                continue
+            if len(name_candidates) > 1:
+                stats["ambiguous"] += 1
+                lines.append(f"- AMBIGUOUS-NAME in rule `{rule['id']}`: `{old_id}` "
+                              f"matches {len(name_candidates)} by name: {name_candidates}")
+                continue
+            # 4) Truly stale
+            stats["stale"] += 1
+            lines.append(f"- STALE in rule `{rule['id']}`: `{old_id}` "
+                          f"has no id / hash / name match in new corpus")
         if changed and not dry_run:
             rule_path.write_text(json.dumps(rule, indent=2, sort_keys=True))
 
-    if (stats["ambiguous"] or stats["stale"]) and not dry_run:
+    has_review_lines = (stats["ambiguous"] or stats["stale"]
+                         or stats["name_match_rewritten"])
+    if has_review_lines and not dry_run:
         candidates_path.write_text("\n".join(lines))
     return stats
 
