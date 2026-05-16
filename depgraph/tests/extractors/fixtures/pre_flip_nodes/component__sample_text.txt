@@ -1,3 +1,0 @@
-export default function CodeOfConductPage() {
-  return <PolicyPageView slug="code_of_conduct" />;
-}
