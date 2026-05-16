@@ -305,6 +305,82 @@ function extractVariables(sf: SourceFile, repoKey: string, relPath: string): Pri
   return out;
 }
 
+function packagePrimitives(sourceFiles: SourceFile[], repoKey: string, repoPath: string): Primitive[] {
+  const dirs = new Set<string>();
+  for (const sf of sourceFiles) {
+    let rel = relative(repoPath, sf.getFilePath());
+    let dir = rel.includes("/") ? rel.substring(0, rel.lastIndexOf("/")) : "";
+    while (dir) {
+      dirs.add(dir);
+      dir = dir.includes("/") ? dir.substring(0, dir.lastIndexOf("/")) : "";
+    }
+    if (dirs.has("")) dirs.delete("");
+  }
+  return [...dirs].sort().map((d) => ({
+    schema_version: 2 as const,
+    id: `${repoKey}::${d}`,
+    primitive: "package" as const,
+    name: d,
+    owner: null,
+    source: { repo: repoKey, path: d, language: "typescript", line: 0, end_line: 0 },
+    signature: {},
+    attributes: { abstract: false, generated: false, external: false,
+                  template_parameters: [], macro: false, mutable: false,
+                  instantiable: false, inheritable: false },
+    edges_out: [],
+    structural_hash: structuralHash({ kind: "package", path: d }),
+    kind: null,
+    extractor: EXTRACTOR_TAG,
+  }));
+}
+
+function extractObjectLiteralApiClients(sf: SourceFile, repoKey: string, relPath: string): Primitive[] {
+  const out: Primitive[] = [];
+  for (const vs of sf.getVariableStatements()) {
+    for (const decl of vs.getDeclarations()) {
+      const init = decl.getInitializer();
+      if (!init || !Node.isObjectLiteralExpression(init)) continue;
+      const className = decl.getName();
+      const classId = canonicalId(repoKey, relPath, className);
+      out.push({
+        schema_version: 2, id: classId, primitive: "class",
+        name: className, owner: null,
+        source: { repo: repoKey, path: relPath, language: "typescript",
+                  line: decl.getStartLineNumber(), end_line: decl.getEndLineNumber() },
+        signature: {},
+        attributes: { abstract: false, generated: false, external: false,
+                      template_parameters: [], macro: false, mutable: false,
+                      instantiable: true, inheritable: false },
+        edges_out: [],
+        structural_hash: structuralHash({ kind: "class", name: className, object_literal: true }),
+        kind: null,
+        extractor: EXTRACTOR_TAG,
+      });
+
+      for (const prop of init.getProperties()) {
+        if (Node.isMethodDeclaration(prop) || (Node.isPropertyAssignment(prop) &&
+            (Node.isArrowFunction(prop.getInitializer()!) || Node.isFunctionExpression(prop.getInitializer()!)))) {
+          const isMethod = Node.isMethodDeclaration(prop);
+          const memberName = isMethod ? prop.getName() : (prop as any).getName();
+          const fnNode: any = isMethod ? prop : (prop as any).getInitializer()!;
+          out.push(functionPrimitive(fnNode, memberName, classId, {
+            parameters: fnNode.getParameters().map(paramShape),
+            return_type: fnNode.getReturnTypeNode?.()?.getText() ?? null,
+            is_async: fnNode.isAsync?.() ?? false,
+            decorators: [],
+            returns_jsx: bodyHasJsx(fnNode),
+          }, bodyText(fnNode), repoKey, relPath));
+        } else if (Node.isPropertyAssignment(prop)) {
+          const initText = (prop as any).getInitializer()?.getText() ?? null;
+          out.push(variablePrimitive(prop, prop.getName(), classId, true,
+            null, initText, repoKey, relPath));
+        }
+      }
+    }
+  }
+  return out;
+}
+
 function main() {
   const { values } = parseArgs({
     options: {
@@ -323,12 +399,17 @@ function main() {
   const project = new Project({ skipAddingFilesFromTsConfig: true });
   for (const f of listSourceFiles(repoPath)) project.addSourceFileAtPath(f);
 
-  for (const sf of project.getSourceFiles()) {
+  const sourceFiles = project.getSourceFiles();
+
+  for (const p of packagePrimitives(sourceFiles, repoKey, repoPath)) emit(p);
+
+  for (const sf of sourceFiles) {
     const relPath = relative(repoPath, sf.getFilePath());
     emit(moduleFor(sf, repoKey, repoPath));
     for (const p of extractClasses(sf, repoKey, relPath)) emit(p);
     for (const p of extractFunctions(sf, repoKey, relPath)) emit(p);
     for (const p of extractVariables(sf, repoKey, relPath)) emit(p);
+    for (const p of extractObjectLiteralApiClients(sf, repoKey, relPath)) emit(p);
   }
 }
 

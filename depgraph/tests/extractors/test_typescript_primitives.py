@@ -175,3 +175,21 @@ def test_class_field_has_owner():
     assert "Settings.VERSION" in names
     assert "Settings.debug" in names
     assert "Settings.publicProp" in names
+
+
+def test_package_primitive_per_dir_with_sources():
+    prims = run_extractor("object_api_client")
+    pkgs = {p["name"]: p for p in prims if p["primitive"] == "package"}
+    # Expect packages for "src" and "src/lib"
+    assert "src" in pkgs
+    assert "src/lib" in pkgs
+
+def test_object_literal_api_client_emits_class_and_members():
+    prims = run_extractor("object_api_client")
+    classes = {p["name"]: p for p in prims if p["primitive"] == "class"}
+    assert "usersApi" in classes
+    fns = {p["name"] for p in prims if p["primitive"] == "function" and p["owner"]}
+    assert "usersApi.fetch" in fns
+    assert "usersApi.create" in fns
+    vars_ = {p["name"] for p in prims if p["primitive"] == "variable" and p["owner"]}
+    assert "usersApi.endpoint" in vars_
