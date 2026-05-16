@@ -149,3 +149,29 @@ def test_same_name_static_and_instance_method_disambiguate():
     assert "fixture::src/all.ts::Holder.shared" in ids
     assert "fixture::src/all.ts::Holder.shared:static" in ids
     assert len(ids) == 2
+
+
+def test_top_level_const_variable():
+    prims = run_extractor("variables")
+    vars_ = {p["name"]: p for p in prims if p["primitive"] == "variable"}
+    assert "PI" in vars_
+    assert vars_["PI"]["attributes"]["mutable"] is False
+
+def test_top_level_let_variable():
+    prims = run_extractor("variables")
+    vars_ = {p["name"]: p for p in prims if p["primitive"] == "variable"}
+    assert vars_["counter"]["attributes"]["mutable"] is True
+
+def test_arrow_function_const_is_function_not_variable():
+    """`const x = () => 1` should be function, not variable."""
+    prims = run_extractor("functions")
+    primitives_by_name = {p["name"]: p["primitive"] for p in prims}
+    assert primitives_by_name.get("arrow") == "function"
+
+def test_class_field_has_owner():
+    prims = run_extractor("variables")
+    fields = [p for p in prims if p["primitive"] == "variable" and p["owner"] is not None]
+    names = {p["name"] for p in fields}
+    assert "Settings.VERSION" in names
+    assert "Settings.debug" in names
+    assert "Settings.publicProp" in names

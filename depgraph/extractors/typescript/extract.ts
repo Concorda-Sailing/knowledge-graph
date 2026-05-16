@@ -245,6 +245,66 @@ function extractFunctions(sf: SourceFile, repoKey: string, relPath: string): Pri
   return out;
 }
 
+function variablePrimitive(
+  node: { getStartLineNumber(): number; getEndLineNumber(): number },
+  name: string, owner: string | null, mutable: boolean,
+  type_annotation: string | null,
+  value_text: string | null,
+  repoKey: string, relPath: string,
+): Primitive {
+  const symbol = owner ? `${owner.split("::").pop()}.${name}` : name;
+  const signature = { type_annotation, value_text };
+  return {
+    schema_version: 2, id: canonicalId(repoKey, relPath, symbol),
+    primitive: "variable", name: symbol, owner,
+    source: { repo: repoKey, path: relPath, language: "typescript",
+              line: node.getStartLineNumber(), end_line: node.getEndLineNumber() },
+    signature,
+    attributes: { abstract: false, generated: false, external: false,
+                  template_parameters: [], macro: false, mutable,
+                  instantiable: false, inheritable: false },
+    edges_out: [],
+    structural_hash: structuralHash({
+      primitive: "variable", name: symbol,
+      signature, body_text: value_text ?? "",
+    }),
+    kind: null,
+    extractor: EXTRACTOR_TAG,
+  };
+}
+
+function extractVariables(sf: SourceFile, repoKey: string, relPath: string): Primitive[] {
+  const out: Primitive[] = [];
+
+  for (const vs of sf.getVariableStatements()) {
+    const declKind = vs.getDeclarationKind();  // "const" | "let" | "var"
+    for (const decl of vs.getDeclarations()) {
+      const init = decl.getInitializer();
+      if (init && (Node.isArrowFunction(init) || Node.isFunctionExpression(init))) continue;
+      // Also skip object literals — handled by extractObjectLiteralApiClients
+      if (init && Node.isObjectLiteralExpression(init)) continue;
+      out.push(variablePrimitive(decl, decl.getName(), null,
+        declKind !== "const",
+        decl.getTypeNode()?.getText() ?? null,
+        init?.getText() ?? null,
+        repoKey, relPath));
+    }
+  }
+
+  for (const cls of sf.getClasses()) {
+    const classId = canonicalId(repoKey, relPath, cls.getName() ?? "<anonymous>");
+    for (const prop of cls.getProperties()) {
+      out.push(variablePrimitive(prop, prop.getName(), classId,
+        !prop.isReadonly(),
+        prop.getTypeNode()?.getText() ?? null,
+        prop.getInitializer()?.getText() ?? null,
+        repoKey, relPath));
+    }
+  }
+
+  return out;
+}
+
 function main() {
   const { values } = parseArgs({
     options: {
@@ -268,6 +328,7 @@ function main() {
     emit(moduleFor(sf, repoKey, repoPath));
     for (const p of extractClasses(sf, repoKey, relPath)) emit(p);
     for (const p of extractFunctions(sf, repoKey, relPath)) emit(p);
+    for (const p of extractVariables(sf, repoKey, relPath)) emit(p);
   }
 }
 
