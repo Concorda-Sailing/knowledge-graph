@@ -15,6 +15,7 @@ import argparse
 import os
 from pathlib import Path
 
+from kg.cli.install import hooks as _hooks_mod
 from kg.cli.install import init as _init_mod
 from kg.cli.install import tools as _tools_mod
 
@@ -32,6 +33,12 @@ def _run_installer(args: argparse.Namespace, extra: list[str]) -> int:
         tools_parser.add_argument("--data", action="append", default=[])
         tools_args = tools_parser.parse_args(extra[1:])
         return _tools_mod.cmd_tools(tools_args)
+    if extra and extra[0] == "hooks":
+        hooks_parser = argparse.ArgumentParser(prog="kg install hooks")
+        hooks_parser.add_argument("--project", help="Project data dir (used in hook command paths)")
+        hooks_parser.add_argument("--apply", action="store_true")
+        hooks_parser.add_argument("--force", action="store_true")
+        return _hooks_mod.cmd_hooks(hooks_parser.parse_args(extra[1:]))
     # Fall through: subprocess shim for everything else.
     tool_root = Path(__file__).resolve().parents[3]
     installer = tool_root / "install.sh"
