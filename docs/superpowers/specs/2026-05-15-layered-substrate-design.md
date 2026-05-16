@@ -301,8 +301,8 @@ The kinds surfaced in graphui — component, hook, controller, service, model, u
 | **hook** | function whose name matches `use<Capital>` **and** calls another known hook or a React built-in hook |
 | **endpoint / controller** | function targeted by an inbound HTTP route registration (Layer-3 evidence) |
 | **service** | function with at least one of: `db_access` edge, `queue_produce` edge, `webhook_publish` edge, `notification_send` edge, `file_storage_access` edge **AND** transitively called from at least one endpoint |
-| **model** | class with `extends` to a known ORM base **or** sourced from a schema-language extractor (Prisma model, SQL table, GraphQL type) |
-| **schema** | class sourced from a schema-language extractor that is referenced by an endpoint signature |
+| **schema** | class sourced from a **schema-language extractor** (SQL `CREATE TABLE`, Prisma `model`, GraphQL `type`, JSON Schema definition, etc.). The schema is the *actual data shape on disk / over the wire*, not a host-language abstraction over it. |
+| **model** | host-language class (Python, TS, etc.) with `extends` to a known ORM base **AND** a `references` edge to a `schema`-kind primitive. The model is the *ORM mapper / observer* of a schema, not the schema itself. A class lacking the schema reference is unclassified as `model` even if it extends an ORM base — that signals an orphan mapper or missing schema extraction. |
 | **util** | function called by at least one classified kind **and** classifies as none of the above |
 | **test** | function whose body calls a known test framework primitive (`it`, `test`, `pytest.fixture`, `t.Run`, `#[test]`) |
 
@@ -362,17 +362,22 @@ Phases 1–3 are framework work. Phases 4–5 may need framework support but per
 
 1. **Parity strategy.** ~~Existing parity fixtures lock layer-1 + layer-2 output…~~ **Resolved 2026-05-16:** no backward-compatibility constraint. The `tests/extractors/test_pre_flip_parity.py` gate and its 8 `pre_flip_nodes/*.json` fixtures are retired. Concorda's depgraph corpus is regenerated from scratch once the new pipeline lands; logigraph claims become stale en masse and are re-authored (or auto-rewritten via reconcile where the new `structural_hash` matches). New fixtures are seeded from the first clean phase-1 regen and lock the layered model going forward.
 2. **Persistence model for derived nodes.** **Resolved 2026-05-16:** option (a) — write derived nodes to disk under kind-dirs. Classifier replaces today's extractor as the writer; graphui's file-read model is unchanged. Lazy derivation (option b) stays reachable later if classifier iteration becomes painful.
-3. **Migration-attribute granularity.** A migration's `up_operations[]` could list each statement-as-primitive (one function call per CREATE / ALTER), or aggregate into one "migration step." The former is more powerful for rule claims; the latter is simpler. Lean toward statement-as-primitive but resolve in phase 1 of SQL extractor work — out of scope for the first implementation pass (see "Implementation scope" below).
+3. **Migration-attribute granularity.** **Resolved 2026-05-16:** per-statement primitives. Each parsed SQL statement inside a migration is a first-class primitive (a class for `CREATE TABLE`, a variable add/drop reflected on the table's column set, etc.) with `source.path` = the migration file and `source.line` = the `text(...)` call's line. The migration module groups them via an `up_operations[]` attribute listing the schema-primitive ids it produces. Rule claims like "every NOT NULL column add has a default" anchor on the per-column primitive's attributes; aggregating into one "migration step" would lose that fidelity.
 
 ## Implementation scope (added 2026-05-16)
 
-First implementation pass: **JavaScript, TypeScript, Python only.** The full language registry (Go, Rust, C, C++, SQL, JSON Schema, Prisma, OpenAPI, GraphQL, Protobuf) stays the architectural target but does not ship in this pass. System-layer (L3) extractors and logigraph L3-claim support land after L1 + L2 + L3-classification on the JS/TS/Python substrate is stable.
+First implementation pass: **JavaScript, TypeScript, Python, and SQL.** SQL is in scope because the *actual database schema* — `CREATE TABLE` statements — is a first-party artifact. ORM mappers (SQLAlchemy `class User(Base)`, Prisma's generated client, etc.) are downstream observers of the schema, not the schema itself; without parsing the SQL, classification can't anchor `model` correctly and `db_access` edges would point at synthetic terminals rather than the real schema primitives.
+
+Deferred to a later pass: Go, Rust, C, C++, JSON Schema, Prisma DSL, OpenAPI, GraphQL, Protobuf. Document-store schemas (MongoDB, etc.) — where the schema is implicit in JSON document shape — also deferred; for that case, the schema source would be JSON Schema files, Pydantic/Marshmallow validators, or sampled documents, none of which Concorda uses today.
 
 Phases for this pass:
 
-1. **L1 primitive extractors** — JS/TS (ts-morph) and Python (stdlib `ast`) emit the five primitives with full attribute set. Class methods, class fields, top-level functions, top-level variables, module + package primitives. No kind decisions.
+1. **L1 primitive extractors** — JS/TS (ts-morph), Python (stdlib `ast`), SQL (sqlglot) emit the five primitives with full attribute set. SQL `CREATE TABLE` → class with `kind: "schema"` (set inherently by the schema-language extractor; not derived). Columns → variables. Class methods, class fields, top-level functions, top-level variables, module + package primitives for the host languages. No kind decisions for non-schema primitives.
 2. **L2 edge layer** — defines / extends / implements / calls / instantiates / references / reads / assigns / decorates / imports / tests. `includes` not relevant (no C/C++ in scope). Resolution `exact` only at launch.
-3. **L3 derived classification** — classification engine over (primitives + L2 edges) producing component / hook / endpoint / controller / service / model / schema / util / test. Service classification under JS/TS/Python uses available evidence (db client patterns, http client patterns, queue SDK patterns) emitted as a thin L3 stub specifically for classifier consumption; full L3 system edges are a later pass.
+3. **Migration handling** — Python (and TS, later) migration files are recognized by path pattern + presence of SQL-string calls. Embedded SQL is extracted and parsed; resulting schema primitives carry `source.path = <migration-file>`, `source.language = "sql"`. Migration modules carry `migration_order` + `up_operations[]` attributes. Schema reconciliation replays operations in order to produce the final-state schema primitives.
+4. **ORM mapper → schema cross-reference** — Python (and TS) classes with `__tablename__` (or equivalent) get a `references` edge to the schema-sourced class with matching name. Built as a corpus-wide post-pass.
+5. **L3 db_access edges** — recognize SQLAlchemy `session.query(X)` / `db.add(...)` / cursor-style `conn.execute(text("..."))` patterns. Edge targets are **schema-sourced primitives** (via ORM-model → schema reference chain, or directly via parsed SQL string). No synthetic `external::pypi::sqlalchemy::Session.<method>` terminals.
+6. **L3 derived classification** — classification engine over (primitives + L2 edges + L3 db_access) producing component / hook / endpoint / controller / service / model / schema / util / test. Schema kind is set by the SQL extractor inherently; model kind requires the ORM-base extension *plus* the schema reference.
 
 ## Decision points
 
@@ -380,6 +385,6 @@ Before phase 1 starts, the following must resolve:
 
 - [x] Parity strategy — resolved (drop the gate; regen from scratch)
 - [x] Persistence model for derived nodes — resolved (option a, disk kind-dirs)
-- [x] Implementation language scope — resolved (JS/TS/Python first)
-
-Open question 3 resolves later, alongside the SQL extractor work that is out of scope here.
+- [x] Implementation language scope — resolved (JS/TS/Python + SQL — schema is first-party)
+- [x] Migration-attribute granularity (Q3) — resolved (per-statement primitives; migration module groups them via `up_operations[]`; statements carry `source.line` from the `text(...)` call inside the migration file)
+- [x] model vs schema split — resolved (schema is sourced from schema-language extractors; model is the ORM mapper, requires both `extends → ORM base` and `references → schema` primitive)
