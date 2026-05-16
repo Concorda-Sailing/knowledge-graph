@@ -833,6 +833,137 @@ function attachCallEdges(
 }
 
 // ---------------------------------------------------------------------------
+// L2 edge resolution — Task 3.6: tests edges (assertion-scoped, TS)
+// ---------------------------------------------------------------------------
+
+// Framework primitive names that should never receive `tests` edges.
+// Inlined as a constant until Phase 5 ClassificationConfig exists.
+const TS_TEST_FRAMEWORK_PRIMITIVES = new Set([
+  "describe", "it", "test", "expect", "beforeEach", "afterEach",
+  "beforeAll", "afterAll", "vi", "vitest", "jest",
+]);
+
+function isTestPath(relPath: string): boolean {
+  const last = relPath.split("/").pop() ?? "";
+  return last.endsWith(".test.ts") || last.endsWith(".test.tsx")
+    || last.endsWith(".spec.ts") || last.endsWith(".spec.tsx");
+}
+
+function attachTestsEdges(
+  prims: Primitive[],
+  sourceFiles: SourceFile[],
+  repoKey: string,
+  repoPath: string,
+): void {
+  // Build local symbol index per file: name -> id (non-method, owner-null)
+  const localByPath = new Map<string, Map<string, string>>();
+  for (const p of prims) {
+    if (p.owner === null && (p.primitive === "class" || p.primitive === "function" || p.primitive === "variable")) {
+      if (!localByPath.has(p.source.path)) localByPath.set(p.source.path, new Map());
+      localByPath.get(p.source.path)!.set(p.name, p.id);
+    }
+  }
+
+  // Build import bindings per file: local_binding -> target_id
+  const importsByPath = new Map<string, Map<string, string>>();
+  for (const p of prims) {
+    if (p.primitive !== "module") continue;
+    for (const e of p.edges_out) {
+      if (e.kind !== "imports") continue;
+      const lb = e.local_binding;
+      if (lb) {
+        if (!importsByPath.has(p.source.path)) importsByPath.set(p.source.path, new Map());
+        importsByPath.get(p.source.path)!.set(lb, e.target);
+      }
+    }
+  }
+
+  // Index function primitives by path:line
+  const fnByPathAndLine = new Map<string, Primitive>();
+  for (const p of prims) {
+    if (p.primitive === "function") {
+      fnByPathAndLine.set(`${p.source.path}:${p.source.line}`, p);
+    }
+  }
+
+  for (const sf of sourceFiles) {
+    const rel = relative(repoPath, sf.getFilePath());
+    if (!isTestPath(rel)) continue;
+
+    const localNames = localByPath.get(rel) ?? new Map<string, string>();
+    const imports = importsByPath.get(rel) ?? new Map<string, string>();
+
+    const allFns = [
+      ...sf.getFunctions(),
+      ...sf.getClasses().flatMap((c) => c.getMethods()),
+    ];
+
+    for (const fnNode of allFns as any[]) {
+      const startLine = fnNode.getStartLineNumber();
+      const fnPrim = fnByPathAndLine.get(`${rel}:${startLine}`);
+      if (!fnPrim) continue;
+
+      // Walk descendants looking for CallExpressions
+      const descendants = fnNode.getDescendants?.() ?? [];
+      for (const node of descendants) {
+        if (!Node.isCallExpression(node)) continue;
+
+        // Check if this call is inside an expect(...) ancestor.
+        // expect(add(1, 2)).toBe(3):
+        //   - outer call: expect(...).toBe(3)  — PropertyAccessExpression callee
+        //   - add(1, 2) is an argument to expect(...)
+        // We want to emit tests edge for `add`, not for `expect` or `toBe`.
+        //
+        // Detection: walk up ancestors; if we reach a CallExpression whose
+        // callee (or callee's object) is Identifier "expect", this node is
+        // assertion-scoped.
+        if (!isInsideExpect(node)) continue;
+
+        const callExpr = node.getExpression();
+        let calleeName: string | null = null;
+        if (Node.isIdentifier(callExpr)) {
+          calleeName = callExpr.getText();
+        } else if (Node.isPropertyAccessExpression(callExpr)) {
+          calleeName = callExpr.getName();
+        }
+        if (!calleeName || TS_TEST_FRAMEWORK_PRIMITIVES.has(calleeName)) continue;
+
+        const targetId = localNames.get(calleeName) ?? imports.get(calleeName);
+        if (targetId && !targetId.startsWith("external::")) {
+          fnPrim.edges_out.push({
+            target: targetId, kind: "tests", via: "asserted_call",
+            where: `${rel}:${node.getStartLineNumber()}`, confidence: "exact",
+          });
+        }
+      }
+    }
+  }
+}
+
+function isInsideExpect(node: Node): boolean {
+  // Walk up the ancestor chain; return true if we encounter a CallExpression
+  // whose direct callee is Identifier "expect".
+  let cur: Node | undefined = node.getParent();
+  while (cur !== undefined) {
+    if (Node.isCallExpression(cur)) {
+      const expr = cur.getExpression();
+      // Direct call: expect(...)
+      if (Node.isIdentifier(expr) && expr.getText() === "expect") return true;
+      // Chained: expect(...).toBe(...) — callee is PropertyAccess on expect(...)
+      if (Node.isPropertyAccessExpression(expr)) {
+        const obj = expr.getExpression();
+        if (Node.isCallExpression(obj)) {
+          const innerExpr = obj.getExpression();
+          if (Node.isIdentifier(innerExpr) && innerExpr.getText() === "expect") return true;
+        }
+      }
+    }
+    cur = cur.getParent();
+  }
+  return false;
+}
+
+// ---------------------------------------------------------------------------
 // L2 edge resolution — Task 3.5: reads / assigns (TS)
 // ---------------------------------------------------------------------------
 
@@ -971,6 +1102,7 @@ function main() {
   attachImportsEdges(allPrims, sourceFiles, repoKey, repoPath);
   attachCallEdges(allPrims, sourceFiles, repoKey, repoPath);
   attachVarAccessEdges(allPrims, sourceFiles, repoKey, repoPath);
+  attachTestsEdges(allPrims, sourceFiles, repoKey, repoPath);
 
   for (const p of allPrims) emit(p);
 }

@@ -95,6 +95,7 @@ def extract_repo(*, repo_key: str, repo_path: Path) -> Iterator[dict]:
     imports_by_path = _build_imports_by_path(primitives)
     _attach_decorator_edges(primitives, trees_by_path=trees_by_path,
                              imports_by_path=imports_by_path)
+    _attach_tests_edges(primitives, trees_by_path=trees_by_path)
 
     yield from primitives
 
@@ -720,3 +721,117 @@ def _attach_decorator_edges(primitives: list[dict],
                 "where": f"{path}:{p['source']['line']}",
                 "confidence": "exact",
             })
+
+
+# ---------------------------------------------------------------------------
+# L2 edge resolution — Task 3.6: tests (assertion-scoped)
+# ---------------------------------------------------------------------------
+
+# Test framework primitives: calls to these inside asserts do NOT get
+# `tests` edges — they are framework machinery, not code under test.
+# Inlined here as a constant until Phase 5 ClassificationConfig exists.
+# Rationale: keeping changes scoped to Phase 3; ClassificationConfig will
+# subsume this in Phase 5 without any test changes.
+_PY_TEST_FRAMEWORK_PRIMITIVES: frozenset[str] = frozenset({
+    "pytest", "fixture", "mark", "raises", "warns",
+    "assert_called", "assert_called_once", "assert_called_with",
+    "mock", "patch", "MagicMock", "Mock",
+})
+
+
+def _attach_tests_edges(primitives: list[dict],
+                         *, trees_by_path: dict[str, ast.Module]) -> None:
+    """For each test function, emit `tests` edges to call targets that appear
+    inside an ast.Assert node. Calls outside assert expressions (e.g. helper
+    setup calls) do NOT produce edges."""
+    # Build imports index per file so we can resolve called names to ids
+    imports_by_path_local = _build_imports_by_path(primitives)
+
+    # Also build module-local symbol index per file
+    local_by_path: dict[str, dict[str, str]] = {}
+    for p in primitives:
+        if p.get("owner") is None and p["primitive"] in {"class", "function", "variable"}:
+            local_by_path.setdefault(p["source"]["path"], {})[p["name"]] = p["id"]
+
+    for path, tree in trees_by_path.items():
+        if not _is_test_path_py(path):
+            continue
+        local_names = local_by_path.get(path, {})
+        imports = imports_by_path_local.get(path, {})
+
+        for fn_node in ast.walk(tree):
+            if not isinstance(fn_node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue
+            if not _is_test_function_py(fn_node):
+                continue
+            fn_prim = next(
+                (p for p in primitives
+                 if p["primitive"] == "function"
+                    and p["source"]["path"] == path
+                    and p["source"]["line"] == fn_node.lineno),
+                None,
+            )
+            if fn_prim is None:
+                continue
+
+            # Build child->parent map once for the whole function body
+            parents: dict[int, ast.AST] = {}
+            for sub in ast.walk(fn_node):
+                for child in ast.iter_child_nodes(sub):
+                    parents[id(child)] = sub
+
+            for sub in ast.walk(fn_node):
+                if not isinstance(sub, ast.Call):
+                    continue
+                if not _is_assertion_scoped_py(sub, parents):
+                    continue
+                callee_name = _callee_name_py(sub.func)
+                if callee_name in _PY_TEST_FRAMEWORK_PRIMITIVES:
+                    continue
+                if callee_name is None:
+                    continue
+                target_id = local_names.get(callee_name) or imports.get(callee_name)
+                if target_id and not target_id.startswith("external::"):
+                    fn_prim["edges_out"].append({
+                        "target": target_id, "kind": "tests",
+                        "via": "asserted_call",
+                        "where": f"{path}:{sub.lineno}",
+                        "confidence": "exact",
+                    })
+
+
+def _is_test_path_py(path: str) -> bool:
+    """True if path matches test_*.py or *_test.py naming convention."""
+    last = path.rsplit("/", 1)[-1]
+    return last.startswith("test_") or last.endswith("_test.py")
+
+
+def _is_test_function_py(fn_node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
+    """True if function name starts with test_ or has pytest decorator."""
+    if fn_node.name.startswith("test_"):
+        return True
+    for d in fn_node.decorator_list:
+        name = _decorator_name(d)
+        if name.startswith("pytest."):
+            return True
+    return False
+
+
+def _is_assertion_scoped_py(node: ast.AST, parents: dict[int, ast.AST]) -> bool:
+    """Walk up from node; return True if any ancestor is ast.Assert."""
+    cur = parents.get(id(node))
+    while cur is not None:
+        if isinstance(cur, ast.Assert):
+            return True
+        cur = parents.get(id(cur))
+    return False
+
+
+def _callee_name_py(func: ast.expr) -> str | None:
+    """Extract the bare function name from a call's func node, if resolvable."""
+    if isinstance(func, ast.Name):
+        return func.id
+    if isinstance(func, ast.Attribute):
+        # e.g. obj.method — return just the method name for local lookup
+        return func.attr
+    return None

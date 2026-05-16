@@ -146,3 +146,18 @@ def test_external_decorator_not_an_edge_py():
     assert incoming == [], (
         f"external decorator should not emit a decorates edge; got: {incoming}"
     )
+
+
+# ---------------------------------------------------------------------------
+# Task 3.6: tests edges (assertion-scoped)
+# ---------------------------------------------------------------------------
+
+def test_tests_edge_py_assertion_scoped():
+    prims = list(extract_repo(repo_key="fixture", repo_path=FIXTURE_DIR / "tests"))
+    tfn = next(p for p in prims if p["name"] == "test_add")
+    tests = [e for e in tfn["edges_out"] if e["kind"] == "tests"]
+    targets = {e["target"] for e in tests}
+    assert "fixture::src/math.py::add" in targets
+    assert "fixture::src/math.py::normalize" in targets
+    # helper imported but called outside an assert — not a subject
+    assert "fixture::src/test_helpers.py::make_fixture" not in targets

@@ -158,3 +158,21 @@ def test_assigns_edge_ts():
     writer = next(p for p in prims if p["name"] == "writer")
     assigns = [e for e in writer["edges_out"] if e["kind"] == "assigns"]
     assert any(e["target"] == "fixture::src/file.ts::globalCount" for e in assigns)
+
+
+# ---------------------------------------------------------------------------
+# Task 3.6: tests edges (assertion-scoped, TS)
+# ---------------------------------------------------------------------------
+
+def test_tests_edge_to_subject_only():
+    prims = run_extractor("tests", which="edges")
+    test_fn = next(p for p in prims if p["primitive"] == "function"
+                   and p["source"]["path"].endswith(".test.ts"))
+    tests = [e for e in test_fn["edges_out"] if e["kind"] == "tests"]
+    targets = {e["target"] for e in tests}
+    assert "fixture::src/math.ts::add" in targets
+    assert "fixture::src/math.ts::normalize" in targets
+    # helper called outside expect(...) — must NOT be a tests-edge target
+    assert "fixture::src/test_helpers.ts::makeFixture" not in targets
+    # framework primitives must NOT be targets either
+    assert not any("vitest" in t for t in targets)
