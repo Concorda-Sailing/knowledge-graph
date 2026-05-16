@@ -50,6 +50,9 @@ def _iter_py_files(repo_path: Path) -> Iterator[Path]:
 
 
 def extract_repo(*, repo_key: str, repo_path: Path) -> Iterator[dict]:
+    primitives: list[dict] = []
+    trees_by_path: dict[str, ast.Module] = {}
+
     files = sorted(_iter_py_files(repo_path))
 
     # packages: dirs that contain __init__.py
@@ -59,26 +62,36 @@ def extract_repo(*, repo_key: str, repo_path: Path) -> Iterator[dict]:
         if rel.name == "__init__.py":
             package_dirs.add(str(rel.parent))
     for pkg_path in sorted(package_dirs):
-        yield _base_primitive(
+        primitives.append(_base_primitive(
             schema_id=f"{repo_key}::{pkg_path}",
             primitive="package", name=pkg_path, owner=None,
             repo=repo_key, path=pkg_path, line=0, end_line=0,
             signature={}, structural_payload={"kind": "package", "path": pkg_path},
-        )
+        ))
 
     # modules
     for f in files:
         rel = str(f.relative_to(repo_path))
         text = f.read_text()
         tree = ast.parse(text)
+        trees_by_path[rel] = tree
         end_line = len(text.splitlines()) or 1
-        yield _base_primitive(
+        primitives.append(_base_primitive(
             schema_id=f"{repo_key}::{rel}",
             primitive="module", name=rel, owner=None,
             repo=repo_key, path=rel, line=1, end_line=end_line,
             signature={}, structural_payload={"kind": "module", "path": rel},
-        )
-        yield from _walk_module_body(tree, repo_key=repo_key, rel_path=rel)
+        ))
+        primitives.extend(_walk_module_body(tree, repo_key=repo_key, rel_path=rel))
+
+    # L2 edge resolution passes (ordered: each pass may read edges added by prior)
+    _attach_defines_edges(primitives)
+    _attach_inheritance_edges(primitives, trees_by_path=trees_by_path)
+    _attach_imports_edges(primitives, trees_by_path=trees_by_path, repo_key=repo_key,
+                          repo_path=repo_path)
+    _attach_call_edges(primitives, trees_by_path=trees_by_path)
+
+    yield from primitives
 
 
 def _decorator_name(dec: ast.expr) -> str:
@@ -95,30 +108,33 @@ def _annotation_text(ann: ast.expr | None) -> str | None:
     return ast.unparse(ann) if ann is not None else None
 
 
-def _walk_module_body(tree: ast.Module, *, repo_key: str, rel_path: str) -> Iterator[dict]:
+def _walk_module_body(tree: ast.Module, *, repo_key: str, rel_path: str) -> list[dict]:
+    out: list[dict] = []
     for node in tree.body:
         if isinstance(node, ast.ClassDef):
-            yield from _emit_class(node, repo_key=repo_key, rel_path=rel_path)
+            out.extend(_emit_class(node, repo_key=repo_key, rel_path=rel_path))
         elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            yield _function_primitive(node, owner=None,
-                                      repo_key=repo_key, rel_path=rel_path)
+            out.append(_function_primitive(node, owner=None,
+                                           repo_key=repo_key, rel_path=rel_path))
         elif isinstance(node, (ast.Assign, ast.AnnAssign)):
-            yield from _variable_primitives(node, owner=None,
-                                            repo_key=repo_key, rel_path=rel_path)
+            out.extend(_variable_primitives(node, owner=None,
+                                            repo_key=repo_key, rel_path=rel_path))
+    return out
 
 
 def _emit_class(node: ast.ClassDef, *, repo_key: str, rel_path: str,
-                parent_qualname: str | None = None) -> Iterator[dict]:
+                parent_qualname: str | None = None) -> list[dict]:
     """Emit a class primitive plus its members. Recurses into nested classes.
 
     `parent_qualname` is the dotted name of the enclosing class chain, used
     to build nested ids like `Outer.Inner` and `Outer.Inner.method`.
     """
+    out: list[dict] = []
     qualname = f"{parent_qualname}.{node.name}" if parent_qualname else node.name
     class_id = canonical_id(repo_key, rel_path, qualname)
     owner = canonical_id(repo_key, rel_path, parent_qualname) if parent_qualname else None
     tparams = [tp.name for tp in getattr(node, "type_params", [])]
-    yield _base_primitive(
+    out.append(_base_primitive(
         schema_id=class_id, primitive="class", name=qualname, owner=owner,
         repo=repo_key, path=rel_path, line=node.lineno, end_line=node.end_lineno or node.lineno,
         signature={"decorators": [_decorator_name(d) for d in node.decorator_list]},
@@ -128,24 +144,25 @@ def _emit_class(node: ast.ClassDef, *, repo_key: str, rel_path: str,
                             "signature": {"decorators": [_decorator_name(d) for d in node.decorator_list],
                                           "bases": [ast.unparse(b) for b in node.bases]},
                             "body_text": ast.unparse(node)},
-    )
+    ))
     for child in node.body:
         if isinstance(child, ast.ClassDef):
             # Nested class — recurse with this class as parent. The
             # recursive call builds the dotted qualname (Outer.Inner) and
             # sets `owner` to the enclosing class id.
-            yield from _emit_class(child, repo_key=repo_key, rel_path=rel_path,
-                                   parent_qualname=qualname)
+            out.extend(_emit_class(child, repo_key=repo_key, rel_path=rel_path,
+                                   parent_qualname=qualname))
         elif isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
             # `owner` carries the parent's full canonical id; the function
             # primitive derives its symbol as `<owner-qualname>.<name>`,
             # which works for nested classes since the owner's id ends
             # with the dotted qualname (Outer.Inner).
-            yield _function_primitive(child, owner=class_id, repo_key=repo_key,
-                                      rel_path=rel_path)
+            out.append(_function_primitive(child, owner=class_id, repo_key=repo_key,
+                                           rel_path=rel_path))
         elif isinstance(child, (ast.Assign, ast.AnnAssign)):
-            yield from _variable_primitives(child, owner=class_id, repo_key=repo_key,
-                                            rel_path=rel_path)
+            out.extend(_variable_primitives(child, owner=class_id, repo_key=repo_key,
+                                            rel_path=rel_path))
+    return out
 
 
 def _function_primitive(node: ast.FunctionDef | ast.AsyncFunctionDef,
@@ -178,7 +195,8 @@ def _function_primitive(node: ast.FunctionDef | ast.AsyncFunctionDef,
 
 
 def _variable_primitives(node: ast.Assign | ast.AnnAssign,
-                         *, owner: str | None, repo_key: str, rel_path: str) -> Iterator[dict]:
+                         *, owner: str | None, repo_key: str, rel_path: str) -> list[dict]:
+    out: list[dict] = []
     if isinstance(node, ast.AnnAssign):
         targets = [node.target]
         type_ann = _annotation_text(node.annotation)
@@ -193,7 +211,7 @@ def _variable_primitives(node: ast.Assign | ast.AnnAssign,
         if not isinstance(tgt, ast.Name):
             continue
         symbol = f"{owner.split('::')[-1]}.{tgt.id}" if owner else tgt.id
-        yield _base_primitive(
+        out.append(_base_primitive(
             schema_id=canonical_id(repo_key, rel_path, symbol),
             primitive="variable", name=symbol, owner=owner,
             repo=repo_key, path=rel_path, line=node.lineno, end_line=node.end_lineno or node.lineno,
@@ -206,4 +224,378 @@ def _variable_primitives(node: ast.Assign | ast.AnnAssign,
                                 "signature": {"type_annotation": type_ann,
                                               "value_text": value_text},
                                 "body_text": value_text or ""},
-        )
+        ))
+    return out
+
+
+# ---------------------------------------------------------------------------
+# L2 edge resolution — Task 3.1: defines
+# ---------------------------------------------------------------------------
+
+def _attach_defines_edges(primitives: list[dict]) -> None:
+    """For every module/class/package, attach `defines` edges to its children
+    in-place. Module → top-level class/function/variable, class → members,
+    package → immediate child modules."""
+    for p in primitives:
+        if p["primitive"] == "module":
+            path = p["source"]["path"]
+            for child in primitives:
+                if child["id"] == p["id"]:
+                    continue
+                if (child["source"]["path"] == path
+                        and child["owner"] is None
+                        and child["primitive"] in {"class", "function", "variable"}):
+                    p["edges_out"].append({
+                        "target": child["id"],
+                        "kind": "defines",
+                        "via": "lexical_scope",
+                        "where": f"{path}:{child['source']['line']}",
+                        "confidence": "exact",
+                    })
+        elif p["primitive"] == "class":
+            for child in primitives:
+                if child.get("owner") == p["id"]:
+                    p["edges_out"].append({
+                        "target": child["id"],
+                        "kind": "defines",
+                        "via": "class_body",
+                        "where": f"{p['source']['path']}:{child['source']['line']}",
+                        "confidence": "exact",
+                    })
+        elif p["primitive"] == "package":
+            pkg_path = p["source"]["path"]
+            for child in primitives:
+                if child["primitive"] != "module":
+                    continue
+                child_path = child["source"]["path"]
+                # immediate child: directory portion of child_path == pkg_path
+                child_dir = (child_path.rsplit("/", 1)[0]
+                             if "/" in child_path else "")
+                if child_dir == pkg_path:
+                    p["edges_out"].append({
+                        "target": child["id"],
+                        "kind": "defines",
+                        "via": "package_member",
+                        "where": f"{pkg_path}/",
+                        "confidence": "exact",
+                    })
+
+
+# ---------------------------------------------------------------------------
+# L2 edge resolution — Task 3.2: extends / implements
+# ---------------------------------------------------------------------------
+
+def _attach_inheritance_edges(primitives: list[dict],
+                               *, trees_by_path: dict[str, ast.Module]) -> None:
+    """Walk each class's bases AST, resolve base names to local class ids,
+    append `extends` edges in-place."""
+    # top-level class name -> id, per file
+    by_path: dict[str, dict[str, str]] = {}
+    for p in primitives:
+        if p["primitive"] == "class" and p["owner"] is None:
+            by_path.setdefault(p["source"]["path"], {})[p["name"]] = p["id"]
+
+    classes_by_id = {p["id"]: p for p in primitives if p["primitive"] == "class"}
+
+    for path, tree in trees_by_path.items():
+        local_names = by_path.get(path, {})
+        for node in tree.body:
+            if not isinstance(node, ast.ClassDef):
+                continue
+            class_id = local_names.get(node.name)
+            if not class_id:
+                continue
+            target_class = classes_by_id[class_id]
+            for base in node.bases:
+                base_name = _name_from_base(base)
+                if base_name is None:
+                    continue
+                target_id = local_names.get(base_name)
+                if target_id:
+                    target_class["edges_out"].append({
+                        "target": target_id,
+                        "kind": "extends",
+                        "via": "class_decl",
+                        "where": f"{path}:{node.lineno}",
+                        "confidence": "exact",
+                    })
+                else:
+                    target_class["edges_out"].append({
+                        "target": f"external::pypi::unknown::{base_name}",
+                        "kind": "extends",
+                        "via": "class_decl",
+                        "where": f"{path}:{node.lineno}",
+                        "confidence": "unresolved",
+                    })
+
+
+def _name_from_base(base: ast.expr) -> str | None:
+    """Recover the rightmost name from a base class expression.
+    e.g. `Base` -> 'Base', `pkg.Base` -> 'Base', `Generic[T]` -> 'Generic'."""
+    if isinstance(base, ast.Name):
+        return base.id
+    if isinstance(base, ast.Attribute):
+        return base.attr
+    if isinstance(base, ast.Subscript):
+        return _name_from_base(base.value)
+    return None
+
+
+# ---------------------------------------------------------------------------
+# L2 edge resolution — Task 3.3: imports
+# ---------------------------------------------------------------------------
+
+def _attach_imports_edges(primitives: list[dict],
+                           *, trees_by_path: dict[str, ast.Module],
+                           repo_key: str, repo_path: Path) -> None:
+    """Walk ast.Import / ast.ImportFrom in each module, emit `imports` edges
+    with `local_binding` on the owning module primitive."""
+    # Build module index: dotted-module-name -> primitive id
+    # e.g. "a" -> "fixture::a.py", "pkg.sub" -> "fixture::pkg/sub.py"
+    module_index: dict[str, str] = {}
+    # Also index by path for quick lookup
+    mod_by_path: dict[str, dict] = {}
+    for p in primitives:
+        if p["primitive"] == "module":
+            mod_by_path[p["source"]["path"]] = p
+            # Convert path to dotted form: "pkg/sub.py" -> "pkg.sub"
+            dotted = p["source"]["path"]
+            if dotted.endswith(".py"):
+                dotted = dotted[:-3]
+            dotted = dotted.replace("/", ".")
+            if dotted.endswith(".__init__"):
+                dotted = dotted[: -len(".__init__")]
+            module_index[dotted] = p["id"]
+
+    # symbol index: module_id -> {symbol_name -> primitive_id}
+    symbol_index: dict[str, dict[str, str]] = {}
+    for p in primitives:
+        if p.get("owner") is None:
+            continue
+        owner_id = p["owner"]
+        # owner is a module id when the owner's primitive == "module"
+        # (functions/classes at module scope have owner=None, so this
+        # catches class members — skip those; we want module-level symbols
+        # indexed under the module id)
+        # Actually: module-level symbols have owner=None. We need the
+        # module->symbol mapping built differently:
+    # Build symbol_index: module_path -> {name -> id}
+    sym_by_path: dict[str, dict[str, str]] = {}
+    for p in primitives:
+        if p["owner"] is None and p["primitive"] in {"class", "function", "variable"}:
+            sym_by_path.setdefault(p["source"]["path"], {})[p["name"]] = p["id"]
+
+    for path, tree in trees_by_path.items():
+        mod_prim = mod_by_path.get(path)
+        if mod_prim is None:
+            continue
+        local_syms = sym_by_path.get(path, {})
+
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom):
+                level = node.level or 0
+                module_name = node.module or ""
+                if level > 0:
+                    # Relative import: resolve from this file's directory
+                    parts = path.replace("\\", "/").split("/")
+                    # parts[-1] is the filename; go up `level` directories
+                    base_parts = parts[:-level] if level <= len(parts) - 1 else []
+                    if module_name:
+                        base_parts = base_parts + module_name.split(".")
+                    candidate_path = "/".join(base_parts) + ".py" if base_parts else ""
+                    # Also check __init__.py form
+                    candidate_init = "/".join(base_parts) + "/__init__.py" if base_parts else ""
+                    target_mod_prim = (mod_by_path.get(candidate_path)
+                                       or mod_by_path.get(candidate_init))
+                    for alias in node.names:
+                        local_binding = alias.asname or alias.name
+                        if target_mod_prim:
+                            # Try to find the named symbol in the target module
+                            target_syms = sym_by_path.get(target_mod_prim["source"]["path"], {})
+                            sym_id = target_syms.get(alias.name)
+                            if sym_id:
+                                target = sym_id
+                                confidence = "exact"
+                            else:
+                                target = target_mod_prim["id"]
+                                confidence = "exact"
+                        else:
+                            # Can't resolve — external or unindexed
+                            root_pkg = module_name.split(".")[0] if module_name else "unknown"
+                            target = f"external::pypi::{root_pkg}::{alias.name}"
+                            confidence = "unresolved"
+                        mod_prim["edges_out"].append({
+                            "target": target,
+                            "kind": "imports",
+                            "via": "import_from",
+                            "where": f"{path}:{node.lineno}",
+                            "confidence": confidence,
+                            "local_binding": local_binding,
+                        })
+
+            elif isinstance(node, ast.Import):
+                for alias in node.names:
+                    local_binding = alias.asname or alias.name
+                    # Absolute import — look up by dotted name
+                    target_id = module_index.get(alias.name)
+                    if target_id:
+                        target = target_id
+                        confidence = "exact"
+                    else:
+                        root_pkg = alias.name.split(".")[0]
+                        target = f"external::pypi::{root_pkg}"
+                        confidence = "unresolved"
+                    mod_prim["edges_out"].append({
+                        "target": target,
+                        "kind": "imports",
+                        "via": "import",
+                        "where": f"{path}:{node.lineno}",
+                        "confidence": confidence,
+                        "local_binding": local_binding,
+                    })
+
+
+# ---------------------------------------------------------------------------
+# L2 edge resolution — Task 3.4: calls + instantiates
+# ---------------------------------------------------------------------------
+
+def _attach_call_edges(primitives: list[dict],
+                        *, trees_by_path: dict[str, ast.Module]) -> None:
+    """For each function primitive, walk its body and emit calls /
+    instantiates edges. Resolves method calls on local variables when the
+    variable's type is known from (a) `x = SomeClass(...)` assignment,
+    (b) `x: SomeClass = ...` annotated assignment, (c) parameter
+    annotations on the enclosing function."""
+    # Index local top-level symbols per file
+    local_by_path: dict[str, dict[str, str]] = {}
+    for p in primitives:
+        if p.get("owner") is not None:
+            continue
+        if p["primitive"] not in {"class", "function", "variable"}:
+            continue
+        local_by_path.setdefault(p["source"]["path"], {})[p["name"]] = p["id"]
+
+    classes_by_id = {p["id"]: p for p in primitives if p["primitive"] == "class"}
+
+    # Index methods: class_id -> {method_local_name -> method_id}
+    methods_by_class: dict[str, dict[str, str]] = {}
+    for p in primitives:
+        if p["primitive"] == "function" and p.get("owner") in classes_by_id:
+            # p["name"] is like "ClassName.method_name" — take last segment
+            method_local = p["name"].split(".")[-1]
+            methods_by_class.setdefault(p["owner"], {})[method_local] = p["id"]
+
+    # Imports local_binding -> target_id, per file (built from edges already attached)
+    imports_by_path: dict[str, dict[str, str]] = {}
+    for p in primitives:
+        if p["primitive"] != "module":
+            continue
+        for e in p["edges_out"]:
+            if e["kind"] != "imports":
+                continue
+            lb = e.get("local_binding")
+            if lb:
+                imports_by_path.setdefault(p["source"]["path"], {})[lb] = e["target"]
+
+    for path, tree in trees_by_path.items():
+        local_names = local_by_path.get(path, {})
+        imports = imports_by_path.get(path, {})
+
+        for fn_node in ast.walk(tree):
+            if not isinstance(fn_node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue
+            fn_prim = next(
+                (p for p in primitives
+                 if p["primitive"] == "function"
+                    and p["source"]["path"] == path
+                    and p["source"]["line"] == fn_node.lineno),
+                None,
+            )
+            if fn_prim is None:
+                continue
+
+            # Seed type binding from parameter annotations
+            var_types: dict[str, str] = {}  # local_name -> class_id
+            for arg in fn_node.args.args + fn_node.args.kwonlyargs:
+                if arg.annotation is None:
+                    continue
+                ann_text = ast.unparse(arg.annotation).split("[")[0].strip()
+                target_id = local_names.get(ann_text) or imports.get(ann_text)
+                if target_id and target_id in classes_by_id:
+                    var_types[arg.arg] = target_id
+
+            # Walk body in source order; update var_types on assignments,
+            # emit edges for each Call node
+            for sub in ast.walk(fn_node):
+                # Pattern 1: x: SomeClass = ...
+                if isinstance(sub, ast.AnnAssign) and isinstance(sub.target, ast.Name):
+                    ann_text = ast.unparse(sub.annotation).split("[")[0].strip()
+                    cid = local_names.get(ann_text) or imports.get(ann_text)
+                    if cid and cid in classes_by_id:
+                        var_types[sub.target.id] = cid
+
+                # Pattern 2: x = SomeClass(...)
+                if (isinstance(sub, ast.Assign)
+                        and len(sub.targets) == 1
+                        and isinstance(sub.targets[0], ast.Name)
+                        and isinstance(sub.value, ast.Call)
+                        and isinstance(sub.value.func, ast.Name)):
+                    cname = sub.value.func.id
+                    cid = local_names.get(cname) or imports.get(cname)
+                    if cid and cid in classes_by_id:
+                        var_types[sub.targets[0].id] = cid
+
+                # Emit edges for each Call node
+                if isinstance(sub, ast.Call):
+                    edges = _resolve_call_edge(
+                        sub,
+                        local_names=local_names,
+                        imports=imports,
+                        classes_by_id=classes_by_id,
+                        methods_by_class=methods_by_class,
+                        var_types=var_types,
+                        path=path,
+                    )
+                    fn_prim["edges_out"].extend(edges)
+
+
+def _resolve_call_edge(call: ast.Call, *, local_names: dict, imports: dict,
+                        classes_by_id: dict, methods_by_class: dict,
+                        var_types: dict, path: str) -> list[dict]:
+    """Return a list of edge dicts for a single Call node."""
+    if isinstance(call.func, ast.Name):
+        # Bare name: helper() or Service()
+        name = call.func.id
+        target = local_names.get(name) or imports.get(name)
+        if target is None:
+            return []
+        kind = "instantiates" if target in classes_by_id else "calls"
+        return [{"target": target, "kind": kind, "via": "function_call",
+                  "where": f"{path}:{call.lineno}", "confidence": "exact"}]
+
+    if isinstance(call.func, ast.Attribute):
+        # Method call: receiver.method(...)
+        if isinstance(call.func.value, ast.Name):
+            recv = call.func.value.id
+            method = call.func.attr
+            recv_class_id = var_types.get(recv)
+            if recv_class_id is None:
+                return [{"target": f"external::unresolved::{recv}.{method}",
+                          "kind": "calls", "via": "method_call",
+                          "where": f"{path}:{call.lineno}",
+                          "confidence": "unresolved"}]
+            method_id = methods_by_class.get(recv_class_id, {}).get(method)
+            if method_id:
+                return [{"target": method_id, "kind": "calls",
+                          "via": "method_call",
+                          "where": f"{path}:{call.lineno}",
+                          "confidence": "exact"}]
+            return [{"target": f"external::unresolved::{recv_class_id}.{method}",
+                      "kind": "calls", "via": "method_call",
+                      "where": f"{path}:{call.lineno}",
+                      "confidence": "unresolved"}]
+        # Chained attribute (a.b.c()) — unresolved for v0
+        return []
+
+    # Computed callee — unresolved
+    return []
