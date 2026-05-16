@@ -15,6 +15,7 @@ import argparse
 import os
 from pathlib import Path
 
+from kg.cli.install import bootstrap as _bootstrap_mod
 from kg.cli.install import cascade as _cascade_mod
 from kg.cli.install import hooks as _hooks_mod
 from kg.cli.install import init as _init_mod
@@ -57,6 +58,11 @@ def _run_installer(args: argparse.Namespace, extra: list[str]) -> int:
         path_parser.add_argument("--apply", action="store_true")
         path_parser.add_argument("--force", action="store_true")
         return _path_mod.cmd_path(path_parser.parse_args(extra[1:]))
+    if extra and extra[0] == "bootstrap":
+        boot_parser = argparse.ArgumentParser(prog="kg install bootstrap")
+        boot_parser.add_argument("project")
+        boot_parser.add_argument("--data", action="append", default=[])
+        return _bootstrap_mod.cmd_bootstrap(boot_parser.parse_args(extra[1:]))
     if extra and extra[0] == "cascade":
         casc_parser = argparse.ArgumentParser(prog="kg install cascade")
         casc_parser.add_argument("target_repo")
