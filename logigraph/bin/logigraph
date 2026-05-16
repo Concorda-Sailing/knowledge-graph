@@ -222,24 +222,8 @@ def cmd_validate(args: argparse.Namespace) -> int:
 
 
 def cmd_rules_for(args: argparse.Namespace) -> int:
-    if not BY_CODE_INDEX.exists():
-        print("by_code index not built — run `bin/logigraph regen`", file=sys.stderr)
-        return 1
-    idx = json.loads(BY_CODE_INDEX.read_text())
-    rule_ids = idx.get("by_target", {}).get(args.depgraph_id, [])
-    if not rule_ids:
-        print(f"no rules claim {args.depgraph_id}")
-        return 0
-    nodes = load_all_nodes()
-    for rid in rule_ids:
-        node = nodes.get(rid, (None, {}))[1]
-        title = node.get("title", rid)
-        statement = node.get("statement", "")
-        print(f"- {rid}")
-        print(f"  {title}")
-        if statement:
-            print(f"  → {statement}")
-    return 0
+    from lib.cli.rules_for import cmd_rules_for as _impl
+    return _impl(args, _CTX)
 
 
 def cmd_fan_out(args: argparse.Namespace) -> int:
