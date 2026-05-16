@@ -71,10 +71,36 @@ def _run_installer(args: argparse.Namespace, extra: list[str]) -> int:
         casc_parser.add_argument("--apply", action="store_true")
         casc_parser.add_argument("--force", action="store_true")
         return _cascade_mod.cmd_cascade(casc_parser.parse_args(extra[1:]))
-    # Fall through: subprocess shim for everything else.
-    tool_root = Path(__file__).resolve().parents[3]
-    installer = tool_root / "install.sh"
-    os.execvpe(str(installer), [str(installer), *extra], os.environ.copy())
+    # All subcommands have native handlers as of P4T9; print usage for
+    # unknown/missing subcommands. (Falling through to install.sh would
+    # recurse infinitely now that install.sh just execs `kg install`.)
+    import sys
+    if extra and extra[0] in ("-h", "--help"):
+        _print_install_help()
+        return 0
+    if not extra:
+        _print_install_help()
+        return 1
+    print(f"kg install: unknown subcommand {extra[0]!r}", file=sys.stderr)
+    print("known subcommands: tools / init / hooks / systemd / path / cascade / bootstrap", file=sys.stderr)
+    return 1
+
+
+def _print_install_help() -> None:
+    print(
+        "usage: kg install <subcommand> [options]\n"
+        "\n"
+        "Subcommands:\n"
+        "  tools     [--target ... --data ...]              Install/upgrade framework binaries\n"
+        "  init      <project>                              Scaffold a fresh project layout\n"
+        "  hooks     [--project <dir>] [--apply] [--force]  Write Claude Code hook block to settings.json\n"
+        "  systemd   [--project <dir>] [--apply]            Generate + apply graphui systemd unit\n"
+        "            [--depgraph-data-dir <p>] [--logigraph-data-dir <p>]\n"
+        "  path      [--rcfile ...] [--apply] [--force]     Add framework bin dirs to shell PATH\n"
+        "  cascade   <repo> [--depgraph ... --logigraph ...] [--apply] [--force]\n"
+        "                                                   Install pre-push hook in a target repo\n"
+        "  bootstrap <project> [--data ...]                 One-shot: tools + init + hooks + systemd + path\n"
+    )
 
 
 def register(sub: argparse._SubParsersAction) -> None:
