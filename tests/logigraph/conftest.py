@@ -22,7 +22,7 @@ def _logigraph_lib_on_path() -> None:
     checks in depgraph tests aren't broken if execution order ever changes.
     """
     _root = str(LOGIGRAPH_ROOT)
-    _shared = ("lib", "lib.cli", "lib.config", "lib.cli.context", "lib.cli._shared")
+    _shared = ("lib", "lib.cli", "lib.config", "lib.cli.context", "lib.cli._shared", "lib.cli.flag")
     current_lib = sys.modules.get("lib")
     if current_lib is not None:
         lib_file = getattr(current_lib, "__file__", "") or ""
