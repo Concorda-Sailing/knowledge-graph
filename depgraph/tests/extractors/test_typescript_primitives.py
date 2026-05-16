@@ -193,3 +193,13 @@ def test_object_literal_api_client_emits_class_and_members():
     assert "usersApi.create" in fns
     vars_ = {p["name"] for p in prims if p["primitive"] == "variable" and p["owner"]}
     assert "usersApi.endpoint" in vars_
+
+
+from depgraph.lib.primitives import validate_primitive
+
+def test_all_emitted_primitives_validate():
+    for scenario in ("module_only", "classes", "functions", "variables", "object_api_client"):
+        prims = run_extractor(scenario)
+        for p in prims:
+            errors = validate_primitive(p)
+            assert not errors, f"{scenario}/{p.get('id')}: {errors}"
