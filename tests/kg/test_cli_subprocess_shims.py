@@ -70,3 +70,11 @@ def test_kg_depgraph_regen_help_reaches_subcommand_help(single_project: dict) ->
     res = _run(single_project["registry"], "depgraph", "regen", "--help")
     assert res.returncode == 0
     assert "--all" in res.stdout or "--since" in res.stdout
+
+
+def test_kg_logigraph_rule_rank_help_reaches_subcommand_help(single_project: dict) -> None:
+    """After Phase 3, kg logigraph rule-rank --help reaches the real subcommand argparse."""
+    res = _run(single_project["registry"], "logigraph", "rule-rank", "--help")
+    assert res.returncode == 0
+    # rule-rank's --help mentions at least one of its known flags.
+    assert any(flag in res.stdout for flag in ("--tier", "--limit", "--status", "--only-stale"))
