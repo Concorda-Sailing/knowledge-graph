@@ -1,0 +1,14 @@
+{
+  "primitives": [
+    {"id": "fixture::src/nesting.py", "primitive": "module", "name": "src/nesting.py", "owner": null},
+    {"id": "fixture::src/nesting.py::Outer", "primitive": "class", "name": "Outer", "owner": null},
+    {"id": "fixture::src/nesting.py::Outer.Inner", "primitive": "class", "name": "Outer.Inner", "owner": "fixture::src/nesting.py::Outer"},
+    {"id": "fixture::src/nesting.py::Outer.Inner.Deepest", "primitive": "class", "name": "Outer.Inner.Deepest", "owner": "fixture::src/nesting.py::Outer.Inner"},
+    {"id": "fixture::src/nesting.py::Outer.Inner.Deepest.deep_method", "primitive": "function", "name": "Outer.Inner.Deepest.deep_method", "owner": "fixture::src/nesting.py::Outer.Inner.Deepest"},
+    {"id": "fixture::src/nesting.py::Outer.Inner.inner_method", "primitive": "function", "name": "Outer.Inner.inner_method", "owner": "fixture::src/nesting.py::Outer.Inner"},
+    {"id": "fixture::src/nesting.py::Outer.x", "primitive": "variable", "name": "Outer.x", "owner": "fixture::src/nesting.py::Outer"},
+    {"id": "fixture::src/nesting.py::Outer.outer_method", "primitive": "function", "name": "Outer.outer_method", "owner": "fixture::src/nesting.py::Outer"},
+    {"id": "fixture::src/nesting.py::top_func", "primitive": "function", "name": "top_func", "owner": null}
+  ],
+  "edges": []
+}

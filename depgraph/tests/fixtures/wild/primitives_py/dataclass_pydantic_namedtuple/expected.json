@@ -1,0 +1,22 @@
+{
+  "primitives": [
+    {"id": "fixture::src/models.py", "primitive": "module", "name": "src/models.py", "owner": null},
+    {"id": "fixture::src/models.py::PointDC", "primitive": "class", "name": "PointDC", "owner": null},
+    {"id": "fixture::src/models.py::PointDC.x", "primitive": "variable", "name": "PointDC.x", "owner": "fixture::src/models.py::PointDC"},
+    {"id": "fixture::src/models.py::PointDC.y", "primitive": "variable", "name": "PointDC.y", "owner": "fixture::src/models.py::PointDC"},
+    {"id": "fixture::src/models.py::PointDC.tags", "primitive": "variable", "name": "PointDC.tags", "owner": "fixture::src/models.py::PointDC"},
+    {"id": "fixture::src/models.py::PointDC3D", "primitive": "class", "name": "PointDC3D", "owner": null},
+    {"id": "fixture::src/models.py::PointDC3D.z", "primitive": "variable", "name": "PointDC3D.z", "owner": "fixture::src/models.py::PointDC3D"},
+    {"id": "fixture::src/models.py::PointNT", "primitive": "class", "name": "PointNT", "owner": null},
+    {"id": "fixture::src/models.py::PointNT.x", "primitive": "variable", "name": "PointNT.x", "owner": "fixture::src/models.py::PointNT"},
+    {"id": "fixture::src/models.py::PointNT.y", "primitive": "variable", "name": "PointNT.y", "owner": "fixture::src/models.py::PointNT"},
+    {"id": "fixture::src/models.py::PointNT.label", "primitive": "variable", "name": "PointNT.label", "owner": "fixture::src/models.py::PointNT"},
+    {"id": "fixture::src/models.py::PointPydantic", "primitive": "class", "name": "PointPydantic", "owner": null},
+    {"id": "fixture::src/models.py::PointPydantic.x", "primitive": "variable", "name": "PointPydantic.x", "owner": "fixture::src/models.py::PointPydantic"},
+    {"id": "fixture::src/models.py::PointPydantic.y", "primitive": "variable", "name": "PointPydantic.y", "owner": "fixture::src/models.py::PointPydantic"},
+    {"id": "fixture::src/models.py::PointPydantic.label", "primitive": "variable", "name": "PointPydantic.label", "owner": "fixture::src/models.py::PointPydantic"},
+    {"id": "fixture::src/models.py::PointPydantic.Config", "primitive": "class", "name": "PointPydantic.Config", "owner": "fixture::src/models.py::PointPydantic"},
+    {"id": "fixture::src/models.py::PointPydantic.Config.frozen", "primitive": "variable", "name": "PointPydantic.Config.frozen", "owner": "fixture::src/models.py::PointPydantic.Config"}
+  ],
+  "edges": []
+}

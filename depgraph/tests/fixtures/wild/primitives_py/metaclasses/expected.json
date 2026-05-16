@@ -1,0 +1,15 @@
+{
+  "primitives": [
+    {"id": "fixture::src/meta.py", "primitive": "module", "name": "src/meta.py", "owner": null},
+    {"id": "fixture::src/meta.py::AbstractBase", "primitive": "class", "name": "AbstractBase", "owner": null},
+    {"id": "fixture::src/meta.py::AbstractBase.run", "primitive": "function", "name": "AbstractBase.run", "owner": "fixture::src/meta.py::AbstractBase"},
+    {"id": "fixture::src/meta.py::AbstractBase.status", "primitive": "function", "name": "AbstractBase.status", "owner": "fixture::src/meta.py::AbstractBase"},
+    {"id": "fixture::src/meta.py::TypeSubclass", "primitive": "class", "name": "TypeSubclass", "owner": null},
+    {"id": "fixture::src/meta.py::TypeSubclass.__new__", "primitive": "function", "name": "TypeSubclass.__new__", "owner": "fixture::src/meta.py::TypeSubclass"},
+    {"id": "fixture::src/meta.py::TypeSubclass.__init__", "primitive": "function", "name": "TypeSubclass.__init__", "owner": "fixture::src/meta.py::TypeSubclass"},
+    {"id": "fixture::src/meta.py::ConcreteWithMeta", "primitive": "class", "name": "ConcreteWithMeta", "owner": null},
+    {"id": "fixture::src/meta.py::ConcreteWithMeta.run", "primitive": "function", "name": "ConcreteWithMeta.run", "owner": "fixture::src/meta.py::ConcreteWithMeta"},
+    {"id": "fixture::src/meta.py::ConcreteWithMeta.status", "primitive": "function", "name": "ConcreteWithMeta.status", "owner": "fixture::src/meta.py::ConcreteWithMeta"}
+  ],
+  "edges": []
+}

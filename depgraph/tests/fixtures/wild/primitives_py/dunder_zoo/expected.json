@@ -1,0 +1,12 @@
+{
+  "primitives": [
+    {"id": "fixture::src/dunders.py", "primitive": "module", "name": "src/dunders.py", "owner": null},
+    {"id": "fixture::src/dunders.py::DescriptorMixin", "primitive": "class", "name": "DescriptorMixin", "owner": null},
+    {"id": "fixture::src/dunders.py::DescriptorMixin.__slots__", "primitive": "variable", "name": "DescriptorMixin.__slots__", "owner": "fixture::src/dunders.py::DescriptorMixin"},
+    {"id": "fixture::src/dunders.py::DescriptorMixin.__init_subclass__", "primitive": "function", "name": "DescriptorMixin.__init_subclass__", "owner": "fixture::src/dunders.py::DescriptorMixin"},
+    {"id": "fixture::src/dunders.py::DescriptorMixin.__set_name__", "primitive": "function", "name": "DescriptorMixin.__set_name__", "owner": "fixture::src/dunders.py::DescriptorMixin"},
+    {"id": "fixture::src/dunders.py::DescriptorMixin.__class_getitem__", "primitive": "function", "name": "DescriptorMixin.__class_getitem__", "owner": "fixture::src/dunders.py::DescriptorMixin"},
+    {"id": "fixture::src/dunders.py::DescriptorMixin.value", "primitive": "function", "name": "DescriptorMixin.value", "owner": "fixture::src/dunders.py::DescriptorMixin"}
+  ],
+  "edges": []
+}

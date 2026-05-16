@@ -1,0 +1,14 @@
+{
+  "primitives": [
+    {"id": "fixture::src/entrypoint.py", "primitive": "module", "name": "src/entrypoint.py", "owner": null},
+    {"id": "fixture::src/entrypoint.py::APP_NAME", "primitive": "variable", "name": "APP_NAME", "owner": null},
+    {"id": "fixture::src/entrypoint.py::DEBUG", "primitive": "variable", "name": "DEBUG", "owner": null},
+    {"id": "fixture::src/entrypoint.py::Config", "primitive": "class", "name": "Config", "owner": null},
+    {"id": "fixture::src/entrypoint.py::Config.host", "primitive": "variable", "name": "Config.host", "owner": "fixture::src/entrypoint.py::Config"},
+    {"id": "fixture::src/entrypoint.py::Config.port", "primitive": "variable", "name": "Config.port", "owner": "fixture::src/entrypoint.py::Config"},
+    {"id": "fixture::src/entrypoint.py::setup_logging", "primitive": "function", "name": "setup_logging", "owner": null},
+    {"id": "fixture::src/entrypoint.py::main", "primitive": "function", "name": "main", "owner": null},
+    {"id": "fixture::src/entrypoint.py::DynConfig", "primitive": "variable", "name": "DynConfig", "owner": null}
+  ],
+  "edges": []
+}

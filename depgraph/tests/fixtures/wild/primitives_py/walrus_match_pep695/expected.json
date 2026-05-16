@@ -1,0 +1,14 @@
+{
+  "primitives": [
+    {"id": "fixture::src/modern.py", "primitive": "module", "name": "src/modern.py", "owner": null},
+    {"id": "fixture::src/modern.py::SCHEMA_VERSION", "primitive": "variable", "name": "SCHEMA_VERSION", "owner": null},
+    {"id": "fixture::src/modern.py::classify_input", "primitive": "function", "name": "classify_input", "owner": null},
+    {"id": "fixture::src/modern.py::Stack", "primitive": "class", "name": "Stack", "owner": null},
+    {"id": "fixture::src/modern.py::Stack.items", "primitive": "variable", "name": "Stack.items", "owner": "fixture::src/modern.py::Stack"},
+    {"id": "fixture::src/modern.py::Stack.push", "primitive": "function", "name": "Stack.push", "owner": "fixture::src/modern.py::Stack"},
+    {"id": "fixture::src/modern.py::Stack.pop", "primitive": "function", "name": "Stack.pop", "owner": "fixture::src/modern.py::Stack"},
+    {"id": "fixture::src/modern.py::first", "primitive": "function", "name": "first", "owner": null},
+    {"id": "fixture::src/modern.py::zip_pairs", "primitive": "function", "name": "zip_pairs", "owner": null}
+  ],
+  "edges": []
+}

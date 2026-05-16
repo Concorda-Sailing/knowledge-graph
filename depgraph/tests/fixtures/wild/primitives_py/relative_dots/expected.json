@@ -1,0 +1,14 @@
+{
+  "primitives": [
+    {"id": "fixture::src/pkg", "primitive": "package", "name": "src/pkg", "owner": null},
+    {"id": "fixture::src/pkg/sub", "primitive": "package", "name": "src/pkg/sub", "owner": null},
+    {"id": "fixture::src/pkg/__init__.py", "primitive": "module", "name": "src/pkg/__init__.py", "owner": null},
+    {"id": "fixture::src/pkg/__init__.py::PKG_VERSION", "primitive": "variable", "name": "PKG_VERSION", "owner": null},
+    {"id": "fixture::src/pkg/sub/__init__.py", "primitive": "module", "name": "src/pkg/sub/__init__.py", "owner": null},
+    {"id": "fixture::src/pkg/sub/__init__.py::SUB_VERSION", "primitive": "variable", "name": "SUB_VERSION", "owner": null},
+    {"id": "fixture::src/pkg/sub/x.py", "primitive": "module", "name": "src/pkg/sub/x.py", "owner": null},
+    {"id": "fixture::src/pkg/sub/x.py::EXPORT_KEY", "primitive": "variable", "name": "EXPORT_KEY", "owner": null},
+    {"id": "fixture::src/pkg/sub/x.py::load", "primitive": "function", "name": "load", "owner": null}
+  ],
+  "edges": []
+}

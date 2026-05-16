@@ -1,0 +1,14 @@
+{
+  "primitives": [
+    {"id": "fixture::src/decorators.py", "primitive": "module", "name": "src/decorators.py", "owner": null},
+    {"id": "fixture::src/decorators.py::require_role", "primitive": "function", "name": "require_role", "owner": null},
+    {"id": "fixture::src/decorators.py::log_call", "primitive": "function", "name": "log_call", "owner": null},
+    {"id": "fixture::src/decorators.py::retry", "primitive": "function", "name": "retry", "owner": null},
+    {"id": "fixture::src/decorators.py::delete_record", "primitive": "function", "name": "delete_record", "owner": null},
+    {"id": "fixture::src/decorators.py::fetch_data", "primitive": "function", "name": "fetch_data", "owner": null},
+    {"id": "fixture::src/decorators.py::Service", "primitive": "class", "name": "Service", "owner": null},
+    {"id": "fixture::src/decorators.py::Service.admin_action", "primitive": "function", "name": "Service.admin_action", "owner": "fixture::src/decorators.py::Service"},
+    {"id": "fixture::src/decorators.py::Service.retried_action", "primitive": "function", "name": "Service.retried_action", "owner": "fixture::src/decorators.py::Service"}
+  ],
+  "edges": []
+}
