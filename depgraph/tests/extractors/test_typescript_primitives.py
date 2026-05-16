@@ -75,3 +75,77 @@ def test_type_alias_as_class():
     prims = run_extractor("classes")
     classes = {p["name"]: p for p in prims if p["primitive"] == "class"}
     assert classes["Json"]["attributes"]["instantiable"] is False
+
+
+def test_top_level_function():
+    prims = run_extractor("functions")
+    fns = {p["name"]: p for p in prims if p["primitive"] == "function"}
+    assert "topLevel" in fns
+    f = fns["topLevel"]
+    assert f["owner"] is None
+    assert f["signature"]["is_async"] is False
+    assert f["signature"]["return_type"] == "string"
+    assert [p["name"] for p in f["signature"]["parameters"]] == ["x"]
+
+def test_async_function():
+    prims = run_extractor("functions")
+    fns = {p["name"]: p for p in prims if p["primitive"] == "function"}
+    assert fns["asyncFn"]["signature"]["is_async"] is True
+
+def test_arrow_function_bound_to_const():
+    prims = run_extractor("functions")
+    fns = {p["name"]: p for p in prims if p["primitive"] == "function"}
+    assert "arrow" in fns
+    assert fns["arrow"]["owner"] is None
+
+def test_class_method_has_owner():
+    prims = run_extractor("functions")
+    fns = {p["name"]: p for p in prims if p["primitive"] == "function" and "." in p["name"]}
+    names = set(fns.keys())
+    assert "Holder.method" in names
+    m = fns["Holder.method"]
+    assert m["owner"] == "fixture::src/all.ts::Holder"
+
+def test_static_method_captured():
+    prims = run_extractor("functions")
+    names = {p["name"] for p in prims if p["primitive"] == "function"}
+    # Static methods always get the :static suffix in this extractor.
+    assert "Holder.staticMethod:static" in names
+
+def test_private_method_captured():
+    prims = run_extractor("functions")
+    names = {p["name"] for p in prims if p["primitive"] == "function"}
+    assert "Holder.privateMethod" in names
+
+def test_anonymous_default_export_gets_synthesized_name():
+    prims = run_extractor("functions")
+    fns = {p["name"]: p for p in prims if p["primitive"] == "function"}
+    # `export default function() {}` — no source-given name. Use module basename.
+    assert "<default:all>" in fns
+    assert fns["<default:all>"]["owner"] is None
+    assert fns["<default:all>"]["signature"]["is_async"] is False
+
+def test_ts_overload_stubs_skipped_only_impl_emitted():
+    prims = run_extractor("functions")
+    formats = [p for p in prims if p["primitive"] == "function"
+               and p["name"] == "Holder.format"]
+    assert len(formats) == 1, "overload stubs should be skipped; only impl emits"
+    # The impl is the one with a body — return_type from the impl signature.
+    assert formats[0]["signature"]["return_type"] == "string"
+
+def test_jsx_returning_function_sets_attribute():
+    prims = run_extractor("functions")
+    fns = {p["name"]: p for p in prims if p["primitive"] == "function"}
+    assert fns["Header"]["signature"]["returns_jsx"] is True
+    assert fns["Footer"]["signature"]["returns_jsx"] is True
+    assert fns["notAComponent"]["signature"]["returns_jsx"] is False
+
+def test_same_name_static_and_instance_method_disambiguate():
+    """`shared()` and `static shared()` must produce distinct ids."""
+    prims = run_extractor("functions")
+    ids = {p["id"] for p in prims if p["primitive"] == "function"
+           and p["owner"] == "fixture::src/all.ts::Holder"
+           and p["name"].split(".")[-1].startswith("shared")}
+    assert "fixture::src/all.ts::Holder.shared" in ids
+    assert "fixture::src/all.ts::Holder.shared:static" in ids
+    assert len(ids) == 2

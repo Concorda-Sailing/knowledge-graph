@@ -125,6 +125,126 @@ function extractClasses(sf: SourceFile, repoKey: string, relPath: string): Primi
   return out;
 }
 
+function bodyHasJsx(node: { getDescendantsOfKind: (k: SyntaxKind) => any[] }): boolean {
+  return (
+    node.getDescendantsOfKind(SyntaxKind.JsxElement).length > 0 ||
+    node.getDescendantsOfKind(SyntaxKind.JsxFragment).length > 0 ||
+    node.getDescendantsOfKind(SyntaxKind.JsxSelfClosingElement).length > 0
+  );
+}
+
+function bodyText(node: { getBodyText?: () => string | undefined; getText: () => string }): string {
+  return (node.getBodyText?.() ?? node.getText()) || "";
+}
+
+function functionPrimitive(
+  node: { getStartLineNumber(): number; getEndLineNumber(): number },
+  name: string,
+  owner: string | null,
+  signature: { parameters: { name: string; type_annotation: string | null }[];
+               return_type: string | null;
+               is_async: boolean;
+               decorators: string[];
+               returns_jsx: boolean },
+  body: string,
+  repoKey: string, relPath: string,
+): Primitive {
+  const symbol = owner ? `${owner.split("::").pop()}.${name}` : name;
+  const id = canonicalId(repoKey, relPath, symbol);
+  return {
+    schema_version: 2, id, primitive: "function", name: symbol, owner,
+    source: { repo: repoKey, path: relPath, language: "typescript",
+              line: node.getStartLineNumber(), end_line: node.getEndLineNumber() },
+    signature,
+    attributes: { abstract: false, generated: false, external: false,
+                  template_parameters: [], macro: false, mutable: false,
+                  instantiable: false, inheritable: false },
+    edges_out: [],
+    structural_hash: structuralHash({ primitive: "function", name: symbol,
+                                       signature, body_text: body }),
+    kind: null,
+    extractor: EXTRACTOR_TAG,
+  };
+}
+
+function paramShape(p: any) {
+  return { name: p.getName(), type_annotation: p.getTypeNode()?.getText() ?? null };
+}
+
+function moduleBasename(relPath: string): string {
+  const last = relPath.split("/").pop() ?? relPath;
+  const dot = last.lastIndexOf(".");
+  return dot === -1 ? last : last.slice(0, dot);
+}
+
+function extractFunctions(sf: SourceFile, repoKey: string, relPath: string): Primitive[] {
+  const out: Primitive[] = [];
+
+  for (const fn of sf.getFunctions()) {
+    if (!fn.hasBody()) continue;
+    const fnName = fn.getName() ?? `<default:${moduleBasename(relPath)}>`;
+    out.push(functionPrimitive(fn, fnName, null, {
+      parameters: fn.getParameters().map(paramShape),
+      return_type: fn.getReturnTypeNode()?.getText() ?? null,
+      is_async: fn.isAsync(),
+      decorators: [],
+      returns_jsx: bodyHasJsx(fn),
+    }, bodyText(fn), repoKey, relPath));
+  }
+
+  for (const vs of sf.getVariableStatements()) {
+    for (const decl of vs.getDeclarations()) {
+      const init = decl.getInitializer();
+      if (init && (Node.isArrowFunction(init) || Node.isFunctionExpression(init))) {
+        out.push(functionPrimitive(decl, decl.getName(), null, {
+          parameters: init.getParameters().map(paramShape),
+          return_type: init.getReturnTypeNode()?.getText() ?? null,
+          is_async: init.isAsync(),
+          decorators: [],
+          returns_jsx: bodyHasJsx(init),
+        }, bodyText(init), repoKey, relPath));
+      }
+    }
+  }
+
+  // `export default function(){}` / `export default () => {}` are
+  // ExportAssignment expressions whose expression is an anonymous fn.
+  for (const ea of sf.getExportAssignments()) {
+    if (ea.isExportEquals()) continue;
+    const expr = ea.getExpression();
+    if (Node.isFunctionExpression(expr) || Node.isArrowFunction(expr)) {
+      if (Node.isFunctionExpression(expr) && expr.getName()) continue;
+      const synthName = `<default:${moduleBasename(relPath)}>`;
+      out.push(functionPrimitive(ea, synthName, null, {
+        parameters: expr.getParameters().map(paramShape),
+        return_type: expr.getReturnTypeNode()?.getText() ?? null,
+        is_async: expr.isAsync(),
+        decorators: [],
+        returns_jsx: bodyHasJsx(expr),
+      }, bodyText(expr), repoKey, relPath));
+    }
+  }
+
+  for (const cls of sf.getClasses()) {
+    const classId = canonicalId(repoKey, relPath, cls.getName() ?? "<anonymous>");
+    for (const m of cls.getMethods()) {
+      if (!m.hasBody()) continue;
+      const methodLocalName = m.isStatic()
+        ? `${m.getName()}:static`
+        : m.getName();
+      out.push(functionPrimitive(m, methodLocalName, classId, {
+        parameters: m.getParameters().map(paramShape),
+        return_type: m.getReturnTypeNode()?.getText() ?? null,
+        is_async: m.isAsync(),
+        decorators: m.getDecorators().map((d) => d.getName()),
+        returns_jsx: bodyHasJsx(m),
+      }, bodyText(m), repoKey, relPath));
+    }
+  }
+
+  return out;
+}
+
 function main() {
   const { values } = parseArgs({
     options: {
@@ -147,6 +267,7 @@ function main() {
     const relPath = relative(repoPath, sf.getFilePath());
     emit(moduleFor(sf, repoKey, repoPath));
     for (const p of extractClasses(sf, repoKey, relPath)) emit(p);
+    for (const p of extractFunctions(sf, repoKey, relPath)) emit(p);
   }
 }
 
