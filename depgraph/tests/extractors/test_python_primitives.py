@@ -2,6 +2,7 @@ from pathlib import Path
 import json
 import pytest
 from depgraph.extractors.python.extract import extract_repo
+from depgraph.lib.primitives import validate_primitive
 
 FIXTURE_DIR = Path(__file__).parent / "fixtures" / "primitives_py"
 
@@ -71,3 +72,10 @@ def test_nested_class_extracted_with_dotted_qualname():
     fns = {p["name"]: p for p in prims if p["primitive"] == "function"}
     assert "Outer.Inner.inner_method" in fns
     assert fns["Outer.Inner.inner_method"]["owner"] == "fixture::src.py::Outer.Inner"
+
+
+def test_all_python_primitives_validate():
+    for scenario in ("modules_only", "classes_and_functions"):
+        for p in extract(scenario):
+            errors = validate_primitive(p)
+            assert not errors, f"{scenario}/{p.get('id')}: {errors}"
