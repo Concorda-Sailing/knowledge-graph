@@ -57,18 +57,64 @@
         {% endfor %}
       </div>
       {% set columns = ['title', 'area', 'kind', 'tier', 'fan_in', 'state'] %}
-      <h3 class="nodes-group-h">Domain <span class="nodes-group-count">{{ domain_nodes|length }}</span></h3>
+      {% set pg = domain_pagination %}
+      {%- set qs_extra -%}
+        {%- if kind_filter %}&kind={{ kind_filter }}{% endif -%}
+        {%- if area_filter %}&area={{ area_filter }}{% endif -%}
+        {%- if tier_filter %}&tier={{ tier_filter }}{% endif -%}
+        {%- if state_filter %}&state={{ state_filter }}{% endif -%}
+        {%- if pg.per_page != 100 %}&per_page={{ pg.per_page }}{% endif -%}
+      {%- endset -%}
+      <h3 class="nodes-group-h">Domain <span class="nodes-group-count">{{ pg.total }}</span>
+        {% if pg.total %}<span class="nodes-group-hint">showing {{ pg.start }}–{{ pg.end }}</span>{% endif %}
+      </h3>
       {% with nodes=domain_nodes, columns=columns, empty_message="No domain-specific nodes match the current filters." %}
         {% include '_node_list.html' %}
       {% endwith %}
+      {% if pg.pages > 1 %}
+      <nav class="pagination" aria-label="Domain nodes pagination">
+        {% if pg.has_prev %}
+          <a class="chip" href="?tab=nodes&page={{ pg.prev_page }}{{ qs_extra }}">← Prev</a>
+        {% else %}
+          <span class="chip chip-disabled">← Prev</span>
+        {% endif %}
+        <span class="pagination-label">Page {{ pg.page }} of {{ pg.pages }}</span>
+        {% if pg.has_next %}
+          <a class="chip" href="?tab=nodes&page={{ pg.next_page }}{{ qs_extra }}">Next →</a>
+        {% else %}
+          <span class="chip chip-disabled">Next →</span>
+        {% endif %}
+      </nav>
+      {% endif %}
 
-      {% if common_nodes %}
-      <details class="nodes-common-group">
-        <summary><span class="nodes-group-h-inline">Common</span> <span class="nodes-group-count">{{ common_nodes|length }}</span> <span class="nodes-group-hint">shared infrastructure (ui primitives, lib, hooks, utils)</span></summary>
-        {% with nodes=common_nodes, columns=columns %}
-          {% include '_node_list.html' %}
-        {% endwith %}
+      {% if common_count %}
+      {%- set common_url -%}
+        /graph/repo/{{ repo.basename }}/common?_=1
+        {%- if kind_filter %}&kind={{ kind_filter }}{% endif -%}
+        {%- if area_filter %}&area={{ area_filter }}{% endif -%}
+        {%- if tier_filter %}&tier={{ tier_filter }}{% endif -%}
+        {%- if state_filter %}&state={{ state_filter }}{% endif -%}
+      {%- endset -%}
+      <details class="nodes-common-group" data-lazy-url="{{ common_url }}">
+        <summary><span class="nodes-group-h-inline">Common</span> <span class="nodes-group-count">{{ common_count }}</span> <span class="nodes-group-hint">shared infrastructure (ui primitives, lib, hooks, utils)</span></summary>
+        <div class="nodes-common-body"><p class="empty">Loading…</p></div>
       </details>
+      <script>
+        (function () {
+          document.querySelectorAll('details.nodes-common-group[data-lazy-url]').forEach(function (det) {
+            var loaded = false;
+            det.addEventListener('toggle', function () {
+              if (!det.open || loaded) return;
+              loaded = true;
+              var body = det.querySelector('.nodes-common-body');
+              fetch(det.dataset.lazyUrl, { credentials: 'same-origin' })
+                .then(function (r) { return r.text(); })
+                .then(function (html) { body.innerHTML = html; })
+                .catch(function () { body.innerHTML = '<p class="empty">Failed to load common nodes.</p>'; loaded = false; });
+            });
+          });
+        })();
+      </script>
       {% endif %}
 
     {% elif active_tab == 'deps' %}

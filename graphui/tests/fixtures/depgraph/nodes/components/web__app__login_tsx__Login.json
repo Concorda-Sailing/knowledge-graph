@@ -1,0 +1,9 @@
+{
+  "id": "concorda-web::app/login.tsx::Login",
+  "kind": "component",
+  "title": "Login",
+  "source": {"repo": "concorda-web", "path": "app/login.tsx"},
+  "fan_out": 2,
+  "structural_hash": "h2",
+  "deps": []
+}

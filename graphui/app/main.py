@@ -257,6 +257,10 @@ def knowledge_page(
     )
 
 
+DOMAIN_PAGE_SIZE_DEFAULT = 100
+DOMAIN_PAGE_SIZE_MAX = 500
+
+
 @app.get("/graph/repo/{basename}", response_class=HTMLResponse)
 def repo_detail(
     request: Request,
@@ -266,8 +270,16 @@ def repo_detail(
     area: str | None = None,
     tier: str | None = None,
     state: str | None = None,
+    page: int = 1,
+    per_page: int = DOMAIN_PAGE_SIZE_DEFAULT,
 ) -> HTMLResponse:
-    """One source repo with header + left rail + tabbed main pane."""
+    """One source repo with header + left rail + tabbed main pane.
+
+    The domain-nodes table on the nodes tab is server-paginated via `page`
+    and `per_page`. The common-nodes group is lazy-loaded (see the
+    `/graph/repo/{basename}/common` fragment route) so large repos don't
+    ship thousands of hidden rows on first paint.
+    """
     repo = next(
         (r for r in loader.repo_summary() if r["basename"] == basename),
         None,
@@ -276,8 +288,29 @@ def repo_detail(
         raise HTTPException(404, f"repo not found in any tracked node: {basename}")
 
     nodes = loader.nodes_for_repo(basename, kind=kind, area=area, tier=tier, state=state)
-    domain_nodes = [n for n in nodes if not n.get("common")]
-    common_nodes = [n for n in nodes if n.get("common")]
+    domain_nodes_all = [n for n in nodes if not n.get("common")]
+    common_nodes_all = [n for n in nodes if n.get("common")]
+
+    per_page = max(1, min(per_page, DOMAIN_PAGE_SIZE_MAX))
+    domain_total = len(domain_nodes_all)
+    domain_pages = max(1, (domain_total + per_page - 1) // per_page)
+    page = max(1, min(page, domain_pages))
+    start = (page - 1) * per_page
+    domain_nodes_page = domain_nodes_all[start:start + per_page]
+
+    domain_pagination = {
+        "page": page,
+        "per_page": per_page,
+        "total": domain_total,
+        "pages": domain_pages,
+        "start": start + 1 if domain_total else 0,
+        "end": start + len(domain_nodes_page),
+        "has_prev": page > 1,
+        "has_next": page < domain_pages,
+        "prev_page": page - 1,
+        "next_page": page + 1,
+    }
+
     dead_code = loader.repo_dead_code(basename)
     inbound_rollup = loader.repo_inbound_deps_rollup(basename)
     outbound_rollup = loader.repo_outbound_deps_rollup(basename)
@@ -308,8 +341,9 @@ def repo_detail(
             "repo": repo,
             "active_tab": tab,
             "nodes": nodes,
-            "domain_nodes": domain_nodes,
-            "common_nodes": common_nodes,
+            "domain_nodes": domain_nodes_page,
+            "domain_pagination": domain_pagination,
+            "common_count": len(common_nodes_all),
             "dead_code": dead_code,
             "inbound_rollup": inbound_rollup,
             "outbound_rollup": outbound_rollup,
@@ -323,6 +357,39 @@ def repo_detail(
             "tier_filter": tier,
             "state_filter": state,
             "meta": loader.load_meta(),
+        },
+    )
+
+
+@app.get("/graph/repo/{basename}/common", response_class=HTMLResponse)
+def repo_common_fragment(
+    request: Request,
+    basename: str,
+    kind: str | None = None,
+    area: str | None = None,
+    tier: str | None = None,
+    state: str | None = None,
+) -> HTMLResponse:
+    """HTML fragment: the common-nodes table rows for a repo, fetched on
+    demand when the user expands the Common <details> on the nodes tab.
+
+    Filters mirror the parent /graph/repo/{basename} route so the lazy
+    fetch respects whatever chips are active."""
+    repo = next(
+        (r for r in loader.repo_summary() if r["basename"] == basename),
+        None,
+    )
+    if repo is None:
+        raise HTTPException(404, f"repo not found in any tracked node: {basename}")
+    nodes = loader.nodes_for_repo(basename, kind=kind, area=area, tier=tier, state=state)
+    common_nodes = [n for n in nodes if n.get("common")]
+    return TEMPLATES.TemplateResponse(
+        request,
+        "_node_list.html",
+        {
+            "nodes": common_nodes,
+            "columns": ["title", "area", "kind", "tier", "fan_in", "state"],
+            "empty_message": "No common-infrastructure nodes match the current filters.",
         },
     )
 

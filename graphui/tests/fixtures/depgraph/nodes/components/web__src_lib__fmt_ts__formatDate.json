@@ -1,0 +1,9 @@
+{
+  "id": "concorda-web::src/lib/fmt.ts::formatDate",
+  "kind": "component",
+  "title": "formatDate",
+  "source": {"repo": "concorda-web", "path": "src/lib/fmt.ts"},
+  "fan_out": 0,
+  "structural_hash": "h4",
+  "deps": []
+}

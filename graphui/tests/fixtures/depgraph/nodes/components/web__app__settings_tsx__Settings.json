@@ -1,0 +1,9 @@
+{
+  "id": "concorda-web::app/settings.tsx::Settings",
+  "kind": "component",
+  "title": "Settings",
+  "source": {"repo": "concorda-web", "path": "app/settings.tsx"},
+  "fan_out": 1,
+  "structural_hash": "h3",
+  "deps": []
+}

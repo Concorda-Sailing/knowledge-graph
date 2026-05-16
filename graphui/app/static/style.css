@@ -934,6 +934,28 @@ h2 {
 .chip-state-stale:not(.chip-active)       { color: var(--accent-2); border-color: rgba(255, 176, 105, 0.25); }
 .chip-state-llm_drafted:not(.chip-active) { color: var(--warn);     border-color: rgba(240, 198, 116, 0.25); }
 .chip-state-missing:not(.chip-active)     { color: var(--bad);      border-color: rgba(255, 133, 129, 0.25); }
+.chip-disabled {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 12.5px;
+  color: var(--fg-faint);
+  opacity: 0.5;
+  cursor: default;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0 6px;
+}
+.pagination-label {
+  color: var(--fg-mute);
+  font-size: 12.5px;
+}
 
 /* Node cards */
 .node-cards {
