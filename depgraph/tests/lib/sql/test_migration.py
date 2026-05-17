@@ -16,7 +16,7 @@ def test_recognizes_unnumbered_migration_with_sql():
 
 
 def test_rejects_non_migration_python():
-    """A Python file outside a migrations/ directory or without text() calls."""
+    """A Python file with no text() call is not a migration."""
     p = FIXTURES.parent / "not_a_migration.py"
     p.write_text("def foo(): return 1\n")
     try:

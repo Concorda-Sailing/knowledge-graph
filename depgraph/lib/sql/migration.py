@@ -1,8 +1,11 @@
 """Recognize Python migration files and extract embedded SQL.
 
 Migration files are Python modules that execute SQL strings against a
-database connection. The expected convention is `migrations/NNN_<slug>.py`
-with a `migrate()` function that calls `conn.execute(text("..."))`.
+database connection — typically `NNN_<slug>.py` with a `migrate()`
+function that calls `conn.execute(text("..."))`. The directory they
+live in is project-configurable (`migrations_dirs` in project.toml);
+this module recognizes them purely by content (presence of a `text(...)`
+call), so projects are free to name the directory whatever they like.
 """
 from __future__ import annotations
 
@@ -43,9 +46,13 @@ class MigrationFile:
 
 
 def is_migration_file(path: Path) -> bool:
-    """Path is in a migrations/ directory AND contains a text(...) call."""
-    if "migrations" not in path.parts:
-        return False
+    """A Python file containing at least one `text(...)` call.
+
+    Callers are expected to constrain scanning to the project's configured
+    migrations directories (project.toml `[repos.*] migrations_dirs`); this
+    function deliberately does not gate on directory name, so the framework
+    works on any codebase regardless of its migrations-dir naming convention.
+    """
     if path.suffix != ".py":
         return False
     try:
