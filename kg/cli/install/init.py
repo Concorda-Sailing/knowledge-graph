@@ -77,28 +77,68 @@ def cmd_init(args: argparse.Namespace) -> int:
         f"# repo. The key is the logical name extractors reference (e.g. \"api\");\n"
         f"# canonical node ids look like <key>::<rel-path>::<symbol>.\n"
         f"#\n"
-        f"# Add a repo with: depgraph repo-add <key> <path> [--extractor ...] [--detector ...]\n"
-        f"# List repos with:  depgraph repo-list\n"
+        f"# Required: `path`. Everything else is optional but each toggle below\n"
+        f"# changes what ends up in the corpus, so review them when adding a repo.\n"
+        f"#\n"
+        f"# REQUIRED CONFIGURATION when adding a repo:\n"
+        f"#   - path: filesystem location of the checkout.\n"
+        f"#   - include_paths / exclude_paths: SCOPE THE CORPUS. The extractors\n"
+        f"#     only skip hardcoded build dirs (node_modules, .venv, __pycache__,\n"
+        f"#     dist, .git) — they do NOT guess which other trees you want\n"
+        f"#     extracted. Almost every real repo needs exclude_paths to drop\n"
+        f"#     test directories, generated code, vendored deps, fixture trees,\n"
+        f"#     etc. Skipping this step bloats the corpus and produces orphan\n"
+        f"#     edges from test files importing things they shouldn't be tracked\n"
+        f"#     against. Globs use gitignore-flavoured `**/` semantics and are\n"
+        f"#     matched against the file's path relative to `path`.\n"
+        f"#\n"
+        f"# Optional v2 keys:\n"
+        f"#   - languages: any of \"python\", \"typescript\", \"sql\". Inferred from\n"
+        f"#     file extensions if omitted.\n"
+        f"#   - migrations_dirs: subdirs (relative to `path`) the SQL pipeline\n"
+        f"#     scans for migration files. Required if languages includes \"sql\".\n"
+        f"#\n"
+        f"# Example — replace with your repo(s):\n"
         f"#\n"
         f"# [repos.api]\n"
         f'# path = "~/{pname}-api"\n'
-        f'# extractor = ["python3", "{{kg_dir}}/depgraph/extractors/generic/python/extract.py"]\n'
-        f'# detectors = ["fastapi", "sqlalchemy"]\n'
+        f'# languages = ["python", "sql"]\n'
+        f'# migrations_dirs = ["migrations"]\n'
+        f'# exclude_paths = [\n'
+        f'#   "**/tests/**",\n'
+        f'#   "**/test_*.py",\n'
+        f'#   "**/*_test.py",\n'
+        f'#   "**/migrations/versions/**",  # if alembic, generated\n'
+        f'# ]\n'
+        f"#\n"
+        f"# [repos.web]\n"
+        f'# path = "~/{pname}-web"\n'
+        f'# languages = ["typescript"]\n'
+        f'# exclude_paths = [\n'
+        f'#   "**/__tests__/**",\n'
+        f'#   "**/*.test.ts",\n'
+        f'#   "**/*.test.tsx",\n'
+        f'#   "**/*.spec.ts",\n'
+        f'#   "**/build/**",\n'
+        f'#   "**/.next/**",\n'
+        f'# ]\n'
     )
 
     # depgraph/extractors/README.md
     (bundle / "depgraph" / "extractors" / "README.md").write_text(
         f"# Extractors\n"
         f"\n"
-        f"Drop your extractor scripts in here. Each extractor walks a repo (declared\n"
-        f"in `../project.toml [repos]`) and emits JSON node files under `../nodes/`\n"
-        f"following the framework schema at `~/tools/{BUNDLE_DIR}/depgraph/schema/node.schema.json`.\n"
+        f"The shipped per-language extractors at\n"
+        f"`~/tools/{BUNDLE_DIR}/depgraph/extractors/{{python,typescript,sql}}/`\n"
+        f"are driven by `../project.toml [repos.<key>] languages = [...]`. Most\n"
+        f"projects don't need to add anything here — the framework extractors\n"
+        f"handle Python, TypeScript/JavaScript, and SQL migrations out of the\n"
+        f"box.\n"
         f"\n"
-        f"Most projects can use the shipped generic extractors under\n"
-        f"`~/tools/{BUNDLE_DIR}/depgraph/extractors/generic/` (Python, TypeScript,\n"
-        f"Go, Rust) and only add a project-local detector in `detectors/` if a\n"
-        f"framework isn't already covered. See `CONTRIBUTING-detectors.md` in the\n"
-        f"framework repo for the detector authoring guide.\n"
+        f"Drop a project-local extractor script in here only if your repo uses\n"
+        f"a language the framework doesn't ship. Each extractor walks a repo and\n"
+        f"emits JSON node files under `../nodes/` following the framework schema\n"
+        f"at `~/tools/{BUNDLE_DIR}/depgraph/schema/node.schema.json`.\n"
     )
 
     # logigraph directories

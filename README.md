@@ -98,8 +98,13 @@ This section is the source of truth for what to do when a user asks for knowledg
 ├── project.toml                      [project] name; subsystems = ["depgraph", "logigraph"]
 ├── depgraph/
 │   ├── project.toml                  [project] primary_repo; [logigraph] data_dir;
-│   │                                 [repos.<key>] path, extractor, files_arg
-│   ├── extractors/                   project-specific extractors (extract_api.py, …)
+│   │                                 [repos.<key>] path, languages, migrations_dirs,
+│   │                                 include_paths, exclude_paths
+│   │                                 (see depgraph/README.md for the full key reference;
+│   │                                  include_paths/exclude_paths are required for any
+│   │                                  repo with tests or generated code)
+│   ├── extractors/                   project-local extractors (only if a language the
+│   │                                 framework doesn't ship)
 │   ├── nodes/                        produced by `kg depgraph regen`
 │   ├── dossiers/                     human-authored prose per node
 │   └── telemetry/                    injections.jsonl, acknowledgments.jsonl

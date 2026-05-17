@@ -39,13 +39,47 @@ primary_repo = "api"
 
 [repos.api]
 path = "~/<project>-api"
-extractor = ["python3", "{data_dir}/extractors/extract_api.py"]
-files_arg = "--only"
+languages = ["python", "sql"]
+migrations_dirs = ["migrations"]
+exclude_paths = [
+  "**/tests/**",
+  "**/test_*.py",
+  "**/*_test.py",
+]
 
 [repos.web]
 path = "~/<project>-web"
-extractor = ["npx", "tsx", "{data_dir}/extractors/extract_web.ts"]
+languages = ["typescript"]
+exclude_paths = [
+  "**/__tests__/**",
+  "**/*.test.ts",
+  "**/*.test.tsx",
+  "**/*.spec.ts",
+  "**/build/**",
+  "**/.next/**",
+]
 ```
+
+### Per-repo configuration keys
+
+| key | required | what it does |
+|---|---|---|
+| `path` | ✓ | Filesystem checkout location. |
+| `languages` |   | Subset of `["python", "typescript", "sql"]`. Inferred from file extensions if omitted. |
+| `migrations_dirs` |   | Subdirs (relative to `path`) the SQL pipeline scans for migration files. Required when `languages` includes `"sql"`. |
+| `include_paths` |   | gitignore-flavoured globs. If set, only files matching at least one pattern are extracted. |
+| `exclude_paths` |   | gitignore-flavoured globs. Files matching any pattern are skipped. Applied after `include_paths`. |
+
+**`include_paths` / `exclude_paths` are the project author's responsibility.** The extractors only skip a handful of hardcoded build dirs (`node_modules`, `.venv`, `__pycache__`, `dist`, `.git`) — they will not guess which other trees you want extracted. Almost every real repo needs `exclude_paths` to drop test directories, generated code, vendored deps, and fixture trees. Skipping this step bloats the corpus and produces orphan edges from test files importing things that shouldn't be tracked against them.
+
+Globs follow gitignore semantics:
+
+- `**/` — zero or more leading path segments (including none)
+- `**` — any characters, including `/`
+- `*` — any characters except `/` (one segment)
+- `?` — any single character except `/`
+
+Patterns are matched against the file's path relative to `path`. The same `include_paths`/`exclude_paths` config is applied uniformly by every language extractor (Python, TypeScript, SQL).
 
 ```
 ~/tools/knowledge-graph/depgraph/       (this framework subdir; siblings: logigraph/, graphui/, kg/)
