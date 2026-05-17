@@ -41,7 +41,12 @@ _LIB = Path(__file__).resolve().parents[1]
 if str(_LIB.parent) not in sys.path:
     sys.path.insert(0, str(_LIB.parent))
 
-from depgraph.lib.config import project_repos, render_extractor, repo_detectors  # noqa: E402
+from depgraph.lib.config import (  # noqa: E402
+    primary_repo_path,
+    project_repos,
+    render_extractor,
+    repo_detectors,
+)
 from depgraph.lib.path_filters import included  # noqa: E402
 from depgraph.lib.classification.engine import classify_corpus  # noqa: E402
 from depgraph.lib.classification.writer import write_classified  # noqa: E402
@@ -376,10 +381,14 @@ def _run_v2_pipeline(
         "regen_status": "complete",
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "primitive_count": len(all_primitives),
+        # graphui templates read `node_count`; keep both keys so old and
+        # new readers work without coordinating a rename.
+        "node_count": len(all_primitives),
         "edge_count": edge_count,
         "orphan_edge_count": n_orphans,
         "slug_collision_count": n_collisions,
         "primitive_error_count": n_prim_errors,
+        "git_commit": _primary_git_commit(data_dir),
         "validation_report": report,
     }
     meta_path = data_dir / "nodes" / "_meta.json"
@@ -387,6 +396,30 @@ def _run_v2_pipeline(
     meta_path.write_text(json.dumps(meta, indent=2) + "\n")
     print(f"--- done: {len(all_primitives)} primitives, {edge_count} edges")
     return 0
+
+
+def _primary_git_commit(data_dir: Path) -> str | None:
+    """HEAD short SHA of the [project] primary_repo's checkout, if it's a
+    git working tree. Returns None when there's no primary_repo configured,
+    the checkout isn't a git repo, or git isn't on PATH. The corpus is
+    still valid without this — it just goes into _meta for provenance."""
+    try:
+        path = primary_repo_path(data_dir)
+    except Exception:
+        return None
+    if path is None or not path.exists():
+        return None
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=path, capture_output=True, text=True, timeout=5,
+        )
+    except (FileNotFoundError, OSError):
+        return None
+    if result.returncode != 0:
+        return None
+    sha = result.stdout.strip()
+    return sha or None
 
 
 # ---------------------------------------------------------------------------
