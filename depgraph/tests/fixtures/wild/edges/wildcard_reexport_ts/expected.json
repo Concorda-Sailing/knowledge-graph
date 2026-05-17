@@ -1,0 +1,9 @@
+{
+  "description": "`export * from './types'` makes the consumer's imports through the barrel resolve to the definer's primitives",
+  "unresolved_edges_expected": false,
+  "edges": [
+    {"source": "fixture::src/consumer.ts", "kind": "imports", "target": "fixture::src/types.ts::Gadget", "confidence": "fuzzy"},
+    {"source": "fixture::src/consumer.ts", "kind": "imports", "target": "fixture::src/types.ts::Tool", "confidence": "fuzzy"},
+    {"source": "fixture::src/consumer.ts::build", "kind": "instantiates", "target": "fixture::src/types.ts::Tool", "confidence": "exact"}
+  ]
+}

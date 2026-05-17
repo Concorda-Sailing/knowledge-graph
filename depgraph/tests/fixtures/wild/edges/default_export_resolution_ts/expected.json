@@ -1,0 +1,8 @@
+{
+  "description": "`import X from './lib'` resolves to the symbol named by the file's `export default X` rather than a synthetic `default` placeholder",
+  "unresolved_edges_expected": false,
+  "edges": [
+    {"source": "fixture::src/consumer.ts", "kind": "imports", "target": "fixture::src/lib.ts::Widget", "confidence": "fuzzy"},
+    {"source": "fixture::src/consumer.ts::makeWidget", "kind": "instantiates", "target": "fixture::src/lib.ts::Widget", "confidence": "exact"}
+  ]
+}

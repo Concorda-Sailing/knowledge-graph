@@ -571,9 +571,15 @@ function attachImportsEdges(
     }
   }
 
-  // Build re-export map: module rel-path -> {exportedName -> origin-symbol-id}
-  // This allows one-hop re-export resolution for consumers of barrels.
-  const reexportMap = new Map<string, Map<string, string>>();
+  // Build re-export map: module rel-path -> {exportedName -> origin-symbol-id}.
+  // Two-phase build: first collect each file's named re-exports and the set
+  // of files it re-exports wholesale via `export * from './x'`. Then expand
+  // wildcards via DFS so a consumer's lookup against a barrel that only does
+  // `export *` still resolves to the underlying definer. A final closure
+  // pass collapses chains of synthetic placeholders left by named-only
+  // multi-hop chains.
+  const namedReexports = new Map<string, Map<string, string>>();
+  const wildcardFrom = new Map<string, Set<string>>();
   for (const sf of sourceFiles) {
     const rel = relative(repoPath, sf.getFilePath());
     for (const exp of sf.getExportDeclarations()) {
@@ -581,13 +587,127 @@ function attachImportsEdges(
       const targetSf2 = exp.getModuleSpecifierSourceFile();
       const targetRel2 = targetSf2 ? relative(repoPath, targetSf2.getFilePath()) : null;
       if (!targetRel2) continue;
+      const named = exp.getNamedExports();
+      // `export * from './x'` (no named exports, no namespace alias) — record
+      // the wildcard relationship; symbol enumeration happens in the DFS.
+      if (named.length === 0 && !exp.getNamespaceExport()) {
+        if (!wildcardFrom.has(rel)) wildcardFrom.set(rel, new Set());
+        wildcardFrom.get(rel)!.add(targetRel2);
+        continue;
+      }
       const targetSyms2 = symByPath.get(targetRel2) ?? new Map();
-      for (const spec of exp.getNamedExports()) {
+      for (const spec of named) {
         const exportedName = spec.getName();
+        const aliasNode = spec.getAliasNode();
+        // For `export { foo as bar } from './x'`, consumers see `bar` — that
+        // is the key in our map. `spec.getName()` returns the local name
+        // (`foo`), which is what we look up in the target file.
+        const consumerName = aliasNode ? aliasNode.getText() : exportedName;
         const symId = targetSyms2.get(exportedName);
         const originId = symId ?? `${repoKey}::${targetRel2}::${exportedName}`;
-        if (!reexportMap.has(rel)) reexportMap.set(rel, new Map());
-        reexportMap.get(rel)!.set(exportedName, originId);
+        if (!namedReexports.has(rel)) namedReexports.set(rel, new Map());
+        namedReexports.get(rel)!.set(consumerName, originId);
+      }
+    }
+  }
+
+  // DFS: effective exports of `file` = direct definitions ∪ named re-exports
+  // ∪ wildcard targets' effective exports. Named/direct entries win on key
+  // collision (matches TS semantics). `visiting` breaks cycles.
+  function effectiveExports(file: string, visiting: Set<string>): Map<string, string> {
+    if (visiting.has(file)) return new Map();
+    visiting.add(file);
+    const out = new Map<string, string>();
+    const direct = symByPath.get(file);
+    if (direct) for (const [k, v] of direct) out.set(k, v);
+    const ne = namedReexports.get(file);
+    if (ne) for (const [k, v] of ne) if (!out.has(k)) out.set(k, v);
+    const wts = wildcardFrom.get(file);
+    if (wts) {
+      for (const wt of wts) {
+        const wtExports = effectiveExports(wt, visiting);
+        for (const [k, v] of wtExports) if (!out.has(k)) out.set(k, v);
+      }
+    }
+    visiting.delete(file);
+    return out;
+  }
+
+  const reexportMap = new Map<string, Map<string, string>>();
+  for (const sf of sourceFiles) {
+    const rel = relative(repoPath, sf.getFilePath());
+    const ne = namedReexports.get(rel);
+    const wts = wildcardFrom.get(rel);
+    if (!ne && !wts) continue;
+    const map = new Map<string, string>();
+    if (ne) for (const [k, v] of ne) map.set(k, v);
+    if (wts) {
+      for (const wt of wts) {
+        const wtExports = effectiveExports(wt, new Set([rel]));
+        for (const [k, v] of wtExports) if (!map.has(k)) map.set(k, v);
+      }
+    }
+    reexportMap.set(rel, map);
+  }
+
+  // Closure pass: for each entry whose synthetic target points at a file
+  // that itself re-exports the same name, replace with the deeper origin.
+  // Bounded depth prevents infinite loops on cyclic barrels.
+  const MAX_REEXPORT_HOPS = 16;
+  for (const exports of reexportMap.values()) {
+    for (const [name, id] of exports) {
+      let resolved = id;
+      for (let hop = 0; hop < MAX_REEXPORT_HOPS; hop++) {
+        // Parse `<repo>::<file>::<name>` shape. Bail on anything else
+        // (e.g. external terminals, module-only ids).
+        const idx = resolved.indexOf("::");
+        if (idx < 0) break;
+        const rest = resolved.slice(idx + 2);
+        const innerIdx = rest.lastIndexOf("::");
+        if (innerIdx < 0) break;
+        const innerFile = rest.slice(0, innerIdx);
+        const innerName = rest.slice(innerIdx + 2);
+        // If innerFile defines innerName as a real primitive, we're done.
+        if (symByPath.get(innerFile)?.has(innerName)) break;
+        const nextHop = reexportMap.get(innerFile)?.get(innerName);
+        if (!nextHop || nextHop === resolved) break;
+        resolved = nextHop;
+      }
+      if (resolved !== id) exports.set(name, resolved);
+    }
+  }
+
+  // Default-export alias map: file -> primitive id named by `export default X`
+  // (where X is an identifier resolving to a same-file symbol, or a top-level
+  // declaration with the `default` modifier). Lets `import X from './m'`
+  // resolve to the real symbol rather than the synthetic `default` id.
+  const defaultExportMap = new Map<string, string>();
+  for (const sf of sourceFiles) {
+    const rel = relative(repoPath, sf.getFilePath());
+    const localSyms = symByPath.get(rel);
+    if (!localSyms) continue;
+    for (const ea of sf.getExportAssignments()) {
+      if (ea.isExportEquals()) continue;
+      const expr = ea.getExpression();
+      if (Node.isIdentifier(expr)) {
+        const id = localSyms.get(expr.getText());
+        if (id) defaultExportMap.set(rel, id);
+      }
+    }
+    if (defaultExportMap.has(rel)) continue;
+    for (const cls of sf.getClasses()) {
+      if (cls.hasDefaultKeyword()) {
+        const name = cls.getName();
+        const id = name ? localSyms.get(name) : undefined;
+        if (id) { defaultExportMap.set(rel, id); break; }
+      }
+    }
+    if (defaultExportMap.has(rel)) continue;
+    for (const fn of sf.getFunctions()) {
+      if (fn.hasDefaultKeyword()) {
+        const name = fn.getName();
+        const id = name ? localSyms.get(name) : undefined;
+        if (id) { defaultExportMap.set(rel, id); break; }
       }
     }
   }
@@ -607,10 +727,15 @@ function attachImportsEdges(
       const defaultImport = imp.getDefaultImport();
       if (defaultImport) {
         const localBinding = defaultImport.getText();
-        const target = targetRel
-          ? `${repoKey}::${targetRel}::default`
-          : `external::npm::unknown::default`;
-        const confidence = targetRel ? "exact" : "unresolved";
+        const defaultId = targetRel ? defaultExportMap.get(targetRel) : undefined;
+        const target = defaultId
+          ? defaultId
+          : targetRel
+            ? `${repoKey}::${targetRel}::default`
+            : `external::npm::unknown::default`;
+        const confidence = defaultId
+          ? "fuzzy"
+          : (targetRel ? "exact" : "unresolved");
         modPrim.edges_out.push({
           target, kind: "imports", via: "import_decl",
           where: `${rel}:${imp.getStartLineNumber()}`,
@@ -678,17 +803,24 @@ function attachImportsEdges(
       const targetSf2 = exp.getModuleSpecifierSourceFile();
       const targetRel2 = targetSf2 ? relative(repoPath, targetSf2.getFilePath()) : null;
       const targetSyms2 = targetRel2 ? (symByPath.get(targetRel2) ?? new Map()) : new Map();
+      const targetReexports2 = targetRel2 ? (reexportMap.get(targetRel2) ?? new Map()) : new Map();
 
       for (const spec of exp.getNamedExports()) {
         const exportedName = spec.getName();
         const aliasNode = spec.getAliasNode();
         const localBinding = aliasNode ? aliasNode.getText() : exportedName;
         const symId = targetRel2 ? targetSyms2.get(exportedName) : undefined;
+        // Chase through the target file's own re-exports (the closure pass
+        // above has already collapsed multi-hop chains, so one lookup here
+        // suffices).
+        const reexportId = targetRel2 ? targetReexports2.get(exportedName) : undefined;
         const target = symId
           ? symId
-          : targetRel2
-            ? `${repoKey}::${targetRel2}::${exportedName}`
-            : `external::npm::unknown::${exportedName}`;
+          : reexportId
+            ? reexportId
+            : targetRel2
+              ? `${repoKey}::${targetRel2}::${exportedName}`
+              : `external::npm::unknown::${exportedName}`;
         modPrim.edges_out.push({
           target, kind: "imports", via: "re_export",
           where: `${rel}:${exp.getStartLineNumber()}`,

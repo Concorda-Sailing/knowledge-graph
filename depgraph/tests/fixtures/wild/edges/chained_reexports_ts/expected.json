@@ -1,0 +1,9 @@
+{
+  "description": "Two-hop re-export chains resolve to the original definer; both import-decl and re-export emissions chase through the barrel",
+  "unresolved_edges_expected": false,
+  "edges": [
+    {"source": "fixture::src/barrel.ts", "kind": "imports", "target": "fixture::src/definer.ts::realFunc", "confidence": "fuzzy"},
+    {"source": "fixture::src/consumer.ts", "kind": "imports", "target": "fixture::src/definer.ts::realFunc", "confidence": "fuzzy"},
+    {"source": "fixture::src/consumer.ts::useFunc", "kind": "calls", "target": "fixture::src/definer.ts::realFunc", "confidence": "exact"}
+  ]
+}

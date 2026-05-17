@@ -1,0 +1,1 @@
+export { realFunc } from './definer';
