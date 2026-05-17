@@ -42,6 +42,19 @@ import sqlglot
 from sqlglot import expressions as exp
 
 
+def _qualified_table_name(node: Any) -> str:
+    """Return a Table/Schema node's name qualified with its schema (or db)
+    prefix when present: `public.users` not `users`. Reconciliation keys
+    schema primitives by this string, so dropping the qualifier silently
+    merges tables that live in different schemas.
+    """
+    if node is None:
+        return ""
+    name = getattr(node, "name", "") or ""
+    db = getattr(node, "db", "") or ""
+    return f"{db}.{name}" if db else name
+
+
 @dataclass
 class Operation:
     kind: str   # create_table | alter_add_column | alter_drop_column |
@@ -157,7 +170,7 @@ def _inline_fk(col_name: str, coldef: exp.ColumnDef) -> dict[str, str] | None:
         if isinstance(ck, exp.Reference):
             ref_schema = ck.this  # Schema node
             ref_table_node = ref_schema.this if hasattr(ref_schema, "this") else None
-            ref_table = ref_table_node.name if ref_table_node else ""
+            ref_table = _qualified_table_name(ref_table_node)
             ref_col_nodes = ref_schema.expressions if hasattr(ref_schema, "expressions") else []
             ref_col = ref_col_nodes[0].name if ref_col_nodes else "id"
             return {"column": col_name, "references_table": ref_table,
@@ -169,8 +182,9 @@ def _handle_create(node: exp.Create) -> Operation | None:
     target = (node.args.get("kind") or "").upper()
     if target == "TABLE":
         schema = node.this
-        # schema.this is a Table node; .name gives the table name
-        table_name = schema.this.name if hasattr(schema, "this") else ""
+        # schema.this is a Table node; preserve the schema qualifier so
+        # `public.users` and `users` aren't merged into the same primitive.
+        table_name = _qualified_table_name(getattr(schema, "this", None))
         columns = []
         foreign_keys = []
         for col in (schema.expressions or []):
@@ -195,7 +209,7 @@ def _handle_create(node: exp.Create) -> Operation | None:
                 if ref:
                     # ref.this is a Schema: .this is Table node, .expressions are ref columns
                     ref_table_node = ref.this.this if hasattr(ref.this, "this") else None
-                    ref_table = ref_table_node.name if ref_table_node else ""
+                    ref_table = _qualified_table_name(ref_table_node)
                     ref_col_nodes = ref.this.expressions if hasattr(ref.this, "expressions") else []
                     ref_cols = [e.name for e in (ref_col_nodes or [])]
                     for lc, rc in zip(local_cols, ref_cols or [""]):
@@ -210,7 +224,7 @@ def _handle_create(node: exp.Create) -> Operation | None:
         index_node = node.this
         index_name = index_node.this.name if hasattr(index_node.this, "name") else ""
         table_node = index_node.args.get("table")
-        table = table_node.name if table_node else ""
+        table = _qualified_table_name(table_node)
         params = index_node.args.get("params")
         cols = []
         if params:
@@ -222,13 +236,13 @@ def _handle_create(node: exp.Create) -> Operation | None:
                           table=table, columns_indexed=cols)
 
     if target == "VIEW":
-        return Operation(kind="create_view", table=node.this.name)
+        return Operation(kind="create_view", table=_qualified_table_name(node.this))
 
     return None  # unsupported CREATE variant — skip silently
 
 
 def _handle_alter(node: exp.Alter) -> list[Operation]:
-    table = node.this.name
+    table = _qualified_table_name(node.this)
     ops: list[Operation] = []
     for action in (node.args.get("actions") or []):
         if isinstance(action, exp.ColumnDef):
@@ -244,7 +258,7 @@ def _handle_alter(node: exp.Alter) -> list[Operation]:
         elif isinstance(action, exp.AlterRename):
             # sqlglot 30.8: RENAME TABLE action is AlterRename, not RenameTable
             ops.append(Operation(kind="rename_table", table=table,
-                                  new_name=action.this.name))
+                                  new_name=_qualified_table_name(action.this)))
         elif isinstance(action, exp.RenameColumn):
             # In sqlglot 30.8, args["to"] is a Column node, not Identifier
             to_node = action.args.get("to")
@@ -295,6 +309,6 @@ def _handle_alter(node: exp.Alter) -> list[Operation]:
 def _handle_drop(node: exp.Drop) -> Operation | None:
     target = (node.args.get("kind") or "").upper()
     if target == "TABLE":
-        return Operation(kind="drop_table", table=node.this.name)
+        return Operation(kind="drop_table", table=_qualified_table_name(node.this))
     # INDEX, VIEW, etc. — skip for now
     return None

@@ -1,0 +1,17 @@
+{
+  "tables": [
+    {
+      "name": "public.users",
+      "columns": ["id", "name", "email"],
+      "foreign_keys": [],
+      "indexes": []
+    },
+    {
+      "name": "analytics.users",
+      "columns": ["id", "event"],
+      "foreign_keys": [],
+      "indexes": []
+    }
+  ],
+  "expect_warnings": false
+}
