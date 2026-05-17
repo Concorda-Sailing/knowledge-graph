@@ -26,6 +26,46 @@ interface Primitive {
 const EXTRACTOR_TAG = "depgraph/extractors/typescript/extract.ts@2026-05-16";
 const EXTS = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"];
 
+/**
+ * Compile a path glob to a regex matching the full rel-path. Port of
+ * `depgraph.lib.path_filters.compile_glob` — the two must stay in sync.
+ *
+ * Glob syntax (gitignore-flavoured):
+ *   **\/  zero or more leading path segments (incl none)
+ *   **    any characters, including `/`
+ *   *     any characters except `/` (one segment)
+ *   ?     any single character except `/`
+ */
+function compileGlob(pattern: string): RegExp {
+  const pat = pattern.replace(/\\/g, "/").replace(/^\/+/, "");
+  const parts: string[] = [];
+  let i = 0;
+  while (i < pat.length) {
+    if (pat.slice(i, i + 3) === "**/") {
+      parts.push("(?:.*/)?");
+      i += 3;
+    } else if (pat.slice(i, i + 2) === "**") {
+      parts.push(".*");
+      i += 2;
+    } else if (pat[i] === "*") {
+      parts.push("[^/]*");
+      i += 1;
+    } else if (pat[i] === "?") {
+      parts.push("[^/]");
+      i += 1;
+    } else {
+      parts.push(pat[i].replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+      i += 1;
+    }
+  }
+  return new RegExp(`^${parts.join("")}$`);
+}
+
+function matchesAny(relPath: string, patterns: RegExp[]): boolean {
+  const norm = relPath.replace(/\\/g, "/");
+  return patterns.some((re) => re.test(norm));
+}
+
 function listSourceFiles(root: string): string[] {
   const out: string[] = [];
   function walk(dir: string) {
@@ -1043,12 +1083,19 @@ function attachVarAccessEdges(
   }
 }
 
+function splitCsv(s: string | undefined): string[] {
+  if (!s) return [];
+  return s.split(",").map((x) => x.trim()).filter(Boolean);
+}
+
 function main() {
   const { values } = parseArgs({
     options: {
       "repo-key": { type: "string" },
       "repo-path": { type: "string" },
       "format": { type: "string", default: "ndjson" },
+      "include-paths": { type: "string" },
+      "exclude-paths": { type: "string" },
     },
   });
   const repoKey = values["repo-key"];
@@ -1057,6 +1104,8 @@ function main() {
     console.error("Usage: extract.ts --repo-key <key> --repo-path <path>");
     process.exit(1);
   }
+  const includeRes = splitCsv(values["include-paths"]).map(compileGlob);
+  const excludeRes = splitCsv(values["exclude-paths"]).map(compileGlob);
 
   // Initialize Project — try to find tsconfig.json in repo root for path alias support
   const tsconfigPath = `${repoPath}/tsconfig.json`;
@@ -1081,7 +1130,11 @@ function main() {
 
   const sourceFiles = project.getSourceFiles().filter((sf) => {
     const fp = sf.getFilePath();
-    return !fp.includes("/node_modules/") && !fp.includes("/.git/");
+    if (fp.includes("/node_modules/") || fp.includes("/.git/")) return false;
+    const rel = relative(repoPath, fp);
+    if (includeRes.length && !matchesAny(rel, includeRes)) return false;
+    if (excludeRes.length && matchesAny(rel, excludeRes)) return false;
+    return true;
   });
 
   // Collect all primitives

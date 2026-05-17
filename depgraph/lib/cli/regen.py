@@ -42,6 +42,7 @@ if str(_LIB.parent) not in sys.path:
     sys.path.insert(0, str(_LIB.parent))
 
 from depgraph.lib.config import project_repos, render_extractor, repo_detectors  # noqa: E402
+from depgraph.lib.path_filters import included  # noqa: E402
 from depgraph.lib.classification.engine import classify_corpus  # noqa: E402
 from depgraph.lib.classification.writer import write_classified  # noqa: E402
 from depgraph.extractors.reconcile import validate_corpus  # noqa: E402
@@ -107,7 +108,14 @@ def _ts_node_env(base_env: dict[str, str] | None = None) -> dict[str, str]:
     return env
 
 
-def _extract_typescript(repo_key: str, repo_path: Path, *, tool_root: Path) -> list[dict]:
+def _extract_typescript(
+    repo_key: str,
+    repo_path: Path,
+    *,
+    tool_root: Path,
+    include_paths: list[str] | None = None,
+    exclude_paths: list[str] | None = None,
+) -> list[dict]:
     """Invoke the TS extractor as a subprocess, parse ndjson output."""
     ts_extractor = tool_root / "extractors" / "typescript" / "extract.ts"
     if not ts_extractor.exists():
@@ -119,6 +127,10 @@ def _extract_typescript(repo_key: str, repo_path: Path, *, tool_root: Path) -> l
         "--repo-path", str(repo_path),
         "--format", "ndjson",
     ]
+    if include_paths:
+        cmd += ["--include-paths", ",".join(include_paths)]
+    if exclude_paths:
+        cmd += ["--exclude-paths", ",".join(exclude_paths)]
     result = subprocess.run(cmd, env=_ts_node_env(), capture_output=True, text=True, timeout=120)
     if result.returncode != 0:
         print(f"WARN: TS extractor exited {result.returncode}: {result.stderr[:400]}",
@@ -146,6 +158,8 @@ def _run_sql_pipeline(
     repo_key: str,
     repo_path: Path,
     migrations_dirs: list[Path],
+    include_paths: list[str] | None = None,
+    exclude_paths: list[str] | None = None,
 ) -> list[dict]:
     """Run the SQL migration pipeline for one repo and return schema primitives."""
     try:
@@ -156,16 +170,26 @@ def _run_sql_pipeline(
         print(f"WARN: SQL pipeline unavailable ({e}); skipping", file=sys.stderr)
         return []
 
+    include = include_paths or ()
+    exclude = exclude_paths or ()
+
     migration_files = []
     for mdir in migrations_dirs:
         if not mdir.is_dir():
             continue
         for f in sorted(mdir.rglob("*")):
-            if f.is_file() and is_migration_file(f):
-                try:
-                    migration_files.append(extract_migration(f))
-                except Exception as exc:
-                    print(f"WARN: failed to extract migration {f}: {exc}", file=sys.stderr)
+            if not (f.is_file() and is_migration_file(f)):
+                continue
+            try:
+                rel = str(f.resolve().relative_to(repo_path.resolve()))
+            except ValueError:
+                rel = str(f)
+            if not included(rel, include_paths=include, exclude_paths=exclude):
+                continue
+            try:
+                migration_files.append(extract_migration(f))
+            except Exception as exc:
+                print(f"WARN: failed to extract migration {f}: {exc}", file=sys.stderr)
 
     if not migration_files:
         return []
@@ -287,7 +311,11 @@ def _run_v2_pipeline(
             all_primitives.extend(prims)
 
         if "typescript" in languages:
-            prims = _extract_typescript(key, path, tool_root=tool_root)
+            prims = _extract_typescript(
+                key, path, tool_root=tool_root,
+                include_paths=repo_cfg.get("include_paths"),
+                exclude_paths=repo_cfg.get("exclude_paths"),
+            )
             print(f"    typescript: {len(prims)} primitives")
             all_primitives.extend(prims)
 
@@ -298,6 +326,8 @@ def _run_v2_pipeline(
                 repo_key=key,
                 repo_path=path,
                 migrations_dirs=migrations_dirs,
+                include_paths=repo_cfg.get("include_paths"),
+                exclude_paths=repo_cfg.get("exclude_paths"),
             )
             print(f"    sql: {len(schema_prims)} schema primitives")
             all_primitives.extend(schema_prims)
@@ -520,10 +550,11 @@ def register(sub: argparse._SubParsersAction) -> None:
     p.add_argument("--migrations-dir",
                    help="[Mode B] Path to migrations directory (SQL pipeline).")
     p.add_argument("--include-paths", dest="include_paths",
-                   help="[Mode B] Comma-separated fnmatch globs against "
-                        "rel-path; if set, only matching files are extracted "
-                        "(Python only).")
+                   help="[Mode B] Comma-separated globs against rel-path; "
+                        "if set, only matching files are extracted. Applied "
+                        "by every language extractor (Python, TypeScript, SQL).")
     p.add_argument("--exclude-paths", dest="exclude_paths",
-                   help="[Mode B] Comma-separated fnmatch globs against "
-                        "rel-path; matching files are skipped (Python only).")
+                   help="[Mode B] Comma-separated globs against rel-path; "
+                        "matching files are skipped. Applied by every "
+                        "language extractor (Python, TypeScript, SQL).")
     p.set_defaults(func=cmd_regen)
