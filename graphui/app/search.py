@@ -123,20 +123,28 @@ def _load_corpus(label: str, base: Path) -> dict:
 
 
 def load_search_index() -> dict:
-    """Load both corpora's indexes, cached by file mtime. Returns
-    {'depgraph': {...}, 'logigraph': {...}} where each value is the
-    output of _load_corpus."""
+    """Load both corpora's indexes, cached by file mtime + active project
+    path. Returns {'depgraph': {...}, 'logigraph': {...}} where each
+    value is the output of _load_corpus.
+
+    The cache key folds in the active project so that switching projects
+    in graphui reloads the right index instead of serving stale data
+    from a previously-loaded project that happened to share mtimes.
+    """
     global _index_cache
-    cur_mtimes = {}
-    for label, base in (("depgraph", loader.DEPGRAPH_NODES),
-                        ("logigraph", loader.LOGIGRAPH_NODES)):
+    proj = loader.current_project()
+    depgraph_nodes = proj.depgraph_nodes_dir
+    logigraph_nodes = proj.logigraph_nodes_dir
+    cur_mtimes: dict[str, float | str] = {"_project_id": proj.id}
+    for label, base in (("depgraph", depgraph_nodes),
+                        ("logigraph", logigraph_nodes)):
         bin_p = base / "_index" / "embeddings.bin"
         cur_mtimes[label] = bin_p.stat().st_mtime if bin_p.exists() else 0.0
     if _index_cache is not None and cur_mtimes == _index_mtimes:
         return _index_cache
     _index_cache = {
-        "depgraph": _load_corpus("depgraph", loader.DEPGRAPH_NODES),
-        "logigraph": _load_corpus("logigraph", loader.LOGIGRAPH_NODES),
+        "depgraph": _load_corpus("depgraph", depgraph_nodes),
+        "logigraph": _load_corpus("logigraph", logigraph_nodes),
     }
     _index_mtimes.clear()
     _index_mtimes.update(cur_mtimes)

@@ -1619,6 +1619,89 @@ h2 {
 .flagged-list .symbol-id { font-size: 0.8em; color: var(--fg-mute); user-select: all; }
 .flagged-list .flagged-meta { font-size: 0.8em; color: var(--fg-mute); }
 
+/* Top strip — project card + activity strip share the same line + same
+   height (64px). Both children are locked to height: 64px so the strip's
+   internals (sparkline, labels) compress to fit rather than letting the
+   strip grow taller than the card. */
+.top-strip {
+  display: flex;
+  align-items: stretch;
+  gap: 14px;
+  margin: 14px 0;
+  height: 64px;
+}
+.top-strip > .activity-strip { flex: 1 1 auto; margin: 0; min-width: 0; height: 64px; box-sizing: border-box; padding-top: 6px; padding-bottom: 6px; }
+.top-strip > .project-card { flex: 0 0 auto; height: 64px; box-sizing: border-box; }
+.top-strip .sparkline { height: 16px; }
+
+/* _project_card */
+.project-card {
+  position: relative;
+  display: flex;             /* trigger is a flex child → stretches to card height */
+  flex-direction: column;
+  background: #0f172a;
+  border-left: 3px solid #6366f1;
+  border-radius: 4px;
+  min-width: 220px;
+  max-width: 340px;
+}
+.project-card-trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  flex: 1 1 auto;            /* fill the card's stretched height */
+}
+.project-card-trigger:hover { background: #131c35; }
+.project-card-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
+.project-card-name { color: #e5e7eb; font-size: 14px; font-weight: 600; }
+.project-card-desc {
+  color: #94a3b8;
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.project-card-desc code { color: #94a3b8; font-size: 11px; }
+.project-card-chevron { color: #64748b; font-size: 12px; }
+.project-card-trigger[aria-expanded="true"] .project-card-chevron { color: #a5b4fc; }
+.project-card-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  min-width: 240px;
+  background: #0b1220;
+  border: 1px solid #1e293b;
+  border-radius: 4px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  z-index: 50;
+}
+.project-card-option a {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 14px;
+  color: inherit;
+  text-decoration: none;
+}
+.project-card-option a:hover { background: #131c35; }
+.project-card-option-active a { background: #131c35; }
+.project-card-option-active a::after { content: "✓"; color: #6366f1; margin-left: auto; }
+.project-card-option-name { color: #e5e7eb; font-size: 13px; font-weight: 600; }
+.project-card-option-desc { color: #94a3b8; font-size: 11px; }
+.project-card-option-desc code { color: #94a3b8; font-size: 11px; }
+
 /* _activity_strip */
 .activity-strip {
   display: flex;

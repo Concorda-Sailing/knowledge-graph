@@ -1,13 +1,18 @@
 """Load depgraph + logigraph indexes into in-memory dicts.
 
 Single source of truth: the JSON files on disk at the data dirs pointed
-at by DEPGRAPH_DATA_DIR and LOGIGRAPH_DATA_DIR. The heavy loaders
-(`load_depgraph_nodes`, `load_dependents`, `load_logigraph_nodes`,
-`load_meta`) cache their result at module scope, keyed on the mtime of
-the corresponding `nodes/_meta.json`. Reconcile writes that file at the
-end of a regen, so a fresh extraction invalidates the cache without a
-graphui restart. Tests reset cache state by reloading the module via
-the `loader` fixture.
+at by the active `Project`. graphui can serve multiple projects in one
+process — each request resolves its active project via the
+`_CURRENT_PROJECT` contextvar (set by the FastAPI middleware in
+`main.py`), and the heavy loaders cache per-project keyed on the mtime
+of that project's `nodes/_meta.json`. Reconcile writes that file at
+the end of a regen, so a fresh extraction invalidates the cache
+without a graphui restart.
+
+Single-project mode (legacy systemd / dev): if `DEPGRAPH_DATA_DIR` is
+set, the module exposes a default Project synthesized from the env
+vars. With no env vars and no registered projects, graphui exits at
+startup.
 """
 from __future__ import annotations
 
@@ -20,53 +25,175 @@ import sys
 import time
 import tomllib  # stdlib 3.11+
 import hashlib
+from contextvars import ContextVar
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 HOME = Path.home()
 
+# Where `kg project add` writes the registered-graphs list. The orchestrator
+# hook (`kg/hook.py::_pre_edit`) reads the same file; keep them in sync.
+REGISTERED_GRAPHS_PATH = HOME / ".claude" / "kg-graphs.toml"
 
-def _resolve(env_var: str) -> Path:
-    """Resolve a graph data dir from env var, else fail loud. Graphui
-    is meant to be run as a systemd service that sets the env vars
-    explicitly (see install.sh)."""
+
+@dataclass(frozen=True)
+class Project:
+    """A single tracked graph: where its data lives + a name/description
+    for the UI picker. All paths are absolute and resolved."""
+    id: str            # short stable key; matches kg-graphs.toml `[[graph]].name`
+    name: str          # human label (may match id, may come from project.toml)
+    description: str   # one-line summary, "" if unset
+    graph_dir: Path    # ~/<project>-knowledge-graph
+    depgraph_dir: Path
+    logigraph_dir: Path
+
+    @property
+    def depgraph_nodes_dir(self) -> Path:
+        return self.depgraph_dir / "nodes"
+
+    @property
+    def logigraph_nodes_dir(self) -> Path:
+        return self.logigraph_dir / "nodes"
+
+
+def _make_project(project_id: str, name: str, description: str, graph_dir: Path) -> Project:
+    return Project(
+        id=project_id,
+        name=name or project_id,
+        description=description or "",
+        graph_dir=graph_dir,
+        depgraph_dir=graph_dir / "depgraph",
+        logigraph_dir=graph_dir / "logigraph",
+    )
+
+
+def _read_project_description(graph_dir: Path) -> tuple[str, str]:
+    """Read `<graph_dir>/project.toml`'s `[project]` section. Returns
+    (name, description); falls back to ("", "") when the file or the
+    fields are absent. `description` is an optional field convention
+    graphui surfaces — adding it to project.toml is opt-in."""
+    p = graph_dir / "project.toml"
+    if not p.exists():
+        return "", ""
+    try:
+        cfg = tomllib.loads(p.read_text())
+    except (OSError, tomllib.TOMLDecodeError):
+        return "", ""
+    proj = cfg.get("project") or {}
+    return str(proj.get("name") or ""), str(proj.get("description") or "")
+
+
+def list_projects() -> list[Project]:
+    """Enumerate registered graphs from `~/.claude/kg-graphs.toml`.
+    Falls back to a single synthetic project (id `default`) when the
+    file is absent but env-var single-project mode is in use."""
+    out: list[Project] = []
+    if REGISTERED_GRAPHS_PATH.exists():
+        try:
+            cfg = tomllib.loads(REGISTERED_GRAPHS_PATH.read_text())
+        except (OSError, tomllib.TOMLDecodeError):
+            cfg = {}
+        for entry in cfg.get("graph") or []:
+            raw_path = entry.get("path")
+            if not raw_path:
+                continue
+            graph_dir = Path(raw_path).expanduser().resolve()
+            project_id = str(entry.get("name") or graph_dir.name)
+            name, description = _read_project_description(graph_dir)
+            out.append(_make_project(project_id, name or project_id, description, graph_dir))
+    if not out and _DEFAULT_PROJECT is not None:
+        out.append(_DEFAULT_PROJECT)
+    out.sort(key=lambda p: p.name.lower())
+    return out
+
+
+def _resolve(env_var: str) -> Path | None:
+    """Resolve a graph data dir from env var, else None. With no env vars
+    and no registered projects we exit; the check happens after we know
+    whether kg-graphs.toml has entries."""
     val = os.environ.get(env_var)
     if not val:
-        sys.exit(
-            f"{env_var} is not set — graphui needs both DEPGRAPH_DATA_DIR "
-            f"and LOGIGRAPH_DATA_DIR pointing at the project's data dirs."
-        )
+        return None
     return Path(val).expanduser().resolve()
 
 
-DEPGRAPH = _resolve("DEPGRAPH_DATA_DIR")
-LOGIGRAPH = _resolve("LOGIGRAPH_DATA_DIR")
+_ENV_DEPGRAPH = _resolve("DEPGRAPH_DATA_DIR")
+_ENV_LOGIGRAPH = _resolve("LOGIGRAPH_DATA_DIR")
 
-DEPGRAPH_NODES = DEPGRAPH / "nodes"
-LOGIGRAPH_NODES = LOGIGRAPH / "nodes"
+# Synthesize a "default" Project from env vars when present — preserves the
+# pre-multiproject startup path. graph_dir is the common parent of the two
+# data dirs when they share one (the standard `~/<x>-knowledge-graph/{depgraph,
+# logigraph}` layout); otherwise it falls back to depgraph_dir.parent.
+_DEFAULT_PROJECT: Project | None = None
+if _ENV_DEPGRAPH and _ENV_LOGIGRAPH:
+    _shared = _ENV_DEPGRAPH.parent if _ENV_DEPGRAPH.parent == _ENV_LOGIGRAPH.parent else _ENV_DEPGRAPH.parent
+    _name_from_toml, _desc_from_toml = _read_project_description(_shared)
+    _DEFAULT_PROJECT = Project(
+        id=_name_from_toml or _shared.name or "default",
+        name=_name_from_toml or _shared.name or "default",
+        description=_desc_from_toml,
+        graph_dir=_shared,
+        depgraph_dir=_ENV_DEPGRAPH,
+        logigraph_dir=_ENV_LOGIGRAPH,
+    )
 
 
-# Cache state for the heavy loaders. Each entry is (cache_key, value).
-# cache_key is the mtime of the relevant `nodes/_meta.json`; reconcile
-# rewrites that file at the end of every regen, so a fresh extraction
-# automatically invalidates the cache on the next request.
-_DEPGRAPH_DEPS_CACHE: tuple[float, dict[str, list[dict]]] | None = None
-_DEPGRAPH_NODES_CACHE: tuple[float, list[dict]] | None = None
-_LOGIGRAPH_NODES_CACHE: tuple[float, dict[str, list[dict]]] | None = None
-_META_CACHE: tuple[tuple[float, float], dict[str, Any]] | None = None
-_REPO_AGGREGATES_CACHE: tuple[tuple[float, float], dict[str, dict]] | None = None
+_CURRENT_PROJECT: ContextVar[Project | None] = ContextVar("_CURRENT_PROJECT", default=None)
+
+
+def current_project() -> Project:
+    """Resolve the active project for this request. Reads the contextvar
+    first; falls back to the env-var-synthesized default for single-project
+    mode. Exits the process if neither is available — graphui needs to know
+    which project to serve."""
+    p = _CURRENT_PROJECT.get()
+    if p is not None:
+        return p
+    if _DEFAULT_PROJECT is not None:
+        return _DEFAULT_PROJECT
+    projects = list_projects()
+    if projects:
+        return projects[0]
+    sys.exit(
+        "graphui has no project to serve — set DEPGRAPH_DATA_DIR/LOGIGRAPH_DATA_DIR "
+        f"or register one with `kg project add <path>` (writes {REGISTERED_GRAPHS_PATH})."
+    )
+
+
+def set_current_project(project: Project | None) -> Any:
+    """Bind the request's active project to the contextvar. Returns the
+    token so the middleware can reset it after the request completes."""
+    return _CURRENT_PROJECT.set(project)
+
+
+def reset_current_project(token: Any) -> None:
+    _CURRENT_PROJECT.reset(token)
+
+
+# Per-project caches. Keys are the project's `depgraph_dir` (or graph_dir
+# where the cache spans both subgraphs). Each value is the same
+# (cache_key, value) tuple as before. cache_key is the mtime of the
+# relevant `nodes/_meta.json`; reconcile rewrites that file at the end of
+# every regen, so a fresh extraction invalidates the cache on the next
+# request.
+_DEPGRAPH_DEPS_CACHE: dict[Path, tuple[float, dict[str, list[dict]]]] = {}
+_DEPGRAPH_NODES_CACHE: dict[Path, tuple[float, list[dict]]] = {}
+_LOGIGRAPH_NODES_CACHE: dict[Path, tuple[float, dict[str, list[dict]]]] = {}
+_META_CACHE: dict[Path, tuple[tuple[float, float], dict[str, Any]]] = {}
+_REPO_AGGREGATES_CACHE: dict[Path, tuple[tuple[float, float], dict[str, dict]]] = {}
 
 
 def _depgraph_meta_mtime() -> float:
     try:
-        return (DEPGRAPH_NODES / "_meta.json").stat().st_mtime
+        return (current_project().depgraph_nodes_dir / "_meta.json").stat().st_mtime
     except OSError:
         return 0.0
 
 
 def _logigraph_meta_mtime() -> float:
     try:
-        return (LOGIGRAPH_NODES / "_meta.json").stat().st_mtime
+        return (current_project().logigraph_nodes_dir / "_meta.json").stat().st_mtime
     except OSError:
         return 0.0
 
@@ -276,23 +403,24 @@ def commit_history(repo_root: Path, rel_paths: list[str], limit: int = 20) -> li
 
 
 def load_dependents() -> dict[str, list[dict]]:
-    global _DEPGRAPH_DEPS_CACHE
+    proj = current_project()
     mt = _depgraph_meta_mtime()
-    if _DEPGRAPH_DEPS_CACHE is not None and _DEPGRAPH_DEPS_CACHE[0] == mt:
-        return _DEPGRAPH_DEPS_CACHE[1]
-    p = DEPGRAPH_NODES / "_index" / "dependents.json"
+    cached = _DEPGRAPH_DEPS_CACHE.get(proj.depgraph_dir)
+    if cached is not None and cached[0] == mt:
+        return cached[1]
+    p = proj.depgraph_nodes_dir / "_index" / "dependents.json"
     if not p.exists():
         out: dict[str, list[dict]] = {}
     else:
         idx = json.loads(p.read_text())
         out = idx.get("by_target") or {}
-    _DEPGRAPH_DEPS_CACHE = (mt, out)
+    _DEPGRAPH_DEPS_CACHE[proj.depgraph_dir] = (mt, out)
     return out
 
 
 def load_logigraph_by_code() -> dict[str, list[str]]:
     """Map of depgraph node-id (or HTTP route) -> [rule_id, ...]."""
-    p = LOGIGRAPH_NODES / "_index" / "by_code.json"
+    p = current_project().logigraph_nodes_dir / "_index" / "by_code.json"
     if not p.exists():
         return {}
     idx = json.loads(p.read_text())
@@ -301,34 +429,36 @@ def load_logigraph_by_code() -> dict[str, list[str]]:
 
 def load_meta() -> dict[str, Any]:
     """Read both meta files."""
-    global _META_CACHE
+    proj = current_project()
     key = (_depgraph_meta_mtime(), _logigraph_meta_mtime())
-    if _META_CACHE is not None and _META_CACHE[0] == key:
-        return _META_CACHE[1]
+    cached = _META_CACHE.get(proj.graph_dir)
+    if cached is not None and cached[0] == key:
+        return cached[1]
     out: dict[str, Any] = {"depgraph": {}, "logigraph": {}}
     for label, p in (
-        ("depgraph", DEPGRAPH_NODES / "_meta.json"),
-        ("logigraph", LOGIGRAPH_NODES / "_meta.json"),
+        ("depgraph", proj.depgraph_nodes_dir / "_meta.json"),
+        ("logigraph", proj.logigraph_nodes_dir / "_meta.json"),
     ):
         if p.exists():
             try:
                 out[label] = json.loads(p.read_text())
             except (OSError, json.JSONDecodeError):
                 pass
-    _META_CACHE = (key, out)
+    _META_CACHE[proj.graph_dir] = (key, out)
     return out
 
 
 def load_depgraph_nodes() -> list[dict]:
     """Read every depgraph node file and enrich with derived fields:
     fan_out, tier, dossier_state, commits_30d. Sorted by id."""
-    global _DEPGRAPH_NODES_CACHE
+    proj = current_project()
     mt = _depgraph_meta_mtime()
-    if _DEPGRAPH_NODES_CACHE is not None and _DEPGRAPH_NODES_CACHE[0] == mt:
-        return _DEPGRAPH_NODES_CACHE[1]
+    cached = _DEPGRAPH_NODES_CACHE.get(proj.depgraph_dir)
+    if cached is not None and cached[0] == mt:
+        return cached[1]
     deps = load_dependents()
     nodes: list[dict] = []
-    for nf in DEPGRAPH_NODES.rglob("*.json"):
+    for nf in proj.depgraph_nodes_dir.rglob("*.json"):
         if nf.name.startswith("_") or any(p.startswith("_") for p in nf.parts):
             continue
         try:
@@ -341,25 +471,26 @@ def load_depgraph_nodes() -> list[dict]:
         fan_out = len(deps.get(nid) or [])
         d["fan_out"] = fan_out
         d["tier"] = _tier_of(fan_out)
-        d["dossier_state"] = _dossier_state(d, DEPGRAPH)
-        d["_node_file"] = str(nf.relative_to(DEPGRAPH))
+        d["dossier_state"] = _dossier_state(d, proj.depgraph_dir)
+        d["_node_file"] = str(nf.relative_to(proj.depgraph_dir))
         src = d.get("source") or {}
         nodes.append(d)
     nodes.sort(key=lambda n: n["id"])
-    _DEPGRAPH_NODES_CACHE = (mt, nodes)
+    _DEPGRAPH_NODES_CACHE[proj.depgraph_dir] = (mt, nodes)
     return nodes
 
 
 def load_logigraph_nodes() -> dict[str, list[dict]]:
     """Returns {'rules': [...], 'domain': [...], 'processes': [...]} with
     derived dossier_state."""
-    global _LOGIGRAPH_NODES_CACHE
+    proj = current_project()
     mt = _logigraph_meta_mtime()
-    if _LOGIGRAPH_NODES_CACHE is not None and _LOGIGRAPH_NODES_CACHE[0] == mt:
-        return _LOGIGRAPH_NODES_CACHE[1]
+    cached = _LOGIGRAPH_NODES_CACHE.get(proj.logigraph_dir)
+    if cached is not None and cached[0] == mt:
+        return cached[1]
     out: dict[str, list[dict]] = {"rules": [], "domain": [], "processes": []}
     for kind, sub in (("rules", "rules"), ("domain", "domain"), ("processes", "processes")):
-        d = LOGIGRAPH_NODES / sub
+        d = proj.logigraph_nodes_dir / sub
         if not d.is_dir():
             continue
         for nf in sorted(d.glob("*.json")):
@@ -367,8 +498,8 @@ def load_logigraph_nodes() -> dict[str, list[dict]]:
                 node = json.loads(nf.read_text())
             except (OSError, json.JSONDecodeError):
                 continue
-            node["dossier_state"] = _dossier_state(node, LOGIGRAPH)
-            node["_node_file"] = str(nf.relative_to(LOGIGRAPH))
+            node["dossier_state"] = _dossier_state(node, proj.logigraph_dir)
+            node["_node_file"] = str(nf.relative_to(proj.logigraph_dir))
             # Logigraph rules carry their own fan_out (claims count); use it.
             # Processes use total claim count across all steps + ui_surfaces.
             if "fan_out" not in node:
@@ -379,7 +510,7 @@ def load_logigraph_nodes() -> dict[str, list[dict]]:
                 else:
                     node["fan_out"] = len(node.get("claims_code") or [])
             out[kind].append(node)
-    _LOGIGRAPH_NODES_CACHE = (mt, out)
+    _LOGIGRAPH_NODES_CACHE[proj.logigraph_dir] = (mt, out)
     return out
 
 
@@ -917,10 +1048,25 @@ def dependents_of(node_id: str) -> list[dict]:
 
 # ----- Telemetry --------------------------------------------------------------
 
-LOGIGRAPH_INJECTIONS = LOGIGRAPH / "telemetry" / "injections.jsonl"
-LOGIGRAPH_ACKS = LOGIGRAPH / "telemetry" / "acknowledgments.jsonl"
-DEPGRAPH_INJECTIONS = DEPGRAPH / "telemetry" / "injections.jsonl"
-DEPGRAPH_ACKS = DEPGRAPH / "telemetry" / "acknowledgments.jsonl"
+# Telemetry paths are derived per-request from the active project; the legacy
+# module-level constants were removed when graphui learned to serve multiple
+# projects (see Project / current_project()).
+
+
+def _logigraph_injections_path() -> Path:
+    return current_project().logigraph_dir / "telemetry" / "injections.jsonl"
+
+
+def _logigraph_acks_path() -> Path:
+    return current_project().logigraph_dir / "telemetry" / "acknowledgments.jsonl"
+
+
+def _depgraph_injections_path() -> Path:
+    return current_project().depgraph_dir / "telemetry" / "injections.jsonl"
+
+
+def _depgraph_acks_path() -> Path:
+    return current_project().depgraph_dir / "telemetry" / "acknowledgments.jsonl"
 
 
 def _telemetry_for_id(
@@ -989,8 +1135,8 @@ def telemetry_for_rule(rule_id: str, days: int = 7) -> dict[str, Any]:
     return _telemetry_for_id(
         target_id=rule_id,
         id_field="rule_id",
-        injections_path=LOGIGRAPH_INJECTIONS,
-        acks_path=LOGIGRAPH_ACKS,
+        injections_path=_logigraph_injections_path(),
+        acks_path=_logigraph_acks_path(),
         days=days,
     )
 
@@ -999,8 +1145,8 @@ def telemetry_for_node(node_id: str, days: int = 7) -> dict[str, Any]:
     return _telemetry_for_id(
         target_id=node_id,
         id_field="node_id",
-        injections_path=DEPGRAPH_INJECTIONS,
-        acks_path=DEPGRAPH_ACKS,
+        injections_path=_depgraph_injections_path(),
+        acks_path=_depgraph_acks_path(),
         days=days,
     )
 
@@ -1233,8 +1379,9 @@ def _count_jsonl_since(path: Path, since_ts: float, predicate=None) -> int:
 
 def _drafts_authored_since(since_ts: float) -> int:
     """Dossiers whose status==llm_drafted whose file mtime is in window."""
+    proj = current_project()
     n = 0
-    for kind_dir in (DEPGRAPH / "dossiers", LOGIGRAPH / "dossiers"):
+    for kind_dir in (proj.depgraph_dir / "dossiers", proj.logigraph_dir / "dossiers"):
         if not kind_dir.exists():
             continue
         for p in kind_dir.rglob("*.md"):
@@ -1271,15 +1418,16 @@ def _drift_events_since(since_ts: float) -> int:
 
 def _rules_authored_since(since_ts: float) -> int:
     """Rule node files (kind=rule) with mtime in window."""
-    rule_dir = LOGIGRAPH_NODES / "rules"
+    rule_dir = current_project().logigraph_nodes_dir / "rules"
     return _count_node_files_since(rule_dir, since_ts)
 
 
 def activity_summary() -> dict:
     """Today / 7-day sparkline / 30-day rollup for the dashboard activity strip."""
+    proj = current_project()
     today_start = _start_of_day_utc(0)
     today = {
-        "nodes_added": _count_node_files_since(DEPGRAPH_NODES, today_start),
+        "nodes_added": _count_node_files_since(proj.depgraph_nodes_dir, today_start),
         "drafts_authored": _drafts_authored_since(today_start),
         "drift_events": _drift_events_since(today_start),
         "rules_authored": _rules_authored_since(today_start),
@@ -1290,8 +1438,7 @@ def activity_summary() -> dict:
     # edits a tracked file, so they reflect work.
     spark: list[int] = [0] * 7  # oldest first
     today_date = dt.datetime.now(dt.timezone.utc).date()
-    for src in (DEPGRAPH / "telemetry" / "injections.jsonl",
-                LOGIGRAPH / "telemetry" / "injections.jsonl"):
+    for src in (_depgraph_injections_path(), _logigraph_injections_path()):
         for row in _read_jsonl(src):
             ts_raw = row.get("ts")
             try:
@@ -1303,9 +1450,9 @@ def activity_summary() -> dict:
                 spark[6 - delta] += 1
     thirty_start = _start_of_day_utc(30)
     thirty_day = {
-        "nodes_added": _count_node_files_since(DEPGRAPH_NODES, thirty_start),
+        "nodes_added": _count_node_files_since(proj.depgraph_nodes_dir, thirty_start),
         "drafts_reviewed": _count_jsonl_since(
-            LOGIGRAPH / "telemetry" / "acknowledgments.jsonl", thirty_start
+            _logigraph_acks_path(), thirty_start
         ),
         "drift_events": _drift_events_since(thirty_start),
     }
@@ -1335,8 +1482,7 @@ def _telemetry_stats(window_days: int = 30) -> dict:
     acked_keys: set[tuple[str, str]] = set()
     inj_keys_total: set[tuple[str, str]] = set()
 
-    for src in (DEPGRAPH / "telemetry" / "injections.jsonl",
-                LOGIGRAPH / "telemetry" / "injections.jsonl"):
+    for src in (_depgraph_injections_path(), _logigraph_injections_path()):
         for row in _read_jsonl(src):
             ts_raw = row.get("ts")
             try:
@@ -1354,8 +1500,7 @@ def _telemetry_stats(window_days: int = 30) -> dict:
             elif prev_since <= ts < since:
                 prev_inj_count += 1
 
-    for src in (DEPGRAPH / "telemetry" / "acknowledgments.jsonl",
-                LOGIGRAPH / "telemetry" / "acknowledgments.jsonl"):
+    for src in (_depgraph_acks_path(), _logigraph_acks_path()):
         for row in _read_jsonl(src):
             ts_raw = row.get("ts")
             try:
@@ -1373,7 +1518,7 @@ def _telemetry_stats(window_days: int = 30) -> dict:
     trend = round(((inj_count - prev_inj_count) / prev_inj_count) * 100) if prev_inj_count else 0
 
     # Dead rules: rule node files that never fired in the window.
-    rules_dir = LOGIGRAPH_NODES / "rules"
+    rules_dir = current_project().logigraph_nodes_dir / "rules"
     dead = 0
     if rules_dir.exists():
         for p in rules_dir.glob("*.json"):
@@ -1404,9 +1549,10 @@ def _telemetry_stats(window_days: int = 30) -> dict:
 
 
 def _calibration_summary() -> dict:
-    """Read the most-recent calibration run dir under LOGIGRAPH/calibration/runs/.
-    Returns accuracy %, pass/fail counts, drifted rule ids, prev-run delta."""
-    runs_dir = LOGIGRAPH / "calibration" / "runs"
+    """Read the most-recent calibration run dir under the project's
+    logigraph/calibration/runs/. Returns accuracy %, pass/fail counts,
+    drifted rule ids, prev-run delta."""
+    runs_dir = current_project().logigraph_dir / "calibration" / "runs"
     if not runs_dir.exists():
         return {"accuracy_pct": None, "regressions": 0, "last_run_id": None, "drifted_rules": [], "prev_delta_pp": 0}
     runs = sorted([p for p in runs_dir.iterdir() if p.is_dir()], reverse=True)
@@ -1581,7 +1727,7 @@ def _classify(last_push_age: int | None) -> str:
 def _today_node_delta_for_repo(basename: str) -> int:
     today_start = _start_of_day_utc(0)
     n = 0
-    for p in DEPGRAPH_NODES.rglob("*.json"):
+    for p in current_project().depgraph_nodes_dir.rglob("*.json"):
         if "_index" in p.parts or p.name == "_meta.json":
             continue
         if p.stat().st_mtime < today_start:
@@ -1754,10 +1900,11 @@ def _repo_aggregates() -> dict[str, dict]:
         that depends on the source repo's own files, not graph data)
       - cross_cuts: {rules, processes, domain} — sorted id lists
     """
-    global _REPO_AGGREGATES_CACHE
+    proj = current_project()
     key = (_depgraph_meta_mtime(), _logigraph_meta_mtime())
-    if _REPO_AGGREGATES_CACHE is not None and _REPO_AGGREGATES_CACHE[0] == key:
-        return _REPO_AGGREGATES_CACHE[1]
+    cached = _REPO_AGGREGATES_CACHE.get(proj.graph_dir)
+    if cached is not None and cached[0] == key:
+        return cached[1]
 
     nodes = load_depgraph_nodes()
     dependents = load_dependents()
@@ -1850,7 +1997,7 @@ def _repo_aggregates() -> dict[str, dict]:
             },
         }
 
-    _REPO_AGGREGATES_CACHE = (key, out)
+    _REPO_AGGREGATES_CACHE[proj.graph_dir] = (key, out)
     return out
 
 
@@ -2030,7 +2177,7 @@ def repo_dead_code(basename: str) -> list[dict]:
 def read_project_toml() -> dict:
     """Parse the depgraph project.toml. Returns the raw dict; callers
     interpret `repos.*`, `[project]`, etc."""
-    path = DEPGRAPH / "project.toml"
+    path = current_project().depgraph_dir / "project.toml"
     if not path.exists():
         return {}
     try:
@@ -2044,6 +2191,7 @@ def tracked_repos_settings() -> list[dict]:
     detail for the Settings page: key, basename, resolved filesystem path,
     git remote URL, extractor command, extractor file (resolved abs), and
     files_arg if any."""
+    proj = current_project()
     cfg = read_project_toml()
     repos = cfg.get("repos") or {}
     out: list[dict] = []
@@ -2055,7 +2203,7 @@ def tracked_repos_settings() -> list[dict]:
         extractor_file = None
         for part in extractor_cmd:
             if isinstance(part, str) and "{data_dir}" in part:
-                resolved = part.replace("{data_dir}", str(DEPGRAPH))
+                resolved = part.replace("{data_dir}", str(proj.depgraph_dir))
                 if Path(resolved).exists():
                     extractor_file = resolved
                     break
@@ -2103,7 +2251,7 @@ def extractor_inventory() -> list[dict]:
     extractor dirs. Returns one row per file with size, mtime, sha256 prefix,
     and scope (`project` or `framework`)."""
     out: list[dict] = []
-    project_dir = DEPGRAPH / "extractors"
+    project_dir = current_project().depgraph_dir / "extractors"
     if project_dir.exists():
         for p in sorted(project_dir.iterdir()):
             if p.is_file() and not p.name.startswith("."):
@@ -2146,8 +2294,10 @@ def _framework_git_sha(repo_root: Path) -> str | None:
 
 def framework_settings() -> dict:
     """Surface the depgraph + logigraph framework + data-dir state for the
-    Settings page. Pulls from module constants, env-resolved bins (in main.py),
-    git HEAD of the tool repos, and the corpus _meta.json files."""
+    Settings page. Pulls from the active project's paths, env-resolved CLI
+    bins (overridable via DEPGRAPH_BIN/LOGIGRAPH_BIN), git HEAD of the tool
+    repos, and the corpus _meta.json files."""
+    proj = current_project()
     meta = load_meta()
     depgraph_cli = os.environ.get("DEPGRAPH_BIN") or str(
         _DEPGRAPH_TOOL_ROOT / "bin" / "depgraph"
@@ -2160,7 +2310,7 @@ def framework_settings() -> dict:
             "tool_root": str(_DEPGRAPH_TOOL_ROOT),
             "tool_exists": _DEPGRAPH_TOOL_ROOT.exists(),
             "cli_bin": depgraph_cli,
-            "data_dir": str(DEPGRAPH),
+            "data_dir": str(proj.depgraph_dir),
             "framework_git_sha": _framework_git_sha(_DEPGRAPH_TOOL_ROOT),
             "corpus_commit": (meta.get("depgraph") or {}).get("git_commit"),
             "regen_at": (meta.get("depgraph") or {}).get("regen_at"),
@@ -2171,7 +2321,7 @@ def framework_settings() -> dict:
             "tool_root": str(_LOGIGRAPH_TOOL_ROOT),
             "tool_exists": _LOGIGRAPH_TOOL_ROOT.exists(),
             "cli_bin": logigraph_cli,
-            "data_dir": str(LOGIGRAPH),
+            "data_dir": str(proj.logigraph_dir),
             "framework_git_sha": _framework_git_sha(_LOGIGRAPH_TOOL_ROOT),
             "corpus_commit": (meta.get("logigraph") or {}).get("git_commit"),
             "regen_at": (meta.get("logigraph") or {}).get("regen_at"),

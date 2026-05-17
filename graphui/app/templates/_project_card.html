@@ -1,0 +1,64 @@
+{# Active-project card + picker. Shares the top line with the activity strip
+   on the dashboard. Clicking the card toggles the dropdown of registered
+   projects; each option links to /graph/?project=<id> which the
+   ActiveProjectMiddleware translates into a Set-Cookie + redirect. #}
+{% set _current = current_project() %}
+{% set _projects = all_projects() %}
+<section class="project-card" aria-label="Active project">
+  <button type="button" class="project-card-trigger" id="project-card-trigger" aria-haspopup="listbox" aria-expanded="false">
+    <div class="project-card-text">
+      <span class="project-card-name">{{ _current.name if _current else '—' }}</span>
+      {% if _current and _current.description %}
+        <span class="project-card-desc">{{ _current.description }}</span>
+      {% elif not _current %}
+        <span class="project-card-desc">no project</span>
+      {% endif %}
+    </div>
+    <span class="project-card-chevron" aria-hidden="true">▾</span>
+  </button>
+  {% if _projects|length > 1 %}
+  <ul class="project-card-menu" id="project-card-menu" role="listbox" hidden>
+    {% for p in _projects %}
+      <li class="project-card-option{% if _current and p.id == _current.id %} project-card-option-active{% endif %}" role="option">
+        <a href="/graph/?project={{ p.id }}">
+          <span class="project-card-option-name">{{ p.name }}</span>
+          {% if p.description %}
+            <span class="project-card-option-desc">{{ p.description }}</span>
+          {% endif %}
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</section>
+<script>
+(function() {
+  const trigger = document.getElementById("project-card-trigger");
+  const menu = document.getElementById("project-card-menu");
+  if (!trigger || !menu) return;
+  trigger.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const open = menu.hasAttribute("hidden") ? false : true;
+    if (open) {
+      menu.setAttribute("hidden", "");
+      trigger.setAttribute("aria-expanded", "false");
+    } else {
+      menu.removeAttribute("hidden");
+      trigger.setAttribute("aria-expanded", "true");
+    }
+  });
+  document.addEventListener("click", (e) => {
+    if (menu.hasAttribute("hidden")) return;
+    if (e.target.closest(".project-card")) return;
+    menu.setAttribute("hidden", "");
+    trigger.setAttribute("aria-expanded", "false");
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !menu.hasAttribute("hidden")) {
+      menu.setAttribute("hidden", "");
+      trigger.setAttribute("aria-expanded", "false");
+      trigger.focus();
+    }
+  });
+})();
+</script>

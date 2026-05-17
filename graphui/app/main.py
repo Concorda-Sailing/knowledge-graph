@@ -14,13 +14,19 @@ import os
 import subprocess
 
 from fastapi import FastAPI, HTTPException, Query, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from . import loader
 from . import markdown_render
 from . import search as search_module
+
+# Cookie name for the active project; the picker dropdown writes it via a
+# `?project=<id>` query that the middleware translates into a Set-Cookie
+# + redirect to the canonical URL.
+_PROJECT_COOKIE = "kg_project"
 
 # Where the framework CLIs live. Env vars let us point at the tool
 # repos without coupling graphui to a specific layout. Defaults match
@@ -66,6 +72,90 @@ STATIC = APP_ROOT / "static"
 
 app = FastAPI(title="graphui", openapi_url=None, docs_url=None)
 app.mount("/graph/static", StaticFiles(directory=str(STATIC)), name="static")
+
+
+# ----- Active-project middleware ---------------------------------------------
+
+def _resolve_active_project(request: Request) -> tuple[loader.Project | None, str | None]:
+    """Pick the project to serve this request.
+
+    Priority: `?project=<id>` query (also triggers a Set-Cookie + redirect
+    in the middleware) → `kg_project` cookie → env-var single-project
+    default → first registered project. Returns (project, requested_id_or_None)
+    where `requested_id` is non-None only when the URL carried the query.
+    """
+    projects = loader.list_projects()
+    by_id = {p.id: p for p in projects}
+
+    requested = request.query_params.get("project")
+    if requested and requested in by_id:
+        return by_id[requested], requested
+
+    cookie_id = request.cookies.get(_PROJECT_COOKIE)
+    if cookie_id and cookie_id in by_id:
+        return by_id[cookie_id], None
+
+    # Fallbacks: env-var single-project default, then first registered.
+    if loader._DEFAULT_PROJECT is not None:
+        return loader._DEFAULT_PROJECT, None
+    if projects:
+        return projects[0], None
+    return None, None
+
+
+class ActiveProjectMiddleware(BaseHTTPMiddleware):
+    """Bind `loader.current_project()` for the duration of the request.
+
+    Also handles the picker URL: visiting `?project=<id>` sets the
+    `kg_project` cookie and redirects to the same URL without the param,
+    so the active selection persists across navigation.
+    """
+
+    async def dispatch(self, request: Request, call_next):
+        # Static + healthz routes don't need a project context.
+        path = request.url.path
+        if path.startswith("/graph/static/") or path == "/graph/healthz":
+            return await call_next(request)
+
+        project, requested_id = _resolve_active_project(request)
+
+        if requested_id is not None:
+            # Strip ?project= and redirect; the redirect carries the
+            # Set-Cookie header so subsequent requests resolve via cookie.
+            new_query = "&".join(
+                f"{k}={v}" for k, v in request.query_params.multi_items()
+                if k != "project"
+            )
+            target = request.url.path + (f"?{new_query}" if new_query else "")
+            resp = RedirectResponse(target, status_code=303)
+            resp.set_cookie(
+                _PROJECT_COOKIE, requested_id, max_age=60 * 60 * 24 * 365,
+                httponly=True, samesite="lax",
+            )
+            return resp
+
+        token = loader.set_current_project(project)
+        try:
+            response = await call_next(request)
+        finally:
+            loader.reset_current_project(token)
+        return response
+
+
+app.add_middleware(ActiveProjectMiddleware)
+
+
+# ----- Jinja globals exposing project state ----------------------------------
+
+def _current_project_for_template():
+    try:
+        return loader.current_project()
+    except SystemExit:
+        return None
+
+
+TEMPLATES.env.globals["current_project"] = _current_project_for_template
+TEMPLATES.env.globals["all_projects"] = loader.list_projects
 
 
 # ----- Helpers ----------------------------------------------------------------
@@ -200,7 +290,7 @@ def settings_page(request: Request) -> HTMLResponse:
             "project": loader.read_project_toml(),
             "repos": loader.tracked_repos_settings(),
             "extractors": loader.extractor_inventory(),
-            "project_toml_path": str(loader.DEPGRAPH / "project.toml"),
+            "project_toml_path": str(loader.current_project().depgraph_dir / "project.toml"),
             "meta": loader.load_meta(),
         },
     )
@@ -620,12 +710,13 @@ def node_detail(request: Request, node_id: str) -> HTMLResponse:
         r = loader.load_rule_by_id(rid)
         if r:
             rules.append(r)
-    dossier_text = loader.read_dossier(node.get("dossier"), loader.DEPGRAPH)
+    proj = loader.current_project()
+    dossier_text = loader.read_dossier(node.get("dossier"), proj.depgraph_dir)
     dossier_html = markdown_render.render(dossier_text) if dossier_text else None
     src = node.get("source") or {}
     commits_30d = loader.commits_30d(src.get("repo", ""), src.get("path", ""))
     history = loader.commit_history(
-        loader.DEPGRAPH,
+        proj.depgraph_dir,
         [p for p in (node.get("_node_file"), node.get("dossier")) if p],
     )
     timeline = loader.parse_action_timeline(history)
@@ -662,11 +753,12 @@ def rule_detail(request: Request, rule_id: str) -> HTMLResponse:
     rule = loader.load_rule_by_id(rule_id)
     if not rule:
         raise HTTPException(404, f"rule not found: {rule_id}")
-    dossier_text = loader.read_dossier(rule.get("dossier"), loader.LOGIGRAPH)
+    proj = loader.current_project()
+    dossier_text = loader.read_dossier(rule.get("dossier"), proj.logigraph_dir)
     dossier_html = markdown_render.render(dossier_text) if dossier_text else None
     telemetry = loader.telemetry_for_rule(rule_id)
     history = loader.commit_history(
-        loader.LOGIGRAPH,
+        proj.logigraph_dir,
         [p for p in (rule.get("_node_file"), rule.get("dossier")) if p],
     )
     timeline = loader.parse_action_timeline(history)
@@ -695,10 +787,11 @@ def process_detail(request: Request, process_id: str) -> HTMLResponse:
     proc = loader.load_process_by_id(process_id)
     if not proc:
         raise HTTPException(404, f"process not found: {process_id}")
-    dossier_text = loader.read_dossier(proc.get("dossier"), loader.LOGIGRAPH)
+    proj = loader.current_project()
+    dossier_text = loader.read_dossier(proc.get("dossier"), proj.logigraph_dir)
     dossier_html = markdown_render.render(dossier_text) if dossier_text else None
     history = loader.commit_history(
-        loader.LOGIGRAPH,
+        proj.logigraph_dir,
         [p for p in (proc.get("_node_file"), proc.get("dossier")) if p],
     )
     timeline = loader.parse_action_timeline(history)
@@ -762,10 +855,11 @@ def domain_detail(request: Request, ont_id: str) -> HTMLResponse:
     ont = loader.load_domain_by_id(ont_id)
     if not ont:
         raise HTTPException(404, f"domain node not found: {ont_id}")
-    dossier_text = loader.read_dossier(ont.get("dossier"), loader.LOGIGRAPH)
+    proj = loader.current_project()
+    dossier_text = loader.read_dossier(ont.get("dossier"), proj.logigraph_dir)
     dossier_html = markdown_render.render(dossier_text) if dossier_text else None
     history = loader.commit_history(
-        loader.LOGIGRAPH,
+        proj.logigraph_dir,
         [p for p in (ont.get("_node_file"), ont.get("dossier")) if p],
     )
     timeline = loader.parse_action_timeline(history)
@@ -914,9 +1008,10 @@ async def track_flag(request: Request) -> JSONResponse:
         raise HTTPException(400, "missing node_id or code")
 
     # Resolve node JSON path within the logigraph data dir.
+    proj = loader.current_project()
     target_path: Path | None = None
     for sub in ("rules", "domain", "processes"):
-        d = loader.LOGIGRAPH_NODES / sub
+        d = proj.logigraph_nodes_dir / sub
         if not d.is_dir():
             continue
         for nf in d.glob("*.json"):
@@ -969,7 +1064,7 @@ async def track_flag(request: Request) -> JSONResponse:
     except subprocess.SubprocessError:
         pass  # non-fatal; the JSON edit is the truth, regen catches up next time
 
-    return JSONResponse({"ok": True, "node": str(target_path.relative_to(loader.LOGIGRAPH))})
+    return JSONResponse({"ok": True, "node": str(target_path.relative_to(proj.logigraph_dir))})
 
 
 @app.get("/graph/healthz")

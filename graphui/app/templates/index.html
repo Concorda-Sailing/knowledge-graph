@@ -2,7 +2,10 @@
 {% block title %}graphui{% endblock %}
 {% block content %}
 
-{% include '_activity_strip.html' %}
+<div class="top-strip">
+  {% include '_project_card.html' %}
+  {% include '_activity_strip.html' %}
+</div>
 {% include '_graph_health.html' %}
 {% include '_cross_cutting.html' %}
 
