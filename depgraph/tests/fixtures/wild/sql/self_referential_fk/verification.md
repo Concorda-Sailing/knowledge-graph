@@ -18,10 +18,6 @@ Expected schema:
 - FK: parent_id → node(id)
 - No warnings
 
-Note: inline column-level `REFERENCES` syntax is silently dropped by the parser
-(parsed as a `Reference` constraint kind, not `exp.ForeignKey`). Documented in
-README as a known parser limitation.
-
 ## Actual (post-run)
 
 Both tests pass (2 passed). Prediction was exact:
@@ -33,3 +29,13 @@ Both tests pass (2 passed). Prediction was exact:
 ## Verdict
 
 ✓ First-try match.
+
+## Parser gap — now closed (2026-05-17)
+
+Inline column-level `REFERENCES` syntax (`col TYPE REFERENCES other(col)`) was
+previously silently dropped by the parser. It is now handled by `_inline_fk()`
+in `parser.py`, which walks `exp.Reference` constraints on `ColumnDef` nodes and
+appends matching entries to `foreign_keys`. This fixture was not affected (it uses
+table-level syntax), but the gap closure is noted here for completeness. See
+`test_inline_column_fk_recorded_on_table` and `test_mixed_inline_and_table_level_fk`
+in `test_parser.py` for the regression tests.

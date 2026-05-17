@@ -128,3 +128,39 @@ def test_select_statement_returns_empty_for_ddl_parser():
     The db_access logic uses a different parse path for SELECT/UPDATE/etc."""
     ops = parse_operations("SELECT * FROM users")
     assert ops == []
+
+
+def test_inline_column_fk_recorded_on_table():
+    """A column declared with inline REFERENCES yields an FK entry on the table."""
+    sql = """
+    CREATE TABLE person_orgs (
+        person_id VARCHAR(36) NOT NULL REFERENCES persons(id),
+        org_id VARCHAR(36) NOT NULL REFERENCES organizations(id),
+        PRIMARY KEY (person_id, org_id)
+    )
+    """
+    op = parse_operations(sql)[0]
+    assert op.kind == "create_table"
+    assert op.table == "person_orgs"
+    fks = {(fk["column"], fk["references_table"], fk["references_column"])
+           for fk in op.foreign_keys}
+    assert ("person_id", "persons", "id") in fks
+    assert ("org_id", "organizations", "id") in fks
+
+
+def test_mixed_inline_and_table_level_fk():
+    """A table with one inline FK + one table-level FOREIGN KEY should
+    produce both entries in foreign_keys."""
+    sql = """
+    CREATE TABLE rsvps (
+        id INTEGER PRIMARY KEY,
+        event_id INTEGER NOT NULL REFERENCES events(id),
+        user_id INTEGER NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+    )
+    """
+    op = parse_operations(sql)[0]
+    fks = {(fk["column"], fk["references_table"], fk["references_column"])
+           for fk in op.foreign_keys}
+    assert ("event_id", "events", "id") in fks
+    assert ("user_id", "users", "id") in fks

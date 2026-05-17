@@ -26,13 +26,14 @@ CREATE TABLE node (
 
 sqlglot 30.8 parses an inline column-level `REFERENCES` clause as a `Reference`
 constraint kind on the `ColumnDef`, not as a top-level `exp.ForeignKey` node.
-The parser's `_handle_create` only walks `exp.ForeignKey` expressions (table-level
-form). To reliably exercise the FK path, this fixture uses the explicit
-`FOREIGN KEY (...) REFERENCES ...` table-level syntax.
+The parser handles both forms: `_handle_create` walks `exp.ForeignKey` nodes for
+table-level declarations and calls `_inline_fk()` for inline `Reference`
+constraints. Both styles produce the same `foreign_keys` output shape.
 
-This is a **parser limitation to document**: inline column-level FK syntax
-(`col TYPE REFERENCES other(col)`) is silently dropped. The fixture README
-records this so a future contributor knows where to add the inline-FK handler.
+This fixture uses the explicit `FOREIGN KEY (...) REFERENCES ...` table-level
+syntax to exercise the self-referential FK path specifically. Inline FK handling
+is covered by `test_inline_column_fk_recorded_on_table` and
+`test_mixed_inline_and_table_level_fk` in `test_parser.py`.
 
 ## sqlglot version
 

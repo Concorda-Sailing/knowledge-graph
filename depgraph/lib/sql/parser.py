@@ -136,6 +136,35 @@ def _column_dict(coldef: exp.ColumnDef) -> dict[str, Any]:
             "default": default, "primary_key": primary_key}
 
 
+def _inline_fk(col_name: str, coldef: exp.ColumnDef) -> dict[str, str] | None:
+    """Extract an inline column-level REFERENCES clause as a FK dict, or None.
+
+    sqlglot 30.8 parses `col TYPE REFERENCES other(col)` as a ColumnConstraint
+    whose .kind is exp.Reference (not exp.ForeignKey, which is only produced by
+    table-level FOREIGN KEY declarations).
+
+    Navigation path:
+      ColumnConstraint.args["kind"] → exp.Reference
+        .this → Schema node
+          .this → Table node  (.name = referenced table)
+          .expressions → list[Identifier]  (referenced columns)
+
+    Returns {"column": col_name, "references_table": ..., "references_column": ...}
+    or None if no Reference constraint is found on this column.
+    """
+    for c in coldef.args.get("constraints") or []:
+        ck = c.args.get("kind") if hasattr(c, "args") else None
+        if isinstance(ck, exp.Reference):
+            ref_schema = ck.this  # Schema node
+            ref_table_node = ref_schema.this if hasattr(ref_schema, "this") else None
+            ref_table = ref_table_node.name if ref_table_node else ""
+            ref_col_nodes = ref_schema.expressions if hasattr(ref_schema, "expressions") else []
+            ref_col = ref_col_nodes[0].name if ref_col_nodes else "id"
+            return {"column": col_name, "references_table": ref_table,
+                    "references_column": ref_col}
+    return None
+
+
 def _handle_create(node: exp.Create) -> Operation | None:
     target = (node.args.get("kind") or "").upper()
     if target == "TABLE":
@@ -147,6 +176,13 @@ def _handle_create(node: exp.Create) -> Operation | None:
         for col in (schema.expressions or []):
             if isinstance(col, exp.ColumnDef):
                 columns.append(_column_dict(col))
+                # Inline column-level REFERENCES: `col TYPE REFERENCES other(col)`
+                # sqlglot 30.8 surfaces these as exp.Reference (not exp.ForeignKey);
+                # _inline_fk extracts them so both declaration styles produce the
+                # same output shape in foreign_keys.
+                inline_fk = _inline_fk(col.name, col)
+                if inline_fk:
+                    foreign_keys.append(inline_fk)
             elif isinstance(col, exp.PrimaryKey):
                 # Table-level PRIMARY KEY (a, b, ...) constraint
                 pk_cols = [c.name for c in col.expressions]
