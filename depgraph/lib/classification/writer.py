@@ -1,0 +1,66 @@
+"""Classification writer — persists classified primitives to kind-dirs.
+
+After `classify_corpus` runs, each primitive lands in one of two buckets:
+  - kind was assigned: written to `nodes/<kind_dir>/<slug>.json` with `kind`
+    and `classification` fields filled in.
+  - no kind assigned: written to `nodes/<primitive_type_dir>/<slug>.json`
+    unchanged (kind field left as-is from the primitive dict).
+
+Output is bit-stable: json.dumps with indent=2 and sort_keys=True.
+The Phase-6 determinism gate hashes these files and compares across runs.
+"""
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+from depgraph.lib.primitives import slugify_id_for_filename
+
+
+_KIND_DIRS: dict[str, str] = {
+    "component": "components",
+    "hook": "hooks",
+    "endpoint": "endpoints",
+    "service": "services",
+    "model": "models",
+    "schema": "schemas",
+    "test": "tests",
+    "util": "utils",
+}
+
+_PRIMITIVE_DIRS: dict[str, str] = {
+    "module": "modules",
+    "package": "packages",
+    "class": "classes",
+    "function": "functions",
+    "variable": "variables",
+}
+
+
+def write_classified(primitives: list[dict], decisions: dict, *, data_dir: Path) -> None:
+    """Write each primitive to the appropriate kind or primitive-type directory.
+
+    Args:
+        primitives: list of primitive dicts (schema v2).
+        decisions: dict[str, Decision] returned by classify_corpus.
+        data_dir: root output directory (e.g. the project's data/ folder).
+    """
+    for p in primitives:
+        decision = decisions.get(p["id"])
+        if decision and decision.kind is not None:
+            kind_dir = _KIND_DIRS[decision.kind]
+            p_out = dict(p,
+                         kind=decision.kind,
+                         classification={
+                             "rule": decision.rule,
+                             "evidence": decision.evidence,
+                             "conflicts": decision.conflicts,
+                         })
+        else:
+            kind_dir = _PRIMITIVE_DIRS[p["primitive"]]
+            p_out = p
+
+        slug = slugify_id_for_filename(p["id"])
+        target = data_dir / "nodes" / kind_dir / f"{slug}.json"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(json.dumps(p_out, indent=2, sort_keys=True))
