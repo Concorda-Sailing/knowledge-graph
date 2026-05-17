@@ -189,11 +189,84 @@ def _write_embedding_status(data_dir: Path, status: str) -> None:
         pass
 
 
-DEPGRAPH = resolve_data_dir("DEPGRAPH_DATA_DIR")
-NODES = DEPGRAPH / "nodes"
-INDEX_DIR = NODES / "_index"
-DEPENDENTS_INDEX = INDEX_DIR / "dependents.json"
+def _depgraph() -> Path:
+    """Lazy resolver — only called from functions that actually need the data
+    dir. Avoids the SystemExit on import when DEPGRAPH_DATA_DIR isn't set
+    (e.g. unit-test imports of validate_corpus)."""
+    return resolve_data_dir("DEPGRAPH_DATA_DIR")
+
+
+# ---------------------------------------------------------------------------
+# v2 corpus validation (pure — no data-dir dependency)
+# ---------------------------------------------------------------------------
+
+from depgraph.lib.primitives import (  # noqa: E402
+    validate_primitive, check_slug_collisions, is_external_terminal,
+)
+from depgraph.lib.edges import validate_edge  # noqa: E402
+
+
+def validate_corpus(primitives: list[dict]) -> dict:
+    """Validate a list of v2 primitives and their edges_out.
+
+    Returns a report dict with four keys (all lists; non-empty means problems):
+      primitive_errors  — per-primitive schema violations
+      edge_errors       — edges that violate the EdgeKind source/target rules
+      slug_collisions   — id pairs whose slugified filenames would collide
+      orphan_edges      — edges whose target is neither in-corpus nor external::
+
+    The caller decides whether to abort regen on non-empty lists.
+    """
+    report: dict = {
+        "primitive_errors": [],
+        "edge_errors": [],
+        "slug_collisions": [],
+        "orphan_edges": [],
+    }
+
+    for p in primitives:
+        for err in validate_primitive(p):
+            report["primitive_errors"].append({"id": p.get("id"), "error": err})
+
+    report["slug_collisions"] = check_slug_collisions(primitives)
+
+    by_id = {p["id"]: p for p in primitives if "id" in p}
+    for p in primitives:
+        if "id" not in p:
+            continue
+        src_kind = p.get("primitive")
+        for e in p.get("edges_out", []) or []:
+            tgt = e.get("target")
+            tgt_prim = by_id.get(tgt)
+            if tgt_prim is None and not is_external_terminal(tgt or ""):
+                report["orphan_edges"].append({
+                    "source": p["id"],
+                    "target": tgt,
+                    "kind": e.get("kind"),
+                })
+                continue
+            tgt_kind = tgt_prim["primitive"] if tgt_prim else None
+            for err in validate_edge({**e, "source_kind": src_kind,
+                                       "target_kind": tgt_kind}):
+                report["edge_errors"].append({"source": p["id"],
+                                               "target": tgt, "error": err})
+    return report
+
+
+# ---------------------------------------------------------------------------
+# Module-level paths (v1 reconcile main — set lazily in main())
+# ---------------------------------------------------------------------------
+
+# These are initialized by main() on first run rather than at import time.
+# validate_corpus and other pure functions don't touch them.
 INDEX_SCHEMA_VERSION = 1
+DEPGRAPH: Path = None  # type: ignore[assignment]
+NODES: Path = None  # type: ignore[assignment]
+INDEX_DIR: Path = None  # type: ignore[assignment]
+DEPENDENTS_INDEX: Path = None  # type: ignore[assignment]
+CORPUS_META: Path = None  # type: ignore[assignment]
+MANIFEST_DIR: Path = None  # type: ignore[assignment]
+ARCHIVE_DIR: Path = None  # type: ignore[assignment]
 
 
 def _is_node_file(path: Path) -> bool:
@@ -305,7 +378,6 @@ def strip_legacy_fields(nodes: dict[str, tuple[Path, dict]]) -> int:
     return cleaned
 
 
-CORPUS_META = NODES / "_meta.json"
 META_SCHEMA_VERSION = 1
 
 
@@ -446,10 +518,6 @@ def detect_orphans(nodes: dict[str, tuple[Path, dict]]) -> list[str]:
         if not (repo_path / rel).exists():
             orphans.append(nid)
     return orphans
-
-
-MANIFEST_DIR = NODES / "_manifests"
-ARCHIVE_DIR = NODES / "_archive"
 
 
 def load_manifests() -> dict[str, set[str]]:
@@ -604,6 +672,18 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--report-only", action="store_true")
     args = parser.parse_args()
+
+    # Resolve data-dir globals now that we're actually running (not just being
+    # imported by test code that wants validate_corpus).
+    global DEPGRAPH, NODES, INDEX_DIR, DEPENDENTS_INDEX, CORPUS_META
+    global MANIFEST_DIR, ARCHIVE_DIR
+    DEPGRAPH = _depgraph()
+    NODES = DEPGRAPH / "nodes"
+    INDEX_DIR = NODES / "_index"
+    DEPENDENTS_INDEX = INDEX_DIR / "dependents.json"
+    CORPUS_META = NODES / "_meta.json"
+    MANIFEST_DIR = NODES / "_manifests"
+    ARCHIVE_DIR = NODES / "_archive"
 
     nodes = load_all_nodes()
     manifests = load_manifests()
