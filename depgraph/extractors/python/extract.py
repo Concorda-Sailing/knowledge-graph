@@ -478,6 +478,20 @@ def _attach_imports_edges(primitives: list[dict],
                     target_mod_prim = (mod_by_path.get(candidate_path)
                                        or mod_by_path.get(candidate_init))
                     for alias in node.names:
+                        # `from .pkg import *`: emit a single module-level edge.
+                        # The `*` doesn't bind to a single name, so there's no
+                        # meaningful local_binding, and confidence is fuzzy —
+                        # the actual symbol set depends on the target's __all__
+                        # / module contents and isn't statically analyzed here.
+                        if alias.name == "*":
+                            if target_mod_prim:
+                                mod_prim["edges_out"].append({
+                                    "target": target_mod_prim["id"],
+                                    "kind": "imports", "via": "wildcard_import",
+                                    "where": f"{path}:{node.lineno}",
+                                    "confidence": "fuzzy",
+                                })
+                            continue
                         local_binding = alias.asname or alias.name
                         if target_mod_prim:
                             # Try to find the named symbol in the target module
@@ -508,6 +522,25 @@ def _attach_imports_edges(primitives: list[dict],
                     # the imported name to a top-level symbol in that module.
                     target_mod_id = module_index.get(module_name) if module_name else None
                     for alias in node.names:
+                        # `from x import *`: emit a single module-level edge.
+                        # See the relative branch above for the rationale.
+                        if alias.name == "*":
+                            if target_mod_id:
+                                mod_prim["edges_out"].append({
+                                    "target": target_mod_id,
+                                    "kind": "imports", "via": "wildcard_import",
+                                    "where": f"{path}:{node.lineno}",
+                                    "confidence": "fuzzy",
+                                })
+                            elif module_name:
+                                root_pkg = module_name.split(".")[0]
+                                mod_prim["edges_out"].append({
+                                    "target": f"external::pypi::{root_pkg}",
+                                    "kind": "imports", "via": "wildcard_import",
+                                    "where": f"{path}:{node.lineno}",
+                                    "confidence": "unresolved",
+                                })
+                            continue
                         local_binding = alias.asname or alias.name
                         if target_mod_id:
                             # Module is tracked — look for the symbol inside it

@@ -1,0 +1,7 @@
+{
+  "description": "`from helpers import *` emits one fuzzy module-level edge with via=wildcard_import; no per-symbol synthetic edges, no `local_binding=\"*\"` lying about resolution.",
+  "unresolved_edges_expected": false,
+  "edges": [
+    {"source": "fixture::consumer.py", "kind": "imports", "target": "fixture::helpers.py", "confidence": "fuzzy"}
+  ]
+}
