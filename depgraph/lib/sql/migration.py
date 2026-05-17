@@ -1,7 +1,7 @@
 """Recognize Python migration files and extract embedded SQL.
 
 Migration files are Python modules that execute SQL strings against a
-database connection. Concorda's convention: `migrations/NNN_<slug>.py`
+database connection. The expected convention is `migrations/NNN_<slug>.py`
 with a `migrate()` function that calls `conn.execute(text("..."))`.
 """
 from __future__ import annotations

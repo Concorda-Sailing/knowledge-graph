@@ -197,11 +197,11 @@ def test_context_depgraph_id_target(ctx: Context, capsys) -> None:
     _write_rule_node(ctx, "rule::test::via_code_index", node)
     _write_by_code_index(ctx, {
         "by_target": {
-            "concorda-api::models/foo.py::Foo": ["rule::test::via_code_index"],
+            "acme-api::models/foo.py::Foo": ["rule::test::via_code_index"],
         }
     })
 
-    args = argparse.Namespace(target="concorda-api::models/foo.py::Foo")
+    args = argparse.Namespace(target="acme-api::models/foo.py::Foo")
     rc = cmd_context(args, ctx)
     assert rc == 0
     out = capsys.readouterr().out

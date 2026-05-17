@@ -13,10 +13,10 @@ Reference the file via the `{framework_dir}` substitution that
 
 ```toml
 [repos.web]
-path = "~/concorda-web"
+path = "~/my-web-app"
 extractor = ["npx", "tsx",
              "{framework_dir}/extractors/generic/typescript/route-calls.ts",
-             "--scan", "{path}/src", "--repo-key", "concorda-web"]
+             "--scan", "{path}/src", "--repo-key", "web"]
 ```
 
 Each extractor declares `__extractor_version__ = "1.0.0"` (or the

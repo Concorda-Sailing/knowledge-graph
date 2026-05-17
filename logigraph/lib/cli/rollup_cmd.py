@@ -68,7 +68,7 @@ def cmd_rollup(args: argparse.Namespace, ctx: Context) -> int:
 
 def register(sub: argparse._SubParsersAction) -> None:  # type: ignore[type-arg]
     p = sub.add_parser("rollup", help="Emit code rollup for a domain entity")
-    p.add_argument("entity_id", help="Logigraph domain node id (e.g. resource::concorda::boat_crew)")
+    p.add_argument("entity_id", help="Logigraph domain node id (e.g. resource::<project>::<entity>)")
     p.add_argument("--kind", default=None, help="Comma-separated kinds (model,service,endpoint,component,test,hook,schema)")
     p.add_argument("--depth", type=int, default=3, choices=[1, 2, 3], help="BFS depth (1=direct only)")
     p.add_argument("--direct-only", action="store_true", help="Equivalent to --depth 1")

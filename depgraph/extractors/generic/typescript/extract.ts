@@ -1,8 +1,7 @@
 #!/usr/bin/env tsx
 /**
  * !!! FROZEN — pending replacement by depgraph/extractors/typescript/extract.ts
- * (layered substrate, schema v2). Do not extend. See docs/superpowers/plans/
- * 2026-05-16-depgraph-extractor-rewrite.md.
+ * (layered substrate, schema v2). Do not extend.
  */
 
 import * as fs from "node:fs";
@@ -246,9 +245,8 @@ interface CandidateNode {
 }
 
 function isWebExtractor(repoKey: string): boolean {
-  // Stamp matches pre-flip: web-style repos use extract_web.ts; the test repo
-  // (concorda-test) uses extract_tests.ts. We detect by repo-key suffix to
-  // stay stable across renames.
+  // Web-style repos get extract_web.ts; repos whose key ends in `-test`
+  // (Playwright/Vitest suites) get extract_tests.ts.
   return !repoKey.endsWith("-test");
 }
 

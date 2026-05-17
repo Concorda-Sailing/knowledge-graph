@@ -1,10 +1,8 @@
-/** Vitest/Playwright detector — ports the buildEmissions logic from
- *  pre-flip extract_tests.ts. Emits test/service AddNode mutations with
+/** Vitest/Playwright detector — emits test/service AddNode mutations with
  *  metadata canonicalize() reads to build canonical nodes.
  *
- *  Despite the file name, this detector also handles Playwright .spec.ts —
- *  pre-flip extract_tests.ts targets concorda-test (a Playwright project)
- *  and the framework re-uses the same pipeline. */
+ *  Despite the file name, this detector also handles Playwright `.spec.ts`
+ *  files; the two test runners share enough surface to use one pipeline. */
 
 import * as ts from "typescript";
 import { Node } from "ts-morph";

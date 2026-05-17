@@ -29,7 +29,7 @@ def _make_project_toml(data_dir: Path, repo_path: Path) -> None:
     basename_path_map() returns {basename: path} and matches the `source.repo`
     field stored in node JSON files.
     """
-    key = repo_path.name  # basename == key, matching real-world concorda layout
+    key = repo_path.name  # basename == key, matching real-world acme layout
     (data_dir / "project.toml").write_text(
         f'[project]\nname = "test"\n\n'
         f'[repos.{key}]\npath = "{repo_path}"\n'

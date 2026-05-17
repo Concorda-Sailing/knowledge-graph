@@ -115,12 +115,12 @@ def test_load_default_returns_none_when_file_missing(tmp_registry: Path) -> None
 
 
 def test_save_default_then_load(tmp_registry: Path, tmp_path: Path) -> None:
-    graph_dir = tmp_path / "concorda-knowledge-graph"
+    graph_dir = tmp_path / "acme-knowledge-graph"
     graph_dir.mkdir()
-    registry.add(name="concorda", path=graph_dir)
+    registry.add(name="acme", path=graph_dir)
 
-    registry.save_default("concorda")
-    assert registry.load_default() == "concorda"
+    registry.save_default("acme")
+    assert registry.load_default() == "acme"
 
 
 def test_save_default_rejects_unregistered_name(tmp_registry: Path) -> None:

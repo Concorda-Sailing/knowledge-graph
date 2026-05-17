@@ -41,7 +41,7 @@ def _write_by_code_index(ctx: Context, index: dict) -> Path:
 
 def test_rules_for_missing_index_exits_1(ctx: Context, capsys) -> None:
     """When by_code index is absent, exits 1 with stderr message."""
-    args = argparse.Namespace(depgraph_id="concorda-api::models/foo.py::Foo")
+    args = argparse.Namespace(depgraph_id="acme-api::models/foo.py::Foo")
     rc = cmd_rules_for(args, ctx)
     assert rc == 1
     err = capsys.readouterr().err
@@ -55,12 +55,12 @@ def test_rules_for_missing_index_exits_1(ctx: Context, capsys) -> None:
 def test_rules_for_no_match_prints_and_exits_0(ctx: Context, capsys) -> None:
     """A depgraph_id with no rules prints a message and exits 0."""
     _write_by_code_index(ctx, {"by_target": {}})
-    args = argparse.Namespace(depgraph_id="concorda-api::models/foo.py::Foo")
+    args = argparse.Namespace(depgraph_id="acme-api::models/foo.py::Foo")
     rc = cmd_rules_for(args, ctx)
     assert rc == 0
     out = capsys.readouterr().out
     assert "no rules claim" in out
-    assert "concorda-api::models/foo.py::Foo" in out
+    assert "acme-api::models/foo.py::Foo" in out
 
 
 # ---------------------------------------------------------------------------
@@ -83,10 +83,10 @@ def test_rules_for_with_statement(ctx: Context, capsys) -> None:
     _write_rule_node(ctx, "rule::test::my_rule", node)
     _write_by_code_index(ctx, {
         "by_target": {
-            "concorda-api::models/foo.py::Foo": ["rule::test::my_rule"],
+            "acme-api::models/foo.py::Foo": ["rule::test::my_rule"],
         }
     })
-    args = argparse.Namespace(depgraph_id="concorda-api::models/foo.py::Foo")
+    args = argparse.Namespace(depgraph_id="acme-api::models/foo.py::Foo")
     rc = cmd_rules_for(args, ctx)
     assert rc == 0
     out = capsys.readouterr().out
@@ -116,10 +116,10 @@ def test_rules_for_no_statement_omits_arrow(ctx: Context, capsys) -> None:
     _write_rule_node(ctx, "rule::test::no_stmt", node)
     _write_by_code_index(ctx, {
         "by_target": {
-            "concorda-api::models/bar.py::Bar": ["rule::test::no_stmt"],
+            "acme-api::models/bar.py::Bar": ["rule::test::no_stmt"],
         }
     })
-    args = argparse.Namespace(depgraph_id="concorda-api::models/bar.py::Bar")
+    args = argparse.Namespace(depgraph_id="acme-api::models/bar.py::Bar")
     rc = cmd_rules_for(args, ctx)
     assert rc == 0
     out = capsys.readouterr().out
@@ -135,10 +135,10 @@ def test_rules_for_missing_node_falls_back_to_id(ctx: Context, capsys) -> None:
     """When the index points to a rule not in nodes, falls back to using the id as title."""
     _write_by_code_index(ctx, {
         "by_target": {
-            "concorda-api::models/baz.py::Baz": ["rule::test::ghost"],
+            "acme-api::models/baz.py::Baz": ["rule::test::ghost"],
         }
     })
-    args = argparse.Namespace(depgraph_id="concorda-api::models/baz.py::Baz")
+    args = argparse.Namespace(depgraph_id="acme-api::models/baz.py::Baz")
     rc = cmd_rules_for(args, ctx)
     assert rc == 0
     out = capsys.readouterr().out

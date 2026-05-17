@@ -15,7 +15,6 @@ from ._shared import check_prereqs, color_yellow, err, log, ok
 
 
 BUNDLE_DIR = "knowledge-graph"
-DEFAULT_ORG = "Concorda-Sailing"
 
 
 def _clone_or_pull(url: str, dest: Path) -> None:
@@ -80,13 +79,19 @@ def cmd_tools(args: argparse.Namespace) -> int:
     ok(f"graphui venv at {venv}")
 
     # --data clones
-    org = os.environ.get("KNOWLEDGE_GRAPH_ORG", DEFAULT_ORG)
+    org = os.environ.get("KNOWLEDGE_GRAPH_ORG")
     for spec in (args.data or []):
         if "=" not in spec:
             err(f"invalid --data spec: {spec} (expected owner/repo=local-path)")
             return 1
         repo_part, path_part = spec.split("=", 1)
         if "/" not in repo_part:
+            if not org:
+                err(
+                    f"--data spec {spec!r} omits the owner; pass owner/repo=path "
+                    "or set KNOWLEDGE_GRAPH_ORG"
+                )
+                return 1
             repo_part = f"{org}/{repo_part}"
         cloned_path = Path(os.path.expanduser(path_part))
         _clone_or_pull(f"https://github.com/{repo_part}.git", cloned_path)

@@ -45,8 +45,8 @@ def tokenize(text: str) -> list[str]:
     """Split text on non-alphanumeric boundaries; lowercase all tokens.
 
     Used both for the BM25 doc bags and for query tokenization. The
-    regex skips dashes / dots / colons so `concorda-api::routers/events.py`
-    decomposes to ['concorda', 'api', 'routers', 'events', 'py'].
+    regex skips dashes / dots / colons so `web-api::routers/events.py`
+    decomposes to ['web', 'api', 'routers', 'events', 'py'].
     """
     if not text:
         return []

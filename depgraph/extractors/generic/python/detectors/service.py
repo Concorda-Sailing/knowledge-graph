@@ -6,8 +6,7 @@ A function is labeled kind=service if it lives under a directory named
 - public (does not start with `_`),
 - not already labeled by another detector running after this one.
 
-This is a path-convention detector, not framework-detected. Lifted
-from Concorda's extract_api.py extract_service_nodes().
+This is a path-convention detector, not framework-detected.
 """
 from __future__ import annotations
 

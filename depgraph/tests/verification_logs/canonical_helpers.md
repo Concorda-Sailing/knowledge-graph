@@ -20,7 +20,7 @@ Discrepancies between Predicted and Observed (if any) are noted at the bottom.
 | `external_terminal(ecosystem="npm", package="react", symbol="useState")` | `"external::npm::react::useState"` | `'external::npm::react::useState'` |
 | `external_terminal(ecosystem="unresolved", package="", symbol="Cursor.execute")` | `"external::unresolved::Cursor.execute"` (assumed package would be skipped if empty) | `'external::unresolved::Cursor.execute'` ✓ (fixed) |
 | `is_external_terminal("external::npm::react::useState")` | `True` | `True` |
-| `is_external_terminal("concorda-api::routers/events.py::create")` | `False` | `False` |
+| `is_external_terminal("api::routers/events.py::create")` | `False` | `False` |
 | `is_external_terminal("external::")` | `True` (starts with "external::") | `True` |
 | `is_external_terminal("")` | `False` | `False` |
 | `is_external_terminal("External::upper::case")` | `True` (assumed case-insensitive or would match) | `False` — **WRONG** — `startswith("external::")` is strictly lowercase; capital E does not match |

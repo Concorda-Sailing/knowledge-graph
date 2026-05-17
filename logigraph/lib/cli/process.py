@@ -296,7 +296,7 @@ def cmd_process_rank(args: argparse.Namespace, ctx: Context) -> int:
         conc = 1.0 - abs(n_eps - 5) / 12.0
         conf = min(1.0, kw * max(0.3, conc))
         # Suggested name from downstream id
-        # e.g. concorda-api::models/event_crew.py::EventCrew → process::event_crew::lifecycle
+        # e.g. api::models/order.py::Order → process::order::lifecycle
         suggest_slug = downstream_id.split("::")[-1].lower()
         suggest_cat = ds_kind  # "model", "hook", etc.
         candidates.append({
@@ -309,7 +309,7 @@ def cmd_process_rank(args: argparse.Namespace, ctx: Context) -> int:
         })
 
     # --- Signal F — UI-initiated flow: pages and hooks --------------------
-    # A real Concorda flow usually starts at a button (component in
+    # A typical UI flow starts at a button (component in
     # src/app/**/page.tsx) or at a reusable hook (kind=hook in src/hooks/).
     # Walk forward from each candidate entry point; require it to reach
     # both an endpoint AND a model for the flow to be "complete."

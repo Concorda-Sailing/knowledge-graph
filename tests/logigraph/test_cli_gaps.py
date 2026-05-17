@@ -58,8 +58,8 @@ def test_gaps_empty_corpus_no_gaps(ctx: Context, capsys) -> None:
 
 def test_gaps_all_valid_no_gaps(ctx: Context, capsys) -> None:
     """A rule with a valid claim and valid domain ref reports no gaps."""
-    _write_depgraph_node(ctx, "concorda-api::models/foo.py::Foo", {
-        "id": "concorda-api::models/foo.py::Foo",
+    _write_depgraph_node(ctx, "acme-api::models/foo.py::Foo", {
+        "id": "acme-api::models/foo.py::Foo",
         "structural_hash": "hash_abc",
     })
     _write_domain_node(ctx, "resource::test::thing", {
@@ -70,7 +70,7 @@ def test_gaps_all_valid_no_gaps(ctx: Context, capsys) -> None:
     _write_rule_node(ctx, "rule::test::ok_rule", {
         "id": "rule::test::ok_rule", "kind": "rule", "title": "OK",
         "statement": "OK.", "references_domain": ["resource::test::thing"],
-        "claims_code": [{"depgraph_id": "concorda-api::models/foo.py::Foo",
+        "claims_code": [{"depgraph_id": "acme-api::models/foo.py::Foo",
                          "role": "model", "remote_hash": "hash_abc"}],
         "definition_status": "stub", "structural_hash": "r001",
     })
@@ -89,7 +89,7 @@ def test_gaps_orphan_claim(ctx: Context, capsys) -> None:
     _write_rule_node(ctx, "rule::test::orphan_claim_rule", {
         "id": "rule::test::orphan_claim_rule", "kind": "rule", "title": "Orphan",
         "statement": "Orphan.", "references_domain": [],
-        "claims_code": [{"depgraph_id": "concorda-api::missing/gone.py::Gone",
+        "claims_code": [{"depgraph_id": "acme-api::missing/gone.py::Gone",
                          "role": "model"}],
         "definition_status": "stub", "structural_hash": "r002",
     })
@@ -98,7 +98,7 @@ def test_gaps_orphan_claim(ctx: Context, capsys) -> None:
     assert rc == 1
     out = capsys.readouterr().out
     assert "ORPHAN CLAIMS" in out
-    assert "concorda-api::missing/gone.py::Gone" in out
+    assert "acme-api::missing/gone.py::Gone" in out
 
 
 # ---------------------------------------------------------------------------
@@ -127,14 +127,14 @@ def test_gaps_orphan_domain_ref(ctx: Context, capsys) -> None:
 
 def test_gaps_stale_claim(ctx: Context, capsys) -> None:
     """A claim whose remote_hash differs from the current structural_hash is stale."""
-    _write_depgraph_node(ctx, "concorda-api::models/bar.py::Bar", {
-        "id": "concorda-api::models/bar.py::Bar",
+    _write_depgraph_node(ctx, "acme-api::models/bar.py::Bar", {
+        "id": "acme-api::models/bar.py::Bar",
         "structural_hash": "new_hash",
     })
     _write_rule_node(ctx, "rule::test::stale_rule", {
         "id": "rule::test::stale_rule", "kind": "rule", "title": "Stale",
         "statement": "Stale.", "references_domain": [],
-        "claims_code": [{"depgraph_id": "concorda-api::models/bar.py::Bar",
+        "claims_code": [{"depgraph_id": "acme-api::models/bar.py::Bar",
                          "role": "model", "remote_hash": "old_hash"}],
         "definition_status": "stub", "structural_hash": "r004",
     })
@@ -143,4 +143,4 @@ def test_gaps_stale_claim(ctx: Context, capsys) -> None:
     assert rc == 1
     out = capsys.readouterr().out
     assert "STALE CLAIMS" in out
-    assert "concorda-api::models/bar.py::Bar" in out
+    assert "acme-api::models/bar.py::Bar" in out

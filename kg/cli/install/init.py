@@ -94,12 +94,11 @@ def cmd_init(args: argparse.Namespace) -> int:
         f"in `../project.toml [repos]`) and emits JSON node files under `../nodes/`\n"
         f"following the framework schema at `~/tools/{BUNDLE_DIR}/depgraph/schema/node.schema.json`.\n"
         f"\n"
-        f"The Concorda reference implementation lives at\n"
-        f"`Concorda-Sailing/concorda-depgraph` — clone it for examples:\n"
-        f"\n"
-        f"- `extract_api.py` — FastAPI route handlers + SQLAlchemy models\n"
-        f"- `extract_web.ts` — Next.js components + React hooks\n"
-        f"- `extract_tests.ts` — Playwright specs\n"
+        f"Most projects can use the shipped generic extractors under\n"
+        f"`~/tools/{BUNDLE_DIR}/depgraph/extractors/generic/` (Python, TypeScript,\n"
+        f"Go, Rust) and only add a project-local detector in `detectors/` if a\n"
+        f"framework isn't already covered. See `CONTRIBUTING-detectors.md` in the\n"
+        f"framework repo for the detector authoring guide.\n"
     )
 
     # logigraph directories

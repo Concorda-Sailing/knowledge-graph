@@ -50,7 +50,7 @@ Notable user-visible changes to the knowledge-graph framework.
 
 ## Earlier fixes (uncategorized — also 2026-05-15)
 
-- **graphui systemd unit**: corrected `DEPGRAPH_DATA_DIR` / `LOGIGRAPH_DATA_DIR` to point at the actual sibling-with-hyphen layout (`~/concorda-knowledge-graph/...`). Service had been rendering "No repos" because it was reading from a path that doesn't exist.
+- **graphui systemd unit**: corrected `DEPGRAPH_DATA_DIR` / `LOGIGRAPH_DATA_DIR` to point at the actual sibling-with-hyphen layout (`~/<project>-knowledge-graph/...`). Service had been rendering "No repos" because it was reading from a path that doesn't exist.
 - **`depgraph repo-add` / `repo-list`**: new CLI for managing per-project `[repos.<key>]` tables — previously users had to hand-edit TOML and trip on the format.
 - **`install.sh init` scaffold**: emits the correct `[repos.<key>]` sub-table form instead of the flat `[repos]` form (which the loaders reject).
 - **`install.sh systemd`**: added `--depgraph-data-dir` / `--logigraph-data-dir` overrides + sibling-with-hyphen auto-detect + preflight refusal on missing data dirs + graphui venv bootstrap. These all carried into the Phase-4 Python port.

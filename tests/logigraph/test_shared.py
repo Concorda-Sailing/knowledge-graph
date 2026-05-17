@@ -86,7 +86,7 @@ def test_find_rules_for_target_domain_prefix_returns_verbatim(data_dir: Path) ->
 def test_find_rules_for_target_depgraph_node_id_looks_up_by_code(data_dir: Path) -> None:
     """A target containing '::' (but not a domain prefix) is looked up via by_code."""
     ctx = Context.from_data_dir(data_dir)
-    depgraph_id = "concorda-api::models/user.py::User"
+    depgraph_id = "acme-api::models/user.py::User"
     rule_ids = ["rule::auth::email_verified", "rule::auth::require_login"]
     _write_by_code_index(ctx, {depgraph_id: rule_ids})
 
@@ -102,7 +102,7 @@ def test_find_rules_for_target_depgraph_id_missing_from_index_returns_empty(
     ctx = Context.from_data_dir(data_dir)
     _write_by_code_index(ctx, {})
 
-    result = find_rules_for_target(ctx, "concorda-api::models/foo.py::Foo")
+    result = find_rules_for_target(ctx, "acme-api::models/foo.py::Foo")
 
     assert result == []
 
@@ -217,13 +217,13 @@ def test_load_depgraph_corpus_returns_depgraph_nodes(data_dir: Path) -> None:
     dnode_dir = ctx.depgraph_dir / "nodes"
     dnode_dir.mkdir(parents=True, exist_ok=True)
 
-    dnode_id = "concorda-api::models/user.py::User"
+    dnode_id = "acme-api::models/user.py::User"
     dnode_file = dnode_dir / "user__User.json"
     dnode_file.write_text(json.dumps({
         "schema_version": 1,
         "id": dnode_id,
         "kind": "model",
-        "source": {"repo": "concorda-api", "path": "models/user.py"},
+        "source": {"repo": "acme-api", "path": "models/user.py"},
     }))
 
     result = load_depgraph_corpus(ctx)

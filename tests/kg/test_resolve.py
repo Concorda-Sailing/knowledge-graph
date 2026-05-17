@@ -39,15 +39,15 @@ def two_projects(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict:
         return root
 
     return {
-        "concorda": make("concorda"),
+        "acme": make("acme"),
         "demo": make("demo"),
         "tmp_path": tmp_path,
     }
 
 
 def test_rule_1_data_dir_flag_wins(two_projects: dict) -> None:
-    proj = resolve.resolve_project(data_dir=two_projects["concorda"] / "depgraph")
-    assert proj.name == "concorda"
+    proj = resolve.resolve_project(data_dir=two_projects["acme"] / "depgraph")
+    assert proj.name == "acme"
     assert proj.source == "--data-dir flag"
 
 
@@ -70,16 +70,16 @@ def test_rule_2_KG_PROJECT_env(two_projects: dict, monkeypatch: pytest.MonkeyPat
 
 
 def test_rule_3_DEPGRAPH_DATA_DIR_env(two_projects: dict, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("DEPGRAPH_DATA_DIR", str(two_projects["concorda"] / "depgraph"))
+    monkeypatch.setenv("DEPGRAPH_DATA_DIR", str(two_projects["acme"] / "depgraph"))
     proj = resolve.resolve_project()
-    assert proj.name == "concorda"
+    assert proj.name == "acme"
     assert proj.source == "$DEPGRAPH_DATA_DIR"
 
 
 def test_rule_4_cwd_ancestor_walk(two_projects: dict, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.chdir(two_projects["concorda"] / "depgraph")
+    monkeypatch.chdir(two_projects["acme"] / "depgraph")
     proj = resolve.resolve_project()
-    assert proj.name == "concorda"
+    assert proj.name == "acme"
     assert proj.source == "cwd ancestor walk"
 
 
@@ -115,13 +115,13 @@ def test_rule_7_ambiguous_errors_with_list(two_projects: dict, monkeypatch: pyte
     with pytest.raises(resolve.AmbiguousProject) as exc:
         resolve.resolve_project()
     msg = str(exc.value)
-    assert "concorda" in msg
+    assert "acme" in msg
     assert "demo" in msg
     assert "--project" in msg
 
 
 def test_project_dataclass_paths(two_projects: dict) -> None:
-    proj = resolve.resolve_project(project_name="concorda")
-    assert proj.data_dir == (two_projects["concorda"]).resolve()
-    assert proj.depgraph_dir == (two_projects["concorda"] / "depgraph").resolve()
-    assert proj.logigraph_dir == (two_projects["concorda"] / "logigraph").resolve()
+    proj = resolve.resolve_project(project_name="acme")
+    assert proj.data_dir == (two_projects["acme"]).resolve()
+    assert proj.depgraph_dir == (two_projects["acme"] / "depgraph").resolve()
+    assert proj.logigraph_dir == (two_projects["acme"] / "logigraph").resolve()

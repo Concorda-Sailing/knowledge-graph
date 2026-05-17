@@ -1,6 +1,6 @@
 #!/bin/bash
 # kg-prepush-cascade — installed as a pre-push hook in tracked project
-# repos (concorda-api, concorda-web, etc.). When the user pushes code,
+# repos. When the user pushes code,
 # this hook re-extracts depgraph nodes for the changed files, regens
 # the logigraph reconcile pass, commits any KG-corpus changes, and
 # pushes them to the KG remote. Then the original project push
@@ -93,7 +93,7 @@ fi
 for KG_DIR in "${KG_DEPGRAPH_DIR:-}" "${KG_LOGIGRAPH_DIR:-}"; do
     [ -n "$KG_DIR" ] || continue
     [ -d "$KG_DIR/.git" ] || {
-        # corpus may be nested under a parent git repo (e.g. concorda/knowledge-graph/)
+        # corpus may be nested under a parent git repo (e.g. <project>/knowledge-graph/)
         # Walk up looking for the enclosing .git.
         if ! git -C "$KG_DIR" rev-parse --git-dir >/dev/null 2>&1; then
             report_issue not_a_git_repo "$KG_DIR is not inside a git repo" "$target_name" "$target_sha"

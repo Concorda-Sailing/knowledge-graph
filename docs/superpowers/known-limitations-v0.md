@@ -160,7 +160,7 @@ This document is the canonical index of every v0-acceptable gap surfaced during 
 **Where pinned:** `depgraph/tests/fixtures/wild/sql/alembic_op_style/`
 **Current behavior:** `is_migration_file()` checks for a `text()` call in the Python AST (the SQLAlchemy 2.x pattern where raw SQL is wrapped in `text(...)`). Alembic files use `op.create_table(...)`, `op.add_column(...)`, etc. — no `text()` call — so `is_migration_file()` returns `False`. The file is filtered out before `extract_migration` runs. Result: 0 tables extracted, test skips.
 **Ideal behavior:** A parallel Alembic-aware migration recognizer would detect `from alembic import op` or `op.create_table` patterns and extract schema operations from the Alembic DSL rather than from embedded SQL strings.
-**Trigger for fixing:** When the corpus includes Alembic migrations. Concorda uses SQLAlchemy 2.x with raw `text()` migrations, so this is deferred until a non-Concorda corpus is onboarded.
+**Trigger for fixing:** When the corpus includes Alembic migrations. Deferred until a corpus using the Alembic DSL is onboarded.
 
 ---
 
@@ -170,7 +170,7 @@ This document is the canonical index of every v0-acceptable gap surfaced during 
 **Where pinned:** `depgraph/tests/fixtures/wild/sql/bare_sql_file/`
 **Current behavior:** The SQL pipeline only processes Python files that contain embedded SQL strings (via `rglob("*.py")`). Pure `.sql` files (schema dumps, hand-written DDL) are not found. Test skips because `rglob("*.py")` yields nothing for a `.sql`-only `src/` tree.
 **Ideal behavior:** A standalone `.sql` extractor would be registered in `languages.toml` and would process `.sql` files directly through the sqlglot parser, extracting table/column/FK primitives from DDL.
-**Trigger for fixing:** When a corpus contains significant hand-written SQL schema files outside the Python migration layer. Concorda has no standalone `.sql` files in production today.
+**Trigger for fixing:** When a corpus contains significant hand-written SQL schema files outside the Python migration layer.
 
 ---
 

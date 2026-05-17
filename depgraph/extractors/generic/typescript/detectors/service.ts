@@ -6,8 +6,7 @@
  * Emits the same _-prefixed canonical metadata as react.ts so the shared
  * canonicalize() stage in extract.ts can build the canonical service node.
  *
- * Path convention only — no framework recognition. Lifted from Concorda's TS
- * extractor.
+ * Path convention only — no framework recognition.
  */
 import * as ts from "typescript";
 import { Node } from "ts-morph";

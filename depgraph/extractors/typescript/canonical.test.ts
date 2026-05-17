@@ -3,18 +3,18 @@ import { canonicalId, slugifyId, structuralHash } from "./canonical.js";
 
 describe("canonical", () => {
   it("builds top-level id", () => {
-    expect(canonicalId("concorda-web", "src/foo.ts", "Foo"))
-      .toBe("concorda-web::src/foo.ts::Foo");
+    expect(canonicalId("acme-web", "src/foo.ts", "Foo"))
+      .toBe("acme-web::src/foo.ts::Foo");
   });
 
   it("builds class member id with dot", () => {
-    expect(canonicalId("concorda-web", "src/foo.ts", "Foo.bar"))
-      .toBe("concorda-web::src/foo.ts::Foo.bar");
+    expect(canonicalId("acme-web", "src/foo.ts", "Foo.bar"))
+      .toBe("acme-web::src/foo.ts::Foo.bar");
   });
 
   it("slugify replaces non-alphanumeric with underscore", () => {
-    expect(slugifyId("concorda-web::src/foo.ts::Foo.bar"))
-      .toBe("concorda_web__src_foo_ts__Foo_bar");
+    expect(slugifyId("acme-web::src/foo.ts::Foo.bar"))
+      .toBe("acme_web__src_foo_ts__Foo_bar");
   });
 
   it("structuralHash is sha256 of canonical JSON", () => {

@@ -3,7 +3,7 @@
 ## Pattern
 
 A migration file that uses BOTH `text("SQL...")` AND `op.add_column(...)` —
-the kind of file a developer might write when mixing Concorda's text()-based
+the kind of file a developer might write when mixing SQLAlchemy's text()-based
 convention with Alembic helpers.
 
 ```python

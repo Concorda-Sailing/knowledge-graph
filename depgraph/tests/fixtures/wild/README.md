@@ -1,6 +1,6 @@
 # Wild corpus — synthetic-pathological test fixtures
 
-These fixtures aren't representative of any specific project. They're hand-crafted to exercise the corners of the framework — patterns that would break a naive extractor. Concorda is the framework's *first consumer*, not its test case; the wild corpus is what proves the framework correct.
+These fixtures aren't representative of any specific project. They're hand-crafted to exercise the corners of the framework — patterns that would break a naive extractor. The wild corpus is what proves the framework correct against real-world code shapes.
 
 ## Layout
 
@@ -69,4 +69,4 @@ Each fixture directory contains:
 
 Unlike the per-phase fixtures above (each focused on one pattern), the kitchen-sink is a single assembled mini-project covering all kinds. It has its own internal structure (`api/`, `web/`, `db/` subdirs) instead of the standard `src/` layout, and a single `expected.json` capturing the corpus-wide kind distribution + invariants.
 
-- ~30 files across api/, web/, db/. Distribution: 5 endpoints, 4 services, 6 utils, 2 hooks, 3 components, 8 schemas, 5 models, 4 tests. End-to-end gate before Concorda regen.
+- ~30 files across api/, web/, db/. Distribution: 5 endpoints, 4 services, 6 utils, 2 hooks, 3 components, 8 schemas, 5 models, 4 tests. End-to-end gate before regen on any real corpus.

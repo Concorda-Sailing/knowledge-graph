@@ -116,7 +116,7 @@ def find_rules_for_target(ctx: Context, target: str) -> list[str]:
 
     if target.startswith(("rule::", "role::", "resource::", "action::", "attribute::")):
         return [target]
-    # Depgraph node IDs contain '::' (e.g. "concorda-api::models/foo.py::Foo").
+    # Depgraph node IDs contain '::' (e.g. "<repo-key>::models/foo.py::Foo").
     if "::" in target:
         if not by_code_index.exists():
             print("by_code index not built — run `bin/logigraph regen`", file=sys.stderr)

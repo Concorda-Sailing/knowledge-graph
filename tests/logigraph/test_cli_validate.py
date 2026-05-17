@@ -59,7 +59,7 @@ def test_validate_stub_rule_no_dossier_check(ctx: Context) -> None:
             "title": "Test stub rule",
             "statement": "This is a test stub rule.",
             "references_domain": ["resource::test::thing"],
-            "claims_code": [{"depgraph_id": "concorda-api::models/foo.py::Foo", "role": "enforces"}],
+            "claims_code": [{"depgraph_id": "acme-api::models/foo.py::Foo", "role": "enforces"}],
             "definition_status": "stub",
             "structural_hash": "abc123",
             "dossier": "dossiers/rules/test__stub_rule.md",

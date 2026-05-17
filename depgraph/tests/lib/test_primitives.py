@@ -5,13 +5,13 @@ from depgraph.lib.primitives import (
 
 
 def test_canonical_id_top_level_function():
-    assert canonical_id("concorda-api", "routers/events.py", "create_event") == \
-        "concorda-api::routers/events.py::create_event"
+    assert canonical_id("acme-api", "routers/events.py", "create_event") == \
+        "acme-api::routers/events.py::create_event"
 
 
 def test_canonical_id_class_method_uses_dot():
-    assert canonical_id("concorda-api", "services/users.py", "UserService.fetch") == \
-        "concorda-api::services/users.py::UserService.fetch"
+    assert canonical_id("acme-api", "services/users.py", "UserService.fetch") == \
+        "acme-api::services/users.py::UserService.fetch"
 
 
 def test_primitive_kind_enum_values():
@@ -20,11 +20,11 @@ def test_primitive_kind_enum_values():
 
 def test_validate_primitive_accepts_minimal_function():
     p = Primitive(
-        id="concorda-api::routers/events.py::create_event",
+        id="acme-api::routers/events.py::create_event",
         primitive=PrimitiveKind.FUNCTION,
         name="create_event",
         owner=None,
-        source=Source(repo="concorda-api", path="routers/events.py", language="python", line=10, end_line=20),
+        source=Source(repo="acme-api", path="routers/events.py", language="python", line=10, end_line=20),
         signature=Signature(parameters=[], return_type=None, is_async=False, decorators=[]),
         attributes=Attributes(),
         edges_out=[],
@@ -42,7 +42,7 @@ def test_external_terminal_format():
                               symbol="DeclarativeBase")
     assert tid == "external::pypi::sqlalchemy::DeclarativeBase"
     assert is_external_terminal(tid)
-    assert not is_external_terminal("concorda-api::routers/events.py::create_event")
+    assert not is_external_terminal("acme-api::routers/events.py::create_event")
 
 
 def test_external_terminal_no_package_3_segment():
@@ -72,11 +72,11 @@ def test_validate_primitive_rejects_method_without_owner():
     """A function with a `.` in its symbol must have owner set."""
     p_dict = {
         "schema_version": 2,
-        "id": "concorda-api::services/users.py::UserService.fetch",
+        "id": "acme-api::services/users.py::UserService.fetch",
         "primitive": "function",
         "name": "UserService.fetch",
         "owner": None,
-        "source": {"repo": "concorda-api", "path": "services/users.py", "language": "python", "line": 10, "end_line": 20},
+        "source": {"repo": "acme-api", "path": "services/users.py", "language": "python", "line": 10, "end_line": 20},
         "signature": {"parameters": [], "return_type": None, "is_async": False, "decorators": []},
         "attributes": {},
         "edges_out": [],
