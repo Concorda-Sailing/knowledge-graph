@@ -165,6 +165,67 @@ def test_tests_edge_py_assertion_scoped():
 
 
 # ---------------------------------------------------------------------------
+# Blocker 1: absolute ImportFrom resolution
+# ---------------------------------------------------------------------------
+
+def test_absolute_import_resolves_to_internal_module(tmp_path):
+    """from services.widget import create_widget → edge target is the
+    create_widget function primitive inside services/widget.py."""
+    (tmp_path / "services").mkdir()
+    (tmp_path / "services" / "__init__.py").write_text("")
+    (tmp_path / "services" / "widget.py").write_text(
+        "def create_widget(): pass\n"
+    )
+    (tmp_path / "routers").mkdir()
+    (tmp_path / "routers" / "__init__.py").write_text("")
+    (tmp_path / "routers" / "widget.py").write_text(
+        "from services.widget import create_widget\n"
+        "def use_widget(): create_widget()\n"
+    )
+    prims = list(extract_repo(repo_key="fixture", repo_path=tmp_path))
+    router_mod = next(
+        p for p in prims
+        if p["primitive"] == "module" and p["source"]["path"] == "routers/widget.py"
+    )
+    import_edges = [e for e in router_mod["edges_out"] if e["kind"] == "imports"]
+    targets = {e["target"] for e in import_edges}
+    # Should resolve to the function primitive, not the module
+    assert "fixture::services/widget.py::create_widget" in targets, (
+        f"expected create_widget function primitive in targets; got {targets}"
+    )
+
+
+def test_absolute_external_import_yields_external_terminal(tmp_path):
+    """from sqlalchemy import text → edge target external::pypi::sqlalchemy::text."""
+    (tmp_path / "db.py").write_text("from sqlalchemy import text\n")
+    prims = list(extract_repo(repo_key="fixture", repo_path=tmp_path))
+    mod = next(p for p in prims if p["source"]["path"] == "db.py"
+               and p["primitive"] == "module")
+    import_edges = [e for e in mod["edges_out"] if e["kind"] == "imports"]
+    targets = {e["target"] for e in import_edges}
+    assert "external::pypi::sqlalchemy::text" in targets, (
+        f"expected external terminal; got {targets}"
+    )
+
+
+def test_absolute_aliased_import_captures_local_binding(tmp_path):
+    """from sqlalchemy import text as t → local_binding='t'."""
+    (tmp_path / "db.py").write_text("from sqlalchemy import text as t\n")
+    prims = list(extract_repo(repo_key="fixture", repo_path=tmp_path))
+    mod = next(p for p in prims if p["source"]["path"] == "db.py"
+               and p["primitive"] == "module")
+    edge = next(
+        (e for e in mod["edges_out"]
+         if e["kind"] == "imports" and "sqlalchemy" in e["target"]),
+        None,
+    )
+    assert edge is not None, "expected an imports edge for sqlalchemy::text"
+    assert edge["local_binding"] == "t", (
+        f"expected local_binding='t'; got {edge['local_binding']!r}"
+    )
+
+
+# ---------------------------------------------------------------------------
 # Task 3.7: Edge schema validation sweep
 # ---------------------------------------------------------------------------
 

@@ -394,9 +394,12 @@ def _attach_imports_edges(primitives: list[dict],
     module_index: dict[str, str] = {}
     # Also index by path for quick lookup
     mod_by_path: dict[str, dict] = {}
+    # Reverse: module_id -> source path (used by absolute ImportFrom resolution)
+    mod_id_to_path: dict[str, str] = {}
     for p in primitives:
         if p["primitive"] == "module":
             mod_by_path[p["source"]["path"]] = p
+            mod_id_to_path[p["id"]] = p["source"]["path"]
             # Convert path to dotted form: "pkg/sub.py" -> "pkg.sub"
             dotted = p["source"]["path"]
             if dotted.endswith(".py"):
@@ -460,6 +463,36 @@ def _attach_imports_edges(primitives: list[dict],
                                 confidence = "exact"
                         else:
                             # Can't resolve — external or unindexed
+                            root_pkg = module_name.split(".")[0] if module_name else "unknown"
+                            target = f"external::pypi::{root_pkg}::{alias.name}"
+                            confidence = "unresolved"
+                        mod_prim["edges_out"].append({
+                            "target": target,
+                            "kind": "imports",
+                            "via": "import_from",
+                            "where": f"{path}:{node.lineno}",
+                            "confidence": confidence,
+                            "local_binding": local_binding,
+                        })
+                else:
+                    # Absolute ImportFrom: from X.Y.Z import name
+                    # Look up the module by dotted path; then try to resolve
+                    # the imported name to a top-level symbol in that module.
+                    target_mod_id = module_index.get(module_name) if module_name else None
+                    for alias in node.names:
+                        local_binding = alias.asname or alias.name
+                        if target_mod_id:
+                            # Module is tracked — look for the symbol inside it
+                            target_mod_path = mod_id_to_path.get(target_mod_id)
+                            sym_id = (sym_by_path.get(target_mod_path or "", {})
+                                      .get(alias.name))
+                            if sym_id:
+                                target = sym_id
+                            else:
+                                target = target_mod_id
+                            confidence = "exact"
+                        else:
+                            # Module not in corpus — external package
                             root_pkg = module_name.split(".")[0] if module_name else "unknown"
                             target = f"external::pypi::{root_pkg}::{alias.name}"
                             confidence = "unresolved"
