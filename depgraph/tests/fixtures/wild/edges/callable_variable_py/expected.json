@@ -1,0 +1,7 @@
+{
+  "description": "Bare-name call resolving to a module-level variable that holds a function reference must NOT produce `calls -> variable`. Only the direct call to the real function emits a `calls` edge.",
+  "unresolved_edges_expected": false,
+  "edges": [
+    {"source": "fixture::consumer.py::caller", "kind": "calls", "target": "fixture::consumer.py::real_impl", "confidence": "exact"}
+  ]
+}

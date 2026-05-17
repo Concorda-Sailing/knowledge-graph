@@ -576,6 +576,12 @@ def _attach_call_edges(primitives: list[dict],
         local_by_path.setdefault(p["source"]["path"], {})[p["name"]] = p["id"]
 
     classes_by_id = {p["id"]: p for p in primitives if p["primitive"] == "class"}
+    # Primitive-kind index for taxonomy-correct edge emission. `calls` targets
+    # must be functions and `instantiates` targets must be classes (per
+    # depgraph/lib/edges.py::EDGE_KIND_RULES); a bare-name call resolving to a
+    # variable holding a callable produces no `calls` edge — the reads pass
+    # picks up the identifier reference separately.
+    functions_by_id = {p["id"] for p in primitives if p["primitive"] == "function"}
 
     # Index methods: class_id -> {method_local_name -> method_id}
     methods_by_class: dict[str, dict[str, str]] = {}
@@ -652,6 +658,7 @@ def _attach_call_edges(primitives: list[dict],
                         local_names=local_names,
                         imports=imports,
                         classes_by_id=classes_by_id,
+                        functions_by_id=functions_by_id,
                         methods_by_class=methods_by_class,
                         var_types=var_types,
                         path=path,
@@ -660,7 +667,8 @@ def _attach_call_edges(primitives: list[dict],
 
 
 def _resolve_call_edge(call: ast.Call, *, local_names: dict, imports: dict,
-                        classes_by_id: dict, methods_by_class: dict,
+                        classes_by_id: dict, functions_by_id: set,
+                        methods_by_class: dict,
                         var_types: dict, path: str) -> list[dict]:
     """Return a list of edge dicts for a single Call node."""
     if isinstance(call.func, ast.Name):
@@ -669,7 +677,19 @@ def _resolve_call_edge(call: ast.Call, *, local_names: dict, imports: dict,
         target = local_names.get(name) or imports.get(name)
         if target is None:
             return []
-        kind = "instantiates" if target in classes_by_id else "calls"
+        if target in classes_by_id:
+            kind = "instantiates"
+        elif target in functions_by_id or target.startswith("external::"):
+            # External terminals (e.g. `external::pypi::requests::get`) skip
+            # target-kind validation in reconcile and carry semantically-
+            # meaningful information about the call site — keep them.
+            kind = "calls"
+        else:
+            # Target is an in-corpus variable, module, or other non-callable
+            # primitive. Skip the edge: the reads pass picks up the identifier
+            # reference, preserving call-graph reachability without violating
+            # the calls/instantiates target-kind rules.
+            return []
         return [{"target": target, "kind": kind, "via": "function_call",
                   "where": f"{path}:{call.lineno}", "confidence": "exact"}]
 

@@ -1,0 +1,7 @@
+{
+  "description": "Calling a variable that holds a function reference must NOT produce `calls → variable` (taxonomy violation). Only the direct call to the real function emits a `calls` edge.",
+  "unresolved_edges_expected": false,
+  "edges": [
+    {"source": "fixture::src/consumer.ts::caller", "kind": "calls", "target": "fixture::src/consumer.ts::realImpl", "confidence": "exact"}
+  ]
+}
