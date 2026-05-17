@@ -549,6 +549,38 @@ function attachInheritanceEdges(
 // L2 edge resolution — Task 3.3: imports
 // ---------------------------------------------------------------------------
 
+function resolveRelativeImportSpec(
+  fromRel: string,
+  spec: string,
+  modByPath: Map<string, Primitive>,
+): string | null {
+  const lastSlash = fromRel.lastIndexOf("/");
+  const fromDir = lastSlash >= 0 ? fromRel.slice(0, lastSlash) : "";
+  const parts = [...fromDir.split("/").filter(Boolean), ...spec.split("/")];
+  const stack: string[] = [];
+  for (const p of parts) {
+    if (p === "." || p === "") continue;
+    if (p === "..") { stack.pop(); continue; }
+    stack.push(p);
+  }
+  const base = stack.join("/");
+  const hasKnownExt = /\.(ts|tsx|js|jsx|mjs|cjs)$/.test(base);
+  const candidates: string[] = [];
+  if (hasKnownExt) candidates.push(base);
+  for (const ext of EXTS) candidates.push(`${base}${ext}`);
+  for (const ext of EXTS) candidates.push(`${base}/index${ext}`);
+  // Authors writing TS-resolves-via-extension (`./foo.js` that points at
+  // `./foo.ts` on disk) are common — try swapping known extensions too.
+  if (hasKnownExt) {
+    const stem = base.replace(/\.(ts|tsx|js|jsx|mjs|cjs)$/, "");
+    for (const ext of EXTS) candidates.push(`${stem}${ext}`);
+  }
+  for (const c of candidates) {
+    if (modByPath.has(c)) return c;
+  }
+  return null;
+}
+
 function attachImportsEdges(
   prims: Primitive[],
   sourceFiles: SourceFile[],
@@ -828,6 +860,40 @@ function attachImportsEdges(
         });
       }
     }
+
+    // Plain dynamic imports: `await import('./rel')` or `await import('pkg')`.
+    // Attributed to the enclosing module (same as static imports), so impact
+    // analysis and `kg depgraph dependents` see them. The Function-constructor
+    // shim form is handled separately in attachCallEdges.
+    for (const call of sf.getDescendantsOfKind(SyntaxKind.CallExpression)) {
+      if (call.getExpression().getKind() !== SyntaxKind.ImportKeyword) continue;
+      const args = call.getArguments();
+      if (args.length === 0) continue;
+      const first = args[0];
+      // Non-literal spec (template w/ interpolation, identifier, etc.) — can't
+      // resolve statically. Skip rather than emit a wrong edge.
+      if (!Node.isStringLiteral(first) && !Node.isNoSubstitutionTemplateLiteral(first)) continue;
+      const specText = (first as any).getLiteralText();
+      let target: string;
+      let confidence: "exact" | "fuzzy" | "unresolved";
+      if (specText.startsWith(".")) {
+        const resolved = resolveRelativeImportSpec(rel, specText, modByPath);
+        if (resolved) {
+          target = `${repoKey}::${resolved}`;
+          confidence = "exact";
+        } else {
+          target = `external::unresolved::${specText}`;
+          confidence = "unresolved";
+        }
+      } else {
+        target = `external::npm::${specText.split("/")[0].replace(/^@/, "")}`;
+        confidence = "fuzzy";
+      }
+      modPrim.edges_out.push({
+        target, kind: "imports", via: "dynamic_import",
+        where: `${rel}:${call.getStartLineNumber()}`, confidence,
+      });
+    }
   }
 }
 
@@ -868,8 +934,14 @@ function attachCallEdges(
     }
   }
 
-  // All class ids as a set for quick lookup
+  // Primitive-kind index for taxonomy-correct edge emission. `calls` targets
+  // must be functions and `instantiates` targets must be classes (per
+  // depgraph/lib/edges.py::EDGE_KIND_RULES); a bare-id call site can resolve
+  // to a variable holding a callable, in which case no `calls` edge is
+  // emitted and the identifier-read pass picks up the relationship as a
+  // `reads function→variable` edge.
   const allClassIds = new Set(prims.filter((p) => p.primitive === "class").map((p) => p.id));
+  const allFunctionIds = new Set(prims.filter((p) => p.primitive === "function").map((p) => p.id));
 
   // Local top-level symbol index per file: name -> id (non-method, owner-null)
   const localByPath = new Map<string, Map<string, string>>();
@@ -1031,7 +1103,14 @@ function attachCallEdges(
               continue;
             }
             const targetId = localNames.get(name) ?? imports.get(name);
-            if (targetId && !allClassIds.has(targetId)) {
+            // Emit `calls` when the target is a known function primitive OR an
+            // external terminal (those skip target-kind validation in reconcile
+            // and carry semantically-meaningful information — e.g. `useState()`
+            // resolves through the imports map to `external::npm::react::useState`).
+            // In-corpus non-function targets (variables holding callables, modules)
+            // are intentionally dropped here; the reads pass picks them up.
+            const isExternal = targetId?.startsWith("external::");
+            if (targetId && (allFunctionIds.has(targetId) || isExternal)) {
               fnPrim.edges_out.push({
                 target: targetId, kind: "calls", via: "function_call",
                 where: `${rel}:${node.getStartLineNumber()}`, confidence: "exact",

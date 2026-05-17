@@ -1,0 +1,9 @@
+{
+  "description": "Plain `await import('./rel')` resolves to the sibling module primitive (exact); `await import('pkg')` and `await import('@scope/pkg')` resolve to external::npm::<pkg> (fuzzy). Template-string specs are skipped.",
+  "unresolved_edges_expected": false,
+  "edges": [
+    {"source": "fixture::src/consumer.ts", "kind": "imports", "target": "fixture::src/helper.ts", "confidence": "exact"},
+    {"source": "fixture::src/consumer.ts", "kind": "imports", "target": "external::npm::some-pkg", "confidence": "fuzzy"},
+    {"source": "fixture::src/consumer.ts", "kind": "imports", "target": "external::npm::some-scope", "confidence": "fuzzy"}
+  ]
+}
