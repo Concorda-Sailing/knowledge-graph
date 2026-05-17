@@ -149,6 +149,69 @@ def test_kitchen_sink_models_reference_schemas(regen_kitchen_sink):
 
 
 # ---------------------------------------------------------------------------
+# Unified-kind contract — every node, every language, non-null kind
+# ---------------------------------------------------------------------------
+
+# Mirrors lib/classification/writer.py — kept inline so a writer change
+# that adds/renames a kind dir has to update this contract too.
+_CLASSIFIED_KINDS = {
+    "component", "hook", "endpoint", "service",
+    "model", "schema", "test", "util",
+}
+_PRIMITIVE_KINDS = {"module", "package", "class", "function", "variable"}
+_VALID_KINDS = _CLASSIFIED_KINDS | _PRIMITIVE_KINDS
+
+
+def test_every_node_has_non_null_kind_in_valid_union(regen_kitchen_sink):
+    """Contract: every node written to disk carries a non-null `kind` from
+    the unified taxonomy. Catches an extractor that emits kind=None and
+    nobody noticing because the writer silently fills it in — and a
+    classifier that returns a misspelled kind value."""
+    nodes = _load_all_nodes(regen_kitchen_sink)
+    assert nodes, "kitchen-sink fixture produced zero nodes"
+    null_kind = [n["id"] for n in nodes if n.get("kind") is None]
+    bad_kind = [(n["id"], n.get("kind")) for n in nodes if n.get("kind") not in _VALID_KINDS]
+    assert not null_kind, f"{len(null_kind)} node(s) have kind=None: {null_kind[:5]}"
+    assert not bad_kind, f"{len(bad_kind)} node(s) have unknown kind: {bad_kind[:5]}"
+
+
+def test_primitive_default_rule_holds(regen_kitchen_sink):
+    """When no classifier fires AND the extractor didn't set a kind, the
+    writer must default kind to the primitive value (so kind == primitive
+    for the "raw" tier of the taxonomy)."""
+    nodes = _load_all_nodes(regen_kitchen_sink)
+    mismatches = []
+    for n in nodes:
+        kind = n.get("kind")
+        primitive = n.get("primitive")
+        if kind in _CLASSIFIED_KINDS:
+            continue  # classifier upgraded; primitive may differ from kind
+        if kind != primitive:
+            mismatches.append((n["id"], primitive, kind))
+    assert not mismatches, (
+        f"{len(mismatches)} non-classified node(s) have kind != primitive: "
+        f"{mismatches[:5]}"
+    )
+
+
+def test_every_language_in_fixture_emits_at_least_one_node(regen_kitchen_sink):
+    """Sanity gate: the kitchen-sink fixture spans Python + TypeScript + SQL.
+    If any language drops to zero nodes between runs, the per-language
+    extractor or its config likely broke — and the rest of these tests
+    would silently pass for the wrong reason."""
+    by_lang: dict[str, int] = {}
+    for n in _load_all_nodes(regen_kitchen_sink):
+        lang = n.get("source", {}).get("language")
+        if lang:
+            by_lang[lang] = by_lang.get(lang, 0) + 1
+    for expected in ("python", "typescript", "sql"):
+        assert by_lang.get(expected, 0) > 0, (
+            f"expected {expected} primitives from the kitchen-sink fixture, "
+            f"got 0 (full breakdown: {by_lang})"
+        )
+
+
+# ---------------------------------------------------------------------------
 # Test 5 — determinism: two consecutive regens produce identical output
 # ---------------------------------------------------------------------------
 
