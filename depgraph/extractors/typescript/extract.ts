@@ -808,8 +808,12 @@ function attachImportsEdges(
               target = reexportId;
               confidence = "fuzzy";
             } else {
+              // Couldn't resolve to the named symbol. Falling back to the
+              // module id is the best we can do, but the resolution is a
+              // guess — not "exact." Downgrade to "fuzzy" so consumers know
+              // the edge is module-level rather than symbol-level.
               target = `${repoKey}::${targetRel}`;
-              confidence = "exact";
+              confidence = "fuzzy";
             }
           }
         } else {
@@ -1130,8 +1134,13 @@ function attachCallEdges(
                   where: `${rel}:${node.getStartLineNumber()}`, confidence: "exact",
                 });
               } else {
+                // Canonical external-terminal shape is `external::<ecosystem>::<symbol>`
+                // (3 segments). Use the bare class name as the symbol prefix —
+                // embedding the full primitive id (`<repo>::<path>::<cls>`) would
+                // produce a 5-segment string that fails the terminal format.
+                const className = recvClassId.split("::").pop() ?? recvClassId;
                 fnPrim.edges_out.push({
-                  target: `external::unresolved::${recvClassId}.${methodName}`,
+                  target: `external::unresolved::${className}.${methodName}`,
                   kind: "calls", via: "method_call",
                   where: `${rel}:${node.getStartLineNumber()}`, confidence: "unresolved",
                 });
