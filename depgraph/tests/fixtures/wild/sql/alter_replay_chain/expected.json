@@ -1,0 +1,11 @@
+{
+  "tables": [
+    {
+      "name": "archive",
+      "columns": ["id", "event_id", "snapshot", "archived_at"],
+      "foreign_keys": [],
+      "indexes": []
+    }
+  ],
+  "expect_warnings": false
+}

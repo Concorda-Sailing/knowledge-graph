@@ -1,0 +1,11 @@
+{
+  "tables": [
+    {
+      "name": "log",
+      "columns": ["id", "msg"],
+      "foreign_keys": [],
+      "indexes": []
+    }
+  ],
+  "expect_warnings": false
+}

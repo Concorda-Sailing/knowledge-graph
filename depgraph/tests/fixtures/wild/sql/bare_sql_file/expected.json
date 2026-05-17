@@ -1,0 +1,5 @@
+{
+  "tables": [],
+  "expect_warnings": false,
+  "skip_reason": "Standalone .sql file extractor is out of scope for Phase 4 — rglob('*.py') finds no files; when a SQL file extractor ships this fixture should assert 3 tables: author, book, review."
+}

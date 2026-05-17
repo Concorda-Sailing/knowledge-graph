@@ -1,0 +1,21 @@
+{
+  "tables": [
+    {
+      "name": "post",
+      "columns": ["id", "body", "featured_comment_id"],
+      "foreign_keys": [
+        {"column": "featured_comment_id", "references_table": "comment", "references_column": "id"}
+      ],
+      "indexes": []
+    },
+    {
+      "name": "comment",
+      "columns": ["id", "post_id", "content"],
+      "foreign_keys": [
+        {"column": "post_id", "references_table": "post", "references_column": "id"}
+      ],
+      "indexes": []
+    }
+  ],
+  "expect_warnings": false
+}

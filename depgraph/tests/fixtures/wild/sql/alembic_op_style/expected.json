@@ -1,0 +1,5 @@
+{
+  "tables": [],
+  "expect_warnings": false,
+  "skip_reason": "Alembic op.* style migrations are out of scope — no text() calls present, is_migration_file() returns False. Support deferred."
+}
