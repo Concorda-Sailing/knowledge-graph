@@ -97,11 +97,19 @@ def project_repos(data_dir: Path) -> dict[str, dict]:
     Returns: {repo_key: {"path": Path, "basename": str,
                          "extractor": list[str] | None,
                          "files_arg": str | None,
-                         "detectors": list[str]}}
+                         "detectors": list[str],
+                         "languages": list[str] | None,
+                         "migrations_dirs": list[str]}}
 
     The repo_key is the [repos.<key>] table name (e.g. "api").
     The basename is the final path segment (e.g. "<project>-api"), used
     for home-relative path matching when classifying file paths.
+
+    v2 keys:
+      languages       — ["python", "typescript", "sql"]; inferred from file
+                        extensions if absent.
+      migrations_dirs — list of subdirectory names (relative to repo path)
+                        that contain migration files.
 
     Raises ValueError if [repos.*] is present but malformed.
     Returns {} if no [repos.*] tables are configured.
@@ -125,6 +133,9 @@ def project_repos(data_dir: Path) -> dict[str, dict]:
             "extractor": val.get("extractor"),
             "files_arg": val.get("files_arg"),
             "detectors": val.get("detectors", []),
+            # v2 pipeline keys — passed through as-is from TOML
+            "languages": val.get("languages"),
+            "migrations_dirs": val.get("migrations_dirs", []),
         }
     return out
 

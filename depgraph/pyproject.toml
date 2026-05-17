@@ -26,3 +26,4 @@ exclude = ["tests*"]
 testpaths = ["tests"]
 addopts = "-v --tb=short"
 pythonpath = [".."]
+norecursedirs = ["fixtures"]

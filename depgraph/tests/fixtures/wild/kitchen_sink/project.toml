@@ -1,0 +1,11 @@
+[project]
+name = "kitchen-sink"
+
+[repos.kitchen-sink-api]
+path = "api"
+languages = ["python", "sql"]
+migrations_dirs = ["migrations"]
+
+[repos.kitchen-sink-web]
+path = "web"
+languages = ["typescript"]

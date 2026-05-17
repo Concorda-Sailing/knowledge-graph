@@ -81,7 +81,7 @@ def _extract_python(repo_key: str, repo_path: Path) -> list[dict]:
 
 def _extract_typescript(repo_key: str, repo_path: Path, *, tool_root: Path) -> list[dict]:
     """Invoke the TS extractor as a subprocess, parse ndjson output."""
-    ts_extractor = tool_root / "depgraph" / "extractors" / "typescript" / "extract.ts"
+    ts_extractor = tool_root / "extractors" / "typescript" / "extract.ts"
     if not ts_extractor.exists():
         print(f"WARN: TS extractor not found at {ts_extractor}; skipping", file=sys.stderr)
         return []
@@ -143,8 +143,9 @@ def _run_sql_pipeline(
         return []
 
     schema = reconcile_schema(migration_files, repo_key=repo_key)
-    schema_prims = schema_to_primitives(schema, repo_key=repo_key)
-    attach_migration_attributes(all_primitives + schema_prims, migration_files)
+    schema_prims = schema_to_primitives(schema)
+    attach_migration_attributes(primitives=all_primitives + schema_prims,
+                               migrations=migration_files)
     return schema_prims
 
 

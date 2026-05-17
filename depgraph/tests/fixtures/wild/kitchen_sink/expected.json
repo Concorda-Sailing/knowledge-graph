@@ -1,0 +1,32 @@
+{
+  "kind_counts": {
+    "schema": 8,
+    "model": 5,
+    "endpoint": 5,
+    "service": 4,
+    "util": 6,
+    "component": 3,
+    "hook": 2,
+    "test": 4
+  },
+  "invariants": [
+    "every model has exactly one references→schema edge via __tablename__",
+    "every endpoint has at least one calls edge into a service or util",
+    "every service has at least one db_access edge targeting a schema",
+    "every component has signature.returns_jsx = true",
+    "every hook has at least one calls edge to another hook or React built-in",
+    "every test has at least one tests edge to a non-test function",
+    "no orphan edges (every non-external target resolves to a primitive)",
+    "no slug collisions",
+    "two consecutive regens produce byte-identical output"
+  ],
+  "spot_check_classifications": [
+    {"id": "kitchen-sink-api::routers/events.py::create_event", "kind": "endpoint"},
+    {"id": "kitchen-sink-api::services/events.py::create_event_service", "kind": "service"},
+    {"id": "kitchen-sink-api::utils/format.py::format_date", "kind": "util"},
+    {"id": "kitchen-sink-web::components/EventCard.tsx::EventCard", "kind": "component"},
+    {"id": "kitchen-sink-web::hooks/useEvents.ts::useEvents", "kind": "hook"},
+    {"id": "kitchen-sink-api::models/event.py::Event", "kind": "model"},
+    {"id": "kitchen-sink-api::schema::events", "kind": "schema"}
+  ]
+}
