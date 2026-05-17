@@ -79,6 +79,23 @@ def _extract_python(repo_key: str, repo_path: Path) -> list[dict]:
     return list(extract_repo(repo_key=repo_key, repo_path=repo_path))
 
 
+_DEFAULT_TS_HEAP_MB = 4096
+
+
+def _ts_node_env(base_env: dict[str, str] | None = None) -> dict[str, str]:
+    """Build the env for the tsx subprocess, ensuring Node has a heap large
+    enough for ts-morph to load hundreds of files. ts-morph's default 2GB
+    heap OOMs on real-world web apps; we raise the floor but defer to any
+    --max-old-space-size the caller has already set in NODE_OPTIONS.
+    """
+    env = dict(base_env if base_env is not None else os.environ)
+    existing = env.get("NODE_OPTIONS", "")
+    if "--max-old-space-size" not in existing:
+        addition = f"--max-old-space-size={_DEFAULT_TS_HEAP_MB}"
+        env["NODE_OPTIONS"] = f"{existing} {addition}".strip() if existing else addition
+    return env
+
+
 def _extract_typescript(repo_key: str, repo_path: Path, *, tool_root: Path) -> list[dict]:
     """Invoke the TS extractor as a subprocess, parse ndjson output."""
     ts_extractor = tool_root / "extractors" / "typescript" / "extract.ts"
@@ -91,7 +108,7 @@ def _extract_typescript(repo_key: str, repo_path: Path, *, tool_root: Path) -> l
         "--repo-path", str(repo_path),
         "--format", "ndjson",
     ]
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+    result = subprocess.run(cmd, env=_ts_node_env(), capture_output=True, text=True, timeout=120)
     if result.returncode != 0:
         print(f"WARN: TS extractor exited {result.returncode}: {result.stderr[:400]}",
               file=sys.stderr)
