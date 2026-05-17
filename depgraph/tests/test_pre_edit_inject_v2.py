@@ -156,10 +156,13 @@ def test_tracked_file_renders_node_block(data_dir, repo):
     assert "app::services/users.py::get_user" in body
 
 
-def test_falls_back_to_primitive_when_kind_absent(data_dir, repo):
-    """Unclassified primitives still render — header shows primitive type
-    when classification didn't assign a kind."""
+def test_unified_kind_renders_primitive_value(data_dir, repo):
+    """When no classifier fires, the writer sets kind = primitive (unified
+    taxonomy — there is no `kind: null`). The hook header reads kind
+    directly; no primitive-fallback needed."""
     node = _make_node("app", "services/users.py", "function", "get_user")
+    # Simulate writer's behaviour: unclassified node lands with kind=primitive.
+    node["kind"] = node["primitive"]
     _write_node(data_dir, "functions", "app__services_users_py__get_user", node)
 
     envelope = _run_hook(data_dir, {

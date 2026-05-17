@@ -439,7 +439,9 @@ def format_warnings(node: dict) -> str:
 
 def render_for_node(node: dict, dependents_index: dict[str, list[dict]]) -> str:
     banner, dossier = load_dossier(node)
-    label = node.get("kind") or node.get("primitive") or "?"
+    # kind is always populated by the writer (primitive value when no
+    # classifier fired); fall back to "?" only if the corpus is malformed.
+    label = node.get("kind") or "?"
     parts = [
         f"## {node.get('name', node['id'])}",
         f"**id:** `{node['id']}`  ·  **kind:** {label}",

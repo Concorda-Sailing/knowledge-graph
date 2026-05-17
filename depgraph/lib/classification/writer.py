@@ -40,6 +40,14 @@ _PRIMITIVE_DIRS: dict[str, str] = {
 def write_classified(primitives: list[dict], decisions: dict, *, data_dir: Path) -> None:
     """Write each primitive to the appropriate kind or primitive-type directory.
 
+    `kind` is the unified taxonomy slot — for classified nodes it's the
+    classifier's verdict (component / hook / endpoint / service / model /
+    schema / test / util); for nodes no classifier touched, it defaults to
+    the primitive type (module / package / class / function / variable).
+    Consumers can always read `node["kind"]`; `primitive` stays on the
+    record as the AST-shape source of truth that classified kinds layer
+    on top of.
+
     Args:
         primitives: list of primitive dicts (schema v2).
         decisions: dict[str, Decision] returned by classify_corpus.
@@ -58,7 +66,10 @@ def write_classified(primitives: list[dict], decisions: dict, *, data_dir: Path)
                          })
         else:
             kind_dir = _PRIMITIVE_DIRS[p["primitive"]]
-            p_out = p
+            # Default unclassified nodes' kind to their primitive type so
+            # every node carries a non-null kind. Preserve any kind the
+            # extractor set directly (e.g. SQL schema primitives).
+            p_out = p if p.get("kind") else dict(p, kind=p["primitive"])
 
         slug = slugify_id_for_filename(p["id"])
         target = data_dir / "nodes" / kind_dir / f"{slug}.json"
