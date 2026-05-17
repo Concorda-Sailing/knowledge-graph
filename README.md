@@ -167,7 +167,7 @@ SQL migrations.
 1. **Pick a meaningful `<key>`** — it surfaces in every node id
    (`<key>::<rel-path>::<symbol>`) and is the label graphui uses for the
    repo on every page. Short role names for multi-repo (`api`, `web`,
-   `mobile`); the project name for single-repo (`codegraph`, `acme`).
+   `mobile`); the project name for single-repo (`acme`, `widgetly`).
    Don't use `app`/`repo`/`main`/`src` — they look like placeholders
    forever.
 2. Add the table:

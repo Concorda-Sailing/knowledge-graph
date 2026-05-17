@@ -23,6 +23,8 @@ Matches the fix-applied state — two `imports` edges, one per call site, no
 
 ## Notes
 
-The fixture mirrors codegraph's real `importESM` pattern at
-`~/target-repo/src/{bin/codegraph.ts,installer/index.ts}` — the 4 edge_errors
-in the codegraph regen's validation report come from exactly this idiom.
+The fixture mirrors the TS-ESM-in-CJS escape hatch — a top-level
+`const importESM = new Function('p', 'return import(p)') as <...>` callable
+invoked as `await importESM('pkg')`. Without the fix the call site emits a
+`calls → variable` edge against the shim binding (taxonomy violation) and
+the real `imports → external::npm::<pkg>` semantic is lost.

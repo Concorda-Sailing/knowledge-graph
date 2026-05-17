@@ -12,7 +12,7 @@ Two-hop re-export chain: a consumer imports/re-exports through a barrel that its
 
 Single-hop re-export resolution (which the extractor already supports) makes `barrel.ts → definer.ts::realFunc` work but stops there. When `consumer.ts` looks up `realFunc` in `barrel.ts`, the local-symbol map for `barrel.ts` doesn't contain `realFunc` (it's not defined there) — so resolution either falls back to an orphan target (`barrel.ts::realFunc`) or has to consult the re-export map for `barrel.ts` to chase one more hop.
 
-This pattern is the dominant orphan-edge driver in codegraph: `src/index.ts` re-exports from `src/extraction/index.ts`, which re-exports from `src/extraction/grammars.ts`.
+This pattern is a common orphan-edge driver in real TS codebases: a top-level `src/index.ts` re-exports from a feature barrel (`src/<feature>/index.ts`), which in turn re-exports from a leaf module.
 
 ## v0 behavior
 

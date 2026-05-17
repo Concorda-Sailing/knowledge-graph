@@ -32,8 +32,7 @@ def migrate(engine):
 ## Out of scope (intentionally deferred)
 
 - `for k, v in TABLES.items(): text(v)` — loop-iteration over a known
-  dict of literals. Needs flow-aware analysis; would unblock the
-  Concorda `040_schema_redesign` pattern but is outside this fix.
+  dict of literals. Needs flow-aware analysis; outside this fix.
 - Names with more than one binding at module scope are dropped
   conservatively (see fixture `006_rebound_var.py` in the unit-test
   fixtures dir).

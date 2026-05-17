@@ -141,7 +141,7 @@ def test_context_emits_flagged_marker_for_flagged_rule(tmp_path):
     subprocess.run(["git", "-C", str(data), "commit", "-q", "-m", "add by_code index"], check=True)
 
     # Flag the rule.
-    _run(["flag", "rule::test::sample", "--reason", "perf issue, not a contract", "--actor", "logan"], data)
+    _run(["flag", "rule::test::sample", "--reason", "perf issue, not a contract", "--actor", "alice"], data)
 
     # Now invoke context on the depgraph id (find_rules_for_target accepts node ids too).
     r = _run(["context", "test-api::models/foo.py::Foo"], data)

@@ -75,7 +75,7 @@ exclude_paths = [
 The `<key>` in `[repos.<key>]` is what shows up in every node id (`<key>::<rel-path>::<symbol>`) and is the label graphui uses on every page that surfaces this repo. Pick something meaningful:
 
 - **Multi-repo project** — short identifier per role: `api`, `web`, `mobile`, `cli`, `worker`.
-- **Single-repo project** — just the project name (e.g. `codegraph`, `acme`).
+- **Single-repo project** — just the project name (e.g. `acme`, `widgetly`).
 - **Avoid** generic placeholders like `app`, `repo`, `main`, `src`, `code`. They make every node id and every UI label say the placeholder forever.
 
 The framework does not infer this from the dir name, the `package.json` name, the git remote, or `[project].name` — it's whatever you put in `[repos.<key>]`. Renaming after the corpus is built rewrites every node id; cheap to fix before the first `kg depgraph regen`, expensive after.

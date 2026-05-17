@@ -60,10 +60,10 @@ def _run(args, data):
 
 def test_rule_bump_to_human_reviewed_writes_reviewed_by_and_at(tmp_path):
     data = _make_drafted_fixture(tmp_path)
-    r = _run(["rule-bump", "rule::test::sample", "--status", "human_reviewed", "--actor", "logan"], data)
+    r = _run(["rule-bump", "rule::test::sample", "--status", "human_reviewed", "--actor", "alice"], data)
     assert r.returncode == 0, r.stderr
     dossier = (data / "dossiers/rules/test__sample.md").read_text()
-    assert "reviewed_by: logan" in dossier
+    assert "reviewed_by: alice" in dossier
     assert "reviewed_at:" in dossier
     # authored_by preserved
     assert "claude (opus-4.7)" in dossier
@@ -71,7 +71,7 @@ def test_rule_bump_to_human_reviewed_writes_reviewed_by_and_at(tmp_path):
 
 def test_rule_bump_commits_with_review_prefix(tmp_path):
     data = _make_drafted_fixture(tmp_path)
-    _run(["rule-bump", "rule::test::sample", "--status", "human_reviewed", "--actor", "logan"], data)
+    _run(["rule-bump", "rule::test::sample", "--status", "human_reviewed", "--actor", "alice"], data)
     log = subprocess.run(
         ["git", "log", "-1", "--format=%s"], cwd=data, capture_output=True, text=True
     )
@@ -80,8 +80,8 @@ def test_rule_bump_commits_with_review_prefix(tmp_path):
 
 def test_rule_bump_back_to_llm_drafted_clears_reviewed_fields(tmp_path):
     data = _make_drafted_fixture(tmp_path)
-    _run(["rule-bump", "rule::test::sample", "--status", "human_reviewed", "--actor", "logan"], data)
-    _run(["rule-bump", "rule::test::sample", "--status", "llm_drafted", "--actor", "logan"], data)
+    _run(["rule-bump", "rule::test::sample", "--status", "human_reviewed", "--actor", "alice"], data)
+    _run(["rule-bump", "rule::test::sample", "--status", "llm_drafted", "--actor", "alice"], data)
     dossier = (data / "dossiers/rules/test__sample.md").read_text()
     assert "reviewed_by:" not in dossier
     assert "reviewed_at:" not in dossier
