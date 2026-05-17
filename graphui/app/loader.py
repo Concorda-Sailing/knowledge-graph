@@ -853,6 +853,7 @@ def read_dossier(rel_path: str | None, root: Path) -> str | None:
 # ----- Coverage matrix --------------------------------------------------------
 
 KIND_LABELS = {
+    # Classified kinds (v1 + v2)
     "model": "models",
     "service": "services",
     "endpoint": "endpoints",
@@ -860,8 +861,18 @@ KIND_LABELS = {
     "component": "components",
     "hook": "hooks",
     "test": "tests",
+    "util": "utils",
+    # Logigraph kinds
     "rule": "rules",
     "domain": "domain",
+    # v2 unclassified primitive-type dirs — primitives that didn't match any
+    # classifier rule land here; displayed as "Unclassified primitives" in the
+    # coverage matrix header, but each kind still appears as its own row.
+    "module": "modules",
+    "package": "packages",
+    "class": "classes",
+    "function": "functions",
+    "variable": "variables",
 }
 
 

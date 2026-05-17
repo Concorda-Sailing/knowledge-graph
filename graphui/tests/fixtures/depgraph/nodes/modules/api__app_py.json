@@ -1,0 +1,10 @@
+{
+  "id": "concorda-api::app.py",
+  "kind": "module",
+  "title": "app.py",
+  "source": {"repo": "concorda-api", "path": "app.py"},
+  "fan_out": 0,
+  "dossier": null,
+  "structural_hash": "m1",
+  "deps": []
+}

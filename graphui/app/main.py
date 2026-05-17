@@ -73,8 +73,13 @@ app.mount("/graph/static", StaticFiles(directory=str(STATIC)), name="static")
 STATE_ORDER = ["current", "llm_drafted", "unreviewed", "stale", "missing"]
 TIER_ORDER = ["A", "B", "C", "*"]
 KIND_ORDER = [
+    # Classified kinds (v1 + v2)
     "model", "service", "endpoint", "schema",
-    "component", "hook", "test", "rule", "process", "domain",
+    "component", "hook", "util", "test",
+    # Logigraph kinds
+    "rule", "process", "domain",
+    # v2 unclassified primitive-type dirs (sorted after derived kinds)
+    "module", "package", "class", "function", "variable",
 ]
 
 
@@ -741,7 +746,13 @@ def domain_rollup(
             "code_rollup": code_rollup,
             "kind_filter": kind_filter,
             "depth": depth,
-            "all_kinds": ["model", "service", "endpoint", "component", "test", "hook", "schema"],
+            "all_kinds": [
+                # classified
+                "model", "service", "endpoint", "schema",
+                "component", "hook", "util", "test",
+                # v2 unclassified primitive-type dirs
+                "module", "package", "class", "function", "variable",
+            ],
         },
     )
 
