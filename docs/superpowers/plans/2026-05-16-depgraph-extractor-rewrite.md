@@ -7505,50 +7505,85 @@ git add depgraph/extractors/reconcile.py kg/cli/depgraph/ depgraph/tests/test_re
 git commit -m "depgraph: rewrite reconcile + regen for v2 layered substrate"
 ```
 
-### Task 6.2: Wire PreToolUse hook to new pipeline
+### Task 6.2: Update the depgraph pre-edit inject script for v2 schema
 
-The hook at `~/.claude/settings.json` calls `kg hook pre-edit`. That hook reads from `nodes/_index/by_target.json` (new shape) to surface incoming edges before edits. Update the hook's reader to consume v2 shape.
+**Plan correction (2026-05-17):** the original Phase 6.2 task was based on a misreading of the hook architecture. Investigation of `kg/hook.py` revealed that the orchestrator is already in place and handles file→graph→subsystem routing entirely on its own. What needs updating is just the per-subsystem inject script's data-reading code.
 
-**File-to-primitive resolution algorithm.** The hook receives an absolute file path (e.g., `/home/user/concorda-api/routers/events.py`) via `--file` and must look up the primitives in that file. Resolution:
+**The architecture as it exists today:**
 
-1. **Load project config.** Either via `DEPGRAPH_DATA_DIR` env var (test override) or the standard project resolver. From the resolved `project.toml`, build a map `{absolute_repo_path: repo_key}` from `repos.*.path`.
-2. **Match the given file path against repo prefixes.** For each `(abs_repo_path, repo_key)`, check whether the file is under it. If yes, `rel_path = file_path.relative_to(abs_repo_path)` and the primitive id prefix is `{repo_key}::{rel_path}::*`.
-3. **Filter `by_target.json` for incoming edges where the source has matching id prefix.** Surface those edges (the callers of anything in this file) in the injected context.
-4. **No match → no injection.** Hook silently no-ops; the edit proceeds. This is the right default — a file outside any tracked repo shouldn't trigger errors, just no context.
+```
+Claude Code
+  → settings.json: PreToolUse hooks Edit/Write/MultiEdit
+    → /home/lgreenlee/tools/knowledge-graph/bin/kg hook pre-edit
+      (stdin: JSON with tool_input.file_path)
+      ↓
+  kg/hook.py::_pre_edit()
+    ├─ reads ~/.claude/kg-graphs.toml (registered graphs)
+    ├─ for each graph_dir:
+    │    proj = kg/project.py::load(graph_dir)  # reads <graph>/project.toml
+    │    if not proj.owns(file_path): continue
+    │    for subsystem in proj.subsystems:  # ["depgraph", "logigraph"]
+    │      script = <graph>/hooks/pre_edit_inject_<subsystem>.py
+    │                OR <TOOL_ROOT>/<subsystem>/hooks/pre_edit_inject.py
+    │      run script with DEPGRAPH_DATA_DIR=<graph>/depgraph set,
+    │      pipe stdin JSON through unchanged
+    │      collect script's `additionalContext` from its envelope
+    └─ concatenate all subsystem outputs into one PreToolUse envelope
+```
 
-For the integration test below: the fixture mimics the standard project layout — a project root with `project.toml` at top level, `depgraph/` as the data dir (where `DEPGRAPH_DATA_DIR` points), and the synthetic source repo (`api/`) as a sibling of `depgraph/`. The hook's resolution algorithm finds `project.toml` one level UP from `DEPGRAPH_DATA_DIR`, reads `[repos.api].path`, matches the `--file` argument against it, and surfaces matching incoming edges from `nodes/_index/by_target.json`.
+**The inject script Phase 6.2 must update** is `depgraph/hooks/pre_edit_inject.py` (~531 lines today, all v1-schema-aware). It receives `DEPGRAPH_DATA_DIR` set by the orchestrator and reads the corpus from there.
 
-- [ ] **Step 1: Add a hook integration test**
+**What v2 actually changes inside the inject script:**
+- Today: reads v1 `nodes/_index/dependents.json` (reverse index keyed by node id, values are lists of dependents with `via`/`where`).
+- v2: reads `nodes/_index/by_target.json` (same key/value shape, but the corpus underneath is v2 — different `kind` set, different `signature`, `edges_out` arrays embedded on primitives).
+- Today: walks `nodes/<kind>/<slug>.json` for v1 kinds (component/hook/endpoint/service/model/schema/route_call/test).
+- v2: walks `nodes/<kind>/<slug>.json` for v2 kinds (component/hook/endpoint/service/model/schema/util/test) PLUS `nodes/<primitive_type>/<slug>.json` for unclassified primitives (modules/packages/classes/functions/variables).
+
+The script's output shape (the Markdown envelope it emits to stdout via `additionalContext`) is unchanged. Only its data-read paths change.
+
+- [ ] **Step 1: Write an integration test for the inject script (not the full orchestrator chain)**
+
+The test exercises `depgraph/hooks/pre_edit_inject.py` directly: set `DEPGRAPH_DATA_DIR` env, pipe Claude-Code-shaped JSON to stdin, assert the envelope's `additionalContext` includes expected callers.
 
 ```python
-# depgraph/tests/test_hook_pre_edit.py
+# depgraph/tests/test_hook_pre_edit_v2.py
+"""Direct integration test of the depgraph inject script under v2 schema.
+
+Skips the kg orchestrator (file→graph routing) entirely — the orchestrator
+is tested elsewhere and v1↔v2-stable. This test asserts that the inject
+script reads v2 indexes correctly and emits the expected v1-shape envelope.
+"""
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
+
 import pytest
+
+INJECT_SCRIPT = Path(__file__).resolve().parents[1] / "hooks" / "pre_edit_inject.py"
 
 
 @pytest.fixture
-def tiny_corpus(tmp_path):
-    """Write a tiny v2 corpus matching the standard project layout:
-
+def tiny_v2_corpus(tmp_path):
+    """Standard graph layout:
         tmp_path/
           project_root/
-            project.toml             ← lives at project root, NOT inside data_dir
-            depgraph/                ← DEPGRAPH_DATA_DIR points here
-              nodes/...
-            api/                     ← the "repo" whose source the hook resolves against
+            project.toml             # subsystems = ["depgraph"]
+            depgraph/
+              project.toml           # [repos.api].path = ../api
+              nodes/
+                functions/...
+                _index/by_target.json + by_source.json
+            api/
               routers.py
-
-    Returns the depgraph data dir (DEPGRAPH_DATA_DIR target). project.toml
-    is at `data_dir.parent / "project.toml"` per the standard layout."""
+    Returns the depgraph data dir."""
     project_root = tmp_path / "project_root"
     data_dir = project_root / "depgraph"
-    nodes = data_dir / "nodes"
-    (nodes / "functions").mkdir(parents=True)
-    (nodes / "_index").mkdir()
+    (data_dir / "nodes" / "functions").mkdir(parents=True)
+    (data_dir / "nodes" / "_index").mkdir()
 
+    # Two function primitives + their edges_out + reverse index
     helper = {
         "schema_version": 2, "id": "api::routers.py::helper",
         "primitive": "function", "name": "helper", "owner": None,
@@ -7560,62 +7595,84 @@ def tiny_corpus(tmp_path):
         "kind": None, "extractor": "test",
     }
     create_event = {
-        **helper,
-        "id": "api::routers.py::create_event", "name": "create_event",
+        **helper, "id": "api::routers.py::create_event", "name": "create_event",
         "source": {**helper["source"], "line": 4, "end_line": 5},
         "edges_out": [{"target": "api::routers.py::helper", "kind": "calls",
-                       "via": "fn", "where": "routers.py:5", "confidence": "exact"}],
+                       "via": "function_call", "where": "routers.py:5",
+                       "confidence": "exact"}],
     }
-    (nodes / "functions/api__routers_py__helper.json").write_text(json.dumps(helper))
-    (nodes / "functions/api__routers_py__create_event.json").write_text(json.dumps(create_event))
-
-    by_target = {"api::routers.py::helper": [
-        {"source": "api::routers.py::create_event", "kind": "calls",
-         "via": "fn", "where": "routers.py:5", "confidence": "exact"}]}
-    (nodes / "_index/by_target.json").write_text(json.dumps(by_target))
-    (nodes / "_index/by_source.json").write_text(json.dumps({
-        "api::routers.py::create_event": create_event["edges_out"]
+    (data_dir / "nodes/functions/api__routers_py__helper.json").write_text(json.dumps(helper))
+    (data_dir / "nodes/functions/api__routers_py__create_event.json").write_text(json.dumps(create_event))
+    (data_dir / "nodes/_index/by_target.json").write_text(json.dumps({
+        "api::routers.py::helper": [{
+            "source": "api::routers.py::create_event", "kind": "calls",
+            "via": "function_call", "where": "routers.py:5", "confidence": "exact",
+        }],
+    }))
+    (data_dir / "nodes/_index/by_source.json").write_text(json.dumps({
+        "api::routers.py::create_event": create_event["edges_out"],
     }))
 
-    # Source root that the hook will resolve against, alongside project.toml
-    # at the project root (one level UP from data_dir, per standard layout).
     src_root = project_root / "api"
     src_root.mkdir()
-    (src_root / "routers.py").write_text(
-        "def helper(): pass\n\n"
-        "def create_event():\n"
-        "    helper()\n"
+    (src_root / "routers.py").write_text("def helper(): pass\n\ndef create_event():\n    helper()\n")
+
+    (project_root / "project.toml").write_text(
+        '[project]\nname = "fixture"\nsubsystems = ["depgraph"]\n'
     )
-    (project_root / "project.toml").write_text(f"""
-[project]
-name = "fixture"
+    (data_dir / "project.toml").write_text(
+        f'[repos.api]\npath = "{src_root}"\nlanguages = ["python"]\n'
+    )
 
-[repos.api]
-path = "{src_root}"
-languages = ["python"]
-""")
-
-    return data_dir   # what DEPGRAPH_DATA_DIR should point at
+    return data_dir, src_root
 
 
-def test_hook_pre_edit_surfaces_callers(tiny_corpus):
-    """The hook resolves the abs file path via project.toml (located at
-    data_dir.parent / project.toml per standard layout); finds the matching
-    repo prefix; surfaces incoming edges from by_target.json."""
-    src_root = tiny_corpus.parent / "api"
-    out = subprocess.run([
-        sys.executable, "-m", "kg.cli", "hook", "pre-edit",
-        "--file", str(src_root / "routers.py"),
-    ], capture_output=True, text=True, check=True,
-       env={"DEPGRAPH_DATA_DIR": str(tiny_corpus),
-            "PATH": __import__("os").environ["PATH"]})
-    assert "helper" in out.stdout
-    assert "create_event" in out.stdout
+def test_inject_surfaces_v2_callers(tiny_v2_corpus):
+    data_dir, src_root = tiny_v2_corpus
+    # Build a Claude-Code-shaped tool_input payload
+    payload = json.dumps({
+        "tool_input": {"file_path": str(src_root / "routers.py")},
+    })
+    env = os.environ.copy()
+    env["DEPGRAPH_DATA_DIR"] = str(data_dir)
+    proc = subprocess.run(
+        ["python3", str(INJECT_SCRIPT)],
+        input=payload, capture_output=True, text=True, env=env, timeout=10,
+    )
+    assert proc.returncode == 0, proc.stderr
+    envelope = json.loads(proc.stdout)
+    body = envelope["hookSpecificOutput"]["additionalContext"]
+    # The reverse-index lookup for `helper` should surface its caller.
+    assert "create_event" in body
+    # The forward edges from create_event should also be visible somewhere.
+    assert "helper" in body
 ```
 
-- [ ] **Step 2: Update hook reader to v2 schema (consume `_index/by_target.json` for incoming edges, `by_source.json` for outgoing).**
+- [ ] **Step 2: Update `depgraph/hooks/pre_edit_inject.py` to read v2 schema**
 
-- [ ] **Step 3: Run, pass, commit.**
+Two surface changes:
+- Replace `nodes/_index/dependents.json` reads with `nodes/_index/by_target.json` (same key/value shape).
+- Update the `nodes/<kind>/<slug>.json` walk to include primitive-type dirs (`modules`, `packages`, `classes`, `functions`, `variables`) alongside the classified kind dirs.
+
+Don't change the envelope shape or the rendered Markdown.
+
+If the existing v1 dossier / drift logic doesn't translate cleanly to v2 (some v1 fields may be absent on v2 nodes), surface those as a warning in the envelope rather than crashing the hook.
+
+- [ ] **Step 3: Run the test + smoke-test the full orchestrator chain**
+
+```bash
+cd /home/lgreenlee/tools/knowledge-graph
+depgraph/venv/bin/python -m pytest depgraph/tests/test_hook_pre_edit_v2.py -v
+```
+
+Then a manual end-to-end smoke test: in this session, do an `Edit` of any tracked file (after Phase 6.6 regen). The hook should fire and the injected context should appear at the top of the tool result. Verify the context references v2 schema (kinds match v2 set, edges include `via`/`confidence`).
+
+- [ ] **Step 4: Commit (script update + new test)**
+
+```bash
+git add depgraph/hooks/pre_edit_inject.py depgraph/tests/test_hook_pre_edit_v2.py
+git commit -m "depgraph/hooks: pre_edit_inject reads v2 schema (by_target + primitive-type dirs)"
+```
 
 ### Task 6.3: Delete legacy extractors
 
@@ -7891,6 +7948,111 @@ The most important review step in the entire plan. Time-budget: a full reading p
 git add depgraph/tests/fixtures/wild/kitchen_sink/ \
         depgraph/tests/test_kitchen_sink.py
 git commit -m "depgraph: kitchen-sink end-to-end gate + Claude verification"
+```
+
+### Task 6.5.5: Concorda scratch-regen dry-run
+
+**Added 2026-05-17** per user direction "dry-run before declaring victory." Before touching `~/concorda-knowledge-graph/depgraph/`, regenerate Concorda's corpus into a scratch directory and eyeball the output. Goal: catch any wild-corpus gaps that don't manifest until you hit real-world Concorda patterns.
+
+- [ ] **Step 1: Run regen into a scratch dir**
+
+```bash
+SCRATCH=$(mktemp -d)
+mkdir -p "$SCRATCH/depgraph"
+cp ~/concorda-knowledge-graph/project.toml "$SCRATCH/project.toml"
+cp ~/concorda-knowledge-graph/depgraph/project.toml "$SCRATCH/depgraph/project.toml"
+# Use the framework venv since sqlglot lives there
+cd ~/tools/knowledge-graph
+depgraph/venv/bin/python -m kg.cli depgraph regen \
+    --data-dir "$SCRATCH/depgraph" \
+    --project-toml "$SCRATCH/project.toml"
+echo "Scratch corpus at: $SCRATCH"
+```
+
+Expected: regen runs to completion under the 30s budget without crashing.
+
+- [ ] **Step 2: Eyeball output against expected shape**
+
+Run a small audit script (write inline, no need to save):
+
+```python
+# scratch_audit.py
+import json
+from pathlib import Path
+from collections import Counter
+
+SCRATCH = Path("/tmp/<scratch>/depgraph")  # fill in the actual path
+
+# Kind distribution
+kinds = Counter()
+for p in (SCRATCH / "nodes").rglob("*.json"):
+    if "_index" in p.parts or p.name.startswith("_"):
+        continue
+    node = json.loads(p.read_text())
+    kinds[node.get("kind") or f"<{node['primitive']}>"] += 1
+print("Kind distribution:")
+for k, n in sorted(kinds.items(), key=lambda kv: -kv[1]):
+    print(f"  {n:5d}  {k}")
+
+# Sanity: orphan edges + slug collisions
+meta = json.loads((SCRATCH / "nodes" / "_meta.json").read_text())
+print(f"\norphan_edges:     {len(meta.get('orphan_edges', []))}")
+print(f"slug_collisions:  {len(meta.get('slug_collisions', []))}")
+print(f"primitive_errors: {len(meta.get('primitive_errors', []))}")
+```
+
+Sanity-check the distribution against expectations:
+- `schema`: should be ~50-65 (Concorda has 65 CREATE TABLE statements; some may be IF NOT EXISTS duplicates that get folded)
+- `model`: should be ~55-67 (number of files in `concorda-api/models/`)
+- `endpoint`: should be ~80-150 (route-decorated functions in `concorda-api/routers/`)
+- `component`: should be roughly the count of files in `concorda-web/src/app/**/page.tsx` plus exported PascalCase components
+- `module` (unclassified): should be the count of all source .py + .ts files — large number
+
+If kind counts are wildly off (e.g., zero models when there are 67 model files), that's a real bug to fix before touching the real corpus.
+
+- [ ] **Step 3: Spot-check 3-5 random nodes**
+
+Pick a handful of nodes by hand:
+
+```bash
+# A random model
+cat "$SCRATCH/depgraph/nodes/models/"$(ls "$SCRATCH/depgraph/nodes/models/" | shuf -n 1)
+# A random endpoint
+cat "$SCRATCH/depgraph/nodes/endpoints/"$(ls "$SCRATCH/depgraph/nodes/endpoints/" | shuf -n 1)
+# A random schema
+cat "$SCRATCH/depgraph/nodes/schemas/"$(ls "$SCRATCH/depgraph/nodes/schemas/" | shuf -n 1)
+```
+
+For each: read the source file the node references, check that edges_out makes sense given the source. Look for:
+- `unresolved` edges that should have resolved (likely a calls-resolution or imports-resolution gap)
+- Missing edges that you'd expect (e.g., a router endpoint that doesn't have any `calls` edges into services)
+- Classifications that look wrong (a function classified as `service` that's clearly something else)
+
+- [ ] **Step 4: Decide**
+
+Either:
+- (a) **The output looks right.** Proceed to Task 6.6 (real regen). Clean up the scratch dir.
+- (b) **The output reveals real gaps.** STOP. Document the gap in `docs/superpowers/known-limitations-v0.md` (if acceptable as v0) OR fix the framework (if not). Re-run the dry-run after fixing. Don't proceed to 6.6 until output is acceptable.
+
+If you proceed, document the dry-run results (kind counts + sanity check verdict) in a commit message for posterity:
+
+```bash
+git -C ~/concorda-knowledge-graph commit --allow-empty -m "$(cat <<'EOF'
+docs: pre-cutover scratch-regen dry-run results
+
+Distribution observed at $(date -I):
+  schema:    NN
+  model:     NN
+  endpoint:  NN
+  service:   NN
+  util:      NN
+  ...
+orphan_edges: N
+slug_collisions: N
+
+Verdict: <accept | reject + reason>
+EOF
+)"
 ```
 
 ### Task 6.6: Regen Concorda corpus
@@ -8274,6 +8436,20 @@ Land this incremental mode only when the full-regen budget becomes painful in re
 - `docs/superpowers/specs/2026-05-15-layered-substrate-design.md` decision-point checkboxes are all checked
 
 ---
+
+## Pinned v0 limitations
+
+Every limitation surfaced by the wild-corpus verification protocol is catalogued in `docs/superpowers/known-limitations-v0.md`. The wild fixtures actively gate against regressions on these — the documented behavior is what the tests assert. Don't "fix" any pinned behavior without first updating the corresponding verification.md in the wild fixture.
+
+The big ones to know going in:
+- **Method-call resolution** on chained attributes (`a.b.c()`) drops silently.
+- **Conditional rebinding** uses `ast.walk` order, not control-flow order — last-branch wins. Acceptable for v0; pinned in the `conditional_rebinding` wild fixture with explicit "intentionally pinned wrong" note.
+- **JSX over-detection** — `bodyHasJsx` counts JSX anywhere in the function body, not just return positions. Some non-component functions will false-positive into the component classifier.
+- **HOC-wrapped components** (`memo(forwardRef(...))`) — outer variable invisible to the classifier; only the inner arrow function classifies.
+- **Test-edge resolution** doesn't recognize unittest-style `self.assertEqual` or chai/jest `assert.X`. Only bare `assert` (Python) and `expect(...)` (vitest/jest) are scoped correctly.
+- **Constructor parameter properties** (TS shorthand) — invisible to `cls.getProperties()`.
+
+Full list with triggers for revisiting: `docs/superpowers/known-limitations-v0.md`.
 
 ## Out of scope for this implementation
 
