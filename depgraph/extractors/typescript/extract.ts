@@ -844,6 +844,10 @@ function attachCallEdges(
   const classesByPath = new Map<string, Map<string, Primitive>>();
   const methodsByClass = new Map<string, Map<string, string>>(); // classId -> {methodName -> fnId}
   const fnByPathAndLine = new Map<string, Primitive>(); // "path:line" -> prim
+  const modByPath = new Map<string, Primitive>();
+  for (const p of prims) {
+    if (p.primitive === "module") modByPath.set(p.source.path, p);
+  }
 
   for (const p of prims) {
     if (p.primitive === "class" && p.owner === null) {
@@ -890,10 +894,44 @@ function attachCallEdges(
     }
   }
 
+  // Dynamic-import-shim detection. The TS-ESM-in-CJS idiom looks like:
+  //   const importESM = new Function('p', 'return import(p)') as ...
+  // tsc would rewrite a real `import()` to `require()` in CJS mode, so authors
+  // hide it behind a Function constructor. The body is a string literal, so we
+  // can statically recognize the pattern and treat `importESM('mod')` calls as
+  // dynamic imports of `'mod'` on the enclosing module — see
+  // depgraph/tests/fixtures/wild/edges/dynamic_import_shim_ts.
+  const SHIM_BODY_RE = /^\s*return\s+import\s*\(\s*([A-Za-z_$][\w$]*)\s*\)\s*;?\s*$/;
+  const importShimsByPath = new Map<string, Set<string>>();
+  for (const sf of sourceFiles) {
+    const rel = relative(repoPath, sf.getFilePath());
+    for (const vs of sf.getVariableStatements()) {
+      for (const decl of vs.getDeclarations()) {
+        let init: any = decl.getInitializer();
+        while (init && Node.isAsExpression(init)) init = init.getExpression();
+        if (!init || !Node.isNewExpression(init)) continue;
+        if (init.getExpression().getText() !== "Function") continue;
+        const args = init.getArguments();
+        if (args.length !== 2) continue;
+        const literalText = (n: any): string | null =>
+          Node.isStringLiteral(n) || Node.isNoSubstitutionTemplateLiteral(n)
+            ? n.getLiteralText() : null;
+        const paramName = literalText(args[0]);
+        const body = literalText(args[1]);
+        if (!paramName || body === null) continue;
+        const m = body.match(SHIM_BODY_RE);
+        if (!m || m[1] !== paramName) continue;
+        if (!importShimsByPath.has(rel)) importShimsByPath.set(rel, new Set());
+        importShimsByPath.get(rel)!.add(decl.getName());
+      }
+    }
+  }
+
   for (const sf of sourceFiles) {
     const rel = relative(repoPath, sf.getFilePath());
     const localNames = localByPath.get(rel) ?? new Map<string, string>();
     const imports = importsByPath.get(rel) ?? new Map<string, string>();
+    const shims = importShimsByPath.get(rel);
 
     const resolveClass = (name: string): string | undefined => {
       const id = localNames.get(name) ?? imports.get(name);
@@ -969,6 +1007,29 @@ function attachCallEdges(
           if (Node.isIdentifier(callExpr)) {
             // bare name call: helper()
             const name = callExpr.getText();
+            // Dynamic-import-shim: `importESM('mod')` is semantically `import('mod')`.
+            // Emit on the enclosing module to match how static imports are attributed
+            // (imports.source = module), and suppress the variable-targeted calls edge.
+            if (shims?.has(name)) {
+              const modPrim = modByPath.get(rel);
+              const callArgs = (node as any).getArguments?.() ?? [];
+              const first = callArgs[0];
+              const specText = first && (Node.isStringLiteral(first) || Node.isNoSubstitutionTemplateLiteral(first))
+                ? first.getLiteralText() : null;
+              if (modPrim && specText) {
+                // The shim idiom exists to import npm ESM packages from CJS; relative
+                // shim calls don't occur in practice (real import() works fine for those).
+                const target = specText.startsWith(".")
+                  ? `external::unresolved::${specText}`
+                  : `external::npm::${specText.split("/")[0].replace(/^@/, "")}`;
+                modPrim.edges_out.push({
+                  target, kind: "imports", via: "dynamic_import_shim",
+                  where: `${rel}:${node.getStartLineNumber()}`,
+                  confidence: specText.startsWith(".") ? "unresolved" : "fuzzy",
+                });
+              }
+              continue;
+            }
             const targetId = localNames.get(name) ?? imports.get(name);
             if (targetId && !allClassIds.has(targetId)) {
               fnPrim.edges_out.push({

@@ -1,0 +1,8 @@
+{
+  "description": "Calls into a `new Function('p','return import(p)')` shim resolve to an `imports` edge on the enclosing module → external::npm::<pkg>; no `calls→variable` edge is emitted.",
+  "unresolved_edges_expected": false,
+  "edges": [
+    {"source": "fixture::src/consumer.ts", "kind": "imports", "target": "external::npm::some-scope", "confidence": "fuzzy"},
+    {"source": "fixture::src/consumer.ts", "kind": "imports", "target": "external::npm::plain-pkg", "confidence": "fuzzy"}
+  ]
+}
