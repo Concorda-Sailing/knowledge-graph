@@ -50,7 +50,7 @@ ACKS_LOG = TELEMETRY_DIR / "acknowledgments.jsonl"
 NODES_DIR = DEPGRAPH / "nodes"
 
 SESSION_WINDOW_HOURS = 6
-# Title-match threshold: shorter symbol names (Person, Event, Boat) are too
+# Title-match threshold: shorter symbol names (Person, Event, Item) are too
 # common in prose to be reliable. Require at least this many characters AND a
 # capital letter to count a title-only match.
 TITLE_MIN_LEN = 8

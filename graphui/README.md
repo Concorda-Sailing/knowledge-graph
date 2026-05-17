@@ -17,11 +17,10 @@ vars) and renders:
 - **Mobile-friendly** layout with horizontal-scroll wrappers around
   wide tables and an auto-collapsed sidebar.
 
-Part of the [knowledge-graph](https://github.com/Concorda-Sailing/knowledge-graph)
-substrate. Install via:
+Part of the knowledge-graph substrate. Install via:
 
 ```bash
-git clone https://github.com/Concorda-Sailing/knowledge-graph.git
+git clone https://github.com/<owner>/knowledge-graph.git
 cd knowledge-graph && ./install.sh
 ```
 

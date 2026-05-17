@@ -8,9 +8,9 @@ Dossiers live at `depgraph/dossiers/<kind>/<id-slug>.md` and are pointed at by t
 
 ```yaml
 ---
-node_id: POST::/api/invite/{invite_code}/accept
+node_id: POST::/api/invite/{code}/accept
 node_kind: endpoint
-feature: crew-invites
+feature: invites
 last_reviewed: 2026-05-09
 last_reviewed_against_hash: 8c2fa1...
 status: current        # current | stale | unreviewed
@@ -29,7 +29,7 @@ One-paragraph plain-English answer to "what is this for and why does it exist?" 
 Bulleted list of things that must remain true. Examples:
 - Token lookup is by SHA-256 hash of the raw token; the raw token never lives in the database.
 - Expired or revoked invites must 404, not 410 — the UI treats them identically and we don't want to leak that the token was once valid.
-- Accepting a `pending` invite creates a BoatCrew row and deletes the PendingCrewInvite in the same transaction.
+- Accepting a `pending` invite creates a Membership row and deletes the PendingInvite in the same transaction.
 
 ## Gotchas
 What has bitten us. Past incidents. Subtle ordering. Anything a reader would only learn the hard way.

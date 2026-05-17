@@ -130,7 +130,7 @@ Every `kg depgraph` / `kg logigraph` / `kg project` command resolves a project b
 
 1. If `~/tools/knowledge-graph/` doesn't exist, clone it:
    ```bash
-   git clone https://github.com/Concorda-Sailing/knowledge-graph.git ~/tools/knowledge-graph
+   git clone https://github.com/<owner>/knowledge-graph.git ~/tools/knowledge-graph
    ```
 2. Resolve the project path. If the user is `cd`'d into the project, use `$PWD`. Otherwise ask which project root to wire up. The data repo conventionally lives at `<project>-knowledge-graph/` (sibling to the source repos), but can live anywhere — `kg project add` takes the path.
 3. Run the bootstrap:

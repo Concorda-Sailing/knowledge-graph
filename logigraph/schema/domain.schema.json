@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "logigraph.domain",
   "title": "Logigraph domain entity",
-  "description": "One node = one named concept in the system: a role (system or relational), a resource (Boat, EventCrew), an action (Accept, Promote), or an attribute (resume_published, status). Rules reference these nodes by id.",
+  "description": "One node = one named concept in the system: a role (system or relational), a resource (Account, Membership), an action (Accept, Promote), or an attribute (status, published). Rules reference these nodes by id.",
   "type": "object",
   "required": ["schema_version", "id", "kind", "subkind", "title", "summary", "definition_status", "structural_hash"],
   "additionalProperties": false,
@@ -15,7 +15,7 @@
     "id": {
       "type": "string",
       "pattern": "^(role|resource|action|attribute|relationship)::[a-z_]+::[a-z0-9_]+$",
-      "description": "Form: <subkind>::<category>::<short_name>. Example: role::relational::boat_owner, relationship::boat::is_owned_by. Stable; renames are explicit migrations."
+      "description": "Form: <subkind>::<category>::<short_name>. Example: role::relational::account_owner, relationship::account::is_owned_by. Stable; renames are explicit migrations."
     },
     "kind": {
       "const": "domain"
@@ -35,7 +35,7 @@
     },
     "predicate": {
       "type": "string",
-      "description": "Required when subkind=relationship. Plain-English statement of the relationship, e.g. 'is owned by', 'is registered for'."
+      "description": "Required when subkind=relationship. Plain-English statement of the relationship, e.g. 'is owned by', 'is assigned to'."
     },
     "mediated_by": {
       "type": "string",
@@ -48,11 +48,11 @@
     },
     "lifecycle": {
       "type": "string",
-      "description": "Required when subkind=relationship. How the relationship comes and goes — e.g. 'approval-gated', 'per-race', 'set-at-creation', 'mutable-by-owner'."
+      "description": "Required when subkind=relationship. How the relationship comes and goes — e.g. 'approval-gated', 'per-session', 'set-at-creation', 'mutable-by-owner'."
     },
     "title": {
       "type": "string",
-      "description": "Human-readable label for the concept. E.g. \"Boat Owner\", \"EventCrew\", \"Accept\"."
+      "description": "Human-readable label for the concept. E.g. \"Account Owner\", \"Membership\", \"Accept\"."
     },
     "summary": {
       "type": "string",
@@ -79,7 +79,7 @@
     },
     "definition_status": {
       "enum": ["stub", "llm_drafted", "human_reviewed"],
-      "description": "stub: extractor placeholder. llm_drafted: Claude wrote the dossier. human_reviewed: Logan signed off. Hooks skip stubs with a banner."
+      "description": "stub: extractor placeholder. llm_drafted: Claude wrote the dossier. human_reviewed: a human reviewer signed off. Hooks skip stubs with a banner."
     },
     "structural_hash": {
       "type": "string",

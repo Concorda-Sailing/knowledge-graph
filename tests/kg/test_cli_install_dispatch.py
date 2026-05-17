@@ -91,12 +91,12 @@ def test_kg_install_init_routes_to_native_handler(tmp_path: Path) -> None:
 
 def test_kg_install_init_project_name_comes_from_path(tmp_path: Path) -> None:
     """The project name in project.toml is derived from the directory name."""
-    project_dir = tmp_path / "acme-sailing"
+    project_dir = tmp_path / "acme-app"
     res = _run("install", "init", str(project_dir))
 
     assert res.returncode == 0
     toml_text = (project_dir / "knowledge-graph" / "project.toml").read_text()
-    assert 'name = "acme-sailing"' in toml_text
+    assert 'name = "acme-app"' in toml_text
 
 
 def test_kg_install_init_refuses_to_overwrite_existing_depgraph(tmp_path: Path) -> None:

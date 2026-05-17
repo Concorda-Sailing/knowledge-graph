@@ -34,7 +34,7 @@ _LINE_PATTERNS = [
     re.compile(r"password\s+`[^`]+`", re.IGNORECASE),
     # YAML-style "password: value" (excludes REDACTED/null/unset placeholders)
     re.compile(r"^\s*password:\s*(?!(?:REDACTED|null|unset|\s*$))[^\s].*", re.IGNORECASE),
-    # `user` / `value` ... creds — catches "Same `lgreenlee` / `in53cure` creds."
+    # `user` / `value` ... creds — catches "Same `alice` / `s3cret` creds."
     re.compile(r"`[^`]+`\s*/\s*`[^`]+`.*\b(creds|credentials|login)\b", re.IGNORECASE),
     # Inline "user:pass@host" credential URLs
     re.compile(r"://[^/\s:@]+:[^/\s@]+@", re.IGNORECASE),

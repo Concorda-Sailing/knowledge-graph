@@ -15,7 +15,7 @@ Discrepancies between Predicted and Observed (if any) are noted at the bottom.
 | Names of framework-only languages | `{"typescript", "python", "sql"}` | `['typescript', 'python', 'sql']` (insertion order preserved in Python 3.7+ dict) |
 | `typescript` extensions | `[".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]` | `['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs']` |
 | `python` runtime | `"python"` | `'python'` |
-| `sql` extractor path | resolved absolute path ending in `depgraph/extractors/sql/extract.py` | `/home/lgreenlee/tools/knowledge-graph/depgraph/extractors/sql/extract.py` |
+| `sql` extractor path | resolved absolute path ending in `depgraph/extractors/sql/extract.py` | `<framework-root>/depgraph/extractors/sql/extract.py` |
 | `load_languages(framework_toml, project_toml)` where project adds `[languages.yaml]` | 4 languages; yaml in the set; yaml extractor resolves relative to project_toml parent | 4 languages: `['typescript', 'python', 'sql', 'yaml']`; yaml extractor `/tmp/tools/extract_yaml.py` |
 | `load_languages(framework_toml, project_toml)` where project overrides `[languages.python]` with different extensions `[".py", ".pyw"]` | 3 languages; python extensions updated; other languages unchanged | 3 languages; python extensions `['.py', '.pyw']`; extractor `/tmp/myextractors/python_custom.py` |
 | `load_languages(framework_toml, Path("/tmp/does_not_exist.toml"))` — nonexistent project.toml | Falls back to framework-only (3 languages) — predicted the `project_toml.exists()` guard handles this | 3 languages: `['typescript', 'python', 'sql']` |

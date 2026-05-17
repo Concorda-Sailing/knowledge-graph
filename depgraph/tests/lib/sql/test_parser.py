@@ -33,15 +33,15 @@ def test_create_table_if_not_exists():
 
 def test_foreign_key_recorded():
     sql = """
-    CREATE TABLE event_crew (
+    CREATE TABLE order_items (
         id INTEGER PRIMARY KEY,
-        event_id INTEGER NOT NULL,
-        FOREIGN KEY (event_id) REFERENCES events(id)
+        order_id INTEGER NOT NULL,
+        FOREIGN KEY (order_id) REFERENCES orders(id)
     )
     """
     op = parse_operations(sql)[0]
     assert op.foreign_keys == [
-        {"column": "event_id", "references_table": "events", "references_column": "id"}
+        {"column": "order_id", "references_table": "orders", "references_column": "id"}
     ]
 
 

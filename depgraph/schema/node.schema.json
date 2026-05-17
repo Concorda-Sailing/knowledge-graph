@@ -22,7 +22,7 @@
     },
     "title": {
       "type": "string",
-      "description": "Human-readable label, e.g. \"POST /api/invite/{code}/accept\" or \"<CrewInviteCard>\"."
+      "description": "Human-readable label, e.g. \"POST /api/invite/{code}/accept\" or \"<InviteCard>\"."
     },
     "feature": {
       "type": ["string", "null"],

@@ -14,7 +14,7 @@ from depgraph.lib.embeddings import (
 
 
 def test_embed_chunks_returns_fp16_matrix():
-    chunks = ["hello world", "this is a sailing regatta"]
+    chunks = ["hello world", "the quick brown fox jumps"]
     vecs = embed_chunks(chunks)
     assert vecs.dtype == np.float16
     assert vecs.shape == (2, vector_dim())

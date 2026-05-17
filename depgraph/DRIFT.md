@@ -28,7 +28,7 @@ The honest framing: structural drift is mostly mechanically catchable; intent dr
 
 ## 1. String-concatenated URLs across the HTTP boundary
 
-**Symptom.** Web/Expo code does `fetch(\`/api/crew/${id}/invites\`)`. The extractor sees the template literal but cannot resolve `id`, so the call site is recorded as a `string_url` edge with `confidence: fuzzy`. If the route path changes from `/api/crew/{id}/invites` to `/api/boats/{id}/crew/invites`, the call site silently keeps pointing at a 404.
+**Symptom.** Web/Expo code does `fetch(\`/api/orders/${id}/items\`)`. The extractor sees the template literal but cannot resolve `id`, so the call site is recorded as a `string_url` edge with `confidence: fuzzy`. If the route path changes from `/api/orders/{id}/items` to `/api/accounts/{id}/orders/items`, the call site silently keeps pointing at a 404.
 
 **Detection.**
 - Extractor canonicalizes URLs by replacing `${...}` and `{}` segments with `*` wildcards, then matches against the FastAPI route table. Unresolvable URLs are recorded with a `warning: unresolved_string_url` and surface in the PreToolUse injection.
@@ -42,7 +42,7 @@ The honest framing: structural drift is mostly mechanically catchable; intent dr
 
 ## 2. Endpoint renamed; old call sites still reference the old path
 
-**Symptom.** Same as scenario 1 but in a deterministic form: handler renamed from `/api/crew/invites` to `/api/invites/crew`, and a literal call site still says `fetch("/api/crew/invites")`.
+**Symptom.** Same as scenario 1 but in a deterministic form: handler renamed from `/api/orders/items` to `/api/items/orders`, and a literal call site still says `fetch("/api/orders/items")`.
 
 **Detection.** The endpoint node's `dependents` array drops the old call site (no route match). The call-site node now has an unresolvable target. Reconciler emits `warning: unresolved_call` for the call-site node and flags the endpoint as `dependents_dropped`.
 
@@ -68,7 +68,7 @@ The honest framing: structural drift is mostly mechanically catchable; intent dr
 
 ## 4. Hook-on-hook composition; transitive dependents missed
 
-**Symptom.** `useCrewInvites` calls `useCrewMembers`. Editing `useCrewMembers` should surface dependents of *both* hooks, since changing the inner hook can invalidate every component that uses the outer hook.
+**Symptom.** `useOrderInvites` calls `useOrderMembers`. Editing `useOrderMembers` should surface dependents of *both* hooks, since changing the inner hook can invalidate every component that uses the outer hook.
 
 **Detection.** Reconciler computes a transitive closure of `dependents` up to depth 3 (configurable). The injection groups dependents by edge depth: "direct (1)" first, then "transitive (2)" with the path. Cycles short-circuit.
 
@@ -92,7 +92,7 @@ The honest framing: structural drift is mostly mechanically catchable; intent dr
 
 ## 6. Generated code: migrations, OpenAPI clients
 
-**Symptom.** Alembic migration references column `crew.invited_by_uuid`; column gets dropped from the model; migration still runs (it's a historical record of *past* state) but anyone reading the model thinks the column is gone — and a future migration referencing it as if it still exists slips through review.
+**Symptom.** Alembic migration references column `account.invited_by_uuid`; column gets dropped from the model; migration still runs (it's a historical record of *past* state) but anyone reading the model thinks the column is gone — and a future migration referencing it as if it still exists slips through review.
 
 **Detection.** Migration files are extracted as `kind: migration` nodes (a future addition; out of v1 scope). Each migration declares the columns/tables it touches, and the reconciler edges them to model nodes. Model deletions surface `dependents` in past migrations as informational, not blocking.
 
@@ -218,7 +218,7 @@ The honest framing: structural drift is mostly mechanically catchable; intent dr
 
 **Mitigation.** Built into reconciliation; tests are pinned to the same canonical schema.
 
-**Residual risk.** A path-param semantic change (changing `{invite_code}` → `{boat_id}` because the route now means something different) is invisible at this level. The structural hash on the endpoint will change because the handler signature changed, which propagates through scenario 3.
+**Residual risk.** A path-param semantic change (changing `{invite_code}` → `{order_id}` because the route now means something different) is invisible at this level. The structural hash on the endpoint will change because the handler signature changed, which propagates through scenario 3.
 
 ---
 

@@ -14,14 +14,14 @@
     "id": {
       "type": "string",
       "pattern": "^process::[a-z_]+::[a-z0-9_]+$",
-      "description": "Form: process::<category>::<short_name>. E.g. process::crew_invite::accept."
+      "description": "Form: process::<category>::<short_name>. E.g. process::invite::accept."
     },
     "kind": {
       "const": "process"
     },
     "title": {
       "type": "string",
-      "description": "Short human label. E.g. \"Crew invite acceptance\"."
+      "description": "Short human label. E.g. \"Invite acceptance\"."
     },
     "summary": {
       "type": "string",

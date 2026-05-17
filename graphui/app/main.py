@@ -1,7 +1,7 @@
 """FastAPI app for the depgraph + logigraph viewer.
 
-Mount-prefix is `/graph` so it can sit behind the dev box Caddy at
-`https://dev.members.massbaysailing.org/graph/`.
+Mount-prefix is `/graph` so it can sit behind a reverse proxy at
+`https://<host>/graph/`.
 """
 from __future__ import annotations
 

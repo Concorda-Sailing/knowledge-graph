@@ -14,14 +14,14 @@
     "id": {
       "type": "string",
       "pattern": "^rule::[a-z_]+::[a-z0-9_]+$",
-      "description": "Form: rule::<category>::<short_name>. Example: rule::crew_visibility::peer_pii_resume_gated."
+      "description": "Form: rule::<category>::<short_name>. Example: rule::privacy::peer_pii_gated."
     },
     "kind": {
       "const": "rule"
     },
     "title": {
       "type": "string",
-      "description": "Short human-readable label. E.g. \"Peer crew identity hidden unless resume is published\"."
+      "description": "Short human-readable label. E.g. \"Peer identity hidden unless profile is published\"."
     },
     "statement": {
       "type": "string",

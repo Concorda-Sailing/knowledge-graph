@@ -14,8 +14,8 @@ Three stages, tracked by `definition_status` on each node:
    filled in (predicate, source path); dossier body is a TODO marker.
 2. **llm_drafted** — Claude has filled in the dossier from MEMORY.md,
    flow docs, and code context. Not yet reviewed.
-3. **human_reviewed** — Logan signed off after reading. Ready to be
-   trusted at edit time.
+3. **human_reviewed** — a human reviewer signed off after reading. Ready
+   to be trusted at edit time.
 
 Stub → drafted → reviewed. Don't skip stages. `bin/logigraph
 dossiers --status` reports the count at each stage.
@@ -23,7 +23,7 @@ dossiers --status` reports the count at each stage.
 ## Adding a rule
 
 1. Pick a stable `id` of the form `rule::<category>::<short_name>`,
-   e.g. `rule::crew_visibility::peer_pii_resume_gated`.
+   e.g. `rule::privacy::peer_pii_gated`.
 2. Write the node JSON at `nodes/rules/<id-slug>.json`. Required fields
    per `schema/rule.schema.json`:
    - `statement` — single-sentence English rule.

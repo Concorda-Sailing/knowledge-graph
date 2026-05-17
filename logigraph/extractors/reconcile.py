@@ -601,8 +601,8 @@ def detect_mediation_collisions(nodes: dict) -> list[tuple[str, list[str]]]:
     than one distinct relationship id is a *mediation collision*: two
     conceptually-distinct relationships sharing the same storage / join /
     predicate. That shared storage is the smoke signal for a domain
-    category error — e.g. ownership and crew membership both stored in
-    boat_crew.
+    category error — e.g. ownership and group membership both stored in
+    account_member.
 
     Returns: list of (mediated_by, [relationship_ids]) for groups with
     >1 distinct relationships.
@@ -616,8 +616,8 @@ def detect_mediation_collisions(nodes: dict) -> list[tuple[str, list[str]]]:
         mech = data.get("mediated_by")
         if not mech:
             continue
-        # Normalize: strip parenthetical qualifiers so 'boat_crew (role=owner)'
-        # and 'boat_crew (role=crew)' both bucket as 'boat_crew'. The
+        # Normalize: strip parenthetical qualifiers so 'account_member (role=owner)'
+        # and 'account_member (role=member)' both bucket as 'account_member'. The
         # qualifier is exactly what distinguishes the use — collision is the
         # point.
         head = mech.split("(", 1)[0].strip().rstrip(",").lower()
