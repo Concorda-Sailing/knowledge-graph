@@ -1,0 +1,33 @@
+[
+  {
+    "attributes": {},
+    "edges_out": [
+      {
+        "confidence": "exact",
+        "kind": "extends",
+        "target": "external::pypi::sqlalchemy::Base",
+        "via": "Base",
+        "where": "models/event.py:1"
+      }
+    ],
+    "extractor": "python",
+    "id": "r::models/event.py::Event",
+    "kind": null,
+    "name": "Event",
+    "owner": null,
+    "primitive": "class",
+    "schema_version": 2,
+    "signature": {
+      "bases": ["Base"],
+      "decorators": []
+    },
+    "source": {
+      "end_line": 10,
+      "language": "python",
+      "line": 1,
+      "path": "models/event.py",
+      "repo": "r"
+    },
+    "structural_hash": "ddd001"
+  }
+]

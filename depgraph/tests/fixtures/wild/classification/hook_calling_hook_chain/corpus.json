@@ -1,0 +1,62 @@
+[
+  {
+    "attributes": {},
+    "edges_out": [
+      {
+        "confidence": "exact",
+        "kind": "calls",
+        "target": "r::src/useBar.ts::useBar",
+        "via": "useBar",
+        "where": "src/useFoo.ts:3"
+      }
+    ],
+    "extractor": "typescript",
+    "id": "r::src/useFoo.ts::useFoo",
+    "kind": null,
+    "name": "useFoo",
+    "owner": null,
+    "primitive": "function",
+    "schema_version": 2,
+    "signature": {
+      "decorators": []
+    },
+    "source": {
+      "end_line": 6,
+      "language": "typescript",
+      "line": 1,
+      "path": "src/useFoo.ts",
+      "repo": "r"
+    },
+    "structural_hash": "aaa001"
+  },
+  {
+    "attributes": {},
+    "edges_out": [
+      {
+        "confidence": "exact",
+        "kind": "calls",
+        "target": "external::npm::react::useState",
+        "via": "useState",
+        "where": "src/useBar.ts:3"
+      }
+    ],
+    "extractor": "typescript",
+    "id": "r::src/useBar.ts::useBar",
+    "kind": null,
+    "name": "useBar",
+    "owner": null,
+    "primitive": "function",
+    "schema_version": 2,
+    "signature": {
+      "decorators": []
+    },
+    "source": {
+      "end_line": 6,
+      "language": "typescript",
+      "line": 1,
+      "path": "src/useBar.ts",
+      "repo": "r"
+    },
+    "structural_hash": "aaa002"
+  }
+]

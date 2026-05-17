@@ -1,0 +1,24 @@
+[
+  {
+    "attributes": {},
+    "edges_out": [],
+    "extractor": "python",
+    "id": "r::tests/test_api.py::test_create_event",
+    "kind": null,
+    "name": "test_create_event",
+    "owner": null,
+    "primitive": "function",
+    "schema_version": 2,
+    "signature": {
+      "decorators": ["router.post"]
+    },
+    "source": {
+      "end_line": 10,
+      "language": "python",
+      "line": 5,
+      "path": "tests/test_api.py",
+      "repo": "r"
+    },
+    "structural_hash": "ggg001"
+  }
+]

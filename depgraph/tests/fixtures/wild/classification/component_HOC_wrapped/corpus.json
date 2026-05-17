@@ -1,0 +1,48 @@
+[
+  {
+    "attributes": {},
+    "edges_out": [],
+    "extractor": "typescript",
+    "id": "r::src/Card.tsx::Card",
+    "kind": null,
+    "name": "Card",
+    "owner": null,
+    "primitive": "variable",
+    "schema_version": 2,
+    "signature": {
+      "decorators": [],
+      "value_text": "memo(forwardRef(({ children }, ref) => <div ref={ref}>{children}</div>))"
+    },
+    "source": {
+      "end_line": 1,
+      "language": "typescript",
+      "line": 1,
+      "path": "src/Card.tsx",
+      "repo": "r"
+    },
+    "structural_hash": "bbb001"
+  },
+  {
+    "attributes": {},
+    "edges_out": [],
+    "extractor": "typescript",
+    "id": "r::src/Card.tsx::CardInner",
+    "kind": null,
+    "name": "CardInner",
+    "owner": null,
+    "primitive": "function",
+    "schema_version": 2,
+    "signature": {
+      "decorators": [],
+      "returns_jsx": true
+    },
+    "source": {
+      "end_line": 1,
+      "language": "typescript",
+      "line": 1,
+      "path": "src/Card.tsx",
+      "repo": "r"
+    },
+    "structural_hash": "bbb002"
+  }
+]

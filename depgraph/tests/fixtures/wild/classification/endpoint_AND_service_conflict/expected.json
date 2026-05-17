@@ -1,0 +1,6 @@
+{
+  "classifications": [
+    {"id": "r::api/events.py::get_events", "kind": "endpoint"}
+  ],
+  "conflicts": []
+}

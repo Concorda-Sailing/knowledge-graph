@@ -1,0 +1,24 @@
+[
+  {
+    "attributes": {},
+    "edges_out": [],
+    "extractor": "python",
+    "id": "r::lib/calculations.py::test_calculate",
+    "kind": null,
+    "name": "test_calculate",
+    "owner": null,
+    "primitive": "function",
+    "schema_version": 2,
+    "signature": {
+      "decorators": []
+    },
+    "source": {
+      "end_line": 12,
+      "language": "python",
+      "line": 5,
+      "path": "lib/calculations.py",
+      "repo": "r"
+    },
+    "structural_hash": "ccc001"
+  }
+]

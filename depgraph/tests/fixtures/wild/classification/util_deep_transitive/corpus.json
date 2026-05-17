@@ -1,0 +1,144 @@
+[
+  {
+    "attributes": {},
+    "edges_out": [
+      {
+        "confidence": "exact",
+        "kind": "calls",
+        "target": "r::lib/helpers.py::fetch_events",
+        "via": "fetch_events",
+        "where": "api/events.py:12"
+      }
+    ],
+    "extractor": "python",
+    "id": "r::api/events.py::list_events",
+    "kind": null,
+    "name": "list_events",
+    "owner": null,
+    "primitive": "function",
+    "schema_version": 2,
+    "signature": {
+      "decorators": ["router.get"]
+    },
+    "source": {
+      "end_line": 15,
+      "language": "python",
+      "line": 10,
+      "path": "api/events.py",
+      "repo": "r"
+    },
+    "structural_hash": "fff001"
+  },
+  {
+    "attributes": {},
+    "edges_out": [
+      {
+        "confidence": "exact",
+        "kind": "calls",
+        "target": "r::lib/db.py::query_events",
+        "via": "query_events",
+        "where": "lib/helpers.py:5"
+      }
+    ],
+    "extractor": "python",
+    "id": "r::lib/helpers.py::fetch_events",
+    "kind": null,
+    "name": "fetch_events",
+    "owner": null,
+    "primitive": "function",
+    "schema_version": 2,
+    "signature": {
+      "decorators": []
+    },
+    "source": {
+      "end_line": 8,
+      "language": "python",
+      "line": 1,
+      "path": "lib/helpers.py",
+      "repo": "r"
+    },
+    "structural_hash": "fff002"
+  },
+  {
+    "attributes": {},
+    "edges_out": [
+      {
+        "confidence": "exact",
+        "kind": "calls",
+        "target": "r::lib/cache.py::get_cached",
+        "via": "get_cached",
+        "where": "lib/db.py:5"
+      }
+    ],
+    "extractor": "python",
+    "id": "r::lib/db.py::query_events",
+    "kind": null,
+    "name": "query_events",
+    "owner": null,
+    "primitive": "function",
+    "schema_version": 2,
+    "signature": {
+      "decorators": []
+    },
+    "source": {
+      "end_line": 8,
+      "language": "python",
+      "line": 1,
+      "path": "lib/db.py",
+      "repo": "r"
+    },
+    "structural_hash": "fff003"
+  },
+  {
+    "attributes": {},
+    "edges_out": [
+      {
+        "confidence": "exact",
+        "kind": "calls",
+        "target": "r::lib/serializer.py::serialize",
+        "via": "serialize",
+        "where": "lib/cache.py:5"
+      }
+    ],
+    "extractor": "python",
+    "id": "r::lib/cache.py::get_cached",
+    "kind": null,
+    "name": "get_cached",
+    "owner": null,
+    "primitive": "function",
+    "schema_version": 2,
+    "signature": {
+      "decorators": []
+    },
+    "source": {
+      "end_line": 8,
+      "language": "python",
+      "line": 1,
+      "path": "lib/cache.py",
+      "repo": "r"
+    },
+    "structural_hash": "fff004"
+  },
+  {
+    "attributes": {},
+    "edges_out": [],
+    "extractor": "python",
+    "id": "r::lib/serializer.py::serialize",
+    "kind": null,
+    "name": "serialize",
+    "owner": null,
+    "primitive": "function",
+    "schema_version": 2,
+    "signature": {
+      "decorators": []
+    },
+    "source": {
+      "end_line": 8,
+      "language": "python",
+      "line": 1,
+      "path": "lib/serializer.py",
+      "repo": "r"
+    },
+    "structural_hash": "fff005"
+  }
+]

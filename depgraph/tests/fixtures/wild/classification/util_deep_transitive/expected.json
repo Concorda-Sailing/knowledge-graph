@@ -1,0 +1,10 @@
+{
+  "classifications": [
+    {"id": "r::api/events.py::list_events", "kind": "endpoint"},
+    {"id": "r::lib/helpers.py::fetch_events", "kind": "util"},
+    {"id": "r::lib/db.py::query_events", "kind": "util"},
+    {"id": "r::lib/cache.py::get_cached", "kind": "util"},
+    {"id": "r::lib/serializer.py::serialize", "kind": "util"}
+  ],
+  "conflicts": []
+}

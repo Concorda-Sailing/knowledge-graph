@@ -1,0 +1,6 @@
+{
+  "classifications": [
+    {"id": "r::src/useBar.ts::useBar", "kind": "hook"}
+  ],
+  "conflicts": []
+}

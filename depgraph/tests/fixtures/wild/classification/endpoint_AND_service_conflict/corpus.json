@@ -1,0 +1,34 @@
+[
+  {
+    "attributes": {},
+    "edges_out": [
+      {
+        "confidence": "exact",
+        "kind": "db_access",
+        "target": "external::python-dbapi::session.query",
+        "via": "session.query",
+        "where": "api/events.py:15"
+      }
+    ],
+    "extractor": "python",
+    "id": "r::api/events.py::get_events",
+    "kind": null,
+    "name": "get_events",
+    "owner": null,
+    "primitive": "function",
+    "schema_version": 2,
+    "signature": {
+      "decorators": [
+        "router.get"
+      ]
+    },
+    "source": {
+      "end_line": 20,
+      "language": "python",
+      "line": 10,
+      "path": "api/events.py",
+      "repo": "r"
+    },
+    "structural_hash": "abc123"
+  }
+]

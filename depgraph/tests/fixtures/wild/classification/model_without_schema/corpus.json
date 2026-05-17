@@ -1,0 +1,40 @@
+[
+  {
+    "attributes": {},
+    "edges_out": [
+      {
+        "confidence": "exact",
+        "kind": "extends",
+        "target": "external::pypi::sqlalchemy::Base",
+        "via": "Base",
+        "where": "models/user.py:1"
+      },
+      {
+        "confidence": "fuzzy",
+        "kind": "references",
+        "target": "r::migrations::users",
+        "via": "__tablename__",
+        "where": "models/user.py:3"
+      }
+    ],
+    "extractor": "python",
+    "id": "r::models/user.py::User",
+    "kind": null,
+    "name": "User",
+    "owner": null,
+    "primitive": "class",
+    "schema_version": 2,
+    "signature": {
+      "bases": ["Base"],
+      "decorators": []
+    },
+    "source": {
+      "end_line": 15,
+      "language": "python",
+      "line": 1,
+      "path": "models/user.py",
+      "repo": "r"
+    },
+    "structural_hash": "eee001"
+  }
+]

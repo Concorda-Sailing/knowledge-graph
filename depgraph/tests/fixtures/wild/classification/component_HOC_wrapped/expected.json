@@ -1,0 +1,6 @@
+{
+  "classifications": [
+    {"id": "r::src/Card.tsx::CardInner", "kind": "component"}
+  ],
+  "conflicts": []
+}

@@ -1,0 +1,8 @@
+{
+  "classifications": [
+    {"id": "r::tests/test_api.py::test_create_event", "kind": "test"}
+  ],
+  "conflicts": [
+    {"id": "r::tests/test_api.py::test_create_event", "kind": "endpoint"}
+  ]
+}
