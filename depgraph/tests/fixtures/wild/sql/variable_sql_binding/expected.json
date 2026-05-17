@@ -1,0 +1,13 @@
+{
+  "tables": [
+    {
+      "name": "accounts",
+      "columns": ["id", "handle"]
+    },
+    {
+      "name": "invites",
+      "columns": ["id", "account_id", "token"]
+    }
+  ],
+  "expect_warnings": false
+}

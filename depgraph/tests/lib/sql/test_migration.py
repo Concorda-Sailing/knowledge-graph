@@ -4,6 +4,7 @@ from depgraph.lib.sql.migration import (
 )
 
 FIXTURES = Path(__file__).parent / "fixtures" / "migrations"
+VAR_FIXTURES = Path(__file__).parent / "fixtures" / "migrations_var"
 
 
 def test_recognizes_numbered_migration():
@@ -49,3 +50,30 @@ def test_dynamic_sql_recorded_as_warning_not_parsed():
     assert m.operations == []
     assert any("dynamic" in w.lower() or "interpolation" in w.lower()
                for w in m.warnings)
+
+
+def test_variable_sql_resolves_module_level_binding():
+    """`var = "CREATE TABLE ..."; text(var)` resolves through the
+    module-level binding instead of dropping the schema as dynamic SQL."""
+    m = extract_migration(VAR_FIXTURES / "005_variable_sql.py")
+    assert m.warnings == []
+    assert len(m.operations) == 1
+    assert m.operations[0].kind == "create_table"
+    assert m.operations[0].table == "accounts"
+
+
+def test_variable_sql_skips_rebound_name():
+    """A name assigned more than once at module scope is ambiguous —
+    drop the binding and surface the dynamic-SQL warning."""
+    m = extract_migration(VAR_FIXTURES / "006_rebound_var.py")
+    assert m.operations == []
+    assert any("unresolved name 'DDL'" in w for w in m.warnings), m.warnings
+
+
+def test_variable_sql_resolves_ann_assign():
+    """`var: str = "..."` (AnnAssign) is recognized alongside plain Assign."""
+    m = extract_migration(VAR_FIXTURES / "007_typed_var.py")
+    assert m.warnings == []
+    assert len(m.operations) == 1
+    assert m.operations[0].kind == "create_table"
+    assert m.operations[0].table == "invites"

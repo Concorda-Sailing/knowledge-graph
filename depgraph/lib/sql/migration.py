@@ -70,6 +70,7 @@ def extract_migration(path: Path) -> MigrationFile:
 
     tree = ast.parse(path.read_text())
     result = MigrationFile(path=path, migration_order=order)
+    var_map = _collect_string_bindings(tree)
 
     for node in ast.walk(tree):
         if not (isinstance(node, ast.Call)
@@ -79,7 +80,7 @@ def extract_migration(path: Path) -> MigrationFile:
         arg = node.args[0] if node.args else None
         if arg is None:
             continue
-        sql_text, dynamic_reason = _extract_string(arg)
+        sql_text, dynamic_reason = _extract_string(arg, var_map=var_map)
         if dynamic_reason:
             result.warnings.append(
                 f"line {node.lineno}: dynamic SQL skipped ({dynamic_reason})")
@@ -92,11 +93,53 @@ def extract_migration(path: Path) -> MigrationFile:
     return result
 
 
-def _extract_string(expr: ast.expr) -> tuple[str, str | None]:
+def _collect_string_bindings(tree: ast.Module) -> dict[str, str]:
+    """Build a map of module-level `var = "literal"` bindings whose RHS
+    reduces to a string literal. Only single-binding names are included —
+    if a name is bound more than once at module scope, the binding is
+    dropped because we can't know which value is live at the text(...)
+    call. Loop variables, function-scoped assignments, dict/list element
+    bindings, and conditional rebindings are not tracked (deferred:
+    would need flow-aware analysis)."""
+    assigns: dict[str, list[ast.expr]] = {}
+    for node in tree.body:
+        if isinstance(node, ast.Assign):
+            for tgt in node.targets:
+                if isinstance(tgt, ast.Name):
+                    assigns.setdefault(tgt.id, []).append(node.value)
+        elif isinstance(node, ast.AnnAssign):
+            if isinstance(node.target, ast.Name) and node.value is not None:
+                assigns.setdefault(node.target.id, []).append(node.value)
+    out: dict[str, str] = {}
+    for name, rhss in assigns.items():
+        if len(rhss) != 1:
+            continue
+        value, dyn = _extract_string(rhss[0], var_map={})
+        if not dyn:
+            out[name] = value
+    return out
+
+
+def _extract_string(
+    expr: ast.expr,
+    *,
+    var_map: dict[str, str] | None = None,
+) -> tuple[str, str | None]:
     """Return (sql_text, dynamic_reason). dynamic_reason is non-None when
-    the expression can't be reduced to a literal string at parse time."""
+    the expression can't be reduced to a literal string at parse time.
+
+    `var_map` carries module-level `var = "literal"` bindings collected by
+    `_collect_string_bindings`. When supplied, bare `Name` references
+    resolve through it. Names that aren't in the map fall through to the
+    non-literal warning."""
+    if var_map is None:
+        var_map = {}
     if isinstance(expr, ast.Constant) and isinstance(expr.value, str):
         return expr.value, None
+    if isinstance(expr, ast.Name):
+        if expr.id in var_map:
+            return var_map[expr.id], None
+        return "", f"unresolved name {expr.id!r}"
     if isinstance(expr, ast.JoinedStr):  # f-string
         parts = []
         for v in expr.values:
@@ -106,8 +149,8 @@ def _extract_string(expr: ast.expr) -> tuple[str, str | None]:
                 return "", "f-string interpolation"
         return "".join(parts), None
     if isinstance(expr, ast.BinOp) and isinstance(expr.op, ast.Add):
-        l, lr = _extract_string(expr.left)
-        r, rr = _extract_string(expr.right)
+        l, lr = _extract_string(expr.left, var_map=var_map)
+        r, rr = _extract_string(expr.right, var_map=var_map)
         if lr or rr:
             return "", lr or rr
         return l + r, None
