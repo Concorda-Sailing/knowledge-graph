@@ -110,6 +110,11 @@ def project_repos(data_dir: Path) -> dict[str, dict]:
                         extensions if absent.
       migrations_dirs — list of subdirectory names (relative to repo path)
                         that contain migration files.
+      include_paths   — list of fnmatch globs against rel-path; if set, only
+                        files matching at least one pattern are extracted.
+      exclude_paths   — list of fnmatch globs against rel-path; files
+                        matching any pattern are skipped. Applied after
+                        include_paths.
 
     Raises ValueError if [repos.*] is present but malformed.
     Returns {} if no [repos.*] tables are configured.
@@ -136,6 +141,8 @@ def project_repos(data_dir: Path) -> dict[str, dict]:
             # v2 pipeline keys — passed through as-is from TOML
             "languages": val.get("languages"),
             "migrations_dirs": val.get("migrations_dirs", []),
+            "include_paths": val.get("include_paths") or [],
+            "exclude_paths": val.get("exclude_paths") or [],
         }
     return out
 

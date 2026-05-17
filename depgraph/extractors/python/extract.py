@@ -6,8 +6,10 @@ variable primitives. No kind decisions; classification is a later step.
 from __future__ import annotations
 
 import ast
+import re
+from functools import lru_cache
 from pathlib import Path
-from typing import Iterator
+from typing import Iterator, Sequence
 
 from .canonical import canonical_id, structural_hash
 
@@ -42,18 +44,87 @@ def _base_primitive(*, schema_id: str, primitive: str, name: str,
     }
 
 
-def _iter_py_files(repo_path: Path) -> Iterator[Path]:
+_HARDCODED_SKIP_DIRS = {"__pycache__", ".venv", "venv", "node_modules"}
+
+
+@lru_cache(maxsize=256)
+def _compile_glob(pattern: str) -> re.Pattern[str]:
+    """Compile a path glob to a regex matching the full rel-path.
+
+    Semantics (gitignore-flavoured):
+      `**/`  → zero or more leading path segments (including none).
+      `**`   → any characters, including `/`.
+      `*`    → any characters except `/` (one segment).
+      `?`    → any single character except `/`.
+
+    Patterns are matched against forward-slash-normalized rel-paths and
+    anchored to the full string."""
+    pat = pattern.replace("\\", "/").lstrip("/")
+    parts: list[str] = []
+    i = 0
+    while i < len(pat):
+        if pat[i:i + 3] == "**/":
+            parts.append("(?:.*/)?")
+            i += 3
+        elif pat[i:i + 2] == "**":
+            parts.append(".*")
+            i += 2
+        elif pat[i] == "*":
+            parts.append("[^/]*")
+            i += 1
+        elif pat[i] == "?":
+            parts.append("[^/]")
+            i += 1
+        else:
+            parts.append(re.escape(pat[i]))
+            i += 1
+    return re.compile(f"^{''.join(parts)}$")
+
+
+def _matches_any(rel_path: str, patterns: Sequence[str]) -> bool:
+    """True if rel_path matches any glob pattern. See `_compile_glob`
+    for supported syntax."""
+    norm = rel_path.replace("\\", "/")
+    return any(_compile_glob(p).match(norm) for p in patterns)
+
+
+def _iter_py_files(
+    repo_path: Path,
+    *,
+    include_paths: Sequence[str] = (),
+    exclude_paths: Sequence[str] = (),
+) -> Iterator[Path]:
+    """Yield every .py under repo_path subject to:
+      1. Hardcoded skip dirs (__pycache__, virtualenvs, node_modules) — always.
+      2. include_paths — if non-empty, file's rel-path must match at least one.
+      3. exclude_paths — file's rel-path must match none.
+    """
     for p in repo_path.rglob("*.py"):
-        if any(part in {"__pycache__", ".venv", "venv", "node_modules"} for part in p.parts):
+        if any(part in _HARDCODED_SKIP_DIRS for part in p.parts):
+            continue
+        rel = str(p.relative_to(repo_path))
+        if include_paths and not _matches_any(rel, include_paths):
+            continue
+        if exclude_paths and _matches_any(rel, exclude_paths):
             continue
         yield p
 
 
-def extract_repo(*, repo_key: str, repo_path: Path) -> Iterator[dict]:
+def extract_repo(
+    *,
+    repo_key: str,
+    repo_path: Path,
+    include_paths: Sequence[str] = (),
+    exclude_paths: Sequence[str] = (),
+) -> Iterator[dict]:
     primitives: list[dict] = []
     trees_by_path: dict[str, ast.Module] = {}
 
-    files = sorted(_iter_py_files(repo_path))
+    files = sorted(_iter_py_files(
+        repo_path,
+        include_paths=include_paths,
+        exclude_paths=exclude_paths,
+    ))
 
     # packages: dirs that contain __init__.py
     package_dirs = set()

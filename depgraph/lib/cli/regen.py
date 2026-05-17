@@ -74,9 +74,20 @@ def _infer_languages(repo_path: Path) -> list[str]:
 # Per-language extraction
 # ---------------------------------------------------------------------------
 
-def _extract_python(repo_key: str, repo_path: Path) -> list[dict]:
+def _extract_python(
+    repo_key: str,
+    repo_path: Path,
+    *,
+    include_paths: list[str] | None = None,
+    exclude_paths: list[str] | None = None,
+) -> list[dict]:
     from depgraph.extractors.python.extract import extract_repo
-    return list(extract_repo(repo_key=repo_key, repo_path=repo_path))
+    return list(extract_repo(
+        repo_key=repo_key,
+        repo_path=repo_path,
+        include_paths=include_paths or (),
+        exclude_paths=exclude_paths or (),
+    ))
 
 
 _DEFAULT_TS_HEAP_MB = 4096
@@ -251,6 +262,8 @@ def _run_v2_pipeline(
         path:           Path — checkout root
         languages:      list[str] — ["python", "typescript", "sql"]
         migrations_dirs: list[Path] — dirs to scan for migration files
+        include_paths:  list[str] — fnmatch globs (Python only, today)
+        exclude_paths:  list[str] — fnmatch globs (Python only, today)
     """
     all_primitives: list[dict] = []
     repo_paths: dict[str, Path] = {}
@@ -265,7 +278,11 @@ def _run_v2_pipeline(
         print(f"--- extract {key} (languages: {', '.join(languages) or 'none detected'})")
 
         if "python" in languages:
-            prims = _extract_python(key, path)
+            prims = _extract_python(
+                key, path,
+                include_paths=repo_cfg.get("include_paths"),
+                exclude_paths=repo_cfg.get("exclude_paths"),
+            )
             print(f"    python: {len(prims)} primitives")
             all_primitives.extend(prims)
 
@@ -378,6 +395,8 @@ def _mode_a(args: argparse.Namespace, ctx: Context) -> int:
             "migrations_dirs": [
                 info["path"] / d for d in (info.get("migrations_dirs") or [])
             ],
+            "include_paths": info.get("include_paths") or [],
+            "exclude_paths": info.get("exclude_paths") or [],
         })
 
     tool_root = ctx.tool_root
@@ -423,6 +442,12 @@ def _mode_a_v1_fallback(
     return 0
 
 
+def _split_csv(value: str | None) -> list[str]:
+    if not value:
+        return []
+    return [s.strip() for s in value.split(",") if s.strip()]
+
+
 # ---------------------------------------------------------------------------
 # Mode B — single-repo direct invocation
 # ---------------------------------------------------------------------------
@@ -443,6 +468,9 @@ def _mode_b(args: argparse.Namespace, ctx: Context) -> int:
     if getattr(args, "migrations_dir", None):
         migrations_dirs = [Path(args.migrations_dir).expanduser().resolve()]
 
+    include_paths = _split_csv(getattr(args, "include_paths", None))
+    exclude_paths = _split_csv(getattr(args, "exclude_paths", None))
+
     # data_dir comes from ctx (resolved by kg.cli.depgraph from --data-dir)
     data_dir = ctx.DEPGRAPH
 
@@ -451,6 +479,8 @@ def _mode_b(args: argparse.Namespace, ctx: Context) -> int:
         "path": repo_path,
         "languages": languages,
         "migrations_dirs": migrations_dirs,
+        "include_paths": include_paths,
+        "exclude_paths": exclude_paths,
     }]
 
     tool_root = ctx.tool_root
@@ -489,4 +519,11 @@ def register(sub: argparse._SubParsersAction) -> None:
                         "Inferred from file extensions if omitted.")
     p.add_argument("--migrations-dir",
                    help="[Mode B] Path to migrations directory (SQL pipeline).")
+    p.add_argument("--include-paths", dest="include_paths",
+                   help="[Mode B] Comma-separated fnmatch globs against "
+                        "rel-path; if set, only matching files are extracted "
+                        "(Python only).")
+    p.add_argument("--exclude-paths", dest="exclude_paths",
+                   help="[Mode B] Comma-separated fnmatch globs against "
+                        "rel-path; matching files are skipped (Python only).")
     p.set_defaults(func=cmd_regen)
