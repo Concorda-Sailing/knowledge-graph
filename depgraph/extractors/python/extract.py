@@ -187,9 +187,26 @@ def _emit_class(node: ast.ClassDef, *, repo_key: str, rel_path: str,
     return out
 
 
+def _property_role(decorator_names: list[str], fn_name: str) -> str | None:
+    """Return ':getter' / ':setter' / ':deleter' if the function is part of
+    a property triple; None for normal methods.
+    """
+    for d in decorator_names:
+        if d == "property":
+            return ":getter"
+        if d == f"{fn_name}.setter":
+            return ":setter"
+        if d == f"{fn_name}.deleter":
+            return ":deleter"
+    return None
+
+
 def _function_primitive(node: ast.FunctionDef | ast.AsyncFunctionDef,
                         *, owner: str | None, repo_key: str, rel_path: str) -> dict:
-    symbol = f"{owner.split('::')[-1]}.{node.name}" if owner else node.name
+    dec_names = [_decorator_name(d) for d in node.decorator_list]
+    prop_suffix = _property_role(dec_names, node.name) or ""
+    base_symbol = f"{owner.split('::')[-1]}.{node.name}" if owner else node.name
+    symbol = f"{base_symbol}{prop_suffix}"
     params = [{"name": a.arg, "type_annotation": _annotation_text(a.annotation),
                "default": None}
               for a in node.args.args + node.args.kwonlyargs]
@@ -199,7 +216,7 @@ def _function_primitive(node: ast.FunctionDef | ast.AsyncFunctionDef,
         "parameters": params,
         "return_type": _annotation_text(node.returns),
         "is_async": isinstance(node, ast.AsyncFunctionDef),
-        "decorators": [_decorator_name(d) for d in node.decorator_list],
+        "decorators": dec_names,
     }
     return _base_primitive(
         schema_id=canonical_id(repo_key, rel_path, symbol),

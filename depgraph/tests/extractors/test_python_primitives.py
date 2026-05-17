@@ -79,3 +79,15 @@ def test_all_python_primitives_validate():
         for p in extract(scenario):
             errors = validate_primitive(p)
             assert not errors, f"{scenario}/{p.get('id')}: {errors}"
+
+
+def test_property_getter_setter_distinct_ids():
+    """@property def value AND @value.setter def value emit distinct primitives."""
+    prims = extract("properties")
+    fns = {p["name"]: p for p in prims if p["primitive"] == "function"}
+    assert "Widget.value:getter" in fns, f"missing getter; got: {list(fns)}"
+    assert "Widget.value:setter" in fns, f"missing setter; got: {list(fns)}"
+    assert "Widget.value:deleter" in fns, f"missing deleter; got: {list(fns)}"
+    assert fns["Widget.value:getter"]["id"] == "fixture::src.py::Widget.value:getter"
+    assert fns["Widget.value:setter"]["id"] == "fixture::src.py::Widget.value:setter"
+    assert fns["Widget.value:deleter"]["id"] == "fixture::src.py::Widget.value:deleter"

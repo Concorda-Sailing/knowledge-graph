@@ -6,7 +6,8 @@
     {"id": "fixture::src/dunders.py::DescriptorMixin.__init_subclass__", "primitive": "function", "name": "DescriptorMixin.__init_subclass__", "owner": "fixture::src/dunders.py::DescriptorMixin"},
     {"id": "fixture::src/dunders.py::DescriptorMixin.__set_name__", "primitive": "function", "name": "DescriptorMixin.__set_name__", "owner": "fixture::src/dunders.py::DescriptorMixin"},
     {"id": "fixture::src/dunders.py::DescriptorMixin.__class_getitem__", "primitive": "function", "name": "DescriptorMixin.__class_getitem__", "owner": "fixture::src/dunders.py::DescriptorMixin"},
-    {"id": "fixture::src/dunders.py::DescriptorMixin.value", "primitive": "function", "name": "DescriptorMixin.value", "owner": "fixture::src/dunders.py::DescriptorMixin"}
+    {"id": "fixture::src/dunders.py::DescriptorMixin.value:getter", "primitive": "function", "name": "DescriptorMixin.value:getter", "owner": "fixture::src/dunders.py::DescriptorMixin"},
+    {"id": "fixture::src/dunders.py::DescriptorMixin.value:setter", "primitive": "function", "name": "DescriptorMixin.value:setter", "owner": "fixture::src/dunders.py::DescriptorMixin"}
   ],
   "edges": []
 }
