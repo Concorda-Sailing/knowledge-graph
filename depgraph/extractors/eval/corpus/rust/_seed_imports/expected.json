@@ -1,6 +1,0 @@
-{
-  "nodes": {
-    "module": ["r:a.rs:<module>"],
-    "function": ["r:a.rs:hi"]
-  }
-}

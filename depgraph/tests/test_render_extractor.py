@@ -7,14 +7,14 @@ import depgraph.lib.config as config
 def test_framework_dir_substitution():
     repo_info = {
         "path": "/some/repo",
-        "extractor": ["python3", "{framework_dir}/extractors/generic/foo.py", "--path", "{path}"],
+        "extractor": ["python3", "{framework_dir}/scripts/foo.py", "--path", "{path}"],
     }
     out = config.render_extractor(repo_info, Path("/some/data_dir"))
     assert out is not None
     # framework_dir resolves to the depgraph repo root (parent of lib/).
     expected_root = str(Path(config.__file__).resolve().parent.parent)
     assert out[1].startswith(expected_root)
-    assert out[1].endswith("/extractors/generic/foo.py")
+    assert out[1].endswith("/scripts/foo.py")
     assert out[3] == "/some/repo"
 
 

@@ -13,12 +13,12 @@ def test_kg_dir_substitution(tmp_path):
     """render_extractor replaces {kg_dir} with the knowledge-graph framework root."""
     repo_info = {
         "path": str(tmp_path),
-        "extractor": ["python3", "{kg_dir}/depgraph/extractors/generic/python/extract.py"],
+        "extractor": ["python3", "{kg_dir}/some/script.py"],
     }
     out = config.render_extractor(repo_info, tmp_path)
     assert out is not None
     expected_kg_dir = str(Path(config.__file__).resolve().parent.parent.parent)
-    assert out[1] == f"{expected_kg_dir}/depgraph/extractors/generic/python/extract.py"
+    assert out[1] == f"{expected_kg_dir}/some/script.py"
 
 
 def test_kg_dir_does_not_break_existing_substitutions(tmp_path):

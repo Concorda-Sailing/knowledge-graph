@@ -1,6 +1,0 @@
-{
-  "nodes": {
-    "module": ["r:a.ts:<module>"],
-    "function": ["r:a.ts:f"]
-  }
-}

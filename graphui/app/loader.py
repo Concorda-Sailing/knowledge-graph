@@ -2098,22 +2098,30 @@ def _scan_extractor_file(path: Path, scope: str) -> dict:
 
 
 def extractor_inventory() -> list[dict]:
-    """Walk the project-custom extractor dir AND the framework-generic
-    extractor dir. Returns one row per file with size, mtime, sha256
-    prefix, and scope (`project` or `generic`)."""
+    """Walk the project-custom extractor dir AND the framework's per-language
+    extractor dirs. Returns one row per file with size, mtime, sha256 prefix,
+    and scope (`project` or `framework`)."""
     out: list[dict] = []
     project_dir = DEPGRAPH / "extractors"
     if project_dir.exists():
         for p in sorted(project_dir.iterdir()):
             if p.is_file() and not p.name.startswith("."):
                 out.append(_scan_extractor_file(p, "project"))
-    # Framework-generic location — empty for now, will populate when Layer 3 ships.
-    framework_dir = _DEPGRAPH_TOOL_ROOT / "extractors" / "generic"
-    if framework_dir.exists():
-        for p in sorted(framework_dir.rglob("*.py")):
-            out.append(_scan_extractor_file(p, "generic"))
-        for p in sorted(framework_dir.rglob("*.ts")):
-            out.append(_scan_extractor_file(p, "generic"))
+    # Framework-shipped per-language extractors (Python in-process, TypeScript
+    # via tsx subprocess, SQL pipeline).
+    framework_extractors = _DEPGRAPH_TOOL_ROOT / "extractors"
+    for subdir in ("python", "typescript", "sql"):
+        d = framework_extractors / subdir
+        if not d.exists():
+            continue
+        for p in sorted(d.rglob("*.py")):
+            if "/node_modules/" in str(p) or "/__pycache__/" in str(p):
+                continue
+            out.append(_scan_extractor_file(p, "framework"))
+        for p in sorted(d.rglob("*.ts")):
+            if "/node_modules/" in str(p):
+                continue
+            out.append(_scan_extractor_file(p, "framework"))
     return out
 
 

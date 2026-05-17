@@ -1,3 +1,0 @@
-{
-  "nodes": { "endpoint": ["r:api.py:list_items"] }
-}

@@ -158,23 +158,40 @@ Every `kg depgraph` / `kg logigraph` / `kg project` command resolves a project b
 
 The native command is `kg project add-repo`; manual TOML editing is no longer the primary path.
 
-```bash
-kg project add-repo <key> <path> \
-  [--extractor <prog> <arg> ...] \
-  [--detector <name> ...] \
-  [--files-arg=--only] \
-  [--force]
-```
+Edit `<data-repo>/depgraph/project.toml` and add a `[repos.<key>]` table.
+The shipped per-language extractors at `depgraph/extractors/{python,
+typescript,sql}/` are driven by the per-repo `languages` list — no
+per-repo extractor command needed for Python, TypeScript/JavaScript, or
+SQL migrations.
 
-1. Pick an extractor for the new repo's language:
-   - **Python:** `--extractor python3 '{kg_dir}/depgraph/extractors/generic/python/extract.py'` — detectors: `fastapi`, `sqlalchemy`, `pydantic`, `pytest`, `service`.
-   - **TypeScript/JavaScript:** `--extractor npx tsx '{kg_dir}/depgraph/extractors/generic/typescript/extract.ts'` — detectors: `react`, `vitest`, `route-calls`, `service`.
-   - **Go:** `--extractor python3 '{kg_dir}/depgraph/extractors/generic/go/extract.py'` — no shipped detectors; primitives only.
-   - **Rust:** `--extractor python3 '{kg_dir}/depgraph/extractors/generic/rust/extract.py'` — no shipped detectors.
-2. Repeat `--detector <name>` for each detector you want. Pass `--files-arg=--only` so the post-edit hook can target a single file (note the `=` — argparse can't parse `--files-arg --only` because `--only` starts with `--`).
-3. If the project needs framework recognition the shipped detectors don't cover, author a project-local detector at `<data-repo>/depgraph/extractors/detectors/<name>.py` (or `.ts`). Copy the `TEMPLATE_detector.*` from the matching language dir. See `CONTRIBUTING-detectors.md` to upstream it as a PR.
-4. Run `kg depgraph regen` and confirm nodes appear under `<data-repo>/depgraph/nodes/`.
-5. If logigraph rules will claim against the new repo, also add the `[repos.<key>]` table to `<data-repo>/logigraph/project.toml` so path-classification works for the logigraph hook. (No `kg` shortcut for the logigraph side yet; hand-edit the TOML.)
+1. Add the table:
+   ```toml
+   [repos.<key>]
+   path = "~/<project>-<key>"
+   languages = ["python"]          # subset of {python, typescript, sql}; inferred if omitted
+   migrations_dirs = ["migrations"] # required when languages includes "sql"
+   exclude_paths = [                # scope what's tracked; the framework only skips a handful of build dirs
+     "**/tests/**", "**/__tests__/**", "**/build/**",
+   ]
+   ```
+   See `depgraph/README.md` for the full per-repo key reference, and the
+   v2 classification rules under `depgraph/lib/classification/` for how
+   `kind` is assigned (`component`, `hook`, `endpoint`, `service`,
+   `model`, `schema`, `test`, `util`).
+2. **Scope the repo with `include_paths` / `exclude_paths`.** Required
+   for almost every real repo — without it, test trees, generated code,
+   and vendored deps end up in the corpus and produce orphan edges.
+3. Run `kg depgraph regen` and confirm nodes appear under
+   `<data-repo>/depgraph/nodes/<kind>/`.
+4. If logigraph rules will claim against the new repo, also add the
+   `[repos.<key>]` table to `<data-repo>/logigraph/project.toml` so
+   path-classification works for the logigraph hook. (No `kg` shortcut
+   for the logigraph side yet; hand-edit the TOML.)
+
+For a language the framework doesn't ship, the v1 subprocess fallback
+in `lib/cli/regen.py::_mode_a_v1_fallback` still honors per-repo
+`extractor = ["cmd", "args", ...]` configs. New repos should prefer the
+shipped per-language extractors.
 
 ### When the user asks: "Author a rule / process / domain entity"
 
