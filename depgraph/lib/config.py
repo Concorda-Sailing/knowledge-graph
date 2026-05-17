@@ -240,6 +240,31 @@ def path_to_repo_relative(abs_path: Path, data_dir: Path) -> Optional[tuple[str,
     return None
 
 
+def path_to_repo_key_relative(abs_path: Path, data_dir: Path) -> Optional[tuple[str, str]]:
+    """Given an absolute filesystem path, find which configured [repos.<key>]
+    checkout it lives under and return (repo_key, rel_path_str).
+
+    Same lookup as `path_to_repo_relative` but returns the repo KEY (the
+    [repos.<key>] table name used as the prefix in canonical node ids
+    like `<key>::<rel-path>::<symbol>`). v2 corpora are keyed by the
+    repo key; v1 path-matching callers may still want basename via the
+    sibling function.
+
+    Returns None if the path isn't under any configured repo's `path`.
+    """
+    try:
+        ap = Path(abs_path).expanduser().resolve()
+    except (OSError, RuntimeError):
+        return None
+    for key, info in project_repos(data_dir).items():
+        try:
+            rel = ap.relative_to(info["path"])
+        except ValueError:
+            continue
+        return key, str(rel)
+    return None
+
+
 def basename_path_map(data_dir: Path) -> dict[str, Path]:
     """{basename: resolved Path} for every [repos.*] table. Convenience for
     callers that have a `source.repo` basename and need the on-disk path

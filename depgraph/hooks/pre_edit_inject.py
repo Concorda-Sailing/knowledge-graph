@@ -40,52 +40,48 @@ sys.path.insert(0, str(_FRAMEWORK_ROOT))
 from depgraph.lib.config import (  # noqa: E402
     resolve_data_dir,
     load_project_config,
-    project_repos,
-    render_extractor,
-    repo_basenames,
-    path_to_repo_relative,
+    path_to_repo_key_relative,
 )
+from depgraph.lib.primitives import slugify_id_for_filename  # noqa: E402
 
 DEPGRAPH = resolve_data_dir("DEPGRAPH_DATA_DIR")
 NODES = DEPGRAPH / "nodes"
-DEPENDENTS_INDEX = NODES / "_index" / "dependents.json"
+# v2 reverse index — built by depgraph.lib.cli.regen._build_by_target.
+# Flat {target_id: [{source, kind, via, where, confidence}, ...]} dict;
+# no schema_version wrapper (writer uses indent=2, sort_keys=True).
+DEPENDENTS_INDEX = NODES / "_index" / "by_target.json"
 CORPUS_META = NODES / "_meta.json"
-MANIFESTS_DIR = NODES / "_manifests"
 TELEMETRY_DIR = DEPGRAPH / "telemetry"
 INJECTIONS_LOG = TELEMETRY_DIR / "injections.jsonl"
 DOSSIER_LINE_LIMIT = 200
 TRANSITIVE_DEPTH = 3
 DEPENDENTS_PER_DEPTH_CAP = 30
-NODE_SCHEMA_VERSION = 1
+NODE_SCHEMA_VERSION = 2
+
+# Dossier dir-name mapping — must mirror lib/classification/writer.py.
+# Classified nodes live under nodes/<kind_dir>/ and dossiers at
+# dossiers/<kind_dir>/. Unclassified primitives use the primitive type.
+_KIND_DIRS = {
+    "component": "components", "hook": "hooks", "endpoint": "endpoints",
+    "service": "services", "model": "models", "schema": "schemas",
+    "test": "tests", "util": "utils",
+}
+_PRIMITIVE_DIRS = {
+    "module": "modules", "package": "packages", "class": "classes",
+    "function": "functions", "variable": "variables",
+}
 
 
-_SCRIPT_SUFFIXES = (".py", ".ts", ".tsx", ".js", ".mjs", ".sh")
-
-
-def expected_extractor_stems() -> list[str]:
-    """Manifest stems we expect to exist after a clean regen, derived from
-    each [repos.<key>].extractor command. Heuristic: find the FIRST token
-    in the command that resolves to a script-shaped filename (suffix in
-    _SCRIPT_SUFFIXES); the stem of that filename is the expected manifest
-    name.
-
-    For multi-repo extractors (one script serving N repos with different
-    args), this returns one stem matching the script name; the actual
-    manifests are typically named `<stem>_<repo>` per repo. We accept any
-    manifest whose name STARTS WITH the derived stem, so multi-repo
-    extractors don't false-positive."""
-    out: list[str] = []
-    for info in project_repos(DEPGRAPH).values():
-        rendered = render_extractor(info, DEPGRAPH)
-        if not rendered:
-            continue
-        for tok in rendered:
-            if any(tok.endswith(s) for s in _SCRIPT_SUFFIXES):
-                stem = Path(tok).stem
-                if stem and stem not in out:
-                    out.append(stem)
-                break
-    return out
+def _dossier_dir_for(node: dict) -> str | None:
+    """Return the dossier subdir for a v2 node, or None if neither kind
+    nor primitive resolves to a known directory."""
+    kind = node.get("kind")
+    if kind and kind in _KIND_DIRS:
+        return _KIND_DIRS[kind]
+    primitive = node.get("primitive")
+    if primitive and primitive in _PRIMITIVE_DIRS:
+        return _PRIMITIVE_DIRS[primitive]
+    return None
 
 
 def _log_injection(tool: str, file_path: str, node_ids: list[str]) -> None:
@@ -113,41 +109,55 @@ def _log_injection(tool: str, file_path: str, node_ids: list[str]) -> None:
 
 
 def load_meta_and_status() -> tuple[dict, list[str]]:
-    """Defect #2: read _meta.json + manifests, surface 'regen torn' state.
-       Returns (meta_dict, banners). banners are strings to render in the
-       PreToolUse output before any node-specific blocks."""
+    """Read _meta.json and surface anything that means the corpus shouldn't
+    be trusted as-is. Returns (meta_dict, banners). banners are rendered
+    above any node-specific blocks.
+
+    Banners cover:
+      • `regen_status != "complete"` — regen torn or never finished.
+      • non-zero primitive_error_count or slug_collision_count from the
+        v2 reconciler's `validation_report` — the corpus was written but
+        with known structural defects.
+      • orphan_edge_count — informational only; this is normal for
+        partial-coverage corpora.
+    """
     banners: list[str] = []
     meta: dict = {}
-    if CORPUS_META.exists():
-        try:
-            meta = json.loads(CORPUS_META.read_text())
-        except (OSError, json.JSONDecodeError):
-            banners.append("> ⚠ Corpus metadata unreadable — graph state unknown. Run `bin/depgraph regen`.")
-            return meta, banners
-        status = meta.get("regen_status")
-        if status != "complete":
-            banners.append(
-                f"> ⚠ Regen `{status or 'unknown'}` — the depgraph may be in a torn state. "
-                "Re-run `bin/depgraph regen` before trusting dependents."
-            )
-    else:
-        banners.append("> ⚠ Corpus metadata missing (`nodes/_meta.json`). Run `bin/depgraph regen`.")
+    if not CORPUS_META.exists():
+        banners.append(
+            "> ⚠ Corpus metadata missing (`nodes/_meta.json`). "
+            "Run `bin/depgraph regen`."
+        )
+        return meta, banners
+    try:
+        meta = json.loads(CORPUS_META.read_text())
+    except (OSError, json.JSONDecodeError):
+        banners.append(
+            "> ⚠ Corpus metadata unreadable — graph state unknown. "
+            "Run `bin/depgraph regen`."
+        )
+        return meta, banners
 
-    # Defect #5: if any expected extractor's manifest is missing, surface it.
-    # Accept manifests whose name STARTS WITH the derived stem so multi-repo
-    # extractors (one script writing <stem>_<repo>.json per repo) don't
-    # false-positive.
-    if MANIFESTS_DIR.exists():
-        present = {f.stem for f in MANIFESTS_DIR.glob("*.json")}
-        missing = []
-        for expected in expected_extractor_stems():
-            if not any(p == expected or p.startswith(expected + "_") for p in present):
-                missing.append(expected)
-        if missing:
-            banners.append(
-                "> ⚠ Missing extractor manifest(s): " + ", ".join(missing) +
-                " — that extractor did not run this round, so its surface is not represented in the graph."
-            )
+    status = meta.get("regen_status")
+    if status != "complete":
+        banners.append(
+            f"> ⚠ Regen `{status or 'unknown'}` — the depgraph may be in a "
+            "torn state. Re-run `bin/depgraph regen` before trusting dependents."
+        )
+
+    prim_errors = meta.get("primitive_error_count") or 0
+    collisions = meta.get("slug_collision_count") or 0
+    if prim_errors:
+        banners.append(
+            f"> ⚠ {prim_errors} primitive validation error(s) in the last "
+            "regen — some nodes failed schema checks and may render incompletely."
+        )
+    if collisions:
+        banners.append(
+            f"> ⚠ {collisions} slug collision(s) in the last regen — two "
+            "distinct ids slugified to the same filename and one overwrote "
+            "the other on disk."
+        )
     return meta, banners
 
 
@@ -184,10 +194,11 @@ def target_files(tool_name: str, tool_input: dict) -> list[str]:
 
 
 def repo_relative(abs_path: str) -> tuple[str, str] | None:
-    """Resolve an absolute filesystem path to (repo_basename, repo_relative_path)
-    by consulting [repos.*].path. Works for both flat (~/<basename>/) and
-    nested (~/projects/<group>/<basename>/) checkouts."""
-    return path_to_repo_relative(abs_path, DEPGRAPH)
+    """Resolve an absolute filesystem path to (repo_key, repo_relative_path)
+    by consulting [repos.<key>].path. v2 canonical ids start with the
+    repo KEY (not the basename), so the by_source index is keyed by
+    `(key, rel)` and the lookup must match."""
+    return path_to_repo_key_relative(abs_path, DEPGRAPH)
 
 
 def load_corpus() -> tuple[
@@ -201,7 +212,7 @@ def load_corpus() -> tuple[
          by_id              : id -> node dict
          by_source          : (repo, path) -> [ids] for source-path lookup
          dependents_index   : id -> [{source, via, where, confidence}, ...]
-                              from nodes/_index/dependents.json (defect #1 fix)
+                              from nodes/_index/by_target.json (v2 reverse index)
          version_mismatches : ids of nodes with wrong schema_version (defect #7
                               gate). These are skipped from by_id; the hook
                               surfaces a banner so we don't silently miss them."""
@@ -239,8 +250,9 @@ def load_corpus() -> tuple[
     if DEPENDENTS_INDEX.exists():
         try:
             idx = json.loads(DEPENDENTS_INDEX.read_text())
-            if idx.get("schema_version") == 1 and isinstance(idx.get("by_target"), dict):
-                dependents_index = idx["by_target"]
+            # v2: by_target.json is a flat {target_id: [...]} dict.
+            if isinstance(idx, dict):
+                dependents_index = idx
         except (OSError, json.JSONDecodeError):
             pass
 
@@ -281,10 +293,17 @@ def walk_transitive(
 
 
 def load_dossier(node: dict) -> tuple[str, str]:
-    rel = node.get("dossier")
-    if not rel:
+    """Locate the dossier for a v2 node.
+
+    Dossier path mirrors the node's on-disk location:
+    `nodes/<dir>/<slug>.json` ↔ `dossiers/<dir>/<slug>.md`, where <dir>
+    is the kind directory if the node is classified, else the primitive
+    directory. Returns (banner, body)."""
+    dossier_dir = _dossier_dir_for(node)
+    if dossier_dir is None:
         return ("", "_No dossier registered for this node._")
-    path = DEPGRAPH / rel
+    slug = slugify_id_for_filename(node.get("id", ""))
+    path = DEPGRAPH / "dossiers" / dossier_dir / f"{slug}.md"
     if not path.exists():
         return ("", "_No dossier yet — run `bin/depgraph stub-dossiers` to auto-stub, or write one by hand._")
     text = path.read_text()
@@ -334,13 +353,14 @@ def format_direct_dependents(node_id: str, dependents_index: dict[str, list[dict
     sections: list[str] = []
 
     def _table(rows: list[dict]) -> str:
-        out = ["| Caller | Via | Where | Confidence |", "|---|---|---|---|"]
+        out = ["| Caller | Edge | Via | Where | Confidence |", "|---|---|---|---|---|"]
         for d in rows[:DEPENDENTS_PER_DEPTH_CAP]:
             out.append(
-                f"| `{d.get('source','?')}` | {d.get('via','?')} | {d.get('where') or '—'} | {d.get('confidence','exact')} |"
+                f"| `{d.get('source','?')}` | {d.get('kind','?')} | {d.get('via','?')} | "
+                f"{d.get('where') or '—'} | {d.get('confidence','exact')} |"
             )
         if len(rows) > DEPENDENTS_PER_DEPTH_CAP:
-            out.append(f"| ... | ... | ... | _{len(rows) - DEPENDENTS_PER_DEPTH_CAP} more truncated_ |")
+            out.append(f"| ... | ... | ... | ... | _{len(rows) - DEPENDENTS_PER_DEPTH_CAP} more truncated_ |")
         return "\n".join(out)
 
     if exact:
@@ -419,9 +439,10 @@ def format_warnings(node: dict) -> str:
 
 def render_for_node(node: dict, dependents_index: dict[str, list[dict]]) -> str:
     banner, dossier = load_dossier(node)
+    label = node.get("kind") or node.get("primitive") or "?"
     parts = [
-        f"## {node.get('title', node['id'])}",
-        f"**id:** `{node['id']}`  ·  **kind:** {node.get('kind','?')}",
+        f"## {node.get('name', node['id'])}",
+        f"**id:** `{node['id']}`  ·  **kind:** {label}",
     ]
     if banner:
         parts.append(f"\n> {banner}\n")
@@ -457,7 +478,7 @@ def main() -> int:
         return 0
 
     by_id, by_source, dependents_index, version_mismatches = load_corpus()
-    if not by_id:
+    if not NODES.exists():
         emit_warning(f"depgraph not initialized at {DEPGRAPH}; run bin/depgraph regen")
         return 0
 
@@ -474,7 +495,7 @@ def main() -> int:
     if not dependents_index:
         rendered_blocks.append(
             "> ⚠ Reverse-dependency index missing or unreadable — direct callers will not show. "
-            "Run `bin/depgraph regen` to rebuild `nodes/_index/dependents.json`."
+            "Run `bin/depgraph regen` to rebuild `nodes/_index/by_target.json`."
         )
     injected_node_ids: list[str] = []
     primary_target: str | None = targets[0] if targets else None
