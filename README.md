@@ -164,7 +164,13 @@ typescript,sql}/` are driven by the per-repo `languages` list — no
 per-repo extractor command needed for Python, TypeScript/JavaScript, or
 SQL migrations.
 
-1. Add the table:
+1. **Pick a meaningful `<key>`** — it surfaces in every node id
+   (`<key>::<rel-path>::<symbol>`) and is the label graphui uses for the
+   repo on every page. Short role names for multi-repo (`api`, `web`,
+   `mobile`); the project name for single-repo (`codegraph`, `acme`).
+   Don't use `app`/`repo`/`main`/`src` — they look like placeholders
+   forever.
+2. Add the table:
    ```toml
    [repos.<key>]
    path = "~/<project>-<key>"
@@ -178,12 +184,12 @@ SQL migrations.
    v2 classification rules under `depgraph/lib/classification/` for how
    `kind` is assigned (`component`, `hook`, `endpoint`, `service`,
    `model`, `schema`, `test`, `util`).
-2. **Scope the repo with `include_paths` / `exclude_paths`.** Required
+3. **Scope the repo with `include_paths` / `exclude_paths`.** Required
    for almost every real repo — without it, test trees, generated code,
    and vendored deps end up in the corpus and produce orphan edges.
-3. Run `kg depgraph regen` and confirm nodes appear under
+4. Run `kg depgraph regen` and confirm nodes appear under
    `<data-repo>/depgraph/nodes/<kind>/`.
-4. If logigraph rules will claim against the new repo, also add the
+5. If logigraph rules will claim against the new repo, also add the
    `[repos.<key>]` table to `<data-repo>/logigraph/project.toml` so
    path-classification works for the logigraph hook. (No `kg` shortcut
    for the logigraph side yet; hand-edit the TOML.)

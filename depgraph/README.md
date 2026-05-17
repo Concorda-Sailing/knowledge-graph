@@ -70,6 +70,16 @@ exclude_paths = [
 | `include_paths` |   | gitignore-flavoured globs. If set, only files matching at least one pattern are extracted. |
 | `exclude_paths` |   | gitignore-flavoured globs. Files matching any pattern are skipped. Applied after `include_paths`. |
 
+### The `<key>` itself matters
+
+The `<key>` in `[repos.<key>]` is what shows up in every node id (`<key>::<rel-path>::<symbol>`) and is the label graphui uses on every page that surfaces this repo. Pick something meaningful:
+
+- **Multi-repo project** — short identifier per role: `api`, `web`, `mobile`, `cli`, `worker`.
+- **Single-repo project** — just the project name (e.g. `codegraph`, `acme`).
+- **Avoid** generic placeholders like `app`, `repo`, `main`, `src`, `code`. They make every node id and every UI label say the placeholder forever.
+
+The framework does not infer this from the dir name, the `package.json` name, the git remote, or `[project].name` — it's whatever you put in `[repos.<key>]`. Renaming after the corpus is built rewrites every node id; cheap to fix before the first `kg depgraph regen`, expensive after.
+
 **`include_paths` / `exclude_paths` are the project author's responsibility.** The extractors only skip a handful of hardcoded build dirs (`node_modules`, `.venv`, `__pycache__`, `dist`, `.git`) — they will not guess which other trees you want extracted. Almost every real repo needs `exclude_paths` to drop test directories, generated code, vendored deps, and fixture trees. Skipping this step bloats the corpus and produces orphan edges from test files importing things that shouldn't be tracked against them.
 
 Globs follow gitignore semantics:
