@@ -37,6 +37,24 @@ _PRIMITIVE_DIRS: dict[str, str] = {
 }
 
 
+def _kind_dir_for(primitive: dict, decision_kind: str | None) -> str:
+    """Return the bucket directory name a primitive lands in: classified kind
+    takes precedence, else falls back to the primitive type."""
+    if decision_kind is not None:
+        return _KIND_DIRS[decision_kind]
+    return _PRIMITIVE_DIRS[primitive["primitive"]]
+
+
+def dossier_rel_path_for(primitive: dict, decision_kind: str | None = None) -> str:
+    """Canonical relative dossier path for a primitive.
+
+    Mirrors the node-file layout: a primitive that lands at
+    `nodes/<dir>/<slug>.json` carries a dossier at `dossiers/<dir>/<slug>.md`."""
+    bucket = _kind_dir_for(primitive, decision_kind)
+    slug = slugify_id_for_filename(primitive["id"])
+    return f"dossiers/{bucket}/{slug}.md"
+
+
 def write_classified(primitives: list[dict], decisions: dict, *, data_dir: Path) -> None:
     """Write each primitive to the appropriate kind or primitive-type directory.
 

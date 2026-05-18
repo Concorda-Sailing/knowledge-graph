@@ -110,12 +110,14 @@ def test_dossier_rank_lists_unreviewed_node(
     assert "test-api::models/foo.py::Foo" in out
 
 
-def test_dossier_rank_only_unreviewed_includes_missing_state(
+def test_dossier_rank_only_unreviewed_excludes_missing_state(
     data_dir: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """On a fresh corpus, every node's dossier state is 'missing' (no file).
-    `--only-unreviewed` must surface those — otherwise the documented
-    on-ramp from `depgraph health` returns 0 nodes (#35)."""
+    """After #40, `regen` auto-stubs every non-skipped node with
+    `status: unreviewed`, so a fresh corpus shouldn't have any nodes in
+    `missing` state. `--only-unreviewed` returns to its v1 behavior: it
+    matches only `unreviewed`, and `missing` is treated as an alarm state
+    (a dossier vanished after the fact) rather than the routine on-ramp."""
     ctx = Context.from_data_dir(data_dir)
     _make_node(ctx, "test-api::models/foo.py::Foo")  # no dossier file written
     args = argparse.Namespace(
@@ -125,8 +127,8 @@ def test_dossier_rank_only_unreviewed_includes_missing_state(
     rc = cmd_dossier_rank(args, ctx)
     assert rc == 0
     out = capsys.readouterr().out
-    assert "test-api::models/foo.py::Foo" in out
-    assert "missing" in out  # the state column should show 'missing'
+    # `missing` state must NOT slip through --only-unreviewed anymore.
+    assert "test-api::models/foo.py::Foo" not in out
 
 
 def test_dossier_rank_only_unreviewed_excludes_current_dossier(

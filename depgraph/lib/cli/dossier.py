@@ -88,11 +88,12 @@ def cmd_dossier_rank(args: argparse.Namespace, ctx: Context) -> int:
         if args.only_stale:
             if state != "stale":
                 continue
-        elif args.only_unreviewed and state not in ("unreviewed", "missing"):
-            # "missing" is the most unreviewed a node can be (no dossier
-            # file on disk). Without this, --only-unreviewed --tier A is a
-            # no-op on every fresh corpus, defeating the on-ramp the
-            # `depgraph health` warning points users at (#35).
+        elif args.only_unreviewed and state != "unreviewed":
+            # `regen` stubs every non-trivial node with `status: unreviewed`
+            # (#40), so a clean corpus has no `missing` state to worry about.
+            # `missing` is a true alarm — surfaced via `depgraph health` —
+            # not a routine on-ramp state, so we no longer fold it into
+            # `--only-unreviewed`.
             continue
         fan_out = len(deps_idx.get(nid) or [])
         tier = _tier_of(fan_out)
@@ -633,8 +634,8 @@ def register(sub: argparse._SubParsersAction) -> None:
     # omitted, args.only_unreviewed was always True (#35).
     p_dr.add_argument(
         "--only-unreviewed", action="store_true",
-        help="Filter to nodes whose dossier state is 'unreviewed' or "
-             "'missing' (no file yet). Omit to rank every node.",
+        help="Filter to nodes whose dossier state is 'unreviewed' "
+             "(stub awaiting first-pass review). Omit to rank every node.",
     )
     p_dr.add_argument("--only-stale", action="store_true")
     p_dr.add_argument(
