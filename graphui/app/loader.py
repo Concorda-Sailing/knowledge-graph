@@ -270,7 +270,12 @@ _COMMITS_CACHE: dict[tuple[str, str], tuple[float, int]] = {}
 
 
 def commits_30d(repo: str, rel_path: str) -> int:
-    """Count commits in the last 30d touching a file. Cached for 5 minutes."""
+    """Count commits in the last 30d touching a file. Cached for 5 minutes.
+
+    `repo` is the v2 `source.repo` value (the `[repos.<key>]` key from
+    project.toml, NOT a directory basename), resolved via `_repo_path` so
+    `path = "~/concorda-api"` works (#25).
+    """
     if not repo or not rel_path:
         return 0
     key = (repo, rel_path)
@@ -279,8 +284,8 @@ def commits_30d(repo: str, rel_path: str) -> int:
         ts, val = _COMMITS_CACHE[key]
         if now - ts < 300:
             return val
-    repo_root = HOME / repo
-    if not (repo_root / ".git").exists():
+    repo_root = _repo_path(repo)
+    if repo_root is None or not (repo_root / ".git").exists():
         _COMMITS_CACHE[key] = (now, 0)
         return 0
     try:
@@ -1719,10 +1724,34 @@ def cross_cutting_summary() -> dict:
 # ---------------------------------------------------------------------------
 
 
-def _repo_path(basename: str) -> Path | None:
-    """Resolve a tracked-repo basename to its filesystem path.
-    Convention: HOME/<basename> (matches `commits_30d` below)."""
-    p = HOME / basename
+def _repo_path(key: str) -> Path | None:
+    """Resolve a tracked-repo identifier to its filesystem path.
+
+    The argument is whatever the extractor wrote to `source.repo` — in v2
+    that's the `[repos.<key>]` key (e.g. "api"), NOT the path basename. We
+    look the key up in depgraph/project.toml and expand `~` so paths like
+    `path = "~/concorda-api"` resolve correctly (#25).
+
+    Fall back to HOME/<arg> for legacy data that recorded a path basename
+    and for the rare case where the key matches the on-disk dir name.
+    """
+    proj = current_project()
+    try:
+        repos = _depgraph_project_repos(proj.depgraph_dir)
+    except Exception:
+        repos = {}
+    info = repos.get(key)
+    if info is not None:
+        configured = Path(info["path"]).expanduser()
+        if (configured / ".git").exists():
+            return configured
+        # `path` is set but the checkout is missing — still return it so
+        # callers can distinguish "not configured" from "configured but
+        # absent." The git helpers no-op on a non-git dir.
+        if configured.exists():
+            return configured
+    # Legacy fallback: basename under $HOME.
+    p = HOME / key
     return p if (p / ".git").exists() else None
 
 
