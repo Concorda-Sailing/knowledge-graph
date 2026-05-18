@@ -40,11 +40,6 @@ Other useful asks (Claude follows the runbook in the next section):
 The `kg` entry point handles everything; legacy `depgraph` / `logigraph` / `install.sh` invocations still work as aliases.
 
 ```bash
-# Put all three knowledge-graph bin dirs on PATH (kg, depgraph,
-# logigraph). Writes a sentinel-guarded block to ~/.profile so the
-# next shell starts with everything reachable.
-kg install path --apply
-
 # Set a default project so bare commands resolve from any cwd:
 kg project use <project-name>
 
@@ -54,9 +49,12 @@ kg logigraph health
 kg project list-repos
 ```
 
-(If your shell doesn't read `~/.profile`, either re-run the snippet
-target with `--rcfile ~/.bashrc` or add the equivalent block by
-hand.)
+`kg install bootstrap` already writes the PATH block to `~/.profile`,
+so if you installed via the runbook below you can skip this step. If
+you set the framework up manually (clone-only, no `bootstrap`), run
+`kg install path --apply` once to add the framework's bin dirs to
+`PATH`. If your shell doesn't read `~/.profile`, pass `--rcfile
+~/.bashrc` (or your shell's equivalent).
 
 ---
 
