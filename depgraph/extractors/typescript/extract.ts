@@ -6,6 +6,7 @@ import { Project, SourceFile, SyntaxKind, Node } from "ts-morph";
 import { parseArgs } from "node:util";
 import { readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
+import { fileURLToPath } from "node:url";
 import { canonicalId, structuralHash } from "./canonical.js";
 
 interface Primitive {
@@ -64,6 +65,65 @@ function compileGlob(pattern: string): RegExp {
 function matchesAny(relPath: string, patterns: RegExp[]): boolean {
   const norm = relPath.replace(/\\/g, "/");
   return patterns.some((re) => re.test(norm));
+}
+
+/**
+ * True if a repo-relative path is anywhere inside a `node_modules/` tree.
+ *
+ * ts-morph happily resolves `import {X} from "react-native"` *into*
+ * `node_modules/react-native/types/index.d.ts` — that file isn't in the
+ * filtered sourceFiles list (we skip it), but the resolved-source-file
+ * pointer leaks through whenever ts-morph traces an import. Without
+ * this guard, every external import becomes an edge with target
+ * `<repo>::node_modules/.../foo.d.ts` — an in-corpus shape pointing at
+ * a path we never extract, which `kg depgraph validate` correctly
+ * flags as orphan (#29).
+ */
+export function inNodeModules(rel: string | null): boolean {
+  if (!rel) return false;
+  return rel.startsWith("node_modules/") || rel.includes("/node_modules/");
+}
+
+/**
+ * Extract the npm package name from an import specifier.
+ *
+ *   "react"                       → "react"
+ *   "react-native"                → "react-native"
+ *   "@react-navigation/native"    → "@react-navigation/native"   (scope preserved)
+ *   "@scope/pkg/sub/path"         → "@scope/pkg"
+ *   "pkg/sub"                     → "pkg"
+ *
+ * Returns "local" for relative specs — callers should have routed those
+ * to the relative-import path before reaching here; this is just a safe
+ * fallback.
+ */
+export function npmPkgFromSpec(specText: string): string {
+  if (specText.startsWith(".")) return "local";
+  const parts = specText.split("/");
+  if (parts[0].startsWith("@") && parts.length >= 2) {
+    return `${parts[0]}/${parts[1]}`;
+  }
+  return parts[0];
+}
+
+/**
+ * Extract the npm package name from a `node_modules/...` rel-path.
+ *
+ *   "node_modules/react/index.d.ts"                                       → "react"
+ *   "node_modules/@react-navigation/native/lib/.../index.d.ts"           → "@react-navigation/native"
+ *   "node_modules/@types/react/index.d.ts"                                → "react"  (DefinitelyTyped redirect)
+ *
+ * Returns null when the path isn't under node_modules at all.
+ */
+export function npmPkgFromNodeModulesRel(rel: string): string | null {
+  if (!rel.startsWith("node_modules/")) return null;
+  const parts = rel.split("/");
+  if (parts.length < 2) return "unknown";
+  if (parts[1] === "@types") return parts[2] || "unknown";
+  if (parts[1].startsWith("@") && parts.length >= 3) {
+    return `${parts[1]}/${parts[2]}`;
+  }
+  return parts[1];
 }
 
 function listSourceFiles(root: string): string[] {
@@ -617,7 +677,10 @@ function attachImportsEdges(
     for (const exp of sf.getExportDeclarations()) {
       if (!exp.hasModuleSpecifier()) continue;
       const targetSf2 = exp.getModuleSpecifierSourceFile();
-      const targetRel2 = targetSf2 ? relative(repoPath, targetSf2.getFilePath()) : null;
+      let targetRel2 = targetSf2 ? relative(repoPath, targetSf2.getFilePath()) : null;
+      // ts-morph resolves package imports into node_modules type stubs;
+      // those aren't in-corpus modules — don't track them as such (#29).
+      if (inNodeModules(targetRel2)) targetRel2 = null;
       if (!targetRel2) continue;
       const named = exp.getNamedExports();
       // `export * from './x'` (no named exports, no namespace alias) — record
@@ -752,7 +815,12 @@ function attachImportsEdges(
     for (const imp of sf.getImportDeclarations()) {
       // Try to resolve the module specifier file via ts-morph
       const targetSf = imp.getModuleSpecifierSourceFile();
-      const targetRel = targetSf ? relative(repoPath, targetSf.getFilePath()) : null;
+      let targetRel = targetSf ? relative(repoPath, targetSf.getFilePath()) : null;
+      // If ts-morph traced the import into a node_modules type stub
+      // (`react-native` → `node_modules/react-native/types/index.d.ts`),
+      // treat as external — those files aren't in the corpus and we
+      // shouldn't emit in-corpus edges to them (#29).
+      if (inNodeModules(targetRel)) targetRel = null;
       const targetSyms = targetRel ? (symByPath.get(targetRel) ?? new Map()) : new Map();
       const targetReexports = targetRel ? (reexportMap.get(targetRel) ?? new Map()) : new Map();
 
@@ -760,11 +828,12 @@ function attachImportsEdges(
       if (defaultImport) {
         const localBinding = defaultImport.getText();
         const defaultId = targetRel ? defaultExportMap.get(targetRel) : undefined;
+        const externalPkg = npmPkgFromSpec(imp.getModuleSpecifierValue());
         const target = defaultId
           ? defaultId
           : targetRel
             ? `${repoKey}::${targetRel}::default`
-            : `external::npm::unknown::default`;
+            : `external::npm::${externalPkg}::default`;  // #29
         const confidence = defaultId
           ? "fuzzy"
           : (targetRel ? "exact" : "unresolved");
@@ -778,9 +847,10 @@ function attachImportsEdges(
       const nsImport = imp.getNamespaceImport();
       if (nsImport) {
         const localBinding = nsImport.getText();
+        const externalPkg = npmPkgFromSpec(imp.getModuleSpecifierValue());
         const target = targetRel
           ? `${repoKey}::${targetRel}`
-          : `external::npm::unknown`;
+          : `external::npm::${externalPkg}`;  // #29
         const confidence = targetRel ? "exact" : "unresolved";
         modPrim.edges_out.push({
           target, kind: "imports", via: "import_decl",
@@ -817,11 +887,13 @@ function attachImportsEdges(
             }
           }
         } else {
-          // Unresolved external
+          // Unresolved external (or resolved-into-node_modules, which we
+          // just demoted to `targetRel = null` above). Use the import
+          // specifier to derive the npm package name so scoped packages
+          // keep their scope: `@react-navigation/native::ScreenProps`
+          // rather than the lossy `react-navigation::ScreenProps` (#29).
           const specText = imp.getModuleSpecifierValue();
-          const pkgName = specText.startsWith(".")
-            ? "local"
-            : specText.split("/")[0].replace(/^@/, "");
+          const pkgName = npmPkgFromSpec(specText);
           target = `external::npm::${pkgName}::${importedName}`;
           confidence = "unresolved";
         }
@@ -837,10 +909,12 @@ function attachImportsEdges(
     for (const exp of sf.getExportDeclarations()) {
       if (!exp.hasModuleSpecifier()) continue;
       const targetSf2 = exp.getModuleSpecifierSourceFile();
-      const targetRel2 = targetSf2 ? relative(repoPath, targetSf2.getFilePath()) : null;
+      let targetRel2 = targetSf2 ? relative(repoPath, targetSf2.getFilePath()) : null;
+      if (inNodeModules(targetRel2)) targetRel2 = null;  // #29
       const targetSyms2 = targetRel2 ? (symByPath.get(targetRel2) ?? new Map()) : new Map();
       const targetReexports2 = targetRel2 ? (reexportMap.get(targetRel2) ?? new Map()) : new Map();
 
+      const externalPkg = npmPkgFromSpec(exp.getModuleSpecifierValue() || "");
       for (const spec of exp.getNamedExports()) {
         const exportedName = spec.getName();
         const aliasNode = spec.getAliasNode();
@@ -856,7 +930,7 @@ function attachImportsEdges(
             ? reexportId
             : targetRel2
               ? `${repoKey}::${targetRel2}::${exportedName}`
-              : `external::npm::unknown::${exportedName}`;
+              : `external::npm::${externalPkg}::${exportedName}`;  // #29
         modPrim.edges_out.push({
           target, kind: "imports", via: "re_export",
           where: `${rel}:${exp.getStartLineNumber()}`,
@@ -890,7 +964,7 @@ function attachImportsEdges(
           confidence = "unresolved";
         }
       } else {
-        target = `external::npm::${specText.split("/")[0].replace(/^@/, "")}`;
+        target = `external::npm::${npmPkgFromSpec(specText)}`;  // #29
         confidence = "fuzzy";
       }
       modPrim.edges_out.push({
@@ -1097,7 +1171,7 @@ function attachCallEdges(
                 // shim calls don't occur in practice (real import() works fine for those).
                 const target = specText.startsWith(".")
                   ? `external::unresolved::${specText}`
-                  : `external::npm::${specText.split("/")[0].replace(/^@/, "")}`;
+                  : `external::npm::${npmPkgFromSpec(specText)}`;  // #29
                 modPrim.edges_out.push({
                   target, kind: "imports", via: "dynamic_import_shim",
                   where: `${rel}:${node.getStartLineNumber()}`,
@@ -1441,4 +1515,13 @@ function main() {
   for (const p of allPrims) emit(p);
 }
 
-main();
+// Only run main() when invoked as a script (`tsx extract.ts ...`). Skip
+// when imported (e.g. by vitest tests that exercise the pure helpers).
+const _invokedDirectly = (() => {
+  try {
+    return process.argv[1] === fileURLToPath(import.meta.url);
+  } catch {
+    return true;  // be permissive on environments lacking URL/import.meta
+  }
+})();
+if (_invokedDirectly) main();
