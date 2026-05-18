@@ -1,12 +1,22 @@
 """logigraph process-* lifecycle subcommand handlers.
 
 Subcommands: process-rank, process-draft, process-finalize, process-bump, process-stub.
+
+Flow-detection heuristics (process-rank in particular) used to hardcode
+the web-API answer to "what counts as a flow entrypoint / sink / UI
+entry-path?" That hardcoding silently degraded for CLI corpora,
+event-driven services, data pipelines — anything that wasn't shaped
+like FastAPI + SQLAlchemy + React. The cue-loading helpers below pull
+those answers from active logigraph plugins (`logigraph.plugins.*`)
+which detect from manifest files; each signal in `cmd_process_rank`
+reads from the resulting `LogigraphCues` instead of a literal string.
 """
 from __future__ import annotations
 
 import argparse
 import json
 import sys
+from fnmatch import fnmatch
 from pathlib import Path
 
 from .context import Context
@@ -18,6 +28,85 @@ from ._shared import (
     default_actor,
     rewrite_dossier_frontmatter,
 )
+from logigraph.plugins import build_config_for_repos, get_logigraph_cues
+from logigraph.plugins.base import LogigraphCues
+
+
+# ---------------------------------------------------------------------------
+# Cue loading + path-glob helpers
+# ---------------------------------------------------------------------------
+
+def _load_logigraph_cues(ctx: Context) -> LogigraphCues:
+    """Build the active LogigraphCues for this project. Walks every repo
+    registered in project.toml, runs each logigraph plugin's detector,
+    unions cues from the active set.
+
+    Project.toml `[classification.plugins]` (auto/enable/disable/local_paths)
+    is honored the same way it is on the depgraph side; the same project-
+    level configuration drives both subsystems' plugin activation. When no
+    repos are registered or no plugins activate, returns an empty
+    LogigraphCues — callers should treat empty fields as "no opinion" and
+    surface a clear log line so the operator can configure plugins."""
+    repo_paths: dict[str, Path] = {}
+    try:
+        from depgraph.lib.config import project_repos  # type: ignore
+        for key, info in (project_repos(ctx.depgraph_dir) or {}).items():
+            path = info.get("path")
+            if path:
+                repo_paths[key] = Path(path)
+    except Exception:
+        # If project.toml is missing or unparseable, fall through with an
+        # empty repo map — build_config returns the empty-cues baseline.
+        repo_paths = {}
+
+    try:
+        from depgraph.lib.config import project_classification_options
+        opts = project_classification_options(ctx.depgraph_dir)
+    except Exception:
+        opts = {"auto": True, "enable": [], "disable": [], "local_plugin_paths": []}
+
+    if not repo_paths:
+        # No registered repos — return baseline (empty cues).
+        return LogigraphCues()
+
+    cues_by_key, _by_repo = build_config_for_repos(
+        repo_paths,
+        enable=opts.get("enable"),
+        disable=opts.get("disable"),
+        auto=opts.get("auto", True),
+        local_plugin_paths=opts.get("local_plugin_paths") or [],
+    )
+    return get_logigraph_cues(cues_by_key)
+
+
+def _path_matches_any(path: str, globs: set[str]) -> bool:
+    """True if `path` matches any of the gitignore-style globs. Uses
+    fnmatch semantics with `**` support via the `**/*` -> `*` collapse
+    that ships with stdlib fnmatch on Python 3.13+. For 3.12 we expand
+    `**/` manually so behavior is portable."""
+    if not globs:
+        return False
+    # Normalize to forward slashes for cross-platform behaviour.
+    norm = path.replace("\\", "/")
+    for g in globs:
+        if fnmatch(norm, g):
+            return True
+        # `**/` prefix: fnmatch doesn't traverse path segments natively
+        # before 3.13; emulate by stripping leading `**/` and matching
+        # the tail against the suffix.
+        if g.startswith("**/"):
+            tail = g[3:]
+            # Try the bare tail (root-level match) and any-depth match.
+            if fnmatch(norm, tail):
+                return True
+            if any(fnmatch(norm[i:], tail) for i in range(len(norm)) if i == 0 or norm[i - 1] == "/"):
+                return True
+        # `**` suffix: rare in our cues; treat as wildcard-anything.
+        if g.endswith("/**"):
+            prefix = g[:-3]
+            if norm == prefix or norm.startswith(prefix + "/"):
+                return True
+    return False
 
 
 # ---------------------------------------------------------------------------
@@ -38,18 +127,28 @@ def _process_dossier_rel(process_id: str) -> str:
 # Process-rank helpers (used only by cmd_process_rank)
 # ---------------------------------------------------------------------------
 
-def _existing_process_coverage(ctx: Context, dg_corpus: dict[str, dict] | None = None) -> set[str]:
+def _existing_process_coverage(
+    ctx: Context,
+    dg_corpus: dict[str, dict] | None = None,
+    cues: LogigraphCues | None = None,
+) -> set[str]:
     """Return the set of depgraph node ids already covered by some existing
     process: directly claimed by any step OR named as flow.endpoint /
     flow.ui_surface OR reachable forward (1-2 hops) from any covered
-    endpoint. The forward-reach expansion suppresses convergence-on-model
-    candidates that the existing endpoint-anchored processes already
-    implicitly own."""
+    entrypoint. The forward-reach expansion suppresses convergence-on-sink
+    candidates that the existing entrypoint-anchored processes already
+    implicitly own.
+
+    `cues` provides the per-project definition of what counts as an
+    "entrypoint" — defaults to the web-api shape (`{"endpoint"}`) when
+    callers don't pass one, preserving back-compat with pre-plugin code
+    paths."""
+    entry_kinds = (cues.entrypoint_kinds if cues else None) or {"endpoint"}
     covered: set[str] = set()
     proc_dir = ctx.NODES / "processes"
     if not proc_dir.is_dir():
         return covered
-    direct_endpoints: list[str] = []
+    direct_entrypoints: list[str] = []
     for nf in proc_dir.glob("*.json"):
         try:
             d = json.loads(nf.read_text())
@@ -60,18 +159,18 @@ def _existing_process_coverage(ctx: Context, dg_corpus: dict[str, dict] | None =
                 cid = c.get("depgraph_id")
                 if cid:
                     covered.add(cid)
-                    if dg_corpus and (dg_corpus.get(cid) or {}).get("kind") == "endpoint":
-                        direct_endpoints.append(cid)
+                    if dg_corpus and (dg_corpus.get(cid) or {}).get("kind") in entry_kinds:
+                        direct_entrypoints.append(cid)
         flow = d.get("flow") or {}
         for k in ("endpoint", "ui_surface"):
             v = flow.get(k)
             if v:
                 covered.add(v)
                 if dg_corpus and k == "endpoint":
-                    direct_endpoints.append(v)
-    # Forward-reach expansion: 1-2 hops from each covered endpoint
+                    direct_entrypoints.append(v)
+    # Forward-reach expansion: 1-2 hops from each covered entrypoint
     if dg_corpus:
-        for ep in direct_endpoints:
+        for ep in direct_entrypoints:
             node = dg_corpus.get(ep)
             if not node:
                 continue
@@ -123,7 +222,41 @@ def cmd_process_rank(args: argparse.Namespace, ctx: Context) -> int:
     is deliberately noisy so we can see what falls out.
     """
     dg_corpus = load_depgraph_corpus(ctx)
-    covered = _existing_process_coverage(ctx, dg_corpus)
+    cues = _load_logigraph_cues(ctx)
+    if not cues.entrypoint_kinds:
+        # No active plugin contributed entrypoint_kinds — fall back to the
+        # historical web-api defaults so this command keeps producing
+        # output on corpora that haven't configured `[classification.plugins]`
+        # in project.toml. Surface a one-liner so the operator can tell
+        # this is happening.
+        print(
+            "process-rank: no logigraph plugins active for this project; "
+            "falling back to web-api defaults. Configure "
+            "[classification.plugins] in project.toml to suppress this.",
+            file=sys.stderr,
+        )
+        cues = LogigraphCues(
+            entrypoint_kinds={"endpoint"},
+            sink_kinds={"model"},
+            mutation_methods={"POST", "PUT", "DELETE", "PATCH"},
+            headless_skip_kinds={
+                "endpoint", "component", "test", "hook", "schema", "model",
+            },
+            kind_weights={
+                "model": 1.0, "hook": 0.85, "service": 0.65, "schema": 0.45,
+            },
+            test_path_globs={
+                "**/tests/**", "**/*.test.ts", "**/*.test.tsx",
+                "**/*.spec.ts", "**/*.spec.tsx",
+                "**/test_*.py", "**/*_test.py",
+            },
+            ui_entry_path_globs={"**/page.tsx", "**/page.jsx"},
+            api_client_path_globs={
+                "**/lib/api.ts", "**/lib/api-client.ts", "**/lib/client.ts",
+                "**/api_client.py", "**/client.py",
+            },
+        )
+    covered = _existing_process_coverage(ctx, dg_corpus, cues)
     nodes = load_all_nodes(ctx)
     candidates: list[dict] = []
 
@@ -162,9 +295,9 @@ def cmd_process_rank(args: argparse.Namespace, ctx: Context) -> int:
             deps_idx = raw.get("by_target") or {}
         except (OSError, json.JSONDecodeError):
             deps_idx = {}
-    # Iterate depgraph endpoints
+    # Iterate depgraph entrypoints (per-project: web-api -> endpoint, cli -> command, etc.)
     for nid, dgn in dg_corpus.items():
-        if dgn.get("kind") != "endpoint":
+        if dgn.get("kind") not in cues.entrypoint_kinds:
             continue
         if nid in covered:
             continue
@@ -230,16 +363,18 @@ def cmd_process_rank(args: argparse.Namespace, ctx: Context) -> int:
     # Build reverse-aggregation alongside Signal C for convergence
     endpoints_reaching: dict[str, set[str]] = {}  # downstream_id -> {endpoint_ids}
 
-    # Lifecycle = state mutation, not aggregation. GET endpoints are reads
-    # in REST-shaped APIs; their fan-out reflects read patterns, not flow
-    # shape. Skip them from both Signal C and the convergence aggregation
-    # used by Signal D so noise like the ICS feed (reads 5 models) doesn't
-    # surface as flow-shaped.
+    # Lifecycle = state mutation, not aggregation. For REST-shaped APIs,
+    # GET endpoints are reads; their fan-out reflects read patterns, not
+    # flow shape. The `mutation_methods` cue says which leading-segment
+    # values count as state-mutating — empty means no filter (every
+    # entrypoint qualifies, e.g. CLI commands which don't have HTTP verbs).
     for nid, dgn in dg_corpus.items():
-        if dgn.get("kind") != "endpoint":
+        if dgn.get("kind") not in cues.entrypoint_kinds:
             continue
-        if nid.startswith("GET::"):
-            continue
+        if cues.mutation_methods and "::" in nid:
+            method = nid.split("::", 1)[0]
+            if method not in cues.mutation_methods:
+                continue
         reached = set(_bfs_forward(nid, max_depth=2).keys())
         # Tally for convergence signal
         for r in reached:
@@ -249,49 +384,53 @@ def cmd_process_rank(args: argparse.Namespace, ctx: Context) -> int:
             continue
         kinds = {dg_corpus[r].get("kind", "?") for r in reached if r in dg_corpus}
         kinds.discard("?")
-        models = {r for r in reached if r in dg_corpus and dg_corpus[r].get("kind") == "model"}
-        if len(kinds) < 3 and len(models) < 2:
+        sinks = {r for r in reached if r in dg_corpus
+                 and dg_corpus[r].get("kind") in cues.sink_kinds}
+        if len(kinds) < 3 and len(sinks) < 2:
             continue
         # Skip pure-test or pure-component fan-out (READ endpoints typically)
         non_trivial_kinds = kinds - {"test", "component", "schema", "route_call"}
         if len(non_trivial_kinds) < 2:
             continue
-        conf = min(1.0, 0.55 + 0.1 * (len(kinds) - 3) + 0.15 * max(0, len(models) - 1))
+        conf = min(1.0, 0.55 + 0.1 * (len(kinds) - 3) + 0.15 * max(0, len(sinks) - 1))
         # Suggested name from endpoint path
         slug = nid.split("::", 1)[1].strip("/").replace("/", "_").replace("{", "").replace("}", "") if "::" in nid else "endpoint"
         candidates.append({
             "signal": "endpoint_forward_reach",
             "anchor": nid,
             "confidence": conf,
-            "evidence": f"reaches kinds {sorted(kinds)}; writes {len(models)} model(s)",
+            "evidence": f"reaches kinds {sorted(kinds)}; touches {len(sinks)} sink(s)",
             "suggested": f"process::endpoints::{slug[:50]}_orchestration",
             "fan_out": len(reached),
         })
 
     # --- Signal D+E (unified): convergence on shared downstream ---------
-    # Kind-weighted; only emit when >=3 endpoints converge AND the
-    # downstream node isn't itself an endpoint or already covered.
-    KIND_WEIGHT = {"model": 1.0, "hook": 0.85, "service": 0.65, "schema": 0.45}
+    # Kind-weighted (per-project via cues.kind_weights); only emit when
+    # >=3 entrypoints converge AND the downstream node isn't itself an
+    # entrypoint or already covered.
+    kind_weight = cues.kind_weights or {
+        "model": 1.0, "hook": 0.85, "service": 0.65, "schema": 0.45,
+    }
     for downstream_id, endpoints in endpoints_reaching.items():
         if downstream_id in covered:
             continue
         n_eps = len(endpoints)
         if n_eps < 3:
             continue
-        # Skip hubs: nodes touched by too many endpoints aren't flow centers,
-        # they're foundational primitives (Person, Event, the auth context).
-        # Threshold tuned by inspection — anything >15 endpoints in a corpus
-        # of ~300 is reading like a hub.
+        # Skip hubs: nodes touched by too many entrypoints aren't flow
+        # centers — they're foundational primitives. Threshold tuned by
+        # inspection: anything >15 entrypoints in a corpus of ~300 reads
+        # like a hub.
         if n_eps > 15:
             continue
         ds_node = dg_corpus.get(downstream_id)
         if not ds_node:
             continue
         ds_kind = ds_node.get("kind", "?")
-        if ds_kind not in KIND_WEIGHT:
+        if ds_kind not in kind_weight:
             continue
-        # confidence: kind weight × concentration factor (peaks 4-7 endpoints)
-        kw = KIND_WEIGHT[ds_kind]
+        # confidence: kind weight × concentration factor (peaks 4-7 entrypoints)
+        kw = kind_weight[ds_kind]
         # Gaussian-ish bump centered at 5 endpoints
         conc = 1.0 - abs(n_eps - 5) / 12.0
         conf = min(1.0, kw * max(0.3, conc))
@@ -309,17 +448,21 @@ def cmd_process_rank(args: argparse.Namespace, ctx: Context) -> int:
         })
 
     # --- Signal F — UI-initiated flow: pages and hooks --------------------
-    # A typical UI flow starts at a button (component in
-    # src/app/**/page.tsx) or at a reusable hook (kind=hook in src/hooks/).
-    # Walk forward from each candidate entry point; require it to reach
-    # both an endpoint AND a model for the flow to be "complete."
+    # A typical UI flow starts at a button (component on a UI-entry path
+    # per the active plugin's `ui_entry_path_globs`) or at a reusable
+    # hook (`kind=hook`). Walk forward from each candidate entry point;
+    # require it to reach both an entrypoint AND a sink for the flow to
+    # be "complete."
     for nid, dgn in dg_corpus.items():
         kind = dgn.get("kind")
         src = dgn.get("source") or {}
         path = src.get("path") or ""
 
-        # Classify entry type
-        is_page = kind == "component" and path.endswith("/page.tsx")
+        # Classify entry type. The page check is path-based via cues;
+        # the hook check stays kind-based (depgraph emits `kind=hook` for
+        # any React-style hook the depgraph/plugins/react plugin's cues
+        # match against — the logigraph layer doesn't need to redefine).
+        is_page = kind == "component" and _path_matches_any(path, cues.ui_entry_path_globs)
         is_hook = kind == "hook"
 
         if not (is_page or is_hook):
@@ -331,10 +474,12 @@ def cmd_process_rank(args: argparse.Namespace, ctx: Context) -> int:
         if not reach_map:
             continue
 
-        endpoints_reached = {r for r in reach_map if r in dg_corpus and dg_corpus[r].get("kind") == "endpoint"}
-        models_reached = {r for r in reach_map if r in dg_corpus and dg_corpus[r].get("kind") == "model"}
+        endpoints_reached = {r for r in reach_map if r in dg_corpus
+                             and dg_corpus[r].get("kind") in cues.entrypoint_kinds}
+        sinks_reached = {r for r in reach_map if r in dg_corpus
+                         and dg_corpus[r].get("kind") in cues.sink_kinds}
 
-        if not endpoints_reached or not models_reached:
+        if not endpoints_reached or not sinks_reached:
             continue
 
         # Confidence: page > hook (pages are unambiguous user actions; hooks
@@ -352,36 +497,22 @@ def cmd_process_rank(args: argparse.Namespace, ctx: Context) -> int:
             "signal": signal_name,
             "anchor": nid,
             "confidence": conf,
-            "evidence": f"reaches {len(endpoints_reached)} endpoint(s), {len(models_reached)} model(s); nearest endpoint at depth {min_endpoint_depth}",
+            "evidence": f"reaches {len(endpoints_reached)} entrypoint(s), {len(sinks_reached)} sink(s); nearest at depth {min_endpoint_depth}",
             "suggested": f"process::{category}::{slug[:50]}_flow",
-            "fan_out": len(endpoints_reached) + len(models_reached),
+            "fan_out": len(endpoints_reached) + len(sinks_reached),
         })
 
     # --- Signal G — headless flow: cron / worker / handler entry points ---
-    # A node with NO reverse-edge dependents AND non-(endpoint|component|test|hook)
-    # kind that still reaches endpoints/models via its forward graph is being
-    # entered from outside the dependency graph — i.e. a cron job, a worker
-    # function, a signal handler, a script.
-    HEADLESS_SKIP_KINDS = {"endpoint", "component", "test", "hook", "schema", "model"}
-    # Test-named paths aren't flows we want to document as processes —
-    # they're test infrastructure that ENTERS the system from outside but
-    # isn't user-facing or scheduled production work. Path-shaped hints
-    # only (no hardcoded repo basenames).
-    TEST_PATH_HINTS = ("/tests/", "tests/", ".spec.ts", ".spec.tsx", "_test.py", "test_", "/spec/")
-    # API client wrappers (lib/api.ts, lib/api-client.ts) and client-side
-    # hooks/utils directories — these are thin shells or caching primitives.
-    # Calling them is "calling the endpoint." They reach endpoints+models
-    # but the flow lives in the endpoint, not the wrapper. Path-shaped
-    # conventions only, not literal project repo names.
-    API_CLIENT_PATH_HINTS = (
-        "lib/api.ts", "lib/api-client.ts", "lib/client.ts",
-        "api_client.py", "client.py",
-        "/hooks/", "hooks/use-",   # React-convention client hooks
-        "/utils/", "/util/",        # generic util dirs
-    )
+    # A node with NO reverse-edge dependents AND a kind that's not in
+    # `cues.headless_skip_kinds` that still reaches entrypoints/sinks via
+    # its forward graph is being entered from outside the dependency
+    # graph — a cron job, a worker function, a signal handler, a script.
+    headless_skip = cues.headless_skip_kinds or {
+        "endpoint", "component", "test", "hook", "schema", "model",
+    }
     for nid, dgn in dg_corpus.items():
         kind = dgn.get("kind")
-        if kind in HEADLESS_SKIP_KINDS:
+        if kind in headless_skip:
             continue
         if nid in covered:
             continue
@@ -391,32 +522,33 @@ def cmd_process_rank(args: argparse.Namespace, ctx: Context) -> int:
 
         src = dgn.get("source") or {}
         path = src.get("path") or ""
-        repo = src.get("repo") or ""
-        # Skip test infrastructure (path-shaped hints only)
-        if any(h in path for h in TEST_PATH_HINTS):
+        # Skip test infrastructure (per-project test path globs)
+        if _path_matches_any(path, cues.test_path_globs):
             continue
-        # Skip API client wrappers — the flow is the endpoint they call
-        if any(h in path for h in API_CLIENT_PATH_HINTS):
+        # Skip API client wrappers — the flow is the entrypoint they call
+        if _path_matches_any(path, cues.api_client_path_globs):
             continue
 
         reach_map = _bfs_forward(nid, max_depth=3)
         if not reach_map:
             continue
-        endpoints_reached = {r for r in reach_map if r in dg_corpus and dg_corpus[r].get("kind") == "endpoint"}
-        models_reached = {r for r in reach_map if r in dg_corpus and dg_corpus[r].get("kind") == "model"}
-        # Headless needs to TOUCH state to be a flow; needs at least one model
-        if not models_reached:
+        endpoints_reached = {r for r in reach_map if r in dg_corpus
+                             and dg_corpus[r].get("kind") in cues.entrypoint_kinds}
+        sinks_reached = {r for r in reach_map if r in dg_corpus
+                         and dg_corpus[r].get("kind") in cues.sink_kinds}
+        # Headless needs to TOUCH state to be a flow; needs at least one sink
+        if not sinks_reached:
             continue
 
         # Suggested name from path
         slug = path.replace("/", "_").replace(".py", "").replace(".ts", "").lower()[:50]
-        conf = min(1.0, 0.6 + 0.05 * len(models_reached) + (0.1 if endpoints_reached else 0))
+        conf = min(1.0, 0.6 + 0.05 * len(sinks_reached) + (0.1 if endpoints_reached else 0))
 
         candidates.append({
             "signal": "headless_initiated_flow",
             "anchor": nid,
             "confidence": conf,
-            "evidence": f"no reverse deps; reaches {len(endpoints_reached)} endpoint(s), {len(models_reached)} model(s)",
+            "evidence": f"no reverse deps; reaches {len(endpoints_reached)} entrypoint(s), {len(sinks_reached)} sink(s)",
             "suggested": f"process::headless::{slug}_flow",
             "fan_out": len(reach_map),
         })
