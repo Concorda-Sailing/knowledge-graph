@@ -105,7 +105,7 @@ def test_reconcile_records_failed_status_when_embed_raises(tmp_path):
     assert result.returncode == 0, f"reconcile should not fail: stderr={result.stderr}"
 
     # Dep-index work still happened.
-    assert (work / "nodes" / "_index" / "dependents.json").exists()
+    assert (work / "nodes" / "_index" / "by_target.json").exists()
 
     # Embedding index is either absent or empty.
     bin_path = work / "nodes" / "_index" / "embeddings.bin"

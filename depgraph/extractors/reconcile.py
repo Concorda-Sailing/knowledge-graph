@@ -12,7 +12,7 @@ Responsibilities, in order:
   1. Load every node JSON in nodes/**/*.json (skipping _archive/ and _index/).
   2. Build the reverse-dependency map in memory:
        for each node X with depends_on=[edge to Y], record (Y ← X) in by_target[Y].
-  3. Write the map atomically to `nodes/_index/dependents.json` (tmp + rename).
+  3. Write the map atomically to `nodes/_index/by_target.json` (tmp + rename).
      The file is sorted deterministically so it's bit-stable across regens that
      produce the same edges.
   4. Strip any leftover `dependents` field from per-node files (one-time cleanup
@@ -516,7 +516,7 @@ def build_reverse_index(nodes: dict[str, tuple[Path, dict]]) -> tuple[dict[str, 
 
 
 def write_dependents_index(by_target: dict[str, list[dict]], node_count: int, edge_count: int) -> tuple[bool, Path]:
-    """Atomic write to nodes/_index/dependents.json. Returns (changed, path)."""
+    """Atomic write to nodes/_index/by_target.json. Returns (changed, path)."""
     from datetime import datetime, timezone
 
     INDEX_DIR.mkdir(parents=True, exist_ok=True)
@@ -555,7 +555,7 @@ LEGACY_FIELDS = ("dependents", "extracted_at", "git_commit")
 
 def strip_legacy_fields(nodes: dict[str, tuple[Path, dict]]) -> int:
     """One-time cleanup: remove fields that have moved out of per-node JSON.
-       - `dependents`    : moved to nodes/_index/dependents.json (defect #1)
+       - `dependents`    : moved to nodes/_index/by_target.json (defect #1)
        - `extracted_at`  : moved to nodes/_meta.json (defect #4)
        - `git_commit`    : moved to nodes/_meta.json (defect #4)
        After all extractors have re-run, this is a no-op every time. Idempotent."""
@@ -871,7 +871,7 @@ def main() -> int:
     DEPGRAPH = _depgraph()
     NODES = DEPGRAPH / "nodes"
     INDEX_DIR = NODES / "_index"
-    DEPENDENTS_INDEX = INDEX_DIR / "dependents.json"
+    DEPENDENTS_INDEX = INDEX_DIR / "by_target.json"
     CORPUS_META = NODES / "_meta.json"
     MANIFEST_DIR = NODES / "_manifests"
     ARCHIVE_DIR = NODES / "_archive"

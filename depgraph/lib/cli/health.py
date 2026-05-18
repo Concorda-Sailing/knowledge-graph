@@ -12,43 +12,13 @@ import sys
 from pathlib import Path
 
 from .context import Context
-from ._shared import load_dependents_index
+from ._shared import load_dependents_index, dossier_state
 
 # Make depgraph/lib/config.py importable.
 _DEPGRAPH_LIB = Path(__file__).resolve().parents[1]
 if str(_DEPGRAPH_LIB) not in sys.path:
     sys.path.insert(0, str(_DEPGRAPH_LIB))
 from depgraph.lib.config import basename_path_map  # noqa: E402
-
-
-def _dossier_state(node: dict, depgraph: Path) -> str:
-    """Return one of: 'current', 'unreviewed', 'stale', 'missing'.
-
-    This is a local copy of the same logic in bin/depgraph._dossier_state
-    translated to accept a ctx.DEPGRAPH path instead of reading the global.
-    """
-    rel = node.get("dossier")
-    if not rel:
-        return "missing"
-    full = depgraph / rel
-    if not full.exists():
-        return "missing"
-    text = full.read_text()
-    pinned = None
-    status = "current"
-    for line in text.splitlines():
-        s = line.strip()
-        if s.startswith("status:"):
-            status = s.split(":", 1)[1].strip()
-        if s.startswith("last_reviewed_against_hash:"):
-            pinned = s.split(":", 1)[1].strip().strip('"').strip("'")
-        if s == "---" and pinned is not None:
-            break
-    if pinned and pinned != node.get("structural_hash"):
-        return "stale"
-    if status == "unreviewed":
-        return "unreviewed"
-    return "current"
 
 
 def cmd_health(args: argparse.Namespace, ctx: Context) -> int:
@@ -107,7 +77,7 @@ def cmd_health(args: argparse.Namespace, ctx: Context) -> int:
             data = json.loads(node_file.read_text())
         except (OSError, json.JSONDecodeError):
             continue
-        if _dossier_state(data, ctx.DEPGRAPH) == "stale":
+        if dossier_state(data, ctx.DEPGRAPH) == "stale":
             stale_n += 1
     if stale_n:
         problems.append(f"{stale_n} stale dossier(s) (structural_hash drifted) — run `depgraph dossier-rank --only-stale`")
@@ -133,7 +103,7 @@ def cmd_health(args: argparse.Namespace, ctx: Context) -> int:
         if fan_out < 10:
             continue
         a_total += 1
-        if _dossier_state(data, ctx.DEPGRAPH) == "current":
+        if dossier_state(data, ctx.DEPGRAPH) == "current":
             a_covered += 1
     a_pct = int(round(100 * a_covered / a_total)) if a_total else 100
     if a_pct < 80 and a_total > 0:

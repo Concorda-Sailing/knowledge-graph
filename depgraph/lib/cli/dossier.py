@@ -23,38 +23,13 @@ if str(_DEPGRAPH_LIB) not in sys.path:
     sys.path.insert(0, str(_DEPGRAPH_LIB))
 from depgraph.lib.config import load_project_config, repo_for_basename  # noqa: E402
 
-from ._shared import load_dependents_index, find_nodes_for_target
+from ._shared import load_dependents_index, find_nodes_for_target, dossier_state
 from .context import Context
 
 
-# ---------------------------------------------------------------------------
-# Shared helpers
-# ---------------------------------------------------------------------------
-
 def _dossier_state(node: dict, ctx: Context) -> str:
-    """Return one of: 'current', 'unreviewed', 'stale', 'missing'."""
-    rel = node.get("dossier")
-    if not rel:
-        return "missing"
-    full = ctx.DEPGRAPH / rel
-    if not full.exists():
-        return "missing"
-    text = full.read_text()
-    pinned = None
-    status = "current"
-    for line in text.splitlines():
-        s = line.strip()
-        if s.startswith("status:"):
-            status = s.split(":", 1)[1].strip()
-        if s.startswith("last_reviewed_against_hash:"):
-            pinned = s.split(":", 1)[1].strip().strip('"').strip("'")
-        if s == "---" and pinned is not None:
-            break
-    if pinned and pinned != node.get("structural_hash"):
-        return "stale"
-    if status == "unreviewed":
-        return "unreviewed"
-    return "current"
+    """Thin adapter so call sites keep their ctx-flavored signature."""
+    return dossier_state(node, ctx.DEPGRAPH)
 
 
 def _commits_touching(rel_path: str, repo: str, ctx: Context, days: int = 30) -> int:

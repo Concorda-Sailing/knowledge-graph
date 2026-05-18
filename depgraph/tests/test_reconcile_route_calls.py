@@ -1,5 +1,5 @@
 """Integration test: reconcile.py joins route_call nodes against endpoint
-nodes and writes the cross-repo edge to dependents.json."""
+nodes and writes the cross-repo edge to by_target.json."""
 import json
 import os
 import shutil
@@ -58,8 +58,11 @@ def test_reconcile_emits_route_call_dependent(tmp_path):
         f"reconcile failed:\nstdout={result.stdout}\nstderr={result.stderr}"
     )
 
-    dependents_path = work / "nodes" / "_index" / "dependents.json"
-    assert dependents_path.exists(), "reconcile did not write dependents.json"
+    dependents_path = work / "nodes" / "_index" / "by_target.json"
+    assert dependents_path.exists(), "reconcile did not write by_target.json"
+    # Regression for #43: reconcile.py used to write to the pre-rename
+    # `dependents.json` filename. Make sure the legacy name isn't produced.
+    assert not (work / "nodes" / "_index" / "dependents.json").exists()
     idx = json.loads(dependents_path.read_text())
     by_target = idx.get("by_target") or {}
 
@@ -87,7 +90,7 @@ def test_reconcile_skips_route_call_with_mismatched_method(tmp_path):
     )
 
     idx = json.loads(
-        (work / "nodes" / "_index" / "dependents.json").read_text()
+        (work / "nodes" / "_index" / "by_target.json").read_text()
     )
     by_target = idx.get("by_target") or {}
     endpoint_id = "rc-api::routers/events.py::import_events_endpoint"

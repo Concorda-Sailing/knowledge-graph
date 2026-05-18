@@ -129,6 +129,18 @@ def test_reconcile_reports_slug_collision():
     assert len(report["slug_collisions"]) >= 1
 
 
+def test_reconcile_dependents_index_filename():
+    """Regression for #43: reconcile.py used to wire DEPENDENTS_INDEX at the
+    pre-rename `dependents.json` path while the rest of the framework writes
+    to `by_target.json`. Guard against the literal drifting again."""
+    import inspect
+    from depgraph.extractors import reconcile
+
+    src = inspect.getsource(reconcile.main)
+    assert 'INDEX_DIR / "by_target.json"' in src
+    assert 'INDEX_DIR / "dependents.json"' not in src
+
+
 # ---------------------------------------------------------------------------
 # regen end-to-end test
 # ---------------------------------------------------------------------------

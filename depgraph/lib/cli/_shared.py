@@ -64,6 +64,36 @@ def load_dependents_index(ctx: Context) -> dict[str, list[dict]]:
     return idx if isinstance(idx, dict) else {}
 
 
+def dossier_state(node: dict, depgraph: Path) -> str:
+    """Return one of: 'current', 'unreviewed', 'stale', 'missing'.
+
+    Single source of truth for the dossier state machine. Takes a Path
+    rather than a Context so callers in non-Context-aware code (extractors,
+    reconcile) can use it too."""
+    rel = node.get("dossier")
+    if not rel:
+        return "missing"
+    full = depgraph / rel
+    if not full.exists():
+        return "missing"
+    text = full.read_text()
+    pinned = None
+    status = "current"
+    for line in text.splitlines():
+        s = line.strip()
+        if s.startswith("status:"):
+            status = s.split(":", 1)[1].strip()
+        if s.startswith("last_reviewed_against_hash:"):
+            pinned = s.split(":", 1)[1].strip().strip('"').strip("'")
+        if s == "---" and pinned is not None:
+            break
+    if pinned and pinned != node.get("structural_hash"):
+        return "stale"
+    if status == "unreviewed":
+        return "unreviewed"
+    return "current"
+
+
 def find_nodes_for_target(ctx: Context, target: str) -> list[Path]:
     """If `target` is a file path, return nodes whose source.path matches.
     Otherwise treat it as a node id. Node ids contain `::` separators
