@@ -266,17 +266,28 @@ def search_page(
     scope: list[str] | None = Query(default=None),
     limit: int = 30,
 ) -> HTMLResponse:
-    """Hybrid search results. `mode` is the primary tab (semantic/dep/
-    knowledge); `scope` may be repeated to narrow further within the mode."""
-    if mode not in ("semantic", "dep", "knowledge"):
+    """Hybrid search results. `mode` is the primary tab; `scope` may be
+    repeated to narrow within the mode.
+
+    Modes:
+      - lexical   — pure BM25 over node id / path / kind / name (no embeddings;
+                    works on day-zero corpora before any dossier authoring).
+      - semantic  — embedding-blended search across dossier bodies, logigraph
+                    entries, and per-node summaries. Falls back to lexical
+                    when the embedding index is empty.
+      - dep       — semantic, narrowed to depgraph sources.
+      - knowledge — semantic, narrowed to logigraph (rules/domain/processes).
+    """
+    if mode not in ("lexical", "semantic", "dep", "knowledge"):
         mode = "semantic"
     scope_list = scope if scope else None
     hits = (search_module.search(q, scopes=scope_list, mode=mode, limit=limit)
             if q else [])
     # Granular chips visible under the active tab depend on mode.
     chips_by_mode = {
-        "semantic": ["rules", "domain", "processes", "dossiers"],
-        "dep": ["dossiers"],
+        "lexical": [],
+        "semantic": ["rules", "domain", "processes", "dossiers", "code"],
+        "dep": ["dossiers", "code"],
         "knowledge": ["rules", "domain", "processes"],
     }
     return TEMPLATES.TemplateResponse(
@@ -285,7 +296,7 @@ def search_page(
         {
             "q": q,
             "mode": mode,
-            "all_modes": ["semantic", "dep", "knowledge"],
+            "all_modes": ["lexical", "semantic", "dep", "knowledge"],
             "scopes_selected": set(scope_list or []),
             "scope_chips": chips_by_mode.get(mode, chips_by_mode["semantic"]),
             "hits": hits,

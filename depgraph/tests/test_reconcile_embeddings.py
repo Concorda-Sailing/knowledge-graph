@@ -51,7 +51,11 @@ def test_reconcile_writes_embedding_index(tmp_path):
     r0 = rows[0]
     assert set(r0.keys()) >= {"row", "node_id", "chunk_index", "content_hash",
                               "text_preview", "source_field"}
-    assert r0["source_field"] == "dossier_body"
+    # Both source_field values are expected on a node that has a dossier:
+    # the per-node synthetic summary (#37) plus the dossier body chunks.
+    source_fields = {r["source_field"] for r in rows}
+    assert "node_summary" in source_fields
+    assert "dossier_body" in source_fields
     assert r0["content_hash"].startswith("sha256:")
 
     raw = bin_path.read_bytes()

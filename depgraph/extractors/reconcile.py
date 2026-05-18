@@ -102,6 +102,53 @@ def _dossier_body_text(node: dict, data_dir: Path) -> str | None:
     return text.strip() or None
 
 
+def _synthetic_node_summary(node: dict) -> str | None:
+    """Build a brief textual summary of a node for semantic indexing.
+
+    Combines id + kind + repo/path + name + signature highlights so semantic
+    search has a useful surface on corpora that haven't been hand-dossiered
+    yet (#37). When a dossier exists for the same node, that body lays on
+    top — its chunks index alongside this summary and rank higher because
+    the text is more specific.
+
+    Returns None for primitives (`package`) that have nothing useful to
+    index — directory groupings carry no symbol semantics beyond what
+    their member modules already cover.
+    """
+    if node.get("primitive") == "package":
+        return None
+    nid = node.get("id") or ""
+    if not nid:
+        return None
+    parts: list[str] = [nid]
+    kind = node.get("kind") or node.get("primitive") or ""
+    if kind:
+        parts.append(f"kind: {kind}")
+    src = node.get("source") or {}
+    repo = src.get("repo")
+    rel = src.get("path")
+    if repo and rel:
+        parts.append(f"path: {repo}/{rel}")
+    name = node.get("name")
+    last_id_segment = nid.rsplit("::", 1)[-1]
+    if name and name != last_id_segment:
+        parts.append(f"name: {name}")
+    sig = node.get("signature") or {}
+    if isinstance(sig, dict):
+        docstring = sig.get("docstring") or sig.get("doc")
+        if isinstance(docstring, str) and docstring.strip():
+            parts.append(f"doc: {docstring.strip()[:400]}")
+        ret = sig.get("return_type")
+        if isinstance(ret, str) and ret:
+            parts.append(f"returns {ret}")
+        params = sig.get("parameters")
+        if isinstance(params, list) and params:
+            names = [p.get("name") for p in params if isinstance(p, dict) and p.get("name")]
+            if names:
+                parts.append("params: " + ", ".join(names))
+    return "\n".join(parts).strip() or None
+
+
 def _chunk_hash(text: str) -> str:
     return "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest()
 
@@ -134,6 +181,24 @@ def _run_embedding_pass(nodes: list[dict], data_dir: Path) -> str:
     embed_targets: list[int] = []  # indices into new_rows for chunks that need fresh embeds
 
     for n in nodes:
+        # Per-node synthetic summary: present on every well-formed node
+        # so semantic search has surface area on dossierless corpora (#37).
+        summary = _synthetic_node_summary(n)
+        if summary:
+            h = _chunk_hash(summary)
+            meta = {
+                "node_id": n.get("id"),
+                "chunk_index": 0,
+                "content_hash": h,
+                "text_preview": summary[:120].replace("\n", " "),
+                "source_field": "node_summary",
+            }
+            row_idx = len(new_rows)
+            new_rows.append(meta)
+            if h not in prior_by_hash:
+                chunks_to_embed.append(summary)
+                embed_targets.append(row_idx)
+
         body = _dossier_body_text(n, data_dir)
         if not body:
             continue

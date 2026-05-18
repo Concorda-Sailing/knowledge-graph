@@ -96,16 +96,23 @@ def _scope_to_source_fields(scope: str) -> set[str]:
         "rules": {"rule_statement"},
         "domain": {"domain_summary"},
         "processes": {"process_summary", "process_step"},
+        "code": {"node_summary"},
     }.get(scope, set())
 
 
 # Primary mode tabs: each maps to the source_fields covered.
+# `node_summary` enters via the synthetic per-node embedding pass (#37) —
+# always indexed when the corpus has nodes, so semantic search has surface
+# area on dossierless corpora.
 MODE_FIELDS: dict[str, set[str]] = {
     "semantic": {"dossier_body", "rule_statement", "domain_summary",
-                 "process_summary", "process_step"},
-    "dep": {"dossier_body"},
+                 "process_summary", "process_step", "node_summary"},
+    "dep": {"dossier_body", "node_summary"},
     "knowledge": {"rule_statement", "domain_summary",
                   "process_summary", "process_step"},
+    # "lexical" doesn't read from the embedding index — handled in search()
+    # by routing into lexical_search() over the in-memory node corpus.
+    "lexical": set(),
 }
 
 
@@ -158,6 +165,8 @@ def _kind_hint(source_field: str) -> str:
         "domain_summary": "domain",
         "process_summary": "process",
         "process_step": "process",
+        "node_summary": "node",
+        "lexical": "node",
     }.get(source_field, source_field)
 
 
@@ -169,6 +178,106 @@ def _href_for(node_id: str, source_field: str) -> str:
     if source_field in ("process_summary", "process_step"):
         return f"/graph/process/{node_id}"
     return f"/graph/node/{node_id}"
+
+
+# ---------------------------------------------------------------------------
+# Lexical search — pure BM25 over the node corpus.
+# ---------------------------------------------------------------------------
+# The on-ramp for a fresh KG. Embeddings cover the same surface once regen
+# has run a pass with fastembed available, but lexical works *immediately*:
+# no model load, no index file, no dossier authoring required. Answers
+# "show me the Button component" the way a developer would with `grep -r`
+# (#37).
+
+_LEXICAL_CACHE: dict | None = None
+_LEXICAL_MTIME: tuple[str | None, float] = (None, 0.0)
+
+
+def _build_lexical_index() -> dict:
+    """Materialize the per-node lexical-search index in memory. One row
+    per non-package primitive; doc-bag terms are tokenized from the
+    node id, source path, kind, primitive, and name."""
+    rows: list[dict] = []
+    doc_terms: list[list[str]] = []
+    for n in loader.load_depgraph_nodes():
+        if not isinstance(n, dict):
+            continue
+        nid = n.get("id") or ""
+        if not nid:
+            continue
+        if n.get("primitive") == "package":
+            continue
+        src = n.get("source") or {}
+        repo = src.get("repo") or ""
+        rel = src.get("path") or ""
+        kind = n.get("kind") or n.get("primitive") or ""
+        name = n.get("name") or nid.rsplit("::", 1)[-1]
+        path_str = f"{repo}/{rel}" if (repo and rel) else (repo or rel or "")
+        terms = (
+            tokenize(nid)
+            + tokenize(name)
+            + tokenize(kind)
+            + tokenize(path_str)
+        )
+        rows.append({
+            "node_id": nid,
+            "kind": kind,
+            "name": name,
+            "path": path_str,
+        })
+        doc_terms.append(terms)
+    return {"rows": rows, "doc_terms": doc_terms}
+
+
+def _load_lexical_index() -> dict:
+    """Cache the lexical index by (project_id, depgraph _meta.json mtime).
+    Re-extracts on regen; otherwise served from memory."""
+    global _LEXICAL_CACHE, _LEXICAL_MTIME
+    proj = loader.current_project()
+    meta_path = proj.depgraph_nodes_dir / "_meta.json"
+    mtime = meta_path.stat().st_mtime if meta_path.exists() else 0.0
+    key = (proj.id, mtime)
+    if _LEXICAL_CACHE is not None and _LEXICAL_MTIME == key:
+        return _LEXICAL_CACHE
+    _LEXICAL_CACHE = _build_lexical_index()
+    _LEXICAL_MTIME = key
+    return _LEXICAL_CACHE
+
+
+def lexical_search(query: str, *, limit: int = 30) -> list[dict]:
+    """Pure-BM25 search over node id / path / kind / name. Returns the
+    same hit shape as the semantic path so the template can render either.
+
+    Use as the default tab on day-zero corpora; once fastembed has run a
+    pass over the corpus, semantic mode covers the same surface plus
+    dossier bodies and logigraph entries.
+    """
+    q = (query or "").strip()
+    if not q:
+        return []
+    idx = _load_lexical_index()
+    rows = idx["rows"]
+    doc_terms = idx["doc_terms"]
+    if not rows:
+        return []
+    scores = bm25_score(tokenize(q), doc_terms)
+    order = np.argsort(-scores)[:limit]
+    hits: list[dict] = []
+    for i in order:
+        s = float(scores[i])
+        if s <= 0:
+            continue
+        r = rows[i]
+        nid = r["node_id"]
+        hits.append({
+            "node_id": nid,
+            "score": s,
+            "kind_hint": _kind_hint("lexical"),
+            "source_field": "lexical",
+            "text_preview": f"{r['kind']} · {r['path']}" if r["path"] else r["kind"],
+            "href": _href_for(nid, "lexical"),
+        })
+    return hits
 
 
 def search(query: str, scopes: list[str] | None,
@@ -187,6 +296,10 @@ def search(query: str, scopes: list[str] | None,
     q = (query or "").strip()
     if not q:
         return []
+
+    # Lexical mode bypasses the embedding index entirely (#37).
+    if mode == "lexical":
+        return lexical_search(q, limit=limit)
 
     # Compute allowed source_fields: intersect mode + scopes (if any).
     allowed_fields = MODE_FIELDS.get(mode, MODE_FIELDS["semantic"])
@@ -216,6 +329,10 @@ def search(query: str, scopes: list[str] | None,
             doc_terms.append(tokenize(r.get("text_preview") or "") +
                              tokenize(r.get("node_id") or ""))
     if not candidates:
+        # Embedding index empty / not built yet — fall through to lexical
+        # so day-zero corpora aren't search-dead (#37).
+        if mode in ("semantic", "dep"):
+            return lexical_search(q, limit=limit)
         return []
 
     cand_vecs = np.vstack(vec_chunks)
@@ -256,4 +373,10 @@ def search(query: str, scopes: list[str] | None,
             "text_preview": r.get("text_preview", ""),
             "href": _href_for(node_id, source_field),
         })
+    # Day-zero fallback: when the embedding index is missing or doesn't
+    # cover the corpus (no regen with fastembed yet), semantic mode comes
+    # up empty. Drop to lexical so the user gets *something* — without
+    # this the tool reads as broken on first load (#37).
+    if not hits and mode in ("semantic", "dep"):
+        return lexical_search(q, limit=limit)
     return hits

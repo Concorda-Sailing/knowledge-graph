@@ -14,7 +14,7 @@
   <div class="search-tabs">
     {% for m in all_modes %}
       <a href="/graph/search?q={{ q }}&mode={{ m }}" class="search-tab{% if mode == m %} search-tab-active{% endif %}">
-        {% if m == 'semantic' %}Semantic{% elif m == 'dep' %}Dependencies{% elif m == 'knowledge' %}Knowledge{% else %}{{ m }}{% endif %}
+        {% if m == 'lexical' %}Lexical{% elif m == 'semantic' %}Semantic{% elif m == 'dep' %}Dependencies{% elif m == 'knowledge' %}Knowledge{% else %}{{ m }}{% endif %}
       </a>
     {% endfor %}
   </div>
