@@ -40,8 +40,8 @@
   {% endif %}
 
   <footer class="repo-card-foot">
-    <span class="dep-stat">↑ inbound <b>{{ deps.inbound_repos }}</b></span>
-    <span class="dep-stat">↓ outbound <b>{{ deps.outbound_repos }}</b></span>
+    <span class="dep-stat" title="Total inbound edges{% if deps.inbound_repos %} from {{ deps.inbound_repos }} other repo{{ '' if deps.inbound_repos == 1 else 's' }}{% endif %}">↑ inbound <b>{{ deps.inbound_edges }}</b>{% if deps.inbound_repos %} <span class="dep-stat-sub">({{ deps.inbound_repos }} repo{{ '' if deps.inbound_repos == 1 else 's' }})</span>{% endif %}</span>
+    <span class="dep-stat" title="Total outbound edges{% if deps.outbound_repos %} to {{ deps.outbound_repos }} other repo{{ '' if deps.outbound_repos == 1 else 's' }}{% endif %}">↓ outbound <b>{{ deps.outbound_edges }}</b>{% if deps.outbound_repos %} <span class="dep-stat-sub">({{ deps.outbound_repos }} repo{{ '' if deps.outbound_repos == 1 else 's' }})</span>{% endif %}</span>
     <span class="dep-stat">⊕ external <b>{{ deps.external_pkgs }}</b></span>
     <span class="dep-sep">·</span>
     <span class="cross-stat cross-rules-tag">🧷 {{ cc.rules|length }} rules</span>

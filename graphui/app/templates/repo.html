@@ -28,8 +28,8 @@
   <div class="repo-detail-stats">
     <span class="stat-chip">{{ repo.node_count }} nodes</span>
     <span class="stat-chip">{{ repo.current_pct }}% current</span>
-    <span class="stat-chip">↑ {{ repo.dep_counts.inbound_repos }} inbound</span>
-    <span class="stat-chip">↓ {{ repo.dep_counts.outbound_repos }} outbound</span>
+    <span class="stat-chip" title="Total inbound edges{% if repo.dep_counts.inbound_repos %} from {{ repo.dep_counts.inbound_repos }} other repo{{ '' if repo.dep_counts.inbound_repos == 1 else 's' }}{% endif %}">↑ {{ repo.dep_counts.inbound_edges }} inbound</span>
+    <span class="stat-chip" title="Total outbound edges{% if repo.dep_counts.outbound_repos %} to {{ repo.dep_counts.outbound_repos }} other repo{{ '' if repo.dep_counts.outbound_repos == 1 else 's' }}{% endif %}">↓ {{ repo.dep_counts.outbound_edges }} outbound</span>
     <span class="stat-chip">⊕ {{ repo.dep_counts.external_pkgs }} ext pkgs</span>
     {% if tab_counts.dead %}<span class="stat-chip stat-chip-warn">⚠ {{ tab_counts.dead }} dead-code</span>{% endif %}
     <span class="stat-chip stat-chip-cross">🧷 {{ repo.cross_cuts.rules|length }} rules · {{ repo.cross_cuts.processes|length }} processes</span>

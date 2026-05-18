@@ -542,17 +542,27 @@ def _empty_state_counts() -> dict[str, int]:
     return {s: 0 for s in _STATES}
 
 
-def _configured_repo_basenames() -> dict[str, str]:
-    """Map of {basename: repo_key} from depgraph/project.toml. Empty when
-    project.toml is missing or has no [repos.*] tables — graphui then
-    falls back to nodes-only repo discovery."""
+def _configured_repo_basenames() -> set[str]:
+    """The set of repo identifiers configured in depgraph/project.toml.
+
+    These are the `[repos.<key>]` keys — the same string the extractor
+    stores in each node's `source.repo`. Used to inject empty-corpus
+    placeholder rows for repos whose extractor produced zero primitives.
+    Empty when project.toml is missing or has no `[repos.*]` tables.
+
+    Earlier versions returned `{basename: key}`, where basename was the
+    path's last segment. That mismatched what extractors write to
+    `source.repo` (always the key), so the placeholder injection produced
+    a duplicate row keyed by basename next to the real row keyed by the
+    `[repos.<key>]` name (#24).
+    """
     proj = current_project()
     try:
         repos = _depgraph_project_repos(proj.depgraph_dir)
     except Exception:
         # Malformed project.toml shouldn't crash the dashboard.
-        return {}
-    return {info["basename"]: key for key, info in repos.items()}
+        return set()
+    return set(repos.keys())
 
 
 def repo_summary() -> list[dict]:
@@ -592,11 +602,10 @@ def repo_summary() -> list[dict]:
 
     # Inject configured-but-empty repos. Without this, a TS repo whose
     # extractor crashed at regen time silently disappears from the dashboard.
-    configured = _configured_repo_basenames()
-    for basename in configured:
-        if basename not in by_repo:
-            by_repo[basename] = {
-                "basename": basename,
+    for repo_key in _configured_repo_basenames():
+        if repo_key not in by_repo:
+            by_repo[repo_key] = {
+                "basename": repo_key,
                 "node_count": 0,
                 "state_counts": _empty_state_counts(),
                 "kinds": {},
@@ -618,21 +627,26 @@ def repo_summary() -> list[dict]:
         r["activity"] = repo_activity(r["basename"])
         r["languages"] = repo_languages(r["basename"])
         r["areas"] = agg.get("areas", [])
-        dep_nodes = agg.get("dep_counts_nodes") or {"inbound_repos": 0, "outbound_repos": 0}
+        dep_nodes = agg.get("dep_counts_nodes") or {
+            "inbound_repos": 0, "outbound_repos": 0,
+            "inbound_edges": 0, "outbound_edges": 0,
+        }
         r["dep_counts"] = {**dep_nodes, "external_pkgs": _repo_external_pkgs(r["basename"])}
         r["cross_cuts"] = agg.get("cross_cuts") or {"rules": [], "processes": [], "domain": []}
         # dead_code_score: low push frequency + zero inbound + many stale claims.
+        # Use total inbound edges (any source), not cross-repo repo count —
+        # otherwise every single-repo project scores as dead-candidate.
         age = r["activity"]["last_push_age_days"] or 0
-        inbound = r["dep_counts"]["inbound_repos"]
+        inbound_edges = r["dep_counts"]["inbound_edges"]
         stale = r["state_counts"].get("stale", 0)
-        score = (age // 30) + (10 if inbound == 0 else 0) + stale
+        score = (age // 30) + (10 if inbound_edges == 0 else 0) + stale
         r["dead_code_score"] = score
         # Override classification for empty configured repos — "extractor
         # produced nothing" is its own state, distinct from old code that
         # nobody depends on.
         if r["empty_corpus"]:
             r["activity"]["classification"] = "empty"
-        elif r["activity"]["classification"] == "dormant" and age >= 180 and inbound == 0:
+        elif r["activity"]["classification"] == "dormant" and age >= 180 and inbound_edges == 0:
             r["activity"]["classification"] = "dead-candidate"
         out.append(r)
     out.sort(key=lambda r: (-r["node_count"], r["basename"]))
@@ -2002,13 +2016,23 @@ def _repo_aggregates() -> dict[str, dict]:
 
     inbound: dict[str, set[str]] = {b: set() for b in seen_repos}
     outbound: dict[str, set[str]] = {b: set() for b in seen_repos}
+    # Edge totals — fan-in and fan-out summed across every node in the repo,
+    # including same-repo edges. For a single-repo project the cross-repo
+    # set above is always empty; without these totals the card shows "0
+    # inbound" even when there's a full edge index (#24).
+    inbound_edges: dict[str, int] = {b: 0 for b in seen_repos}
+    outbound_edges: dict[str, int] = {b: 0 for b in seen_repos}
     for target_id, dependers in dependents.items():
         target_repo = repo_by_id.get(target_id)
         if not target_repo:
             continue
+        inbound_edges[target_repo] = inbound_edges.get(target_repo, 0) + len(dependers)
         for d in dependers:
             dep_repo = repo_by_id.get(d.get("source") or "")
-            if not dep_repo or dep_repo == target_repo:
+            if not dep_repo:
+                continue
+            outbound_edges[dep_repo] = outbound_edges.get(dep_repo, 0) + 1
+            if dep_repo == target_repo:
                 continue
             inbound[target_repo].add(dep_repo)
             outbound.setdefault(dep_repo, set()).add(target_repo)
@@ -2058,6 +2082,8 @@ def _repo_aggregates() -> dict[str, dict]:
             "dep_counts_nodes": {
                 "inbound_repos": len(inbound.get(basename, set())),
                 "outbound_repos": len(outbound.get(basename, set())),
+                "inbound_edges": inbound_edges.get(basename, 0),
+                "outbound_edges": outbound_edges.get(basename, 0),
             },
             "cross_cuts": {
                 "rules": sorted(cross[basename]["rules"]) if basename in cross else [],
@@ -2087,6 +2113,7 @@ def repo_dep_counts(basename: str) -> dict:
     """
     agg = _repo_aggregates().get(basename, {}).get("dep_counts_nodes") or {
         "inbound_repos": 0, "outbound_repos": 0,
+        "inbound_edges": 0, "outbound_edges": 0,
     }
     return {**agg, "external_pkgs": _repo_external_pkgs(basename)}
 
