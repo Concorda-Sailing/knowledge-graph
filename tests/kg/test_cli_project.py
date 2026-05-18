@@ -152,6 +152,34 @@ def test_remove_repo_via_kg_project(two_projects: dict) -> None:
     assert "[repos.api]" not in cfg_text
 
 
+def test_add_repo_mirrors_into_logigraph(two_projects: dict) -> None:
+    """add-repo writes [repos.<key>] into BOTH depgraph and logigraph
+    project.toml so the logigraph hook can classify the repo's edits (#20)."""
+    res = _run(
+        two_projects["registry"], "project", "--project", "alpha",
+        "add-repo", "api", str(two_projects["tmp_path"] / "fake-repo"),
+    )
+    assert res.returncode == 0, f"stderr: {res.stderr}"
+    logi_text = (two_projects["alpha"] / "logigraph" / "project.toml").read_text()
+    assert "[repos.api]" in logi_text
+    assert "path = " in logi_text
+
+
+def test_remove_repo_strips_from_logigraph(two_projects: dict) -> None:
+    """remove-repo removes the mirrored [repos.<key>] from logigraph too (#20)."""
+    _run(
+        two_projects["registry"], "project", "--project", "alpha",
+        "add-repo", "api", str(two_projects["tmp_path"] / "fake-repo"),
+    )
+    res = _run(
+        two_projects["registry"], "project", "--project", "alpha",
+        "remove-repo", "api",
+    )
+    assert res.returncode == 0, f"stderr: {res.stderr}"
+    logi_text = (two_projects["alpha"] / "logigraph" / "project.toml").read_text()
+    assert "[repos.api]" not in logi_text
+
+
 def test_set_primary_repo(two_projects: dict) -> None:
     # Add a repo first so primary_repo has a valid target.
     _run(

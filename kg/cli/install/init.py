@@ -55,8 +55,8 @@ def resolve_bundle_layout(path: Path) -> tuple[Path, str]:
                                project name is "foo"
 
     The doubled-name bug ("user passes
-    ~/concorda-knowledge-graph and gets
-    ~/concorda-knowledge-graph/knowledge-graph/") is fixed here by
+    ~/<project>-knowledge-graph and gets
+    ~/<project>-knowledge-graph/knowledge-graph/") is fixed here by
     detecting that the argument is already the bundle dir under the
     sibling-with-hyphen convention.
     """
@@ -140,10 +140,10 @@ def cmd_init(args: argparse.Namespace) -> int:
         f"#   - migrations_dirs: subdirs (relative to `path`) the SQL pipeline\n"
         f"#     scans for migration files. Required if languages includes \"sql\".\n"
         f"#\n"
-        f"# Example — replace with your repo(s):\n"
+        f"# Example — replace `<project>` and the paths with your repo(s):\n"
         f"#\n"
         f"# [repos.api]\n"
-        f'# path = "~/{pname}-api"\n'
+        f'# path = "~/<project>-api"\n'
         f'# languages = ["python", "sql"]\n'
         f'# migrations_dirs = ["migrations"]\n'
         f'# exclude_paths = [\n'
@@ -154,7 +154,7 @@ def cmd_init(args: argparse.Namespace) -> int:
         f'# ]\n'
         f"#\n"
         f"# [repos.web]\n"
-        f'# path = "~/{pname}-web"\n'
+        f'# path = "~/<project>-web"\n'
         f'# languages = ["typescript"]\n'
         f'# exclude_paths = [\n'
         f'#   "**/__tests__/**",\n'
@@ -200,6 +200,23 @@ def cmd_init(args: argparse.Namespace) -> int:
         f"# Path to this project's depgraph data dir.\n"
         f"[depgraph]\n"
         f'data_dir = "{bundle}/depgraph"\n'
+        f"\n"
+        f"# Repos this logigraph corpus claims against. These must mirror the\n"
+        f"# `[repos.<key>]` tables in `../depgraph/project.toml` — the keys are how\n"
+        f"# the pre-edit hook classifies file paths into repos. Only `path` is\n"
+        f"# required here; everything else is depgraph-only.\n"
+        f"#\n"
+        f"# `kg install bootstrap` copies these from the depgraph side when both\n"
+        f"# scaffolds are seeded together; if you add a repo to depgraph later,\n"
+        f"# remember to mirror it here (there's no shortcut yet).\n"
+        f"#\n"
+        f"# Example — replace `<project>` and the paths with your repo(s):\n"
+        f"#\n"
+        f"# [repos.api]\n"
+        f'# path = "~/<project>-api"\n'
+        f"#\n"
+        f"# [repos.web]\n"
+        f'# path = "~/<project>-web"\n'
     )
 
     # logigraph/CANDIDATES.md

@@ -89,7 +89,7 @@ def cmd_systemd(args: argparse.Namespace) -> int:
     # conventions ("nested" <p>/knowledge-graph/ and "sibling-with-hyphen"
     # <p>-knowledge-graph/) work consistently across bootstrap, init, and
     # systemd. Avoids the doubled-path bug where a user passing
-    # ~/concorda-knowledge-graph got DEPGRAPH_DATA_DIR=...concorda-knowledge-graph/knowledge-graph/depgraph.
+    # ~/<project>-knowledge-graph got DEPGRAPH_DATA_DIR=...<project>-knowledge-graph/knowledge-graph/depgraph.
     from kg.cli.install.init import resolve_bundle_layout
     depg = depg_override
     logg = logg_override

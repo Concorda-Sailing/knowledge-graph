@@ -12,6 +12,7 @@ Remaining verbs (Tasks 6-10):
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 import tomllib
 from pathlib import Path
@@ -170,7 +171,59 @@ def _cmd_add_repo(args: argparse.Namespace) -> int:
         cli_args.append(f"--files-arg={args.files_arg}")
     if args.force:
         cli_args.append("--force")
-    return _delegate_to_depgraph(proj, *cli_args)
+    rc = _delegate_to_depgraph(proj, *cli_args)
+    if rc == 0:
+        # Mirror the [repos.<key>] table into logigraph/project.toml so the
+        # logigraph pre-edit hook can classify edits in this repo. The two
+        # sides go out of sync silently otherwise (#20).
+        try:
+            _mirror_repo_to_logigraph(proj, args.key, args.path)
+        except OSError as e:
+            print(f"warning: could not mirror [repos.{args.key}] to logigraph: {e}",
+                  file=sys.stderr)
+    return rc
+
+
+def _normalize_repo_path_for_toml(p: str) -> str:
+    """Rewrite absolute paths under $HOME to ~/... so project.toml stays
+    portable across users. Mirrors depgraph/lib/cli/repo.py::_normalize_repo_path."""
+    home = str(Path.home())
+    abs_p = str(Path(p).expanduser())
+    if abs_p.startswith(home + "/"):
+        return "~" + abs_p[len(home):]
+    return p
+
+
+def _mirror_repo_to_logigraph(proj: "resolve.Project", key: str, path: str) -> None:
+    """Write [repos.<key>] path = "..." into the logigraph project.toml,
+    replacing any existing block for the same key. No-op if logigraph isn't
+    scaffolded yet (older projects)."""
+    cfg = proj.logigraph_dir / "project.toml"
+    if not cfg.exists():
+        return
+    stored = _normalize_repo_path_for_toml(path)
+    text = cfg.read_text()
+    pattern = re.compile(
+        r"(?ms)^\[repos\." + re.escape(key) + r"\][^\n]*\n(?:(?!^\[).*\n?)*"
+    )
+    text = pattern.sub("", text).rstrip() + "\n"
+    if not text.endswith("\n\n"):
+        text += "\n"
+    text += f'[repos.{key}]\npath = "{stored}"\n'
+    cfg.write_text(text)
+
+
+def _remove_repo_from_logigraph(proj: "resolve.Project", key: str) -> None:
+    cfg = proj.logigraph_dir / "project.toml"
+    if not cfg.exists():
+        return
+    text = cfg.read_text()
+    pattern = re.compile(
+        r"(?ms)^\[repos\." + re.escape(key) + r"\][^\n]*\n(?:(?!^\[).*\n?)*"
+    )
+    new = pattern.sub("", text).rstrip() + "\n"
+    if new != text:
+        cfg.write_text(new)
 
 
 def _cmd_list_repos(args: argparse.Namespace) -> int:
@@ -188,7 +241,14 @@ def _cmd_remove_repo(args: argparse.Namespace) -> int:
     except resolve.ProjectResolutionError as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
-    return _delegate_to_depgraph(proj, "repo-remove", args.key)
+    rc = _delegate_to_depgraph(proj, "repo-remove", args.key)
+    if rc == 0:
+        try:
+            _remove_repo_from_logigraph(proj, args.key)
+        except OSError as e:
+            print(f"warning: could not remove [repos.{args.key}] from logigraph: {e}",
+                  file=sys.stderr)
+    return rc
 
 
 _SET_WHITELIST = {

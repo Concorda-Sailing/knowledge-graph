@@ -339,12 +339,12 @@ def test_bootstrap_sibling_with_hyphen_does_not_double_path(
     monkeypatch.setattr(subprocess, "run",
                         lambda cmd, *a, **k: (proc_calls.append(list(cmd)) or _FakeProc()))
 
-    project = tmp_path / "concorda-knowledge-graph"
+    project = tmp_path / "acme-knowledge-graph"
     args = _make_args(str(project))
     bootstrap_mod.cmd_bootstrap(args)
 
     bundle_arg = proc_calls[0][-1]
-    # Bundle is the path as-given — NOT `concorda-knowledge-graph/knowledge-graph`.
+    # Bundle is the path as-given — NOT `acme-knowledge-graph/knowledge-graph`.
     assert bundle_arg == str(project)
     assert "knowledge-graph/knowledge-graph" not in bundle_arg
 
@@ -366,7 +366,7 @@ def test_bootstrap_nested_convention_appends_knowledge_graph(
     monkeypatch.setattr(subprocess, "run",
                         lambda cmd, *a, **k: (proc_calls.append(list(cmd)) or _FakeProc()))
 
-    project = tmp_path / "concorda"
+    project = tmp_path / "acme"
     args = _make_args(str(project))
     bootstrap_mod.cmd_bootstrap(args)
 
@@ -376,24 +376,24 @@ def test_bootstrap_nested_convention_appends_knowledge_graph(
 
 def test_resolve_bundle_layout_strips_suffix_for_project_name(tmp_path: Path) -> None:
     """The sibling-with-hyphen path infers the project name by stripping
-    `-knowledge-graph` from the basename — so `~/concorda-knowledge-graph`
-    becomes project `concorda`, not `concorda-knowledge-graph` (which
-    would then seed example repo paths like `~/concorda-knowledge-graph-api`).
+    `-knowledge-graph` from the basename — so `~/acme-knowledge-graph`
+    becomes project `acme`, not `acme-knowledge-graph` (which
+    would then seed example repo paths like `~/acme-knowledge-graph-api`).
     Fix for Gap B."""
     from kg.cli.install.init import resolve_bundle_layout
 
-    bundle, pname = resolve_bundle_layout(tmp_path / "concorda-knowledge-graph")
-    assert bundle == (tmp_path / "concorda-knowledge-graph").resolve()
-    assert pname == "concorda"
+    bundle, pname = resolve_bundle_layout(tmp_path / "acme-knowledge-graph")
+    assert bundle == (tmp_path / "acme-knowledge-graph").resolve()
+    assert pname == "acme"
 
 
 def test_resolve_bundle_layout_nested_uses_parent_name(tmp_path: Path) -> None:
     """Nested convention: project name is the parent dir's basename."""
     from kg.cli.install.init import resolve_bundle_layout
 
-    bundle, pname = resolve_bundle_layout(tmp_path / "concorda")
-    assert bundle == (tmp_path / "concorda" / "knowledge-graph").resolve()
-    assert pname == "concorda"
+    bundle, pname = resolve_bundle_layout(tmp_path / "acme")
+    assert bundle == (tmp_path / "acme" / "knowledge-graph").resolve()
+    assert pname == "acme"
 
 
 def test_resolve_bundle_layout_explicit_knowledge_graph_dir(tmp_path: Path) -> None:
@@ -401,10 +401,10 @@ def test_resolve_bundle_layout_explicit_knowledge_graph_dir(tmp_path: Path) -> N
     bundle itself; the project name comes from the parent."""
     from kg.cli.install.init import resolve_bundle_layout
 
-    target = tmp_path / "concorda" / "knowledge-graph"
+    target = tmp_path / "acme" / "knowledge-graph"
     bundle, pname = resolve_bundle_layout(target)
     assert bundle == target.resolve()
-    assert pname == "concorda"
+    assert pname == "acme"
 
 
 # ---------------------------------------------------------------------------
