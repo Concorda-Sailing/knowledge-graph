@@ -130,6 +130,76 @@ def test_decorates_edge_local_decorator_py():
     assert local_dec["id"] in src_ids
 
 
+def test_decorates_edge_variable_source_framework_pattern_py():
+    """Framework-style `@router.get("/x")` anchors the `decorates` edge to
+    the module-level `router` variable. The edge target is the decorated
+    function. Schema (#30) allows variable sources for this pattern."""
+    prims = list(extract_repo(repo_key="fixture", repo_path=FIXTURE_DIR / "references"))
+    decorated = next(p for p in prims if p["name"] == "framework_decorated")
+    router = next(p for p in prims if p["name"] == "router")
+    assert router["primitive"] == "variable"
+
+    incoming = [
+        e for e in router["edges_out"]
+        if e["kind"] == "decorates" and e["target"] == decorated["id"]
+    ]
+    assert incoming, "expected a decorates edge from router (variable) to framework_decorated"
+
+    # The schema must accept this edge — validate it end-to-end.
+    for e in incoming:
+        errors = validate_edge({**e, "source_kind": router["primitive"],
+                                       "target_kind": decorated["primitive"]})
+        assert errors == [], errors
+
+
+def test_decorates_edge_skips_module_source_py():
+    """When a decorator name resolves through the imports map to a module
+    id (rather than a specific symbol), the extractor must NOT emit a
+    `decorates` edge — modules can't be decorators (#30)."""
+    from depgraph.extractors.python.extract import _attach_decorator_edges
+
+    primitives = [
+        # A module that imports `something` from another module.
+        {
+            "id": "fixture::caller.py", "primitive": "module", "name": "caller.py",
+            "owner": None, "source": {"path": "caller.py", "repo": "fixture",
+                                         "language": "python", "line": 1, "end_line": 1},
+            "signature": {}, "attributes": {}, "edges_out": [
+                # imports edge whose target is a MODULE id (not a symbol).
+                {"target": "fixture::pkg/__init__.py", "kind": "imports",
+                 "local_binding": "something", "via": "import_from"},
+            ],
+        },
+        # The module the import resolves to.
+        {
+            "id": "fixture::pkg/__init__.py", "primitive": "module", "name": "pkg/__init__.py",
+            "owner": None, "source": {"path": "pkg/__init__.py", "repo": "fixture",
+                                         "language": "python", "line": 1, "end_line": 1},
+            "signature": {}, "attributes": {}, "edges_out": [],
+        },
+        # A function in caller.py that uses `@something` as a decorator.
+        {
+            "id": "fixture::caller.py::decorated_fn", "primitive": "function",
+            "name": "decorated_fn", "owner": None,
+            "source": {"path": "caller.py", "repo": "fixture",
+                       "language": "python", "line": 10, "end_line": 12},
+            "signature": {"decorators": ["something"]},
+            "attributes": {}, "edges_out": [],
+        },
+    ]
+    imports_by_path = {"caller.py": {"something": "fixture::pkg/__init__.py"}}
+
+    _attach_decorator_edges(primitives, trees_by_path={},
+                            imports_by_path=imports_by_path)
+
+    # No decorates edge on the module — modules are never valid decorator sources.
+    pkg_module = next(p for p in primitives if p["id"] == "fixture::pkg/__init__.py")
+    decorates_on_module = [e for e in pkg_module["edges_out"] if e["kind"] == "decorates"]
+    assert decorates_on_module == [], (
+        f"module source must not emit decorates edges, got: {decorates_on_module}"
+    )
+
+
 def test_external_decorator_not_an_edge_py():
     """`@functools.lru_cache()` records in signature.decorators but does
     not produce a decorates edge (no external-as-source edges)."""

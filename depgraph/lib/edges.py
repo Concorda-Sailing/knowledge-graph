@@ -28,6 +28,22 @@ ALL_EDGE_KINDS = {k.value for k in EdgeKind}
 
 # Per spec table at line 213+. {kind: {source: [allowed], target: [allowed]}}.
 # Allowed values: module / package / class / function / variable / any.
+#
+# decorates.source includes `variable` because the framework-style
+# decorator-method-call pattern is extremely common in real codebases:
+# `@router.get("/x")` (FastAPI), `@app.route("/x")` (Flask), `@admin.register(X)`
+# (Django), `@click.command()` — the syntactic source is a module-level
+# variable, and the actual decorator is the method-call result. Extractors
+# anchor the edge to the variable because the call-expression itself has no
+# node. See #30.
+#
+# reads.target includes `class` because in JS/TS (and Python to a lesser
+# extent) a class binding is a runtime value — React Context objects
+# (`createContext()`), Symbol-like sentinels, and bare class references
+# passed to `useContext` / `getattr` / etc. show up as reads of a value
+# whose primitive happens to be `class`. The structural-primitive
+# distinction (class declaration vs const binding) doesn't constrain
+# runtime usage.
 EDGE_KIND_RULES: dict[str, dict[str, list[str]]] = {
     "defines":      {"source": ["module", "class", "package"], "target": ["any"]},
     "extends":      {"source": ["class"], "target": ["class"]},
@@ -35,9 +51,10 @@ EDGE_KIND_RULES: dict[str, dict[str, list[str]]] = {
     "calls":        {"source": ["function"], "target": ["function"]},
     "instantiates": {"source": ["function"], "target": ["class"]},
     "references":   {"source": ["any"], "target": ["any"]},
-    "reads":        {"source": ["function"], "target": ["variable"]},
+    "reads":        {"source": ["function"], "target": ["variable", "class"]},
     "assigns":      {"source": ["function"], "target": ["variable"]},
-    "decorates":    {"source": ["function", "class"], "target": ["function", "class"]},
+    "decorates":    {"source": ["function", "class", "variable"],
+                     "target": ["function", "class"]},
     "includes":     {"source": ["module"], "target": ["module"]},
     "imports":      {"source": ["module"], "target": ["module", "class", "function", "variable"]},
     "tests":        {"source": ["function"], "target": ["function", "class", "variable"]},

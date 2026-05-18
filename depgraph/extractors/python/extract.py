@@ -815,12 +815,23 @@ def _attach_decorator_edges(primitives: list[dict],
                               *, trees_by_path: dict[str, ast.Module],
                               imports_by_path: dict[str, dict[str, str]]) -> None:
     """For each function/class, if any decorator resolves to a locally-defined
-    function, emit a `decorates` edge from that decorator function to the
-    decorated primitive.
+    function, class, OR module-level variable, emit a `decorates` edge from
+    that source primitive to the decorated function/class.
+
+    `variable` sources support the framework decorator-method-call pattern
+    that is ubiquitous in web frameworks — `@router.get("/x")` (FastAPI),
+    `@app.route("/x")` (Flask), `@click.command()`, `@admin.register(X)`
+    — where the syntactic source of the decoration is a module-level
+    variable and the actual decorator is the method-call result (#30).
 
     External decorators (e.g. @functools.lru_cache, @pytest.fixture) do NOT
     produce edges — the edge taxonomy disallows external terminals as edge
     sources. Those are captured in `signature.decorators` only.
+
+    Module/package sources are also skipped — when the decorator name's
+    head resolves through the imports map to a module id (rather than a
+    specific symbol), emitting an edge with module-source isn't useful
+    and trips the EdgeKind constraint.
     """
     local_by_path: dict[str, dict[str, str]] = {}
     for p in primitives:
@@ -849,6 +860,14 @@ def _attach_decorator_edges(primitives: list[dict],
                 continue
             source_prim = primitives_by_id.get(source_id)
             if source_prim is None:
+                continue
+            # The decorator name's head may resolve through the imports map to
+            # a module id (e.g. `from models import X` where reconcile pinned
+            # the edge to the module rather than to X-the-symbol). A module
+            # isn't a valid decorator source per the EdgeKind taxonomy, and
+            # the framework-decorator-call pattern that does justify a
+            # variable source doesn't apply to module sources — skip (#30).
+            if source_prim["primitive"] in {"module", "package"}:
                 continue
             source_prim["edges_out"].append({
                 "target": p["id"], "kind": "decorates",

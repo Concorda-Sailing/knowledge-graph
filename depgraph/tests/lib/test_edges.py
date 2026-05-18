@@ -34,3 +34,32 @@ def test_edge_kind_rules_documented_for_every_kind():
         assert k.value in EDGE_KIND_RULES, f"missing rules for {k.value}"
         rules = EDGE_KIND_RULES[k.value]
         assert "source" in rules and "target" in rules
+
+
+def test_decorates_allows_variable_source():
+    """Framework decorator-method-call pattern (`@router.get(...)`,
+    `@app.route(...)`, `@click.command()`) anchors the source to the
+    module-level variable holding the framework instance (#30)."""
+    edge = {"source_kind": "variable", "target_kind": "function",
+            "kind": "decorates", "via": "router.get",
+            "where": "routers/auth.py:10", "confidence": "exact"}
+    assert validate_edge(edge) == []
+
+
+def test_decorates_still_rejects_module_source():
+    """A module can never be a decorator. Extractors shouldn't emit these,
+    and if they slip through the schema should flag them (#30)."""
+    edge = {"source_kind": "module", "target_kind": "function",
+            "kind": "decorates", "via": "something",
+            "where": "x.py:1", "confidence": "exact"}
+    errors = validate_edge(edge)
+    assert any("source kind 'module'" in e for e in errors), errors
+
+
+def test_reads_allows_class_target():
+    """JS Context objects / class-typed-but-value-used bindings: a `reads`
+    edge whose target is a class primitive is valid (#30)."""
+    edge = {"source_kind": "function", "target_kind": "class",
+            "kind": "reads", "via": "identifier_read",
+            "where": "sidebar.tsx:10", "confidence": "exact"}
+    assert validate_edge(edge) == []
