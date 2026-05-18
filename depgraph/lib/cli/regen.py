@@ -55,6 +55,7 @@ from depgraph.extractors.reconcile import validate_corpus  # noqa: E402
 
 from ._shared import mark_regen_in_progress
 from .context import Context
+from .orphans import archive_node_file
 
 
 # ---------------------------------------------------------------------------
@@ -294,6 +295,61 @@ def _write_index(index_dir: Path, name: str, payload: dict) -> None:
     tmp.replace(target)
 
 
+def _iter_live_node_files(nodes_dir: Path):
+    """Yield every node JSON under nodes/, skipping `_archive/`, `_index/`,
+    `_meta.json`, `_manifests/`, etc."""
+    for path in nodes_dir.rglob("*.json"):
+        if path.name.startswith("_"):
+            continue
+        if any(p.startswith("_") for p in path.relative_to(nodes_dir).parts):
+            continue
+        yield path
+
+
+def _archive_file_orphans(
+    data_dir: Path, repo_paths: dict[str, Path]
+) -> tuple[int, set[str]]:
+    """Walk on-disk nodes and archive any whose `source.path` no longer
+    exists on disk (file deleted from the tracked repo since last regen).
+
+    `repo_paths` is the authoritative basename → checkout-path map for THIS
+    regen run (built from project.toml in Mode A, from CLI args in Mode B).
+    Nodes whose repo basename isn't in `repo_paths` are preserved — they
+    may belong to a repo this run didn't touch (partial regen). This keeps
+    archival from accidentally clearing a quiescent repo's nodes.
+
+    Returns (count_archived, set_of_archived_ids). The id set lets callers
+    drop matching entries from in-memory primitive lists so indexes only
+    reflect the live set.
+    """
+    nodes_dir = data_dir / "nodes"
+    if not nodes_dir.exists():
+        return 0, set()
+    archive_dir = nodes_dir / "_archive"
+    archived_ids: set[str] = set()
+    count = 0
+    for node_file in _iter_live_node_files(nodes_dir):
+        try:
+            data = json.loads(node_file.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        src = data.get("source") or {}
+        repo, rel = src.get("repo"), src.get("path")
+        if not repo or not rel:
+            continue
+        repo_path = repo_paths.get(repo)
+        if repo_path is None:
+            continue
+        if (repo_path / rel).exists():
+            continue
+        archive_node_file(node_file, archive_dir, reason="source_path_missing")
+        nid = data.get("id")
+        if nid:
+            archived_ids.add(nid)
+        count += 1
+    return count, archived_ids
+
+
 # ---------------------------------------------------------------------------
 # Core v2 pipeline
 # ---------------------------------------------------------------------------
@@ -398,6 +454,18 @@ def _run_v2_pipeline(
     # --- Write to disk ---
     print("--- write")
     write_classified(all_primitives, decisions, data_dir=data_dir)
+
+    # --- Archive file-orphan nodes ---
+    # A node whose source file is gone from its repo is dead corpus state.
+    # `write_classified` only writes the newly-extracted set, it doesn't
+    # delete leftover nodes from prior regens. Walk on-disk now and sweep
+    # them to `_archive/` so indexes and the `node_count` reflect the
+    # live set rather than monotonically growing across regens.
+    print("--- archive file-orphans")
+    archived_count, archived_ids = _archive_file_orphans(data_dir, repo_paths)
+    if archived_ids:
+        all_primitives = [p for p in all_primitives if p.get("id") not in archived_ids]
+    print(f"    archived: {archived_count}")
 
     # --- v2 validation report ---
     report = validate_corpus(all_primitives)
