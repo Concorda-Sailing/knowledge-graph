@@ -8,7 +8,7 @@ Module is named `pytest_plugin` (not `pytest`) to avoid shadowing the
 actual `pytest` package on import.
 """
 from depgraph.lib.classification.config import LanguageCues
-from depgraph.plugins.base import Plugin, has_marker_file, has_pypi_dep
+from kg.shared.plugins import Plugin, has_marker_file, has_pypi_dep
 
 
 def _detect(repo_path) -> bool:

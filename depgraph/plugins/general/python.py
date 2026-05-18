@@ -1,6 +1,6 @@
 """Python language baseline — always active, no framework-specific cues."""
 from depgraph.lib.classification.config import LanguageCues
-from depgraph.plugins.base import Plugin
+from kg.shared.plugins import Plugin
 
 PLUGIN = Plugin(
     name="general:python",

@@ -92,7 +92,7 @@ def test_local_plugin_loaded_from_directory(tmp_path):
     plug_dir.mkdir()
     (plug_dir / "internal_orm.py").write_text(
         "from depgraph.lib.classification.config import LanguageCues\n"
-        "from depgraph.plugins.base import Plugin\n"
+        "from kg.shared.plugins import Plugin\n"
         "PLUGIN = Plugin(\n"
         "    name='acme-internal',\n"
         "    detect=lambda p: True,\n"
@@ -112,7 +112,7 @@ def test_local_plugin_overrides_shipped_on_name_collision(tmp_path):
     plug_dir.mkdir()
     (plug_dir / "react_override.py").write_text(
         "from depgraph.lib.classification.config import LanguageCues\n"
-        "from depgraph.plugins.base import Plugin\n"
+        "from kg.shared.plugins import Plugin\n"
         "PLUGIN = Plugin(\n"
         "    name='react',\n"
         "    detect=lambda p: True,\n"
@@ -134,7 +134,7 @@ def test_local_plugin_bad_file_does_not_abort(tmp_path, capsys):
     (plug_dir / "broken.py").write_text("this is not valid python )(\n")
     (plug_dir / "good.py").write_text(
         "from depgraph.lib.classification.config import LanguageCues\n"
-        "from depgraph.plugins.base import Plugin\n"
+        "from kg.shared.plugins import Plugin\n"
         "PLUGIN = Plugin(name='good', detect=lambda p: True,\n"
         "                cues={'python': LanguageCues()})\n"
     )

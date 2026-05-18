@@ -6,7 +6,7 @@ FastAPI() instance pattern) and `router.X` (the APIRouter pattern). The
 HTTP verbs covered match what FastAPI accepts.
 """
 from depgraph.lib.classification.config import LanguageCues
-from depgraph.plugins.base import Plugin, has_pypi_dep
+from kg.shared.plugins import Plugin, has_pypi_dep
 
 
 def _routes(prefixes: list[str], verbs: list[str]) -> set[str]:

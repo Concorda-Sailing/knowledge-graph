@@ -6,7 +6,7 @@ base-class cues that drive the `model` classifier. Both the 2.x
 covered — projects routinely subclass one and re-export it as the other.
 """
 from depgraph.lib.classification.config import LanguageCues
-from depgraph.plugins.base import Plugin, has_pypi_dep
+from kg.shared.plugins import Plugin, has_pypi_dep
 
 PLUGIN = Plugin(
     name="sqlalchemy",

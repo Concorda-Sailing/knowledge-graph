@@ -5,7 +5,7 @@ that drive endpoint classification — both the `app.X` (Express() instance)
 and `router.X` (Router instance) chained-method patterns.
 """
 from depgraph.lib.classification.config import LanguageCues
-from depgraph.plugins.base import Plugin, has_npm_dep
+from kg.shared.plugins import Plugin, has_npm_dep
 
 
 def _routes(prefixes: list[str], verbs: list[str]) -> set[str]:
