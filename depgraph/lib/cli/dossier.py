@@ -113,7 +113,11 @@ def cmd_dossier_rank(args: argparse.Namespace, ctx: Context) -> int:
         if args.only_stale:
             if state != "stale":
                 continue
-        elif args.only_unreviewed and state != "unreviewed":
+        elif args.only_unreviewed and state not in ("unreviewed", "missing"):
+            # "missing" is the most unreviewed a node can be (no dossier
+            # file on disk). Without this, --only-unreviewed --tier A is a
+            # no-op on every fresh corpus, defeating the on-ramp the
+            # `depgraph health` warning points users at (#35).
             continue
         fan_out = len(deps_idx.get(nid) or [])
         tier = _tier_of(fan_out)
@@ -617,7 +621,14 @@ def register(sub: argparse._SubParsersAction) -> None:
     )
     p_dr.add_argument("--tier", choices=["A", "B", "C"], help="Filter by tier")
     p_dr.add_argument("--limit", type=int, default=50, help="Max rows (default 50)")
-    p_dr.add_argument("--only-unreviewed", action="store_true", default=True)
+    # action='store_true' supplies default=False on its own. The earlier
+    # `default=True` overrode that and made the flag a no-op — passed or
+    # omitted, args.only_unreviewed was always True (#35).
+    p_dr.add_argument(
+        "--only-unreviewed", action="store_true",
+        help="Filter to nodes whose dossier state is 'unreviewed' or "
+             "'missing' (no file yet). Omit to rank every node.",
+    )
     p_dr.add_argument("--only-stale", action="store_true")
     p_dr.add_argument(
         "--include-tests",

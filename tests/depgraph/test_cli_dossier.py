@@ -110,6 +110,86 @@ def test_dossier_rank_lists_unreviewed_node(
     assert "test-api::models/foo.py::Foo" in out
 
 
+def test_dossier_rank_only_unreviewed_includes_missing_state(
+    data_dir: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """On a fresh corpus, every node's dossier state is 'missing' (no file).
+    `--only-unreviewed` must surface those — otherwise the documented
+    on-ramp from `depgraph health` returns 0 nodes (#35)."""
+    ctx = Context.from_data_dir(data_dir)
+    _make_node(ctx, "test-api::models/foo.py::Foo")  # no dossier file written
+    args = argparse.Namespace(
+        only_stale=False, only_unreviewed=True,
+        tier=None, limit=50, include_tests=False,
+    )
+    rc = cmd_dossier_rank(args, ctx)
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "test-api::models/foo.py::Foo" in out
+    assert "missing" in out  # the state column should show 'missing'
+
+
+def test_dossier_rank_only_unreviewed_excludes_current_dossier(
+    data_dir: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A node whose dossier is `current` is filtered out by --only-unreviewed."""
+    ctx = Context.from_data_dir(data_dir)
+    dossier_rel = "dossiers/test-api/models/done.py/Done.md"
+    _make_node(ctx, "test-api::models/done.py::Done", dossier=dossier_rel)
+    p = ctx.DEPGRAPH / dossier_rel
+    p.parent.mkdir(parents=True, exist_ok=True)
+    # Frontmatter that resolves to state=current: status absent (defaults to
+    # "current" in _dossier_state) and last_reviewed_against_hash matches.
+    p.write_text(
+        "---\nlast_reviewed_against_hash: aabbccdd11223344\n---\n\n"
+        "# Done\n\nbody\n"
+    )
+    args = argparse.Namespace(
+        only_stale=False, only_unreviewed=True,
+        tier=None, limit=50, include_tests=False,
+    )
+    rc = cmd_dossier_rank(args, ctx)
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "test-api::models/done.py::Done" not in out
+    assert "total: 0 nodes" in out
+
+
+def test_dossier_rank_only_unreviewed_flag_actually_toggles(
+    data_dir: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """With --only-unreviewed *off*, even `current` dossiers are listed.
+    Asserts the flag actually controls behavior (#35: prior version had
+    `default=True` on top of `action='store_true'` so the flag was inert)."""
+    ctx = Context.from_data_dir(data_dir)
+    dossier_rel = "dossiers/test-api/models/done.py/Done.md"
+    _make_node(ctx, "test-api::models/done.py::Done", dossier=dossier_rel)
+    p = ctx.DEPGRAPH / dossier_rel
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text("---\nlast_reviewed_against_hash: aabbccdd11223344\n---\n\nbody\n")
+    args = argparse.Namespace(
+        only_stale=False, only_unreviewed=False,
+        tier=None, limit=50, include_tests=False,
+    )
+    cmd_dossier_rank(args, ctx)
+    out = capsys.readouterr().out
+    assert "test-api::models/done.py::Done" in out
+
+
+def test_dossier_rank_subparser_only_unreviewed_default_is_false() -> None:
+    """`--only-unreviewed` registered with action='store_true' must default
+    to False; omitting it should not implicitly filter (#35)."""
+    from depgraph.lib.cli.dossier import register
+
+    parser = argparse.ArgumentParser()
+    sub = parser.add_subparsers()
+    register(sub)
+    parsed = parser.parse_args(["dossier-rank", "--tier", "A"])
+    assert parsed.only_unreviewed is False
+    parsed2 = parser.parse_args(["dossier-rank", "--only-unreviewed"])
+    assert parsed2.only_unreviewed is True
+
+
 # ---------------------------------------------------------------------------
 # dossier-draft
 # ---------------------------------------------------------------------------
