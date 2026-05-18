@@ -147,6 +147,164 @@ def test_dossier_draft_missing_node_returns_1(
 
 
 # ---------------------------------------------------------------------------
+# dossier-draft --auto: summarizer-backed dossier writing
+# ---------------------------------------------------------------------------
+
+def _draft_args(**overrides) -> argparse.Namespace:
+    defaults = dict(
+        target="test-api::models/foo.py::Foo",
+        auto=True, model=None, tools=False, max_turns=None,
+    )
+    defaults.update(overrides)
+    return argparse.Namespace(**defaults)
+
+
+def _seed_node_and_repo(ctx: Context, data_dir: Path) -> None:
+    _make_node(
+        ctx,
+        "test-api::models/foo.py::Foo",
+        dossier="dossiers/test-api/models/foo.py/Foo.md",
+    )
+    (data_dir / "project.toml").write_text(
+        '[project]\nname = "test"\n\n'
+        '[repos.test-api]\npath = "/nonexistent/test-api"\n\n'
+        '[summarizer]\n'
+        'default_model = "local-gemma"\n\n'
+        '[summarizer.models.local-gemma]\n'
+        'spec = "openai"\n'
+        'endpoint = "http://localhost:8080/v1"\n'
+        'model = "gemma-2-9b-it"\n'
+    )
+
+
+def test_dossier_draft_auto_writes_dossier_with_llm_drafted_status(
+    data_dir: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """--auto routes the prompt through the configured model and writes the
+    response into the canonical dossier path with status: llm_drafted."""
+    ctx = Context.from_data_dir(data_dir)
+    _seed_node_and_repo(ctx, data_dir)
+
+    from depgraph.lib.summarizer.agent import AgentResult
+    from depgraph.lib.cli import dossier as dossier_mod
+
+    captured: dict = {}
+
+    def fake_run_agent(client, *, user_prompt, tools=None, tool_handlers=None,
+                       max_turns=8, **kw):
+        captured["prompt"] = user_prompt
+        captured["tools"] = tools
+        captured["max_turns"] = max_turns
+        return AgentResult(
+            text="## Purpose\n\nFoo is a model.\n",
+            turns=1, stop_reason="end_turn",
+            usage_totals={"input_tokens": 100, "output_tokens": 20},
+        )
+
+    monkeypatch.setattr(dossier_mod, "_save_drafted_dossier",
+                        dossier_mod._save_drafted_dossier)  # keep real path
+    # Patch the agent loop inside the summarizer module so the test never
+    # hits the network.
+    import depgraph.lib.summarizer as summarizer_pkg
+    monkeypatch.setattr(summarizer_pkg, "run_agent", fake_run_agent)
+
+    rc = cmd_dossier_draft(_draft_args(), ctx)
+    assert rc == 0
+
+    written = ctx.DEPGRAPH / "dossiers/test-api/models/foo.py/Foo.md"
+    assert written.exists()
+    text = written.read_text()
+    assert "status: llm_drafted" in text
+    assert "authored_by:" in text
+    assert "local-gemma" in text
+    assert "Foo is a model" in text
+    # The prompt the agent saw mentions the node id.
+    assert "test-api::models/foo.py::Foo" in captured["prompt"]
+    # No tools by default.
+    assert captured["tools"] is None
+
+
+def test_dossier_draft_auto_with_tools_passes_handlers(
+    data_dir: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """--auto --tools materializes the builtin tool set."""
+    ctx = Context.from_data_dir(data_dir)
+    _seed_node_and_repo(ctx, data_dir)
+
+    from depgraph.lib.summarizer.agent import AgentResult
+    import depgraph.lib.summarizer as summarizer_pkg
+
+    captured: dict = {}
+
+    def fake_run_agent(client, *, user_prompt, tools=None, tool_handlers=None,
+                       max_turns=8, **kw):
+        captured["tools"] = tools
+        captured["handlers"] = tool_handlers
+        return AgentResult(text="## Purpose\n\nbody.\n", turns=1, stop_reason="end_turn")
+
+    monkeypatch.setattr(summarizer_pkg, "run_agent", fake_run_agent)
+
+    rc = cmd_dossier_draft(_draft_args(tools=True), ctx)
+    assert rc == 0
+    assert captured["tools"] is not None
+    tool_names = {t.name for t in captured["tools"]}
+    assert {"read_source", "dependents_of", "node_info", "recent_history"} <= tool_names
+    assert set(captured["handlers"].keys()) == tool_names
+
+
+def test_dossier_draft_auto_no_summarizer_config_returns_1(
+    data_dir: Path, capsys: pytest.CaptureFixture[str],
+) -> None:
+    """--auto without any [summarizer.models.*] entries fails cleanly."""
+    ctx = Context.from_data_dir(data_dir)
+    _make_node(
+        ctx, "test-api::models/foo.py::Foo",
+        dossier="dossiers/test-api/models/foo.py/Foo.md",
+    )
+    (data_dir / "project.toml").write_text(
+        '[project]\nname = "t"\n[repos.test-api]\npath = "/n"\n'
+    )
+    rc = cmd_dossier_draft(_draft_args(), ctx)
+    assert rc == 1
+    err = capsys.readouterr().err
+    assert "no [summarizer.models.*] configured" in err
+
+
+def test_dossier_draft_auto_empty_response_returns_1(
+    data_dir: Path, monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """If the model returns an empty body, don't write a dossier."""
+    ctx = Context.from_data_dir(data_dir)
+    _seed_node_and_repo(ctx, data_dir)
+
+    from depgraph.lib.summarizer.agent import AgentResult
+    import depgraph.lib.summarizer as summarizer_pkg
+
+    monkeypatch.setattr(
+        summarizer_pkg, "run_agent",
+        lambda *a, **kw: AgentResult(text="", turns=1, stop_reason="end_turn"),
+    )
+
+    rc = cmd_dossier_draft(_draft_args(), ctx)
+    assert rc == 1
+    assert "empty body" in capsys.readouterr().err
+    # No dossier written.
+    assert not (ctx.DEPGRAPH / "dossiers/test-api/models/foo.py/Foo.md").exists()
+
+
+def test_dossier_draft_auto_unknown_model_returns_1(
+    data_dir: Path, capsys: pytest.CaptureFixture[str],
+) -> None:
+    """--model pointing at an undeclared key fails cleanly."""
+    ctx = Context.from_data_dir(data_dir)
+    _seed_node_and_repo(ctx, data_dir)
+    rc = cmd_dossier_draft(_draft_args(model="ghost"), ctx)
+    assert rc == 1
+    assert "not configured" in capsys.readouterr().err
+
+
+# ---------------------------------------------------------------------------
 # dossier-finalize
 # ---------------------------------------------------------------------------
 

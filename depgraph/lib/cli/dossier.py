@@ -345,11 +345,152 @@ Output ONLY the dossier markdown body (no frontmatter, no
   {dossier_path.relative_to(ctx.DEPGRAPH)}
 """
 
-    print(prompt)
-    print("\n---")
-    print(f"# After authoring, save the response with:")
-    print(f"#   bin/depgraph dossier-finalize {nid} <transcript-file>")
+    auto = bool(getattr(args, "auto", False))
+    if not auto:
+        print(prompt)
+        print("\n---")
+        print(f"# After authoring, save the response with:")
+        print(f"#   bin/depgraph dossier-finalize {nid} <transcript-file>")
+        return 0
+
+    # --auto: hand the prompt to a configured summarizer model and write
+    # the result straight to the canonical dossier path.
+    try:
+        from depgraph.lib.summarizer import (
+            build_client,
+            builtin_tool_definitions,
+            builtin_tool_handlers,
+            load_models,
+            run_agent,
+        )
+        from depgraph.lib.summarizer.tools import ToolContext
+    except ImportError as e:
+        print(f"--auto requires the summarizer module: {e}", file=sys.stderr)
+        return 1
+
+    try:
+        summarizer_cfg = load_models(ctx.DEPGRAPH)
+    except (KeyError, ValueError) as e:
+        print(f"summarizer config error: {e}", file=sys.stderr)
+        return 1
+
+    if not summarizer_cfg.models:
+        print(
+            "no [summarizer.models.*] configured in project.toml — add a "
+            "model entry first; see depgraph/lib/summarizer/config.py for "
+            "the schema.",
+            file=sys.stderr,
+        )
+        return 1
+
+    try:
+        model_cfg = summarizer_cfg.get(getattr(args, "model", None))
+    except KeyError as e:
+        print(f"summarizer: {e}", file=sys.stderr)
+        return 1
+
+    client = build_client(model_cfg)
+
+    tools_defs = None
+    tools_handlers = None
+    if getattr(args, "tools", False):
+        # Build the tool context: deps index + node map keyed by id.
+        deps_idx = load_dependents_index(ctx)
+        nodes_by_id: dict[str, dict] = {}
+        for nf in ctx.NODES.rglob("*.json"):
+            if nf.name.startswith("_") or any(p.startswith("_") for p in nf.parts):
+                continue
+            try:
+                d = json.loads(nf.read_text())
+            except (OSError, json.JSONDecodeError):
+                continue
+            if "id" in d:
+                nodes_by_id[d["id"]] = d
+        # Resolve repo key → checkout path from project.toml.
+        from depgraph.lib.config import project_repos
+        repos = {k: info["path"] for k, info in project_repos(ctx.DEPGRAPH).items()}
+        tctx = ToolContext(
+            data_dir=ctx.DEPGRAPH,
+            repos=repos,
+            dependents_index=deps_idx,
+            nodes_by_id=nodes_by_id,
+        )
+        tools_defs = builtin_tool_definitions()
+        tools_handlers = builtin_tool_handlers(tctx)
+
+    print(
+        f"--- dossier-draft --auto: model={model_cfg.name} "
+        f"spec={model_cfg.spec} tools={'on' if tools_defs else 'off'}",
+        file=sys.stderr,
+    )
+    try:
+        result = run_agent(
+            client,
+            user_prompt=prompt,
+            tools=tools_defs,
+            tool_handlers=tools_handlers,
+            max_turns=int(getattr(args, "max_turns", None) or 8),
+        )
+    except Exception as e:
+        print(f"summarizer call failed: {type(e).__name__}: {e}", file=sys.stderr)
+        return 1
+
+    body = (result.text or "").strip()
+    if not body:
+        print(
+            f"summarizer returned empty body (stop_reason={result.stop_reason}, "
+            f"turns={result.turns}); not writing dossier.",
+            file=sys.stderr,
+        )
+        return 1
+
+    _save_drafted_dossier(node=node, ctx=ctx, body=body, authored_by=[model_cfg.name])
+    print(
+        f"summarizer: {result.turns} turn(s), stop_reason={result.stop_reason}, "
+        f"tokens={result.usage_totals}",
+        file=sys.stderr,
+    )
     return 0
+
+
+def _save_drafted_dossier(
+    *,
+    node: dict,
+    ctx: Context,
+    body: str,
+    authored_by: list[str],
+) -> Path:
+    """Write a dossier body to the canonical path with `status: llm_drafted`
+    frontmatter. Same shape as cmd_dossier_finalize emits — extracted so
+    the --auto path can reuse it without going through argparse.
+    """
+    import datetime as _dt
+
+    rel = node.get("dossier") or ""
+    if not rel:
+        raise ValueError(f"node {node.get('id')!r} has no dossier path")
+    dossier_path = ctx.DEPGRAPH / rel
+    today = _dt.date.today().isoformat()
+    title = node.get("title") or node["id"].split("::")[-1]
+    fm_lines = [
+        "---",
+        f"node_id: {node['id']}",
+        f"node_kind: {node.get('kind','?')}",
+        f"feature: {node.get('feature') or 'null'}",
+        f"last_reviewed: {today}",
+        f"last_reviewed_against_hash: {node.get('structural_hash')}",
+        "status: llm_drafted",
+    ]
+    if authored_by:
+        fm_lines.append("authored_by:")
+        for a in authored_by:
+            fm_lines.append(f"  - {a}")
+    fm_lines.append("---")
+    frontmatter = "\n".join(fm_lines) + "\n\n" + f"# {title}\n\n"
+    dossier_path.parent.mkdir(parents=True, exist_ok=True)
+    dossier_path.write_text(frontmatter + body + "\n")
+    print(f"wrote {dossier_path.relative_to(ctx.DEPGRAPH)}")
+    return dossier_path
 
 
 def cmd_dossier_finalize(args: argparse.Namespace, ctx: Context) -> int:
@@ -487,9 +628,26 @@ def register(sub: argparse._SubParsersAction) -> None:
 
     p_dd = sub.add_parser(
         "dossier-draft",
-        help="Prepare LLM-drafting context for one node (output a prompt)",
+        help="Prepare LLM-drafting context for one node (output a prompt; --auto to call a configured model)",
     )
     p_dd.add_argument("target", help="Node id or source file path")
+    p_dd.add_argument(
+        "--auto", action="store_true",
+        help="Skip stdout; call a configured summarizer model and write the dossier directly.",
+    )
+    p_dd.add_argument(
+        "--model", default=None,
+        help="[--auto] Model key from [summarizer.models.*]; defaults to [summarizer].default_model "
+             "or the first declared model.",
+    )
+    p_dd.add_argument(
+        "--tools", action="store_true",
+        help="[--auto] Enable tool use (agent loop). Without this, runs in one-shot mode.",
+    )
+    p_dd.add_argument(
+        "--max-turns", dest="max_turns", type=int, default=None,
+        help="[--auto --tools] Cap on agent round-trips (default 8).",
+    )
     p_dd.set_defaults(func=cmd_dossier_draft)
 
     p_df = sub.add_parser(
