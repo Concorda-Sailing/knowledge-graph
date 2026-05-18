@@ -14,6 +14,7 @@ PLUGIN = Plugin(
         has_npm_dep(repo_path, "@prisma/client")
         or has_marker_file(repo_path, "prisma/schema.prisma", "schema.prisma")
     ),
+    target_versions={"@prisma/client": "7.0"},
     cues={
         "typescript": LanguageCues(
             orm_base_classes={"Model", "BaseEntity"},

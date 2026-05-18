@@ -17,6 +17,7 @@ PLUGIN = Plugin(
         has_npm_dep(repo_path, "react-i18next")
         or has_npm_dep(repo_path, "next-i18next")
     ),
+    target_versions={"react-i18next": "15.1", "next-i18next": "15.4"},
     cues={
         "typescript": LanguageCues(
             hook_call_names={

@@ -13,6 +13,7 @@ from depgraph.lib.classification.config import LanguageCues
 PLUGIN = Plugin(
     name="swr",
     detect=lambda repo_path: has_npm_dep(repo_path, "swr"),
+    target_versions={"swr": "2.2"},
     cues={
         "typescript": LanguageCues(
             hook_call_names={

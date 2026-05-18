@@ -32,6 +32,18 @@ def _detect(repo_path):
 PLUGIN = Plugin(
     name="web-api",
     detect=_detect,
+    target_versions={
+        "express": "4.21",
+        "@nestjs/core": "10.4",
+        "fastify": "5.1",
+        "@hapi/hapi": "21.3",
+        "koa": "2.15",
+        "fastapi": "0.115",
+        "django": "5.1",
+        "flask": "3.0",
+        "starlette": "0.41",
+        "sanic": "24.6",
+    },
     cues={"logigraph": LogigraphCues(
         entrypoint_kinds={"endpoint"},
         sink_kinds={"model"},

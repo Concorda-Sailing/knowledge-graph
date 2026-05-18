@@ -22,6 +22,12 @@ def _detect(repo_path):
 PLUGIN = Plugin(
     name="data-pipeline",
     detect=_detect,
+    target_versions={
+        "apache-airflow": "2.10",
+        "prefect": "3.1",
+        "dagster": "1.9",
+        "luigi": "3.5",
+    },
     cues={"logigraph": LogigraphCues(
         entrypoint_kinds={"task", "stage", "source"},
         sink_kinds={"output", "sink"},

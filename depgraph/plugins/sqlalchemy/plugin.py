@@ -11,6 +11,7 @@ from kg.shared.plugins import Plugin, has_pypi_dep
 PLUGIN = Plugin(
     name="sqlalchemy",
     detect=lambda repo_path: has_pypi_dep(repo_path, "sqlalchemy"),
+    target_versions={"sqlalchemy": "2.0"},
     cues={
         "python": LanguageCues(
             orm_base_classes={

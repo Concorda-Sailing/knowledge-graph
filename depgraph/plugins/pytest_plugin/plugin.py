@@ -31,6 +31,7 @@ def _detect(repo_path) -> bool:
 PLUGIN = Plugin(
     name="pytest",
     detect=_detect,
+    target_versions={"pytest": "8.3"},
     cues={
         "python": LanguageCues(
             test_framework_primitives={

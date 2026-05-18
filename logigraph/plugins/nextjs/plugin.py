@@ -12,6 +12,7 @@ from logigraph.plugins.base import LogigraphCues
 PLUGIN = Plugin(
     name="nextjs",
     detect=lambda repo_path: has_npm_dep(repo_path, "next"),
+    target_versions={"next": "16.2"},
     cues={"logigraph": LogigraphCues(
         ui_entry_path_globs={
             "app/**/page.tsx", "app/**/page.jsx",

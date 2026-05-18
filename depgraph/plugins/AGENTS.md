@@ -108,6 +108,44 @@ Beyond the open-source rule, a PR-worthy plugin:
 
 ---
 
+## Version line-in-the-sand: `target_versions`
+
+Every framework plugin must declare a `target_versions` dict pinning the
+specific version(s) the cues were authored against:
+
+```python
+PLUGIN = Plugin(
+    name="my-framework",
+    detect=...,
+    target_versions={"my-framework": "5.62"},   # single pinned version, not a range
+    cues={...},
+)
+```
+
+Rules:
+
+- **One specific version per library.** Use `"5.62"` not `"5.x"` or
+  `"4.0 - 5.62"`. The point is a falsifiable claim ("we verified
+  against exactly this version"). Future contributors bump it when
+  they re-verify.
+- **List every library the cues cover.** A multi-framework plugin
+  (e.g. logigraph's `web-api` which fires on any of Express,
+  Fastify, FastAPI, Django, …) lists every framework whose
+  conventions informed the cue strings.
+- **`general:*` plugins are exempt.** They don't target any specific
+  framework. The registry gating test allows empty `target_versions`
+  for plugins whose name starts with `general:`.
+
+A registry test (`test_every_framework_plugin_declares_target_versions_version`)
+gates this — your PR fails CI if the field is missing.
+
+When you update the cues to track a new major version, update the
+`target_versions` value in the same commit. The audit trail —
+"this plugin's cues were last verified against version X" — is the
+maintenance signal future reviewers rely on.
+
+---
+
 ## PR checklist
 
 Before you submit a PR, confirm every one of these. Tick them off in

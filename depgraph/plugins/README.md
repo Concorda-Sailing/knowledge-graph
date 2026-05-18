@@ -39,7 +39,7 @@ the pattern set, project authors can extend or veto.
 
 Three pieces:
 
-### 1. `Plugin` protocol — `base.py`
+### 1. `Plugin` protocol — `kg.shared.plugins`
 
 ```python
 @dataclass
@@ -47,10 +47,20 @@ class Plugin:
     name: str                                  # stable identifier
     detect: Callable[[Path], bool]             # is this framework active?
     cues: dict[str, LanguageCues]              # per-language contributions
+    target_versions: dict[str, str]              # version line-in-the-sand
 ```
 
 A plugin is a value, not a class hierarchy. Each plugin module exports
 a top-level `PLUGIN: Plugin = Plugin(...)`.
+
+The `target_versions` field pins the specific framework version each
+plugin's cues were authored against (e.g. `{"react": "19.2"}`). It's
+purely informational — the activation pipeline ignores it — but a
+registry test asserts that every framework plugin declares one, so the
+field is the maintainer's "line in the sand": a later reviewer can
+compare the pinned version against today's release and decide if
+re-verification is warranted. See **Authoring a plugin** below for
+the convention.
 
 ### 2. Registry — `__init__.py`
 

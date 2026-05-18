@@ -13,6 +13,7 @@ from depgraph.lib.classification.config import LanguageCues
 PLUGIN = Plugin(
     name="react-intl",
     detect=lambda repo_path: has_npm_dep(repo_path, "react-intl"),
+    target_versions={"react-intl": "7.0"},
     cues={
         "typescript": LanguageCues(
             hook_call_names={"useIntl"},

@@ -15,6 +15,7 @@ def _routes(prefixes: list[str], verbs: list[str]) -> set[str]:
 PLUGIN = Plugin(
     name="express",
     detect=lambda repo_path: has_npm_dep(repo_path, "express"),
+    target_versions={"express": "4.21"},
     cues={
         "typescript": LanguageCues(
             route_decorators=_routes(

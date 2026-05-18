@@ -27,6 +27,29 @@ def test_discovers_general_baselines_and_framework_plugins():
     } <= names
 
 
+def test_every_framework_plugin_declares_target_versions():
+    """The line-in-the-sand check: every plugin that targets a specific
+    framework must pin the version it was authored against. Only the
+    `general:*` always-on baselines are exempt — they don't target any
+    one framework. Without this gate, plugins drift silently and
+    reviewers can't tell which ones still match the current major."""
+    for p in _discover_plugins():
+        if p.name.startswith("general:"):
+            continue
+        assert p.target_versions, (
+            f"plugin {p.name!r} is missing `target_versions=...`; "
+            f"every framework plugin must pin the version its cues were "
+            f"authored against (e.g. target_versions={{\"react\": \"19.2\"}})"
+        )
+        for lib, ver in p.target_versions.items():
+            assert lib and isinstance(lib, str), (
+                f"{p.name}: bad target_versions key {lib!r}"
+            )
+            assert ver and isinstance(ver, str), (
+                f"{p.name}: bad target_versions value {ver!r} for {lib!r}"
+            )
+
+
 def test_general_plugins_always_active_with_no_manifests(tmp_path):
     cfg, active = build_config(tmp_path, auto=True)
     assert "general:python" in active

@@ -21,6 +21,7 @@ from depgraph.lib.classification.config import LanguageCues
 PLUGIN = Plugin(
     name="nextjs-hooks",
     detect=lambda repo_path: has_npm_dep(repo_path, "next"),
+    target_versions={"next": "16.2"},
     cues={
         "typescript": LanguageCues(
             hook_call_names={

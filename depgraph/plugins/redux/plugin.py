@@ -17,6 +17,7 @@ PLUGIN = Plugin(
     detect=lambda repo_path: (
         has_npm_dep(repo_path, "react-redux") or has_npm_dep(repo_path, "redux")
     ),
+    target_versions={"react-redux": "9.1", "redux": "5.0"},
     cues={
         "typescript": LanguageCues(
             hook_call_names={

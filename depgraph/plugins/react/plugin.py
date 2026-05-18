@@ -14,6 +14,7 @@ from kg.shared.plugins import Plugin, has_npm_dep
 PLUGIN = Plugin(
     name="react",
     detect=lambda repo_path: has_npm_dep(repo_path, "react"),
+    target_versions={"react": "19.2"},
     cues={
         "typescript": LanguageCues(
             hook_call_names={

@@ -8,6 +8,7 @@ from logigraph.plugins.base import LogigraphCues
 PLUGIN = Plugin(
     name="nuxt",
     detect=lambda repo_path: has_npm_dep(repo_path, "nuxt"),
+    target_versions={"nuxt": "3.14"},
     cues={"logigraph": LogigraphCues(
         ui_entry_path_globs={
             "pages/**/*.vue",

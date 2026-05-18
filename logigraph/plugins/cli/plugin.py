@@ -35,6 +35,7 @@ def _detect(repo_path):
 PLUGIN = Plugin(
     name="cli",
     detect=_detect,
+    target_versions={"argparse": "stdlib", "click": "8.1", "typer": "0.13"},
     cues={"logigraph": LogigraphCues(
         entrypoint_kinds={"command"},
         sink_kinds={"util"},

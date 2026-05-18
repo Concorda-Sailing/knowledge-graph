@@ -18,6 +18,7 @@ PLUGIN = Plugin(
         has_npm_dep(repo_path, "@growthbook/growthbook-react")
         or has_npm_dep(repo_path, "@growthbook/growthbook")
     ),
+    target_versions={"@growthbook/growthbook-react": "1.1"},
     cues={
         "typescript": LanguageCues(
             hook_call_names={

@@ -19,6 +19,7 @@ PLUGIN = Plugin(
         has_npm_dep(repo_path, "@tanstack/react-query")
         or has_npm_dep(repo_path, "react-query")
     ),
+    target_versions={"@tanstack/react-query": "5.62"},
     cues={
         "typescript": LanguageCues(
             hook_call_names={

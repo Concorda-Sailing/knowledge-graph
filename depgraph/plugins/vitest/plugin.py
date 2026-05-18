@@ -15,6 +15,7 @@ PLUGIN = Plugin(
         or has_marker_file(repo_path, "vitest.config.ts", "vitest.config.js",
                            "vitest.config.mts", "vitest.config.cts")
     ),
+    target_versions={"vitest": "2.1"},
     cues={
         "typescript": LanguageCues(
             test_framework_primitives={

@@ -16,6 +16,7 @@ def _routes(prefixes: list[str], verbs: list[str]) -> set[str]:
 PLUGIN = Plugin(
     name="fastapi",
     detect=lambda repo_path: has_pypi_dep(repo_path, "fastapi"),
+    target_versions={"fastapi": "0.115"},
     cues={
         "python": LanguageCues(
             route_decorators=_routes(

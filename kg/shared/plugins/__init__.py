@@ -78,6 +78,37 @@ class Plugin:
     generic core never inspects the values; it just collects them per
     key and hands them to the subsystem's merger when keys collide."""
 
+    target_versions: dict[str, str] = field(default_factory=dict)
+    """Framework name -> the specific version string the plugin's cues
+    were authored and verified against. A "line in the sand": each entry
+    pins ONE version (e.g. `"19.2"`, not a range like `"18.x to 19.x"`),
+    so a later maintainer can compare it against the current release
+    and decide whether re-verification is needed. Purely informational
+    — the activation pipeline and merger ignore this field.
+
+    Examples:
+        target_versions={"react": "19.2"}
+        target_versions={"@tanstack/react-query": "5.62"}
+        target_versions={"express": "4.21", "fastify": "5.1"}
+
+    Multi-framework plugins (e.g. logigraph's `web-api` which fires on
+    any of express / fastify / fastapi / django / …) list every
+    framework whose conventions informed the cues, each pinned to its
+    own verified version. Always-on baseline plugins (`general:*`) may
+    leave this empty.
+
+    When a contributor bumps cues to track a new major, they update
+    this field too — that's the audit trail. When no one has touched
+    the cues, the field continues to point at the older version,
+    making "this plugin hasn't been re-verified since" visible.
+
+    Useful for:
+      - Maintenance audits ("which plugins haven't been touched since
+        the framework cut a new major?").
+      - Future tooling: `kg plugins list --stale` style commands.
+      - PR review — reviewers can spot when a contributor's claimed
+        target version doesn't match the cue set they shipped."""
+
 
 # ---------------------------------------------------------------------------
 # Discovery

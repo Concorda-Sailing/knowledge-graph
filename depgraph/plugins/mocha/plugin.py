@@ -27,6 +27,7 @@ def _detect(repo_path):
 PLUGIN = Plugin(
     name="mocha",
     detect=_detect,
+    target_versions={"mocha": "10.7"},
     cues={
         "typescript": LanguageCues(
             test_framework_primitives={
