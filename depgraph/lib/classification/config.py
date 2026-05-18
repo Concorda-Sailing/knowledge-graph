@@ -51,40 +51,29 @@ class ClassificationConfig:
 
 
 def default_config() -> ClassificationConfig:
-    """Cues that ship with the framework for JS/TS and Python.
-    Per-project project.toml can extend this with custom cues."""
-    return ClassificationConfig(languages={
-        "python": LanguageCues(
-            route_decorators={
-                "router.get", "router.post", "router.put", "router.patch",
-                "router.delete", "router.head", "router.options",
-                "app.get", "app.post", "app.put", "app.patch", "app.delete",
-            },
-            orm_base_classes={
-                "DeclarativeBase", "Base", "BaseModel",  # SQLAlchemy + project
-            },
-            test_framework_primitives={
-                "pytest.fixture", "pytest.mark", "pytest.raises",
-            },
-            orm_schema_link_vias={"__tablename__"},
-        ),
-        "typescript": LanguageCues(
-            # Express / Next.js API-route patterns are file-based for Next,
-            # decorator-based for some Express-extension setups. Add as needed.
-            route_decorators={
-                "app.get", "app.post", "app.put", "app.patch", "app.delete",
-                "router.get", "router.post", "router.put", "router.patch",
-                "router.delete",
-            },
-            orm_base_classes={
-                "Model", "BaseEntity",  # Prisma / TypeORM names
-            },
-            test_framework_primitives={"it", "test", "describe", "expect"},
-            hook_call_names={
-                "useState", "useEffect", "useMemo", "useCallback", "useRef",
-                "useContext", "useReducer", "useLayoutEffect",
-            },
-            orm_schema_link_vias={"__tablename__"},
-            # Future: add Prisma's "@@map" once a Prisma DSL extractor lands
-        ),
-    })
+    """Cues from every shipped plugin, forced active.
+
+    This is the convenience config for unit tests + CLI invocations that
+    don't run through `depgraph.plugins.build_config_for_repos` (which does
+    per-repo detection). Production regen calls the registry directly so
+    only plugins whose detector fires contribute cues.
+
+    The deferred import avoids a circular dependency:
+    depgraph.plugins -> depgraph.lib.classification.config (this module).
+    """
+    from depgraph.plugins import _discover_plugins, _merge_cues
+
+    languages: dict[str, LanguageCues] = {}
+    for plugin in _discover_plugins():
+        for lang, cues in plugin.cues.items():
+            if lang in languages:
+                languages[lang] = _merge_cues(languages[lang], cues)
+            else:
+                languages[lang] = LanguageCues(
+                    route_decorators=set(cues.route_decorators),
+                    orm_base_classes=set(cues.orm_base_classes),
+                    test_framework_primitives=set(cues.test_framework_primitives),
+                    hook_call_names=set(cues.hook_call_names),
+                    orm_schema_link_vias=set(cues.orm_schema_link_vias),
+                )
+    return ClassificationConfig(languages=languages)

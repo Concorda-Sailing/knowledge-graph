@@ -43,6 +43,7 @@ if str(_LIB.parent) not in sys.path:
 
 from depgraph.lib.config import (  # noqa: E402
     primary_repo_path,
+    project_classification_options,
     project_repos,
     render_extractor,
     repo_detectors,
@@ -282,6 +283,7 @@ def _run_v2_pipeline(
     data_dir: Path,
     repos: list[dict],  # each: {key, path, languages, migrations_dirs}
     tool_root: Path,
+    classification_options: dict | None = None,
 ) -> int:
     """
     Run the full v2 extraction + classification + reconcile pipeline.
@@ -345,7 +347,17 @@ def _run_v2_pipeline(
 
     # --- Classification ---
     print("--- classify")
-    decisions = classify_corpus(all_primitives)
+    from depgraph.plugins import build_config_for_repos
+    classification_options = classification_options or {}
+    cfg, plugins_by_repo = build_config_for_repos(
+        repo_paths,
+        enable=classification_options.get("enable"),
+        disable=classification_options.get("disable"),
+        auto=classification_options.get("auto", True),
+    )
+    for repo_key, names in plugins_by_repo.items():
+        print(f"    {repo_key} plugins: {', '.join(names) if names else '(none)'}")
+    decisions = classify_corpus(all_primitives, config=cfg)
 
     # --- Write to disk ---
     print("--- write")
@@ -463,7 +475,11 @@ def _mode_a(args: argparse.Namespace, ctx: Context) -> int:
         })
 
     tool_root = ctx.tool_root
-    return _run_v2_pipeline(data_dir=ctx.DEPGRAPH, repos=repos, tool_root=tool_root)
+    classification_options = project_classification_options(ctx.DEPGRAPH)
+    return _run_v2_pipeline(
+        data_dir=ctx.DEPGRAPH, repos=repos, tool_root=tool_root,
+        classification_options=classification_options,
+    )
 
 
 def _mode_a_v1_fallback(
@@ -547,7 +563,11 @@ def _mode_b(args: argparse.Namespace, ctx: Context) -> int:
     }]
 
     tool_root = ctx.tool_root
-    return _run_v2_pipeline(data_dir=data_dir, repos=repos, tool_root=tool_root)
+    classification_options = project_classification_options(ctx.DEPGRAPH)
+    return _run_v2_pipeline(
+        data_dir=data_dir, repos=repos, tool_root=tool_root,
+        classification_options=classification_options,
+    )
 
 
 # ---------------------------------------------------------------------------

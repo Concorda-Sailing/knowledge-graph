@@ -1,6 +1,13 @@
 [project]
 name = "kitchen-sink"
 
+# Fixture project — no manifest files (package.json/pyproject.toml) for
+# plugin auto-detection to read. Force the framework set this fixture is
+# written against. Auto-detect stays on for any plugin a future fixture
+# might want via marker files.
+[classification.plugins]
+enable = ["fastapi", "sqlalchemy", "pytest", "react", "vitest"]
+
 [repos.kitchen-sink-api]
 path = "api"
 languages = ["python", "sql"]

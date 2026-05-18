@@ -28,6 +28,11 @@ def _write_project_toml(data_dir: Path) -> None:
     content = f"""[project]
 name = "kitchen-sink"
 
+# Fixture has no package.json / pyproject.toml for plugin auto-detection,
+# so force the framework set this fixture is written against.
+[classification.plugins]
+enable = ["fastapi", "sqlalchemy", "pytest", "react", "vitest"]
+
 [repos.kitchen-sink-api]
 path = "{api_path}"
 languages = ["python", "sql"]

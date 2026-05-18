@@ -147,6 +147,30 @@ def project_repos(data_dir: Path) -> dict[str, dict]:
     return out
 
 
+def project_classification_options(data_dir: Path) -> dict:
+    """Parse the optional [classification] section of project.toml.
+
+    Returns a dict with the activation knobs the plugin registry honors:
+        {"auto": bool, "enable": list[str], "disable": list[str]}
+
+    Defaults: auto=True (detect from manifests), enable=[], disable=[].
+    The project author opts in via:
+
+        [classification]
+        plugins.auto = false              # turn off auto-detect
+        plugins.enable = ["my-framework"] # force-on
+        plugins.disable = ["jest"]        # veto
+    """
+    cfg = load_project_config(data_dir)
+    raw = cfg.get("classification") or {}
+    plugins = raw.get("plugins") or {}
+    return {
+        "auto": bool(plugins.get("auto", True)),
+        "enable": list(plugins.get("enable") or []),
+        "disable": list(plugins.get("disable") or []),
+    }
+
+
 def project_primary_repo(data_dir: Path) -> Optional[str]:
     """Return the repo_key whose git HEAD stamps the corpus-meta git_commit
     field. Falls back to the first [repos.*] key. Returns None if no repos
