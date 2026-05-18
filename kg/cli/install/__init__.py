@@ -21,6 +21,7 @@ from kg.cli.install import hooks as _hooks_mod
 from kg.cli.install import init as _init_mod
 from kg.cli.install import path as _path_mod
 from kg.cli.install import systemd as _systemd_mod
+from kg.cli.install import teardown as _teardown_mod
 from kg.cli.install import tools as _tools_mod
 
 
@@ -108,6 +109,46 @@ def _run_installer(args: argparse.Namespace, extra: list[str]) -> int:
         casc_parser.add_argument("--apply", action="store_true")
         casc_parser.add_argument("--force", action="store_true")
         return _cascade_mod.cmd_cascade(casc_parser.parse_args(extra[1:]))
+    if extra and extra[0] == "teardown":
+        td_parser = argparse.ArgumentParser(
+            prog="kg install teardown",
+            description=(
+                "Inverse of `kg install bootstrap`. Stops + removes the "
+                "graphui systemd unit, strips kg-hook entries from "
+                "~/.claude/settings.json, removes the kg-graphs.toml "
+                "registry, deletes the data dir(s), strips the PATH block "
+                "from the rcfile, and removes the framework dir. Idempotent."
+            ),
+        )
+        td_parser.add_argument(
+            "--data-dir", dest="data_dir", default=None,
+            help="Specific data dir to remove (otherwise discovered from registry).",
+        )
+        td_parser.add_argument(
+            "--target", default=str(Path.home() / "tools"),
+            help="Bundle parent dir (default: ~/tools). Framework lives at <target>/knowledge-graph/.",
+        )
+        td_parser.add_argument(
+            "--rcfile", default=None,
+            help="rcfile to strip the PATH block from (default: ~/.profile).",
+        )
+        td_parser.add_argument(
+            "--keep-data", dest="keep_data", action="store_true",
+            help="Do not remove the data dir(s).",
+        )
+        td_parser.add_argument(
+            "--keep-framework", dest="keep_framework", action="store_true",
+            help="Do not remove ~/tools/knowledge-graph/.",
+        )
+        td_parser.add_argument(
+            "--keep-backups", dest="keep_backups", action="store_true",
+            help="Preserve the .bak files written for settings.json and rcfile.",
+        )
+        td_parser.add_argument(
+            "--dry-run", dest="dry_run", action="store_true",
+            help="Report what would happen without writing.",
+        )
+        return _teardown_mod.cmd_teardown(td_parser.parse_args(extra[1:]))
     # All subcommands have native handlers as of P4T9; print usage for
     # unknown/missing subcommands. (Falling through to install.sh would
     # recurse infinitely now that install.sh just execs `kg install`.)
@@ -119,7 +160,11 @@ def _run_installer(args: argparse.Namespace, extra: list[str]) -> int:
         _print_install_help()
         return 1
     print(f"kg install: unknown subcommand {extra[0]!r}", file=sys.stderr)
-    print("known subcommands: tools / init / hooks / systemd / path / cascade / bootstrap", file=sys.stderr)
+    print(
+        "known subcommands: tools / init / hooks / systemd / path / cascade / "
+        "bootstrap / teardown",
+        file=sys.stderr,
+    )
     return 1
 
 
@@ -137,6 +182,8 @@ def _print_install_help() -> None:
         "  cascade   <repo> [--depgraph ... --logigraph ...] [--apply] [--force]\n"
         "                                                   Install pre-push hook in a target repo\n"
         "  bootstrap <data-dir> [--data ...]                One-shot: tools + init + hooks + systemd + path\n"
+        "  teardown  [--data-dir <p>] [--keep-data]         Inverse of bootstrap; idempotent\n"
+        "            [--keep-framework] [--dry-run]\n"
     )
 
 

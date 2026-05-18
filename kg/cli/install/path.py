@@ -23,6 +23,11 @@ from ._shared import backup_file, die, err, log, ok, warn
 PATH_BLOCK_MARKER = (
     "# Knowledge-graph framework CLIs (depgraph, logigraph) — managed by install.sh"
 )
+# Closing sentinel — paired with PATH_BLOCK_MARKER so teardown can excise the
+# exact range without heuristic walks. Older installs without this line still
+# work: end-detection falls back to walking PATH-block-shaped lines until the
+# trailing `export PATH`.
+PATH_BLOCK_END_MARKER = "# <<< end knowledge-graph framework CLIs"
 
 _BUNDLE_DIR = "knowledge-graph"
 _DEFAULT_TARGET_RELATIVE = "tools"  # $HOME/tools
@@ -65,6 +70,7 @@ def generate_path_snippet(target: str) -> str:
         f'    PATH="{bundle}/bin:$PATH"\n'
         f"fi\n"
         f"export PATH\n"
+        f"{PATH_BLOCK_END_MARKER} >>>\n"
     )
 
 
@@ -121,21 +127,29 @@ def cmd_path(args: argparse.Namespace) -> int:
         ok(f"appended PATH block to {rcfile}")
         return 0
 
-    # Find end of block: walk forward over PATH-block-shaped lines.
-    end = start + 1
-    while end < len(lines):
-        ln = lines[end].lstrip()
-        if ln.startswith(("if ", "PATH=", "fi", "export PATH", "    PATH=")) or ln == "":
-            end += 1
-            # Stop one line past `fi` followed by `export PATH` followed by blank
-            if (
-                lines[end - 1].strip() == ""
-                and end >= 2
-                and lines[end - 2].strip() == "export PATH"
-            ):
-                break
-        else:
+    # Find end of block. Prefer the explicit end sentinel (new installs);
+    # fall back to walking PATH-block-shaped lines (older installs without
+    # the end marker).
+    end: int | None = None
+    for i in range(start + 1, len(lines)):
+        if PATH_BLOCK_END_MARKER in lines[i]:
+            end = i + 1
             break
+    if end is None:
+        end = start + 1
+        while end < len(lines):
+            ln = lines[end].lstrip()
+            if ln.startswith(("if ", "PATH=", "fi", "export PATH", "    PATH=")) or ln == "":
+                end += 1
+                # Stop one line past `fi` followed by `export PATH` followed by blank
+                if (
+                    lines[end - 1].strip() == ""
+                    and end >= 2
+                    and lines[end - 2].strip() == "export PATH"
+                ):
+                    break
+            else:
+                break
 
     existing = "\n".join(lines[start:end]).rstrip()
     new_block_stripped = new_block.rstrip()
