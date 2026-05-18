@@ -54,7 +54,10 @@ from depgraph.lib.classification.writer import (  # noqa: E402
     dossier_rel_path_for,
     write_classified,
 )
-from depgraph.extractors.reconcile import validate_corpus  # noqa: E402
+from depgraph.extractors.reconcile import (  # noqa: E402
+    _normalize_url_pattern,
+    validate_corpus,
+)
 
 from ._shared import mark_regen_in_progress
 from .context import Context
@@ -395,6 +398,70 @@ def _iter_live_node_files(nodes_dir: Path):
         yield path
 
 
+def _effective_kind(p: dict, decisions: dict) -> str | None:
+    """Resolve a primitive's effective kind for cross-cutting passes: the
+    classifier's verdict wins, otherwise the kind the extractor set
+    directly, otherwise None. Mirrors `write_classified`'s precedence."""
+    decision = decisions.get(p.get("id"))
+    if decision is not None and getattr(decision, "kind", None) is not None:
+        return decision.kind
+    return p.get("kind")
+
+
+def _join_route_calls_v2(primitives: list[dict], decisions: dict) -> int:
+    """For every route_call primitive (`kind: "route_call"`), find endpoint
+    primitives whose `(method, normalized_path)` matches the call site's
+    `(method, normalized_url_pattern)` and add a `calls` edge to the call
+    site's `edges_out`. Reverse-index build picks the edges up naturally.
+
+    Uses `decisions` (from `classify_corpus`) because endpoint kind is
+    assigned by the classifier and isn't yet on the primitive itself when
+    this pass runs.
+
+    Returns the count of edges added so the regen log can surface the
+    cross-repo connectivity that was previously inert.
+    """
+    endpoints_by_key: dict[tuple[str, str], list[dict]] = {}
+    route_calls: list[dict] = []
+    for p in primitives:
+        kind = _effective_kind(p, decisions)
+        sig = p.get("signature") or {}
+        if kind == "endpoint":
+            method = (sig.get("method") or "").upper()
+            path = _normalize_url_pattern(sig.get("path"))
+            if not method or not path:
+                continue
+            endpoints_by_key.setdefault((method, path), []).append(p)
+        elif kind == "route_call":
+            route_calls.append(p)
+
+    added = 0
+    for rc in route_calls:
+        sig = rc.get("signature") or {}
+        method = (sig.get("method") or "").upper()
+        url = _normalize_url_pattern(sig.get("url_pattern"))
+        if not method or not url:
+            continue
+        targets = endpoints_by_key.get((method, url), [])
+        if not targets:
+            continue
+        rc_source = rc.get("source") or {}
+        edges = rc.setdefault("edges_out", [])
+        existing_targets = {e.get("target") for e in edges if e.get("via") == "route_call"}
+        for ep in targets:
+            if ep["id"] in existing_targets:
+                continue
+            edges.append({
+                "kind": "calls",
+                "target": ep["id"],
+                "via": "route_call",
+                "where": rc_source.get("path"),
+                "confidence": "fuzzy",
+            })
+            added += 1
+    return added
+
+
 def _manifest_key(repo: str, language: str) -> str:
     """Filename-safe manifest key for a (repo, language) pair."""
     safe_repo = repo.replace("/", "_")
@@ -675,6 +742,14 @@ def _run_v2_pipeline(
     for repo_key, names in plugins_by_repo.items():
         print(f"    {repo_key} plugins: {', '.join(names) if names else '(none)'}")
     decisions = classify_corpus(all_primitives, config=cfg)
+
+    # --- Cross-repo route_call → endpoint join ---
+    # Endpoint kind is assigned by `classify_corpus` (FastAPI / Flask /
+    # Express plugins), so the join has to run AFTER classification.
+    # It mutates each route_call's `edges_out` in place, so the standard
+    # write/index path picks up the new edges with no further plumbing.
+    rc_edges = _join_route_calls_v2(all_primitives, decisions)
+    print(f"--- route_call join: {rc_edges} edge(s)")
 
     # --- Stub missing dossiers ---
     # Run before write_classified so the dossier field is persisted into

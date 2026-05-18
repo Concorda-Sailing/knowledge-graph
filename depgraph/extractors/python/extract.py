@@ -154,6 +154,35 @@ def _decorator_name(dec: ast.expr) -> str:
     return ast.unparse(dec)
 
 
+_ROUTE_DECORATOR_VERBS = {"get", "post", "put", "patch", "delete", "head", "options"}
+
+
+def _route_info_from_decorators(decorators: list[ast.expr]) -> tuple[str, str] | None:
+    """Best-effort extraction of (METHOD, path) from any decorator that
+    looks like `<prefix>.<verb>("/path", ...)` — FastAPI/Starlette and
+    Flask's typed-verb decorators (`@app.get("/x")`) both fit this shape.
+
+    Returns None if no decorator matches or the path arg isn't a literal
+    string. The endpoint classifier still owns the kind verdict; this
+    function only feeds the cross-repo route-call join, which needs the
+    `(method, path)` shape on the endpoint's signature."""
+    for dec in decorators:
+        if not isinstance(dec, ast.Call):
+            continue
+        func = dec.func
+        if not isinstance(func, ast.Attribute):
+            continue
+        verb = func.attr.lower()
+        if verb not in _ROUTE_DECORATOR_VERBS:
+            continue
+        if not dec.args:
+            continue
+        first = dec.args[0]
+        if isinstance(first, ast.Constant) and isinstance(first.value, str):
+            return verb.upper(), first.value
+    return None
+
+
 def _annotation_text(ann: ast.expr | None) -> str | None:
     return ast.unparse(ann) if ann is not None else None
 
@@ -246,6 +275,9 @@ def _function_primitive(node: ast.FunctionDef | ast.AsyncFunctionDef,
         "is_async": isinstance(node, ast.AsyncFunctionDef),
         "decorators": dec_names,
     }
+    route = _route_info_from_decorators(node.decorator_list)
+    if route is not None:
+        signature["method"], signature["path"] = route
     return _base_primitive(
         schema_id=canonical_id(repo_key, rel_path, symbol),
         primitive="function", name=symbol, owner=owner,

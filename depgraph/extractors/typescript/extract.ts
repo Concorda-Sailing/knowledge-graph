@@ -20,7 +20,10 @@ interface Primitive {
   attributes: any;
   edges_out: any[];
   structural_hash: string;
-  kind: null;
+  // null for un-classified structural primitives. Some extraction passes
+  // know the verdict up front (e.g. cross-repo route_call call sites) and
+  // set it directly — `classify_corpus` honors extractor-set kind.
+  kind: string | null;
   extractor: string;
 }
 
@@ -1443,6 +1446,115 @@ function splitCsv(s: string | undefined): string[] {
   return s.split(",").map((x) => x.trim()).filter(Boolean);
 }
 
+// ---------------------------------------------------------------------------
+// route_call extraction
+//
+// Detect HTTP call sites (`fetch(...)`, `axios.<verb>(...)`) and emit
+// `kind: "route_call"` primitives whose signature carries `{method,
+// url_pattern}`. The signature's `url_pattern` is the join key against
+// Python endpoints' `(method, path)` in reconcile / regen — interpolation
+// in template literals is collapsed to the literal `<var>` token to match
+// `_normalize_url_pattern` in `depgraph/extractors/reconcile.py`.
+// ---------------------------------------------------------------------------
+
+const _AXIOS_METHODS = new Set(["get", "post", "put", "patch", "delete", "head", "options"]);
+
+function _urlPatternFromExpression(arg: Node): string | null {
+  if (Node.isStringLiteral(arg) || Node.isNoSubstitutionTemplateLiteral(arg)) {
+    return arg.getLiteralText();
+  }
+  if (Node.isTemplateExpression(arg)) {
+    // `head${a}mid${b}tail` → "head<var>mid<var>tail"
+    let out = arg.getHead().getLiteralText();
+    for (const span of arg.getTemplateSpans()) {
+      out += "<var>" + span.getLiteral().getLiteralText();
+    }
+    return out;
+  }
+  return null;
+}
+
+function _methodFromFetchInit(call: Node): string {
+  // Default for `fetch(url)` is GET. `fetch(url, { method: "POST" })` reads
+  // the method literal. Anything more dynamic falls back to GET — better a
+  // best-guess match than dropping the call site silently.
+  if (!Node.isCallExpression(call)) return "GET";
+  const args = call.getArguments();
+  if (args.length < 2) return "GET";
+  const init = args[1];
+  if (!Node.isObjectLiteralExpression(init)) return "GET";
+  for (const prop of init.getProperties()) {
+    if (!Node.isPropertyAssignment(prop)) continue;
+    const name = prop.getName();
+    if (name !== "method") continue;
+    const value = prop.getInitializer();
+    if (!value) continue;
+    if (Node.isStringLiteral(value) || Node.isNoSubstitutionTemplateLiteral(value)) {
+      return value.getLiteralText().toUpperCase();
+    }
+  }
+  return "GET";
+}
+
+function _slugifyUrlForId(url: string): string {
+  // Filename-safe slice of the URL pattern for the call site's id.
+  return url.replace(/[^A-Za-z0-9_]/g, "_").replace(/_+/g, "_").replace(/^_|_$/g, "");
+}
+
+function _routeCallPrimitive(
+  method: string, urlPattern: string, line: number, endLine: number,
+  repoKey: string, relPath: string,
+): Primitive {
+  const id = `${repoKey}::${relPath}:${line}::${method}_${_slugifyUrlForId(urlPattern)}`;
+  return {
+    schema_version: 2,
+    id,
+    primitive: "function",
+    name: `${method} ${urlPattern}`,
+    owner: null,
+    source: { repo: repoKey, path: relPath, language: "typescript",
+              line, end_line: endLine },
+    signature: { method, url_pattern: urlPattern },
+    attributes: { abstract: false, generated: false, external: false,
+                  template_parameters: [], macro: false, mutable: false,
+                  instantiable: false, inheritable: false },
+    edges_out: [],
+    structural_hash: structuralHash({ kind: "route_call", method, url: urlPattern }),
+    kind: "route_call",
+    extractor: EXTRACTOR_TAG,
+  };
+}
+
+function extractRouteCalls(sf: SourceFile, repoKey: string, relPath: string): Primitive[] {
+  const out: Primitive[] = [];
+  for (const call of sf.getDescendantsOfKind(SyntaxKind.CallExpression)) {
+    const callee = call.getExpression();
+    let method: string | null = null;
+    let urlArg: Node | undefined;
+
+    if (Node.isIdentifier(callee) && callee.getText() === "fetch") {
+      method = _methodFromFetchInit(call);
+      urlArg = call.getArguments()[0];
+    } else if (Node.isPropertyAccessExpression(callee)) {
+      const obj = callee.getExpression();
+      const name = callee.getName();
+      if (Node.isIdentifier(obj) && obj.getText() === "axios"
+          && _AXIOS_METHODS.has(name)) {
+        method = name.toUpperCase();
+        urlArg = call.getArguments()[0];
+      }
+    }
+
+    if (!method || !urlArg) continue;
+    const urlPattern = _urlPatternFromExpression(urlArg);
+    if (!urlPattern) continue;
+    const line = call.getStartLineNumber();
+    const endLine = call.getEndLineNumber();
+    out.push(_routeCallPrimitive(method, urlPattern, line, endLine, repoKey, relPath));
+  }
+  return out;
+}
+
 function main() {
   const { values } = parseArgs({
     options: {
@@ -1502,6 +1614,7 @@ function main() {
     for (const p of extractFunctions(sf, repoKey, relPath)) allPrims.push(p);
     for (const p of extractVariables(sf, repoKey, relPath)) allPrims.push(p);
     for (const p of extractObjectLiteralApiClients(sf, repoKey, relPath)) allPrims.push(p);
+    for (const p of extractRouteCalls(sf, repoKey, relPath)) allPrims.push(p);
   }
 
   // L2 edge resolution passes

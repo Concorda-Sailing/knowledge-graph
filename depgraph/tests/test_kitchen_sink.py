@@ -166,7 +166,7 @@ def test_kitchen_sink_models_reference_schemas(regen_kitchen_sink):
 # that adds/renames a kind dir has to update this contract too.
 _CLASSIFIED_KINDS = {
     "component", "hook", "endpoint", "service",
-    "model", "schema", "test", "util",
+    "model", "schema", "test", "util", "route_call",
 }
 _PRIMITIVE_KINDS = {"module", "package", "class", "function", "variable"}
 _VALID_KINDS = _CLASSIFIED_KINDS | _PRIMITIVE_KINDS

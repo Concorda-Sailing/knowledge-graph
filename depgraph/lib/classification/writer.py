@@ -26,6 +26,7 @@ _KIND_DIRS: dict[str, str] = {
     "schema": "schemas",
     "test": "tests",
     "util": "utils",
+    "route_call": "route_calls",
 }
 
 _PRIMITIVE_DIRS: dict[str, str] = {
