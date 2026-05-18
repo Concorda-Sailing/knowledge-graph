@@ -75,8 +75,13 @@ def regen_kitchen_sink(tmp_path_factory):
 
 def _load_all_nodes(data_dir: Path):
     nodes = []
-    for p in (data_dir / "nodes").rglob("*.json"):
-        if "_index" in p.parts or p.name == "_meta.json":
+    nodes_root = data_dir / "nodes"
+    for p in nodes_root.rglob("*.json"):
+        # Skip every corpus-meta path component (_index/, _meta.json,
+        # _manifests/, _archive/, etc.) — only node files live elsewhere.
+        if p.name.startswith("_") or any(
+            part.startswith("_") for part in p.relative_to(nodes_root).parts
+        ):
             continue
         nodes.append(json.loads(p.read_text()))
     return nodes
@@ -228,12 +233,15 @@ def test_kitchen_sink_determinism(regen_kitchen_sink, tmp_path):
     second_depgraph = second / "depgraph"
 
     def collect_node_files(base: Path) -> dict[str, str]:
-        """rel-path → content for all node JSON files (excluding _index, _meta)."""
+        """rel-path → content for all node JSON files (excluding `_*` paths)."""
         result = {}
-        for p in (base / "nodes").rglob("*.json"):
-            if "_index" in p.parts or p.name == "_meta.json":
+        root = base / "nodes"
+        for p in root.rglob("*.json"):
+            if p.name.startswith("_") or any(
+                part.startswith("_") for part in p.relative_to(root).parts
+            ):
                 continue
-            rel = str(p.relative_to(base / "nodes"))
+            rel = str(p.relative_to(root))
             result[rel] = p.read_text()
         return result
 

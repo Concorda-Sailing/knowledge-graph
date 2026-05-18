@@ -395,6 +395,106 @@ def _iter_live_node_files(nodes_dir: Path):
         yield path
 
 
+def _manifest_key(repo: str, language: str) -> str:
+    """Filename-safe manifest key for a (repo, language) pair."""
+    safe_repo = repo.replace("/", "_")
+    return f"{safe_repo}__{language}"
+
+
+def _write_extraction_manifests(
+    data_dir: Path, manifests: dict[tuple[str, str], set[str]]
+) -> None:
+    """Persist one JSON file per successful extractor run under
+    `nodes/_manifests/<repo>__<language>.json`. Files written here are read
+    back by `_archive_domain_orphans` to tell "extractor ran and didn't
+    emit X" from "extractor didn't run this round."
+
+    Removes any prior manifest for the same (repo, language) before
+    rewriting so a subsequent regen that emits fewer ids doesn't see
+    leftover ids and skip archival.
+    """
+    manifest_dir = data_dir / "nodes" / "_manifests"
+    manifest_dir.mkdir(parents=True, exist_ok=True)
+    for (repo, lang), ids in manifests.items():
+        path = manifest_dir / f"{_manifest_key(repo, lang)}.json"
+        payload = {
+            "schema_version": 1,
+            "repo": repo,
+            "language": lang,
+            "node_ids": sorted(ids),
+        }
+        tmp = path.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+        tmp.replace(path)
+
+
+def _load_extraction_manifests(
+    data_dir: Path, only_keys: set[tuple[str, str]]
+) -> dict[tuple[str, str], set[str]]:
+    """Read manifests for the (repo, language) pairs in `only_keys`. Limiting
+    the read to the pairs THIS regen produced is what gives the partial-regen
+    safety guarantee: stale manifests on disk from a prior different config
+    don't drive archival on this round."""
+    out: dict[tuple[str, str], set[str]] = {}
+    manifest_dir = data_dir / "nodes" / "_manifests"
+    if not manifest_dir.exists():
+        return out
+    for (repo, lang) in only_keys:
+        path = manifest_dir / f"{_manifest_key(repo, lang)}.json"
+        if not path.exists():
+            continue
+        try:
+            data = json.loads(path.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        ids = data.get("node_ids") or []
+        out[(repo, lang)] = set(ids)
+    return out
+
+
+def _archive_domain_orphans(
+    data_dir: Path, manifests: dict[tuple[str, str], set[str]]
+) -> tuple[int, set[str]]:
+    """Walk on-disk nodes and archive any whose (repo, language) had an
+    extractor run THIS regen but whose id isn't in that run's manifest —
+    i.e. the symbol was removed from a source file that still exists.
+
+    Nodes whose (repo, language) isn't in `manifests` are preserved. This
+    is what makes partial regens safe: missing manifest ⇒ "extractor didn't
+    run this round, don't claim its nodes are stale."
+
+    Returns (count, ids) — symmetric with `_archive_file_orphans`.
+    """
+    nodes_dir = data_dir / "nodes"
+    if not nodes_dir.exists():
+        return 0, set()
+    archive_dir = nodes_dir / "_archive"
+    archived_ids: set[str] = set()
+    count = 0
+    for node_file in _iter_live_node_files(nodes_dir):
+        try:
+            data = json.loads(node_file.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        src = data.get("source") or {}
+        repo, language = src.get("repo"), src.get("language")
+        nid = data.get("id")
+        if not repo or not language or not nid:
+            continue
+        manifest = manifests.get((repo, language))
+        if manifest is None:
+            continue
+        if nid in manifest:
+            continue
+        archive_node_file(
+            node_file, archive_dir, reason="domain_orphan_symbol_removed"
+        )
+        _archive_dossier_alongside(data, data_dir)
+        archived_ids.add(nid)
+        count += 1
+    return count, archived_ids
+
+
 def _archive_dossier_alongside(data: dict, data_dir: Path) -> None:
     """If an archived node has a dossier file, move it to `dossiers/_archive/`
     alongside the node. Same collision-safe rename rules as `archive_node_file`.
@@ -480,6 +580,11 @@ def _run_v2_pipeline(
     all_primitives: list[dict] = []
     repo_paths: dict[str, Path] = {}
     extractor_errors: list[tuple[str, str, str]] = []  # (repo_key, language, msg)
+    # (repo_key, language) → set of node ids emitted by a *successful* run
+    # of that extractor. Written to nodes/_manifests/<repo>__<lang>.json so
+    # the domain-orphan pass can tell "this extractor ran and chose not to
+    # emit X" from "this extractor didn't run this round" (partial regen).
+    extraction_manifests: dict[tuple[str, str], set[str]] = {}
 
     # --- Extraction pass (per repo × language) ---
     for repo_cfg in repos:
@@ -498,6 +603,11 @@ def _run_v2_pipeline(
             )
             print(f"    python: {len(prims)} primitives")
             all_primitives.extend(prims)
+            # Python extractor either returns prims or raises — no soft-fail
+            # path — so emission == success.
+            extraction_manifests[(key, "python")] = {
+                p["id"] for p in prims if p.get("id")
+            }
 
         if "typescript" in languages:
             prims, ts_err = _extract_typescript(
@@ -510,6 +620,13 @@ def _run_v2_pipeline(
             if ts_err:
                 extractor_errors.append((key, "typescript", ts_err))
             all_primitives.extend(prims)
+            # Do NOT write a manifest on a TS failure — a partial extraction
+            # would otherwise look complete and the domain-orphan pass would
+            # archive everything the failed run didn't emit.
+            if not ts_err:
+                extraction_manifests[(key, "typescript")] = {
+                    p["id"] for p in prims if p.get("id")
+                }
 
         if "sql" in languages:
             migrations_dirs = [Path(d) for d in repo_cfg.get("migrations_dirs", [])]
@@ -523,6 +640,9 @@ def _run_v2_pipeline(
             )
             print(f"    sql: {len(schema_prims)} schema primitives")
             all_primitives.extend(schema_prims)
+            extraction_manifests[(key, "sql")] = {
+                p["id"] for p in schema_prims if p.get("id")
+            }
 
     print(f"--- total primitives extracted: {len(all_primitives)}")
 
@@ -582,6 +702,22 @@ def _run_v2_pipeline(
     if archived_ids:
         all_primitives = [p for p in all_primitives if p.get("id") not in archived_ids]
     print(f"    archived: {archived_count}")
+
+    # --- Write extraction manifests + archive domain-orphan nodes ---
+    # File-orphan archival above only catches "source file deleted." But
+    # symbols removed from a source file that still exists are equally
+    # stale — and far more common in active development. Compare the
+    # newly-emitted id set per (repo, language) against on-disk leftovers
+    # and archive any that no longer appear.
+    _write_extraction_manifests(data_dir, extraction_manifests)
+    print("--- archive domain-orphans")
+    loaded_manifests = _load_extraction_manifests(
+        data_dir, set(extraction_manifests.keys())
+    )
+    domain_count, domain_ids = _archive_domain_orphans(data_dir, loaded_manifests)
+    if domain_ids:
+        all_primitives = [p for p in all_primitives if p.get("id") not in domain_ids]
+    print(f"    archived: {domain_count}")
 
     # --- v2 validation report ---
     report = validate_corpus(all_primitives)
