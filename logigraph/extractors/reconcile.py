@@ -25,9 +25,11 @@ Responsibilities, in order:
 Pure functions where practical. Atomic writes (tmp+rename). Bit-stable:
 two consecutive regens with no source changes produce zero file diffs.
 
-Phase 0 scope: rules and domain are *authored*, not extracted.
-Manifests for domain extractors will come in Phase 1
-(extract_system_roles.py, extract_db_resources.py).
+Phase 0 scope: rules and domain are *authored*, not extracted. Phase 1
+introduces project-local domain extractors via a plugin point at
+`<data-dir>/extractors/`: the framework provides the loader and the
+manifest schema; each project ships the extractor implementations
+relevant to its codebase.
 """
 
 from __future__ import annotations

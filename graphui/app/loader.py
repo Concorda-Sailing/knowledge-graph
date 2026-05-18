@@ -274,7 +274,7 @@ def commits_30d(repo: str, rel_path: str) -> int:
 
     `repo` is the v2 `source.repo` value (the `[repos.<key>]` key from
     project.toml, NOT a directory basename), resolved via `_repo_path` so
-    `path = "~/concorda-api"` works (#25).
+    `path = "~/<project>-api"` works (#25).
     """
     if not repo or not rel_path:
         return 0
@@ -1800,7 +1800,7 @@ def _repo_path(key: str) -> Path | None:
     The argument is whatever the extractor wrote to `source.repo` — in v2
     that's the `[repos.<key>]` key (e.g. "api"), NOT the path basename. We
     look the key up in depgraph/project.toml and expand `~` so paths like
-    `path = "~/concorda-api"` resolve correctly (#25).
+    `path = "~/<project>-api"` resolve correctly (#25).
 
     Fall back to HOME/<arg> for legacy data that recorded a path basename
     and for the rare case where the key matches the on-disk dir name.

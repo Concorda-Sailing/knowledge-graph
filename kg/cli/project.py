@@ -305,7 +305,7 @@ def _write_toml_key(cfg_path: Path, section: str, key: str, value: str) -> None:
     no blank-line separator; a reader (or another AI) seeing
 
         [project]
-        name = "concorda"
+        name = "myproject"
         # [repos.web]    <- commented example block in the way
         primary_repo = "api"
         [repos.api]

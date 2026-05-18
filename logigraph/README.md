@@ -66,8 +66,9 @@ logigraph/
 │   ├── domain/        plain-language definitions of concepts
 │   └── rules/           plain-language statements of rules
 ├── extractors/
-│   ├── extract_system_roles.py     reads <api-repo>/scripts/seed_roles.py
-│   ├── extract_db_resources.py     walks SQLAlchemy models
+│   ├── (project-local domain extractors live here — Phase 1; the
+│   │    framework provides the loader, each project ships the
+│   │    extractors that fit its codebase)
 │   └── reconcile.py                builds indexes, validates claims
 ├── schema/
 │   ├── domain.schema.json
