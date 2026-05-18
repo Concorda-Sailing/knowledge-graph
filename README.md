@@ -133,32 +133,60 @@ Every `kg depgraph` / `kg logigraph` / `kg project` command resolves a project b
 
 ### When the user asks: "Install knowledge-graph"
 
-1. If `~/tools/knowledge-graph/` doesn't exist, clone it:
+1. If `~/tools/knowledge-graph/` doesn't exist, clone it from the
+   upstream (or your own fork — substitute the org in the URL):
    ```bash
-   git clone https://github.com/<owner>/knowledge-graph.git ~/tools/knowledge-graph
+   git clone https://github.com/Concorda-Sailing/knowledge-graph.git ~/tools/knowledge-graph
    ```
-2. Resolve the project path. If the user is `cd`'d into the project, use `$PWD`. Otherwise ask which project root to wire up. The data repo conventionally lives at `<project>-knowledge-graph/` (sibling to the source repos), but can live anywhere — `kg project add` takes the path.
+2. Resolve the project path. If the user is `cd`'d into the project,
+   use `$PWD`. Otherwise ask which project root to wire up. The data
+   repo conventionally lives at `<project>-knowledge-graph/` (sibling
+   to the source repos), but can live anywhere — `kg project add`
+   takes the path. Both layout conventions work:
+   - **sibling-with-hyphen** — `~/<project>-knowledge-graph/` (the path
+     IS the bundle).
+   - **nested** — `~/<project>/` (bundle becomes
+     `<project>/knowledge-graph/`).
 3. Run the bootstrap:
    ```bash
-   ~/tools/knowledge-graph/bin/kg install bootstrap <data-repo-path>
+   ~/tools/knowledge-graph/bin/kg install bootstrap <data-dir>
    ```
-   This scaffolds `<data-repo-path>/{depgraph,logigraph}/` and the root `project.toml`, writes the hook entries into `~/.claude/settings.json`, registers the data repo via `kg project add`, and starts the graphui systemd `--user` service.
-4. Verify:
+   Replace `<data-dir>` with the path from step 2. Bootstrap
+   scaffolds `<data-dir>/{depgraph,logigraph}/` and the root
+   `project.toml`, writes the hook entries into
+   `~/.claude/settings.json`, registers the data repo via `kg project
+   add`, and starts the graphui systemd `--user` service.
+4. Verify. The `--project` flag goes on each subsystem subcommand
+   (`kg depgraph`, `kg logigraph`), not at the top level:
    ```bash
    ~/tools/knowledge-graph/bin/kg project list                            # data repo appears
-   ~/tools/knowledge-graph/bin/kg --project <name> depgraph self-check
-   ~/tools/knowledge-graph/bin/kg --project <name> logigraph validate
+   ~/tools/knowledge-graph/bin/kg depgraph --project <name> self-check
+   ~/tools/knowledge-graph/bin/kg logigraph --project <name> validate
    systemctl --user is-active graphui
    ```
-5. Tell the user the graphui URL: `http://localhost:8081/graph/` (or LAN IP).
+   If only one project is registered, the `--project` flag is
+   optional and the command resolves to that project implicitly.
+5. Tell the user the graphui URL: `http://localhost:8081/graph/` (or
+   LAN IP).
 
-`install.sh bootstrap <data-repo-path>` is equivalent (it execs `kg install bootstrap`); use whichever shape the user prefers.
+`install.sh bootstrap <data-dir>` is equivalent (it execs `kg install
+bootstrap`); use whichever shape the user prefers.
 
 ### When the user asks: "Add a new tracked repo"
 
-The native command is `kg project add-repo`; manual TOML editing is no longer the primary path.
+Two paths exist:
 
-Edit `<data-repo>/depgraph/project.toml` and add a `[repos.<key>]` table.
+- **Manual TOML edit** (the only path that supports every v2 key).
+  Edit `<data-repo>/depgraph/project.toml` and add a `[repos.<key>]`
+  table. This is what the steps below describe.
+- **`kg project add-repo <key> <path>`** — the native command. Useful
+  for the v1-style cases (extractor command + detector + files-arg)
+  but does **not** yet accept v2 keys (`languages`,
+  `include_paths`, `exclude_paths`, `migrations_dirs`). For v2
+  configurations, run it to seed the entry and then edit the TOML to
+  fill in the v2 keys.
+
+Manual TOML edit:
 The shipped per-language extractors at `depgraph/extractors/{python,
 typescript,sql}/` are driven by the per-repo `languages` list — no
 per-repo extractor command needed for Python, TypeScript/JavaScript, or

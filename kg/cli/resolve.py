@@ -144,7 +144,15 @@ def resolve_project(
             "No projects registered and no --project / --data-dir / env / cwd hint.\n"
             "Register one with: kg project add <path>"
         )
-    lines = ["Multiple projects registered — pick one with --project <name>:"]
+    # The --project flag lives on each subcommand parser
+    # (`kg depgraph --project <name> ...`, `kg logigraph --project <name> ...`),
+    # not on the top-level `kg`. Spell out the canonical position so the
+    # user doesn't try `kg --project <name> depgraph X` (which argparse
+    # rejects).
+    lines = [
+        "Multiple projects registered — pass --project <name> AFTER the "
+        "subcommand (e.g. `kg depgraph --project <name> regen`):",
+    ]
     for e in entries:
         lines.append(f"  --project {e.name}      ({e.path})")
     raise AmbiguousProject("\n".join(lines))

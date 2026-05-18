@@ -44,7 +44,11 @@ Every command picks a project via this 7-step order (first match wins):
 | `kg project set <field> <value>` | Set a whitelisted project.toml field |
 | `kg project health` | Cross-subsystem health (depgraph + logigraph + repo paths) |
 
-`kg project` also accepts `--project <name>` and `--data-dir <path>` as group-level flags that override the resolution order for one command.
+`--project <name>` and `--data-dir <path>` are recognized on each
+subsystem subcommand (`kg project`, `kg depgraph`, `kg logigraph`) and
+override the resolution order for one invocation. The flag goes
+**after** the subsystem name, e.g. `kg depgraph --project <name> regen`
+— not `kg --project <name> depgraph regen` (argparse rejects that).
 
 #### `kg project set` — whitelisted fields
 
@@ -110,8 +114,11 @@ as aliases — no migration required for muscle memory.
 
 ## Common errors
 
-**"Multiple projects registered — pick one with --project"** — set a
-default once: `kg project use <name>`.
+**"Multiple projects registered — pass --project <name> AFTER the
+subcommand"** — either set a default once with `kg project use <name>`,
+or pass `--project <name>` directly to the subsystem subcommand:
+`kg depgraph --project <name> regen`. The flag does **not** go on the
+top-level `kg` — argparse rejects `kg --project <name> depgraph ...`.
 
 **"Project not registered"** — list available: `kg project list`,
 then `kg project add <path>` if missing.
@@ -123,5 +130,11 @@ then `kg project add <path>` if missing.
 ## File locations
 
 - Registry: `~/.claude/kg-graphs.toml` (machine-maintained, manual edits tolerated)
-- Tools: `~/tools/knowledge-graph/{kg,depgraph,logigraph,graphui,install.sh}`
-- Per-project data: `<project>/knowledge-graph/{depgraph,logigraph}/` (or the sibling-with-hyphen layout `<project>-knowledge-graph/`)
+- Tools root: `~/tools/knowledge-graph/`
+  - `kg/`, `depgraph/`, `logigraph/`, `graphui/` — the four subsystems
+  - `bin/kg`, `bin/depgraph`, `bin/logigraph` — CLI entry points (thin shims into the Python packages)
+  - `install.sh` — back-compat shim that execs `kg install`
+  - `tests/` — cross-subsystem test suite (run with `pytest` from this dir)
+- Per-project data: `<project>/knowledge-graph/{depgraph,logigraph}/` (or the sibling-with-hyphen layout `<project>-knowledge-graph/{depgraph,logigraph}/`)
+- Claude Code hooks: `~/.claude/settings.json`
+- Systemd unit (user-mode graphui): `~/.config/systemd/user/graphui.service`

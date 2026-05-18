@@ -27,8 +27,25 @@ from kg.cli.install import tools as _tools_mod
 def _run_installer(args: argparse.Namespace, extra: list[str]) -> int:
     # Subcommands that have native Python handlers dispatch directly.
     if extra and extra[0] == "init":
-        init_parser = argparse.ArgumentParser(prog="kg install init")
-        init_parser.add_argument("path")
+        init_parser = argparse.ArgumentParser(
+            prog="kg install init",
+            description=(
+                "Scaffold a fresh project's knowledge-graph data layout. "
+                "Supports both data-dir conventions: pass "
+                "~/<project>-knowledge-graph for sibling-with-hyphen "
+                "(the path is the bundle), or ~/<project> for nested "
+                "(the bundle becomes <project>/knowledge-graph/)."
+            ),
+        )
+        init_parser.add_argument(
+            "path",
+            metavar="DATA_DIR",
+            help=(
+                "Path to the data directory (sibling-with-hyphen "
+                "<project>-knowledge-graph) or the parent dir for the "
+                "nested <project>/knowledge-graph layout."
+            ),
+        )
         init_args = init_parser.parse_args(extra[1:])
         return _init_mod.cmd_init(init_args)
     if extra and extra[0] in ("tools", "install"):
@@ -59,9 +76,29 @@ def _run_installer(args: argparse.Namespace, extra: list[str]) -> int:
         path_parser.add_argument("--force", action="store_true")
         return _path_mod.cmd_path(path_parser.parse_args(extra[1:]))
     if extra and extra[0] == "bootstrap":
-        boot_parser = argparse.ArgumentParser(prog="kg install bootstrap")
-        boot_parser.add_argument("project")
-        boot_parser.add_argument("--data", action="append", default=[])
+        boot_parser = argparse.ArgumentParser(
+            prog="kg install bootstrap",
+            description=(
+                "One-shot setup: install tools, scaffold the project's "
+                "knowledge-graph data dir, write Claude Code hooks, register "
+                "with the kg orchestrator, install the graphui systemd unit, "
+                "and write the framework's bin dirs into ~/.profile."
+            ),
+        )
+        boot_parser.add_argument(
+            "project",
+            metavar="DATA_DIR",
+            help=(
+                "Path to the project's data directory. Either the "
+                "sibling-with-hyphen form ~/<project>-knowledge-graph "
+                "(used as the bundle directly) or the nested form "
+                "~/<project> (becomes <project>/knowledge-graph/)."
+            ),
+        )
+        boot_parser.add_argument(
+            "--data", action="append", default=[],
+            help="Extra tool data spec passed through to `kg install tools`.",
+        )
         return _bootstrap_mod.cmd_bootstrap(boot_parser.parse_args(extra[1:]))
     if extra and extra[0] == "cascade":
         casc_parser = argparse.ArgumentParser(prog="kg install cascade")
@@ -92,14 +129,14 @@ def _print_install_help() -> None:
         "\n"
         "Subcommands:\n"
         "  tools     [--target ... --data ...]              Install/upgrade framework binaries\n"
-        "  init      <project>                              Scaffold a fresh project layout\n"
+        "  init      <data-dir>                             Scaffold a fresh project layout\n"
         "  hooks     [--project <dir>] [--apply] [--force]  Write Claude Code hook block to settings.json\n"
         "  systemd   [--project <dir>] [--apply]            Generate + apply graphui systemd unit\n"
         "            [--depgraph-data-dir <p>] [--logigraph-data-dir <p>]\n"
         "  path      [--rcfile ...] [--apply] [--force]     Add framework bin dirs to shell PATH\n"
         "  cascade   <repo> [--depgraph ... --logigraph ...] [--apply] [--force]\n"
         "                                                   Install pre-push hook in a target repo\n"
-        "  bootstrap <project> [--data ...]                 One-shot: tools + init + hooks + systemd + path\n"
+        "  bootstrap <data-dir> [--data ...]                One-shot: tools + init + hooks + systemd + path\n"
     )
 
 
