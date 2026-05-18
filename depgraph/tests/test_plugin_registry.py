@@ -20,6 +20,11 @@ def test_discovers_general_baselines_and_framework_plugins():
     assert "general:typescript" in names
     # Framework plugins shipped at v0
     assert {"react", "vitest", "fastapi", "sqlalchemy", "pytest", "express", "prisma"} <= names
+    # Tier 1+2 React-ecosystem cue plugins
+    assert {
+        "mocha", "redux", "tanstack-query", "swr",
+        "nextjs-hooks", "react-i18next", "react-intl", "growthbook",
+    } <= names
 
 
 def test_general_plugins_always_active_with_no_manifests(tmp_path):
@@ -143,6 +148,129 @@ def test_local_plugin_bad_file_does_not_abort(tmp_path, capsys):
     err = capsys.readouterr().err
     assert "failed to load local plugin" in err
     assert "broken.py" in err
+
+
+def test_mocha_detects_from_package_json(tmp_path):
+    (tmp_path / "package.json").write_text(json.dumps({
+        "dependencies": {"mocha": "^10.0.0"},
+    }))
+    cfg, active = build_config(tmp_path, auto=True)
+    assert "mocha" in active
+    prims = cfg.languages["typescript"].test_framework_primitives
+    assert {"describe", "it", "before", "after", "beforeEach"} <= prims
+
+
+def test_mocha_detects_from_mocharc_marker(tmp_path):
+    (tmp_path / ".mocharc.json").write_text("{}\n")
+    _, active = build_config(tmp_path, auto=True)
+    assert "mocha" in active
+
+
+def test_redux_detects_and_contributes_hooks(tmp_path):
+    (tmp_path / "package.json").write_text(json.dumps({
+        "dependencies": {"react-redux": "^9.0.0"},
+    }))
+    cfg, active = build_config(tmp_path, auto=True)
+    assert "redux" in active
+    hooks = cfg.languages["typescript"].hook_call_names
+    assert {"useSelector", "useDispatch"} <= hooks
+
+
+def test_tanstack_query_detects_v4_and_v3(tmp_path):
+    # v4+
+    (tmp_path / "package.json").write_text(json.dumps({
+        "dependencies": {"@tanstack/react-query": "^5.0.0"},
+    }))
+    cfg, active = build_config(tmp_path, auto=True)
+    assert "tanstack-query" in active
+    assert {"useQuery", "useMutation", "useInfiniteQuery"} <= cfg.languages["typescript"].hook_call_names
+
+
+def test_swr_detects_and_contributes_hooks(tmp_path):
+    (tmp_path / "package.json").write_text(json.dumps({
+        "dependencies": {"swr": "^2.0.0"},
+    }))
+    cfg, active = build_config(tmp_path, auto=True)
+    assert "swr" in active
+    assert "useSWR" in cfg.languages["typescript"].hook_call_names
+
+
+def test_nextjs_hooks_detects_and_contributes(tmp_path):
+    (tmp_path / "package.json").write_text(json.dumps({
+        "dependencies": {"next": "^16.0.0"},
+    }))
+    cfg, active = build_config(tmp_path, auto=True)
+    assert "nextjs-hooks" in active
+    hooks = cfg.languages["typescript"].hook_call_names
+    assert {"useRouter", "usePathname", "useSearchParams"} <= hooks
+
+
+def test_react_i18next_detects(tmp_path):
+    (tmp_path / "package.json").write_text(json.dumps({
+        "dependencies": {"react-i18next": "^14.0.0"},
+    }))
+    cfg, active = build_config(tmp_path, auto=True)
+    assert "react-i18next" in active
+    assert "useTranslation" in cfg.languages["typescript"].hook_call_names
+
+
+def test_react_i18next_via_next_i18next(tmp_path):
+    (tmp_path / "package.json").write_text(json.dumps({
+        "dependencies": {"next-i18next": "^15.0.0"},
+    }))
+    _, active = build_config(tmp_path, auto=True)
+    assert "react-i18next" in active
+
+
+def test_react_intl_detects(tmp_path):
+    (tmp_path / "package.json").write_text(json.dumps({
+        "dependencies": {"react-intl": "^6.0.0"},
+    }))
+    cfg, active = build_config(tmp_path, auto=True)
+    assert "react-intl" in active
+    assert "useIntl" in cfg.languages["typescript"].hook_call_names
+
+
+def test_growthbook_detects(tmp_path):
+    (tmp_path / "package.json").write_text(json.dumps({
+        "dependencies": {"@growthbook/growthbook-react": "^1.0.0"},
+    }))
+    cfg, active = build_config(tmp_path, auto=True)
+    assert "growthbook" in active
+    hooks = cfg.languages["typescript"].hook_call_names
+    assert {"useFeature", "useFeatureValue", "useFeatureIsOn"} <= hooks
+
+
+def test_real_fe_landing_page_stack_unions_correctly(tmp_path):
+    """End-to-end: a realistic Next.js project with Next + SWR + redux-form +
+    react-i18next + GrowthBook + Sentry/Next + react-bootstrap unions cues
+    from every relevant plugin."""
+    (tmp_path / "package.json").write_text(json.dumps({
+        "dependencies": {
+            "next": "^16.2.0",
+            "react": "^19.2.0",
+            "swr": "^2.0.0",
+            "react-i18next": "^14.0.0",
+            "next-i18next": "^15.0.0",
+            "@growthbook/growthbook-react": "^1.0.0",
+            "react-bootstrap": "^2.0.0",   # no plugin — just noise
+            "@sentry/nextjs": "^7.0.0",     # no plugin — just noise
+        },
+    }))
+    cfg, active = build_config(tmp_path, auto=True)
+    # Every Tier 1+2 plugin matched by this stack
+    assert {"react", "nextjs-hooks", "swr", "react-i18next", "growthbook"} <= set(active)
+    hooks = cfg.languages["typescript"].hook_call_names
+    # Built-in React hooks
+    assert "useState" in hooks
+    # Next.js navigation
+    assert "useRouter" in hooks
+    # Data fetching
+    assert "useSWR" in hooks
+    # i18n
+    assert "useTranslation" in hooks
+    # Feature flags
+    assert "useFeature" in hooks
 
 
 def test_build_config_for_repos_unions_across_repos(tmp_path):

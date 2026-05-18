@@ -69,13 +69,21 @@ shipped set:
 | ----------------- | ------------------------------------------------------ | --------------------------------------------- |
 | `general:python`  | always-on                                              | `orm_schema_link_vias` baseline               |
 | `general:typescript` | always-on                                           | `orm_schema_link_vias` baseline               |
-| `react`           | `react` in `package.json` deps                         | TS `hook_call_names` (`useState`, …)          |
-| `vitest`          | `vitest` dep or `vitest.config.*` marker               | TS `test_framework_primitives`                |
-| `express`         | `express` in `package.json` deps                       | TS `route_decorators` (`app.X`, `router.X`)   |
-| `prisma`          | `@prisma/client` dep or `prisma/schema.prisma` marker  | TS `orm_base_classes`                         |
-| `fastapi`         | `fastapi` in pyproject / requirements                  | Python `route_decorators`                     |
-| `sqlalchemy`      | `sqlalchemy` in pyproject / requirements               | Python `orm_base_classes`                     |
-| `pytest`          | `pytest` dep, `pytest.ini`, or `[tool.pytest*]`        | Python `test_framework_primitives`            |
+| `react`           | `react` in `package.json` deps                         | React built-in hook names (`useState`, `useEffect`, …) |
+| `redux`           | `redux` or `react-redux` in `package.json`             | `useSelector`, `useDispatch`, `useStore`      |
+| `tanstack-query`  | `@tanstack/react-query` (v4+) or `react-query` (v3)    | `useQuery`, `useMutation`, `useInfiniteQuery`, `useQueryClient`, … |
+| `swr`             | `swr` in `package.json`                                | `useSWR`, `useSWRConfig`, `useSWRMutation`, … |
+| `nextjs-hooks`    | `next` in `package.json`                               | `useRouter`, `usePathname`, `useSearchParams`, `useParams`, … |
+| `react-i18next`   | `react-i18next` or `next-i18next`                      | `useTranslation`, `useSSR`                    |
+| `react-intl`      | `react-intl` in `package.json`                         | `useIntl`                                     |
+| `growthbook`      | `@growthbook/growthbook-react` / `@growthbook/growthbook` | `useFeature`, `useFeatureValue`, `useFeatureIsOn`, `useGrowthBook` |
+| `vitest`          | `vitest` dep or `vitest.config.*` marker               | Vitest BDD primitives (`describe`/`it`/`expect`/…) |
+| `mocha`           | `mocha` dep or `.mocharc.*` marker                     | Mocha BDD primitives (`describe`/`it`/`before`/`after`/…) |
+| `express`         | `express` in `package.json` deps                       | `app.X` / `router.X` route decorators         |
+| `prisma`          | `@prisma/client` dep or `prisma/schema.prisma` marker  | `Model` / `BaseEntity` ORM base classes       |
+| `fastapi`         | `fastapi` in pyproject / requirements                  | Python `route_decorators` (FastAPI shape)     |
+| `sqlalchemy`      | `sqlalchemy` in pyproject / requirements               | `DeclarativeBase` / `Base` / `BaseModel`      |
+| `pytest`          | `pytest` dep, `pytest.ini`, or `[tool.pytest*]`        | `pytest.fixture` / `pytest.mark` / `pytest.raises` / … |
 
 ---
 
