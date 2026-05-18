@@ -57,6 +57,11 @@ DOSSIER_LINE_LIMIT = 200
 TRANSITIVE_DEPTH = 3
 DEPENDENTS_PER_DEPTH_CAP = 30
 NODE_SCHEMA_VERSION = 2
+# Hard ceiling on the injected `additionalContext` body. The hook fires before
+# every edit, so a 100KB injection on a high-fan-in central file crowds out
+# the conversation context (issue #17). Configurable via
+# `[depgraph].max_injection_bytes = N` in project.toml.
+DEFAULT_MAX_INJECTION_BYTES = 32_000
 
 # Dossier dir-name mapping — must mirror lib/classification/writer.py.
 # Classified nodes live under nodes/<kind_dir>/ and dossiers at
@@ -305,7 +310,7 @@ def load_dossier(node: dict) -> tuple[str, str]:
     slug = slugify_id_for_filename(node.get("id", ""))
     path = DEPGRAPH / "dossiers" / dossier_dir / f"{slug}.md"
     if not path.exists():
-        return ("", "_No dossier yet — run `bin/depgraph stub-dossiers` to auto-stub, or write one by hand._")
+        return ("", "_No dossier yet — run `kg depgraph dossier-draft <id>` to seed one, or write one by hand._")
     text = path.read_text()
     pinned_hash = None
     status = "current"
@@ -499,8 +504,21 @@ def main() -> int:
             "> ⚠ Reverse-dependency index missing or unreadable — direct callers will not show. "
             "Run `bin/depgraph regen` to rebuild `nodes/_index/by_target.json`."
         )
+    cfg = load_project_config(DEPGRAPH)
+    max_bytes = int(
+        ((cfg.get("depgraph") or {}).get("max_injection_bytes"))
+        or DEFAULT_MAX_INJECTION_BYTES
+    )
+
     injected_node_ids: list[str] = []
     primary_target: str | None = targets[0] if targets else None
+    # Running byte tally so the loop can short-circuit once the budget is
+    # spent. We can't know the final separator/footer length in advance, so
+    # leave a small slack (256 bytes) for the trailing reminder + truncation
+    # marker before declaring the budget exhausted.
+    budget = max(1024, max_bytes - 256)
+    running = sum(len(b) for b in rendered_blocks)
+    truncated_remaining = 0
     for abs_path in targets:
         rr = repo_relative(abs_path)
         if not rr:
@@ -514,22 +532,36 @@ def main() -> int:
             continue
         for nid in ids:
             node = by_id.get(nid)
-            if node:
-                rendered_blocks.append(render_for_node(node, dependents_index))
-                injected_node_ids.append(nid)
+            if not node:
+                continue
+            block = render_for_node(node, dependents_index)
+            if running + len(block) > budget and injected_node_ids:
+                # Already injected at least one node — count remaining and stop.
+                truncated_remaining += 1
+                continue
+            rendered_blocks.append(block)
+            injected_node_ids.append(nid)
+            running += len(block)
 
     if not rendered_blocks:
         return 0
 
-    cfg = load_project_config(DEPGRAPH)
     project_name = (cfg.get("project") or {}).get("name", "")
     header = f"# 📍 {project_name} depgraph context\n\n" if project_name else "# 📍 depgraph context\n\n"
+    footer_parts = [
+        "_Reminder: this graph reduces blind spots, it does not make the change safe._",
+    ]
+    if truncated_remaining:
+        footer_parts.append(
+            f"_⚠ {truncated_remaining} additional node(s) on this file were skipped "
+            f"because the injection budget ({max_bytes} bytes) was reached. "
+            f"Tune `[depgraph].max_injection_bytes` in project.toml if you want more._"
+        )
     body = (
         header
         + "\n\n---\n\n".join(rendered_blocks)
         + "\n\n---\n\n"
-        "_Reminder: this graph reduces blind spots, it does not make the change safe._ "
-        "_Read PROCESS.md if you need a refresher._"
+        + " ".join(footer_parts)
     )
 
     emit(

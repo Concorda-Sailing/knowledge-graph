@@ -320,3 +320,52 @@ def test_untracked_file_emits_explainer(data_dir, repo):
     })
     body = envelope["hookSpecificOutput"]["additionalContext"]
     assert "No tracked nodes" in body
+
+
+def test_injection_respects_max_bytes_budget(data_dir, repo):
+    """High-fan-in files would otherwise pour 100+ KB into the conversation.
+    Setting `[depgraph].max_injection_bytes` clamps the body and surfaces a
+    truncation marker so the user knows nodes were dropped (#17)."""
+    # Override project.toml to set a tiny budget.
+    (data_dir / "project.toml").write_text(
+        f'[project]\nname = "synth"\n\n'
+        f'[depgraph]\nmax_injection_bytes = 2000\n\n'
+        f'[repos.app]\npath = "{repo}"\n'
+    )
+    # Plant a dozen function nodes on the same file so the hook will iterate
+    # many blocks; the budget should stop after the first 1-2 fit.
+    for i in range(12):
+        name = f"handler_{i}"
+        node = _make_node("app", "services/users.py", "function", name,
+                          kind="service")
+        _write_node(data_dir, "services",
+                    f"app__services_users_py__{name}", node)
+    _write_meta(data_dir, primitive_count=12)
+
+    envelope = _run_hook(data_dir, {
+        "tool_name": "Edit",
+        "tool_input": {"file_path": str(repo / "services" / "users.py")},
+    })
+    body = envelope["hookSpecificOutput"]["additionalContext"]
+    # Truncation marker must mention how many nodes were skipped.
+    assert "additional node" in body
+    assert "max_injection_bytes" in body
+    # Body should be bounded by the budget (with a small slack for the
+    # footer). 12 full node blocks at ~300 bytes each would be ~3.6KB.
+    assert len(body) < 4000, f"body too big: {len(body)} bytes"
+
+
+def test_injection_no_budget_marker_when_under_threshold(data_dir, repo):
+    """A single small node should fit comfortably in the default budget;
+    no truncation marker should appear."""
+    node = _make_node("app", "services/users.py", "function", "get_user",
+                      kind="service")
+    _write_node(data_dir, "services", "app__services_users_py__get_user", node)
+    _write_meta(data_dir, primitive_count=1)
+
+    envelope = _run_hook(data_dir, {
+        "tool_name": "Edit",
+        "tool_input": {"file_path": str(repo / "services" / "users.py")},
+    })
+    body = envelope["hookSpecificOutput"]["additionalContext"]
+    assert "max_injection_bytes" not in body
