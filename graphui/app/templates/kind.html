@@ -37,7 +37,7 @@
       {% set n = summary.state_counts.get(state_key, 0) %}
       {% if n > 0 %}
       <a href="/graph/kind/{{ kind_name }}?state={{ state_key }}{% if subkind_filter %}&subkind={{ subkind_filter }}{% endif %}"
-         class="chip chip-state-{{ state_key }}{% if state_filter == state_key %} chip-active{% endif %}">{{ state_key }} <span class="chip-count">{{ n }}</span></a>
+         class="chip chip-state-{{ state_key }}{% if state_filter == state_key %} chip-active{% endif %}">{{ state_key | state_label }} <span class="chip-count">{{ n }}</span></a>
       {% endif %}
     {% endfor %}
   {% endif %}

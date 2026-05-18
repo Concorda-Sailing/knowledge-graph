@@ -13,7 +13,7 @@
     <span class="pill">{{ proc.steps|length }} steps</span>
     {% if proc.ui_surfaces %}<span class="pill">{{ proc.ui_surfaces|length }} UI surface{{ '' if proc.ui_surfaces|length == 1 else 's' }}</span>{% endif %}
     <span class="pill">def: {{ proc.definition_status }}</span>
-    <span class="pill">state: <span class="state-chip state-chip-{{ proc.dossier_state }}">{{ proc.dossier_state }}</span></span>
+    <span class="pill">state: <span class="state-chip state-chip-{{ proc.dossier_state }}">{{ proc.dossier_state | state_label }}</span></span>
   </div>
 
   {% include "_review_strip.html" %}

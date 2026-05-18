@@ -11,7 +11,7 @@
   <div class="meta-row">
     <span class="pill">id: {{ ont.id }}</span>
     <span class="pill">def: {{ ont.definition_status }}</span>
-    <span class="pill">state: <span class="state-{{ ont.dossier_state }}">{{ ont.dossier_state }}</span></span>
+    <span class="pill">state: <span class="state-{{ ont.dossier_state }}">{{ ont.dossier_state | state_label }}</span></span>
   </div>
 
   {% include "_review_strip.html" %}

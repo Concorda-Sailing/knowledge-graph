@@ -49,7 +49,7 @@
      class="chip{% if not state_filter %} chip-active{% endif %}">all</a>
   {% for st in filters.states %}
   <a href="/graph/knowledge?state={{ st }}{% if kind_filter %}&kind={{ kind_filter }}{% endif %}{% if subkind_filter %}&subkind={{ subkind_filter }}{% endif %}{% if sort and sort != 'id' %}&sort={{ sort }}{% endif %}"
-     class="chip chip-state-{{ st }}{% if state_filter == st %} chip-active{% endif %}">{{ st }}</a>
+     class="chip chip-state-{{ st }}{% if state_filter == st %} chip-active{% endif %}">{{ st | state_label }}</a>
   {% endfor %}
 </div>
 

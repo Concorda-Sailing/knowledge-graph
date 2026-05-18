@@ -158,6 +158,22 @@ TEMPLATES.env.globals["current_project"] = _current_project_for_template
 TEMPLATES.env.globals["all_projects"] = loader.list_projects
 
 
+# Map internal dossier-state names to user-facing labels. "missing" reads as
+# drift/error to a fresh user (#26) — what it actually means is "no dossier
+# authored yet," so render it as such. The CSS class still uses the internal
+# state name, so styling is unchanged.
+_STATE_LABELS = {
+    "missing": "no dossier",
+}
+
+
+def _state_label(state: str) -> str:
+    return _STATE_LABELS.get(state, state)
+
+
+TEMPLATES.env.filters["state_label"] = _state_label
+
+
 # ----- Helpers ----------------------------------------------------------------
 
 STATE_ORDER = ["current", "llm_drafted", "unreviewed", "stale", "missing"]

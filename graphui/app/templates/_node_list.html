@@ -30,7 +30,7 @@
         {% if 'area' in cols %}<td class="knowledge-area">{{ n.area or '—' }}</td>{% endif %}
         {% if 'tier' in cols %}<td>{{ n.tier or '—' }}</td>{% endif %}
         {% if 'fan_in' in cols %}<td class="numeric">{{ n.fan_out }}</td>{% endif %}
-        {% if 'state' in cols %}<td><span class="state-chip state-chip-{{ n.state }}">{{ '⚠ ' if n.state == 'stale' else '' }}{{ n.state }}</span></td>{% endif %}
+        {% if 'state' in cols %}<td><span class="state-chip state-chip-{{ n.state }}">{{ '⚠ ' if n.state == 'stale' else '' }}{{ n.state | state_label }}</span></td>{% endif %}
         {% if 'id' in cols %}<td class="src"><code>{{ n.id }}</code></td>{% endif %}
       </tr>
       {% endfor %}

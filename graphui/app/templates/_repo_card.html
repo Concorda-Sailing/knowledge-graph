@@ -28,7 +28,7 @@
   <div class="state-bar repo-card-states">
     {% for state_key in ['current', 'llm_drafted', 'unreviewed', 'stale', 'missing'] %}
       {% set n = repo.state_counts.get(state_key, 0) %}
-      {% if n > 0 %}<span class="state-bar-seg state-bar-{{ state_key }}" style="flex: {{ n }};" title="{{ n }} {{ state_key }}"></span>{% endif %}
+      {% if n > 0 %}<span class="state-bar-seg state-bar-{{ state_key }}" style="flex: {{ n }};" title="{{ n }} {{ state_key | state_label }}"></span>{% endif %}
     {% endfor %}
   </div>
 

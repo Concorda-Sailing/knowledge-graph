@@ -12,7 +12,7 @@
   <div class="meta-row">
     <span class="pill">id: {{ node.id }}</span>
     <span class="pill">{{ node.fan_out }} dependent{{ '' if node.fan_out == 1 else 's' }}</span>
-    <span class="pill">state: <span class="state-{{ node.dossier_state }}">{{ node.dossier_state }}</span></span>
+    <span class="pill">state: <span class="state-{{ node.dossier_state }}">{{ node.dossier_state | state_label }}</span></span>
     {% if node.structural_hash %}<span class="pill">hash: {{ node.structural_hash[:12] }}</span>{% endif %}
     {% if commits_30d %}<span class="pill">{{ commits_30d }} commits / 30d</span>{% endif %}
     {% if src.repo and src.path %}

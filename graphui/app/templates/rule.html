@@ -13,7 +13,7 @@
     <span class="pill">claims: {{ rule.fan_out }}</span>
     <span class="pill">conf: <span class="conf-{{ rule.confidence }}">{{ rule.confidence }}</span></span>
     <span class="pill">def: {{ rule.definition_status }}</span>
-    <span class="pill">state: <span class="state-{{ rule.dossier_state }}">{{ rule.dossier_state }}</span></span>
+    <span class="pill">state: <span class="state-{{ rule.dossier_state }}">{{ rule.dossier_state | state_label }}</span></span>
   </div>
 
   {% include "_review_strip.html" %}

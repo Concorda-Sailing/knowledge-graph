@@ -52,7 +52,7 @@
         {% for st in ['current', 'llm_drafted', 'unreviewed', 'stale', 'missing'] %}
           {% set n = repo.state_counts.get(st, 0) %}
           {% if n > 0 %}
-          <a href="/graph/repo/{{ repo.basename }}?tab=nodes&state={{ st }}{% if kind_filter %}&kind={{ kind_filter }}{% endif %}{% if area_filter %}&area={{ area_filter }}{% endif %}{% if tier_filter %}&tier={{ tier_filter }}{% endif %}" class="chip chip-state-{{ st }}{% if state_filter == st %} chip-active{% endif %}">{{ st }} <span class="chip-count">{{ n }}</span></a>
+          <a href="/graph/repo/{{ repo.basename }}?tab=nodes&state={{ st }}{% if kind_filter %}&kind={{ kind_filter }}{% endif %}{% if area_filter %}&area={{ area_filter }}{% endif %}{% if tier_filter %}&tier={{ tier_filter }}{% endif %}" class="chip chip-state-{{ st }}{% if state_filter == st %} chip-active{% endif %}">{{ st | state_label }} <span class="chip-count">{{ n }}</span></a>
           {% endif %}
         {% endfor %}
       </div>
