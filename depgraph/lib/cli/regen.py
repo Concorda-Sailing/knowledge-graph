@@ -354,6 +354,7 @@ def _run_v2_pipeline(
         enable=classification_options.get("enable"),
         disable=classification_options.get("disable"),
         auto=classification_options.get("auto", True),
+        local_plugin_paths=classification_options.get("local_plugin_paths"),
     )
     for repo_key, names in plugins_by_repo.items():
         print(f"    {repo_key} plugins: {', '.join(names) if names else '(none)'}")

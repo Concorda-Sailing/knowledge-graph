@@ -85,6 +85,66 @@ def test_auto_false_disables_detection(tmp_path):
     assert active == ["general:python", "general:typescript"]
 
 
+def test_local_plugin_loaded_from_directory(tmp_path):
+    """A project-private plugin file under `local_plugin_paths` loads and
+    contributes cues just like a shipped plugin."""
+    plug_dir = tmp_path / "plugins"
+    plug_dir.mkdir()
+    (plug_dir / "internal_orm.py").write_text(
+        "from depgraph.lib.classification.config import LanguageCues\n"
+        "from depgraph.plugins.base import Plugin\n"
+        "PLUGIN = Plugin(\n"
+        "    name='acme-internal',\n"
+        "    detect=lambda p: True,\n"
+        "    cues={'python': LanguageCues(orm_base_classes={'AcmeModel'})},\n"
+        ")\n"
+    )
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    cfg, active = build_config(repo, local_plugin_paths=[plug_dir])
+    assert "acme-internal" in active
+    assert "AcmeModel" in cfg.languages["python"].orm_base_classes
+
+
+def test_local_plugin_overrides_shipped_on_name_collision(tmp_path):
+    """A local plugin named the same as a shipped one replaces it."""
+    plug_dir = tmp_path / "plugins"
+    plug_dir.mkdir()
+    (plug_dir / "react_override.py").write_text(
+        "from depgraph.lib.classification.config import LanguageCues\n"
+        "from depgraph.plugins.base import Plugin\n"
+        "PLUGIN = Plugin(\n"
+        "    name='react',\n"
+        "    detect=lambda p: True,\n"
+        "    cues={'typescript': LanguageCues(hook_call_names={'useAcmeOnly'})},\n"
+        ")\n"
+    )
+    cfg, active = build_config(tmp_path, local_plugin_paths=[plug_dir])
+    assert "react" in active
+    hooks = cfg.languages["typescript"].hook_call_names
+    # Override semantics — shipped React's useState is gone, replaced by local
+    assert "useAcmeOnly" in hooks
+    assert "useState" not in hooks
+
+
+def test_local_plugin_bad_file_does_not_abort(tmp_path, capsys):
+    """A broken local plugin reports on stderr but doesn't break the build."""
+    plug_dir = tmp_path / "plugins"
+    plug_dir.mkdir()
+    (plug_dir / "broken.py").write_text("this is not valid python )(\n")
+    (plug_dir / "good.py").write_text(
+        "from depgraph.lib.classification.config import LanguageCues\n"
+        "from depgraph.plugins.base import Plugin\n"
+        "PLUGIN = Plugin(name='good', detect=lambda p: True,\n"
+        "                cues={'python': LanguageCues()})\n"
+    )
+    _, active = build_config(tmp_path, local_plugin_paths=[plug_dir])
+    assert "good" in active
+    err = capsys.readouterr().err
+    assert "failed to load local plugin" in err
+    assert "broken.py" in err
+
+
 def test_build_config_for_repos_unions_across_repos(tmp_path):
     api = tmp_path / "api"; api.mkdir()
     (api / "pyproject.toml").write_text('[project]\ndependencies = ["fastapi"]\n')

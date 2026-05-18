@@ -150,24 +150,45 @@ def project_repos(data_dir: Path) -> dict[str, dict]:
 def project_classification_options(data_dir: Path) -> dict:
     """Parse the optional [classification] section of project.toml.
 
-    Returns a dict with the activation knobs the plugin registry honors:
-        {"auto": bool, "enable": list[str], "disable": list[str]}
+    Returns the activation knobs the plugin registry honors:
+        {
+            "auto": bool,
+            "enable": list[str],
+            "disable": list[str],
+            "local_plugin_paths": list[Path],
+        }
 
-    Defaults: auto=True (detect from manifests), enable=[], disable=[].
-    The project author opts in via:
+    Defaults: auto=True, enable=[], disable=[]. `local_plugin_paths`
+    always includes `<data-dir>/plugins/` if it exists (convention path
+    for project-private detectors) plus anything listed under
+    `[classification.plugins].local_paths`. Relative paths in
+    project.toml resolve against the data dir.
 
-        [classification]
-        plugins.auto = false              # turn off auto-detect
-        plugins.enable = ["my-framework"] # force-on
-        plugins.disable = ["jest"]        # veto
+        [classification.plugins]
+        auto = false                      # turn off auto-detect
+        enable = ["my-internal"]          # force-on (incl. local plugins)
+        disable = ["jest"]                # veto
+        local_paths = ["./private-plugins"]
     """
     cfg = load_project_config(data_dir)
     raw = cfg.get("classification") or {}
     plugins = raw.get("plugins") or {}
+
+    local_paths: list[Path] = []
+    conv = data_dir / "plugins"
+    if conv.is_dir():
+        local_paths.append(conv)
+    for entry in plugins.get("local_paths") or []:
+        p = Path(entry).expanduser()
+        if not p.is_absolute():
+            p = (data_dir / p).resolve()
+        local_paths.append(p)
+
     return {
         "auto": bool(plugins.get("auto", True)),
         "enable": list(plugins.get("enable") or []),
         "disable": list(plugins.get("disable") or []),
+        "local_plugin_paths": local_paths,
     }
 
 
