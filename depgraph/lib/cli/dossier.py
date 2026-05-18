@@ -494,6 +494,7 @@ def _save_drafted_dossier(
     dossier_path.parent.mkdir(parents=True, exist_ok=True)
     dossier_path.write_text(frontmatter + body + "\n")
     print(f"wrote {dossier_path.relative_to(ctx.DEPGRAPH)}")
+    _refresh_embeddings_for_node(node, ctx)
     return dossier_path
 
 
@@ -543,6 +544,7 @@ def cmd_dossier_finalize(args: argparse.Namespace, ctx: Context) -> int:
     dossier_path.write_text(frontmatter + body + "\n")
     print(f"wrote {dossier_path.relative_to(ctx.DEPGRAPH)}")
     print(f"status: llm_drafted (review and bump to current when satisfied)")
+    _refresh_embeddings_for_node(node, ctx)
     return 0
 
 
@@ -606,7 +608,37 @@ def cmd_dossier_bump(args: argparse.Namespace, ctx: Context) -> int:
     new_text = "---\n" + "\n".join(out_lines).strip("\n") + "\n---\n" + body
     dossier_path.write_text(new_text)
     print(f"bumped {dossier_path.relative_to(ctx.DEPGRAPH)} → status: {args.status}")
+    _refresh_embeddings_for_node(node, ctx)
     return 0
+
+
+def _refresh_embeddings_for_node(node: dict, ctx: Context) -> None:
+    """Wrapper around `refresh_node_embeddings` that swallows missing
+    dependencies. Lifecycle commands shouldn't fail when the embedding
+    pipeline is unavailable (fastembed not installed, model load fails,
+    or the corpus pre-dates the first full regen) — they just print a
+    status line and continue.
+    """
+    try:
+        from depgraph.extractors.reconcile import refresh_node_embeddings
+    except ImportError:
+        return
+    try:
+        status = refresh_node_embeddings(node, ctx.DEPGRAPH)
+    except Exception as e:  # defensive: never block a successful write
+        print(f"warning: embedding refresh raised {type(e).__name__}: {e}",
+              file=sys.stderr)
+        return
+    if status == "ok":
+        print("embedding index refreshed for this node")
+    elif status == "failed":
+        print(
+            "warning: embedding refresh failed — node is on disk but "
+            "search won't see it until the next full regen",
+            file=sys.stderr,
+        )
+    # "skipped" is the common "no fastembed yet" / "no prior pass" case —
+    # quiet on stdout to avoid flooding the auto-draft path with notes.
 
 
 # ---------------------------------------------------------------------------

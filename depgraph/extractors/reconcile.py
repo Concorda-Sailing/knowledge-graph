@@ -238,6 +238,132 @@ def _run_embedding_pass(nodes: list[dict], data_dir: Path) -> str:
     return "ok"
 
 
+def refresh_node_embeddings(
+    node: dict, data_dir: Path
+) -> str:
+    """Re-embed a single node's chunks and merge into the existing index.
+
+    Used by `dossier-finalize` / `dossier-bump` / `dossier-draft --auto` so
+    a newly-authored dossier is searchable immediately, without waiting
+    for the next full `kg depgraph regen` (#36). Same returns as
+    `_run_embedding_pass`: "ok" | "failed" | "skipped".
+
+    Idempotent and incremental:
+      - Drops every existing row whose `node_id` matches the target node.
+      - Re-emits the node's chunks (synthetic summary + dossier body if
+        present), pulling embeddings forward by content_hash from rows
+        that survived the drop (i.e. other nodes' chunks).
+      - Renumbers `row` indices across the merged set.
+      - Atomic rewrite of `embeddings.{bin,jsonl}` via write_index.
+
+    If no index file exists yet (corpus pre-regen), this is a no-op
+    success — the next full regen will pick up the node's chunks
+    alongside everything else.
+    """
+    if not _EMBEDDING_AVAILABLE:
+        return "skipped"
+    import numpy as np
+
+    nid = node.get("id")
+    if not nid:
+        return "skipped"
+
+    index_dir = data_dir / "nodes" / "_index"
+    bin_path = index_dir / "embeddings.bin"
+    jsonl_path = index_dir / "embeddings.jsonl"
+    if not bin_path.exists() or not jsonl_path.exists():
+        # No prior pass — defer to the next full regen. Caller can decide
+        # whether to warn; returning "skipped" keeps the lifecycle commands
+        # quiet for the common pre-first-regen case.
+        return "skipped"
+
+    prior_rows, prior_vecs = read_index(bin_path, jsonl_path)
+    # Keep every row that doesn't belong to the target node.
+    keep_rows: list[dict] = []
+    keep_vecs: list = []
+    for r in prior_rows:
+        if r.get("node_id") == nid:
+            continue
+        keep_rows.append(r)
+        keep_vecs.append(prior_vecs[r["row"]])
+
+    # Build the carry-forward hash → vec map from the surviving rows so
+    # re-embedded text that already matches an existing row (e.g. an
+    # unchanged synthetic summary) doesn't need a fresh embed call.
+    prior_by_hash = {
+        r["content_hash"]: prior_vecs[r["row"]]
+        for r in prior_rows if "content_hash" in r
+    }
+
+    new_rows: list[dict] = []
+    chunks_to_embed: list[str] = []
+    embed_targets: list[int] = []
+
+    summary = _synthetic_node_summary(node)
+    if summary:
+        h = _chunk_hash(summary)
+        meta = {
+            "node_id": nid, "chunk_index": 0, "content_hash": h,
+            "text_preview": summary[:120].replace("\n", " "),
+            "source_field": "node_summary",
+        }
+        new_rows.append(meta)
+        if h not in prior_by_hash:
+            chunks_to_embed.append(summary)
+            embed_targets.append(len(new_rows) - 1)
+
+    body = _dossier_body_text(node, data_dir)
+    if body:
+        for i, ch in enumerate(chunk_text(body)):
+            h = _chunk_hash(ch)
+            meta = {
+                "node_id": nid, "chunk_index": i, "content_hash": h,
+                "text_preview": ch[:120].replace("\n", " "),
+                "source_field": "dossier_body",
+            }
+            new_rows.append(meta)
+            if h not in prior_by_hash:
+                chunks_to_embed.append(ch)
+                embed_targets.append(len(new_rows) - 1)
+
+    try:
+        fresh_vecs = embed_chunks(chunks_to_embed)
+    except EmbeddingUnavailable:
+        return "failed"
+
+    new_vecs_for_node = np.zeros((len(new_rows), 384), dtype=np.float16)
+    fresh_idx = 0
+    for i, meta in enumerate(new_rows):
+        h = meta["content_hash"]
+        if h in prior_by_hash:
+            new_vecs_for_node[i] = prior_by_hash[h]
+        else:
+            new_vecs_for_node[i] = fresh_vecs[fresh_idx]
+            fresh_idx += 1
+
+    # Merge: keep_rows first, then the node's fresh rows. Renumber `row`
+    # indices so they remain contiguous and in-sync with the bin layout.
+    merged_rows: list[dict] = []
+    if keep_rows:
+        for i, r in enumerate(keep_rows):
+            r2 = dict(r)
+            r2["row"] = i
+            merged_rows.append(r2)
+    base_offset = len(merged_rows)
+    for i, r in enumerate(new_rows):
+        r2 = dict(r)
+        r2["row"] = base_offset + i
+        merged_rows.append(r2)
+
+    if keep_vecs:
+        merged_vecs = np.vstack([np.vstack(keep_vecs), new_vecs_for_node])
+    else:
+        merged_vecs = new_vecs_for_node
+
+    write_index(bin_path, jsonl_path, merged_vecs, merged_rows)
+    return "ok"
+
+
 def _write_embedding_status(data_dir: Path, status: str) -> None:
     """Stamp _meta.json::embedding_status without disturbing other keys."""
     meta_path = data_dir / "nodes" / "_meta.json"
