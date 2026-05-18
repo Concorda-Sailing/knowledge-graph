@@ -158,21 +158,26 @@ def test_dry_run_sibling_hyphen_layout(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture,
 ) -> None:
-    """Auto-detects <project>-knowledge-graph/{depgraph,logigraph} sibling layout."""
+    """Sibling-with-hyphen layout: passing `<project>-knowledge-graph`
+    as --project resolves to that path AS the bundle (no nested
+    knowledge-graph/ subdir appended). The previous auto-fallback —
+    "if `<project>/knowledge-graph/` doesn't exist but `<project>-knowledge-graph/`
+    does, use the sibling" — has been removed in favour of explicit
+    detection via resolve_bundle_layout: the layout is determined by the
+    path the user passes, not by which directories happen to exist."""
     monkeypatch.setenv("HOME", str(tmp_path))
-    # Create the sibling-with-hyphen directories.
-    project = tmp_path / "myproject"
-    sibling_depg = tmp_path / "myproject-knowledge-graph" / "depgraph"
-    sibling_logg = tmp_path / "myproject-knowledge-graph" / "logigraph"
-    sibling_depg.mkdir(parents=True)
-    sibling_logg.mkdir(parents=True)
+    bundle = tmp_path / "myproject-knowledge-graph"
+    depg = bundle / "depgraph"
+    logg = bundle / "logigraph"
+    depg.mkdir(parents=True)
+    logg.mkdir(parents=True)
 
-    args = _dry_run_args(project=str(project))
+    args = _dry_run_args(project=str(bundle))
     rc = cmd_systemd(args)
     assert rc == 0
     out = capsys.readouterr().out
-    assert str(sibling_depg) in out
-    assert str(sibling_logg) in out
+    assert str(depg) in out
+    assert str(logg) in out
 
 
 def test_dry_run_no_write_to_systemd_dir(
@@ -484,25 +489,26 @@ def test_apply_sibling_hyphen_layout(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """--apply resolves sibling-with-hyphen layout and passes preflight."""
+    """--apply with a sibling-with-hyphen `--project` arg resolves the
+    data dirs to that path's children (no nested knowledge-graph/
+    subdir appended) and passes preflight."""
     monkeypatch.setenv("HOME", str(tmp_path))
-    # Set up sibling layout.
-    project = tmp_path / "myproject"
-    sibling_depg = tmp_path / "myproject-knowledge-graph" / "depgraph"
-    sibling_logg = tmp_path / "myproject-knowledge-graph" / "logigraph"
-    sibling_depg.mkdir(parents=True)
-    sibling_logg.mkdir(parents=True)
+    bundle = tmp_path / "myproject-knowledge-graph"
+    depg = bundle / "depgraph"
+    logg = bundle / "logigraph"
+    depg.mkdir(parents=True)
+    logg.mkdir(parents=True)
 
     # Also set up the graphui venv.
     target = str(tmp_path / "tools")
-    bundle = tmp_path / "tools" / "knowledge-graph"
-    uvicorn_bin = bundle / "graphui" / ".venv" / "bin" / "uvicorn"
+    tool_bundle = tmp_path / "tools" / "knowledge-graph"
+    uvicorn_bin = tool_bundle / "graphui" / ".venv" / "bin" / "uvicorn"
     uvicorn_bin.parent.mkdir(parents=True, exist_ok=True)
     uvicorn_bin.touch(mode=0o755)
 
     args = argparse.Namespace(
         target=target,
-        project=str(project),
+        project=str(bundle),
         depgraph_data_dir=None,
         logigraph_data_dir=None,
         apply=True,
@@ -514,9 +520,8 @@ def test_apply_sibling_hyphen_layout(
                 rc = cmd_systemd(args)
 
     # Should succeed (not fail with preflight error).
-    # rc might be non-zero only if start fails — check unit was written.
     unit_path = tmp_path / ".config" / "systemd" / "user" / _SYSTEMD_UNIT
     assert unit_path.exists(), "unit file should have been written"
     content = unit_path.read_text()
-    assert str(sibling_depg) in content
-    assert str(sibling_logg) in content
+    assert str(depg) in content
+    assert str(logg) in content

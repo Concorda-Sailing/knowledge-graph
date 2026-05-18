@@ -68,17 +68,44 @@ def check_prereqs() -> None:
 
 # ---- file helpers ---------------------------------------------------------
 
-def backup_file(p: Path) -> Path | None:
-    """If `p` exists, copy to `p.bak.<mtime>` and return the backup path.
+def _prune_legacy_timestamped_backups(p: Path) -> int:
+    """Remove sibling `.bak.<digits>` files left over by older versions
+    of `backup_file` that timestamped each backup. Returns the count
+    removed. Best-effort — a permission error on one sibling shouldn't
+    fail an otherwise-successful install."""
+    import re
+    parent = p.parent
+    if not parent.is_dir():
+        return 0
+    pattern = re.compile(rf"^{re.escape(p.name)}\.bak\.\d+$")
+    removed = 0
+    for sibling in parent.iterdir():
+        if pattern.match(sibling.name):
+            try:
+                sibling.unlink()
+                removed += 1
+            except OSError:
+                continue
+    return removed
 
-    Returns None if `p` doesn't exist. Equivalent to install.sh:backup_file()
-    semantics (bak suffix includes mtime so re-runs don't clobber prior backups).
+
+def backup_file(p: Path) -> Path | None:
+    """If `p` exists, copy to `p.bak` (overwriting any prior `.bak`) and
+    return the backup path. Returns None if `p` doesn't exist.
+
+    Single-suffix design: only the most recent prior version is kept.
+    Older versions of this helper used a `.bak.<mtime>` suffix that
+    accumulated on every install — re-bootstrapping ten times left ten
+    orphaned `.bak.<timestamp>` files. This version overwrites the
+    single `.bak` AND prunes any leftover `.bak.<digits>` siblings from
+    prior installs so the cleanup is self-healing.
     """
+    pruned = _prune_legacy_timestamped_backups(p)
+    if pruned:
+        log(f"pruned {pruned} legacy .bak.<timestamp> file(s) next to {p.name}")
     if not p.exists():
         return None
-    mtime = int(p.stat().st_mtime)
-    bak = p.with_suffix(p.suffix + f".bak.{mtime}")
-    if not bak.exists():
-        shutil.copy2(p, bak)
-        log(f"backed up to {bak}")
+    bak = p.with_suffix(p.suffix + ".bak")
+    shutil.copy2(p, bak)
+    log(f"backed up to {bak}")
     return bak

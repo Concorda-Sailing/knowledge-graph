@@ -338,9 +338,8 @@ def test_apply_different_content_creates_backup(
             apply=True,
         ))
     assert rc == 0
-    # A backup should exist.
-    backups = list(hooks_dir.glob("pre-push.bak.*"))
-    assert len(backups) >= 1
+    # Single-suffix backup of the prior hook should exist.
+    assert (hooks_dir / "pre-push.bak").exists()
     # And the hook should now contain the new content.
     assert "#!/bin/bash" in old_hook.read_text()
     assert "KG_DEPGRAPH_DIR" in old_hook.read_text()

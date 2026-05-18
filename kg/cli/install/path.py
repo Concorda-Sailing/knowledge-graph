@@ -14,7 +14,6 @@ from __future__ import annotations
 import argparse
 import os
 import sys
-import time
 from pathlib import Path
 
 from ._shared import backup_file, die, err, log, ok, warn
@@ -147,11 +146,9 @@ def cmd_path(args: argparse.Namespace) -> int:
         )
         return 2
 
-    # Backup before rewrite.
-    bak = p.with_suffix(p.suffix + f".bak.{int(time.time())}")
-    import shutil
-    shutil.copy2(p, bak)
-    log(f"backed up to {bak}")
+    # Backup before rewrite. Use the shared single-suffix helper so
+    # re-runs don't accumulate `.bak.<timestamp>` files next to ~/.profile.
+    backup_file(p)
 
     new_lines = lines[:start] + new_block_stripped.splitlines() + lines[end:]
     p.write_text("\n".join(new_lines).rstrip() + "\n")

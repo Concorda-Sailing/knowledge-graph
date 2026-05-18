@@ -1,25 +1,29 @@
-"""kg install init — Python port of install.sh's cmd_init().
+"""kg install init — scaffold a project's knowledge-graph data layout.
 
-Scaffolds a fresh project's knowledge-graph data layout:
-  <project>/knowledge-graph/
+Supports both data-dir conventions documented in the README:
+
+  Sibling-with-hyphen: ~/<project>-knowledge-graph/
+                       Bundle lives at the path given; project name
+                       inferred by stripping the `-knowledge-graph`
+                       suffix from the basename.
+
+  Nested:              ~/<project>/
+                       Bundle lives at <given>/knowledge-graph/;
+                       project name is the parent's basename.
+
+The convention is detected from the path argument: if it ends in
+`-knowledge-graph` (or is literally named `knowledge-graph`), the
+path IS the bundle; otherwise the bundle is a nested subdir.
+
+Scaffolded layout (under the resolved bundle dir):
+  project.toml
+  depgraph/
     project.toml
-    depgraph/
-      project.toml
-      extractors/README.md
-      nodes/
-      dossiers/
-      telemetry/
-    logigraph/
-      project.toml
-      CANDIDATES.md
-      nodes/rules/
-      nodes/domain/
-      dossiers/rules/
-      dossiers/domain/
-      telemetry/
-
-Matches install.sh:cmd_init() byte-for-byte (using the Phase-1
-[repos.<key>] sub-table fix in the depgraph project.toml template).
+    extractors/README.md
+    nodes/  dossiers/  telemetry/
+  logigraph/
+    project.toml  CANDIDATES.md
+    nodes/{rules,domain}/  dossiers/{rules,domain}/  telemetry/
 """
 from __future__ import annotations
 
@@ -33,21 +37,55 @@ BUNDLE_DIR = "knowledge-graph"
 DEFAULT_TARGET = Path.home() / "tools"
 
 
-def cmd_init(args: argparse.Namespace) -> int:
-    """Scaffold a fresh project data layout. Mirrors install.sh:cmd_init()."""
-    project_dir = Path(args.path).expanduser()
-    if not project_dir.is_absolute():
-        project_dir = Path.cwd() / project_dir
-    project_dir = project_dir.resolve()
+def resolve_bundle_layout(path: Path) -> tuple[Path, str]:
+    """Resolve a user-given path into (bundle_dir, project_name).
 
-    bundle = project_dir / BUNDLE_DIR
+    The bundle dir is where `depgraph/` and `logigraph/` live. The
+    project name is what gets written into the scaffolded
+    project.toml files and used as the kg orchestrator registration
+    key.
+
+    Three input shapes are recognized:
+
+      ~/foo-knowledge-graph/   sibling-with-hyphen — bundle is this path,
+                               project name is "foo"
+      ~/some/knowledge-graph/  explicit bundle dir — bundle is this path,
+                               project name is parent's basename
+      ~/foo/                   nested — bundle is foo/knowledge-graph/,
+                               project name is "foo"
+
+    The doubled-name bug ("user passes
+    ~/concorda-knowledge-graph and gets
+    ~/concorda-knowledge-graph/knowledge-graph/") is fixed here by
+    detecting that the argument is already the bundle dir under the
+    sibling-with-hyphen convention.
+    """
+    path = path.expanduser()
+    if not path.is_absolute():
+        path = Path.cwd() / path
+    path = path.resolve()
+
+    suffix = f"-{BUNDLE_DIR}"
+    if path.name.endswith(suffix):
+        # Sibling-with-hyphen: path IS the bundle, strip suffix for name.
+        return path, path.name[: -len(suffix)]
+    if path.name == BUNDLE_DIR:
+        # Explicit bundle path: parent's basename is the project.
+        return path, path.parent.name
+    # Nested convention: bundle is a subdir, basename is the project.
+    return path / BUNDLE_DIR, path.name
+
+
+def cmd_init(args: argparse.Namespace) -> int:
+    """Scaffold a fresh project data layout."""
+    bundle, pname = resolve_bundle_layout(Path(args.path))
 
     if (bundle / "depgraph").exists():
         err(f"{bundle}/depgraph already exists; refusing to overwrite")
         return 1
 
-    log(f"scaffolding project at {color_yellow(str(bundle))}")
-    pname = project_dir.name
+    log(f"scaffolding project {color_yellow(pname)} at {color_yellow(str(bundle))}")
+    quiet = getattr(args, "quiet", False)
 
     # Root project.toml
     bundle.mkdir(parents=True, exist_ok=True)
@@ -180,6 +218,11 @@ def cmd_init(args: argparse.Namespace) -> int:
     )
 
     ok(f"scaffolded {bundle}")
+    if quiet:
+        # Bootstrap calls init with quiet=True and runs `kg add` + `kg
+        # install hooks` itself; printing a stale "Next:" hint here just
+        # confuses the operator about what's already been done.
+        return 0
     print()
     kg_bin = f"{DEFAULT_TARGET}/{BUNDLE_DIR}/bin/kg"
     print(
@@ -188,11 +231,11 @@ def cmd_init(args: argparse.Namespace) -> int:
         f"  Register this graph with the kg orchestrator:\n"
         f"    {kg_bin} add {bundle}\n"
         f"\n"
-        f"  Apply the project-agnostic Claude Code hook block (one-time per machine):\n"
-        f"    install.sh hooks --apply\n"
+        f"  Apply the Claude Code hook block (one-time per machine):\n"
+        f"    {kg_bin} install hooks --apply\n"
         f"\n"
         f"  Or print the hook snippet to merge by hand:\n"
-        f"    install.sh hooks"
+        f"    {kg_bin} install hooks"
     )
 
     return 0

@@ -7,21 +7,24 @@ from pathlib import Path
 
 from ._shared import color_yellow, log, ok, warn
 from .hooks import cmd_hooks
-from .init import cmd_init
+from .init import BUNDLE_DIR, cmd_init, resolve_bundle_layout
 from .path import cmd_path
 from .systemd import cmd_systemd
 from .tools import cmd_tools
 
 
-BUNDLE_DIR = "knowledge-graph"
-
-
 def cmd_bootstrap(args: argparse.Namespace) -> int:
     """One-shot bootstrap: tools → init (or use-existing) → hooks →
-    kg add → systemd → path. Mirrors install.sh:cmd_bootstrap().
+    kg add → systemd → path.
+
+    The user's `project` argument is resolved by `resolve_bundle_layout`
+    so both data-dir conventions work:
+      sibling-with-hyphen   ~/<project>-knowledge-graph/
+      nested                ~/<project>/   (becomes <project>/knowledge-graph/)
+    See `kg/cli/install/init.py::resolve_bundle_layout` for the rules.
     """
-    project = Path(args.project).expanduser().resolve()
-    log(f"bootstrapping → {color_yellow(str(project))}")
+    bundle, pname = resolve_bundle_layout(Path(args.project))
+    log(f"bootstrapping {color_yellow(pname)} → {color_yellow(str(bundle))}")
     print()
 
     # 1. tools (was cmd_install in install.sh)
@@ -34,11 +37,12 @@ def cmd_bootstrap(args: argparse.Namespace) -> int:
         return rc
     print()
 
-    # 2. init — scaffold if the project layout doesn't exist yet; otherwise reuse.
-    bundle = project / BUNDLE_DIR
+    # 2. init — scaffold if the bundle's depgraph/logigraph don't exist yet;
+    #    otherwise reuse. Pass quiet=True so init doesn't print a stale
+    #    "Next:" hint (bootstrap runs those next steps itself).
     if not (bundle / "depgraph").exists() or not (bundle / "logigraph").exists():
         log(f"scaffolding empty project layout at {bundle}")
-        init_args = argparse.Namespace(path=str(project))
+        init_args = argparse.Namespace(path=str(args.project), quiet=True)
         rc = cmd_init(init_args)
         if rc != 0:
             return rc
@@ -49,7 +53,7 @@ def cmd_bootstrap(args: argparse.Namespace) -> int:
 
     # 3. hooks — bootstrap implies --force (overwrite any existing hooks block).
     log(f"applying Claude Code hooks → ~/.claude/settings.json")
-    hooks_args = argparse.Namespace(project=str(project), apply=True, force=True)
+    hooks_args = argparse.Namespace(project=str(bundle), apply=True, force=True)
     rc = cmd_hooks(hooks_args)
     if rc != 0:
         return rc
@@ -69,7 +73,7 @@ def cmd_bootstrap(args: argparse.Namespace) -> int:
     log("applying systemd unit for graphui")
     sysd_args = argparse.Namespace(
         target=str(Path.home() / "tools"),
-        project=str(project),
+        project=str(bundle),
         depgraph_data_dir=None,
         logigraph_data_dir=None,
         apply=True,
@@ -83,7 +87,7 @@ def cmd_bootstrap(args: argparse.Namespace) -> int:
     cmd_path(path_args)
     print()
 
-    ok("bootstrap complete")
+    ok(f"bootstrap complete — project {color_yellow(pname)}")
 
     tool_root_str = str(Path.home() / "tools" / BUNDLE_DIR)
     print(f"""

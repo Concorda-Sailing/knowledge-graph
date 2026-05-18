@@ -84,24 +84,22 @@ def cmd_systemd(args: argparse.Namespace) -> int:
         project = str(Path.home() / "your-project")
         warn(f"no --project given; using placeholder {project}")
 
-    # Resolve data dirs: explicit flags win, then <project>/<BUNDLE>/<sub>,
-    # then the sibling-with-hyphen fallback.
+    # Resolve data dirs: explicit flags win, otherwise resolve the project
+    # path through the shared bundle-layout helper so both data-dir
+    # conventions ("nested" <p>/knowledge-graph/ and "sibling-with-hyphen"
+    # <p>-knowledge-graph/) work consistently across bootstrap, init, and
+    # systemd. Avoids the doubled-path bug where a user passing
+    # ~/concorda-knowledge-graph got DEPGRAPH_DATA_DIR=...concorda-knowledge-graph/knowledge-graph/depgraph.
+    from kg.cli.install.init import resolve_bundle_layout
     depg = depg_override
     logg = logg_override
 
-    if not depg:
-        depg = f"{project}/{_BUNDLE_DIR}/depgraph"
-        sibling = f"{project}-{_BUNDLE_DIR}/depgraph"
-        if not Path(depg).is_dir() and Path(sibling).is_dir():
-            depg = sibling
-            log(f"depgraph data dir: using sibling layout {depg}")
-
-    if not logg:
-        logg = f"{project}/{_BUNDLE_DIR}/logigraph"
-        sibling = f"{project}-{_BUNDLE_DIR}/logigraph"
-        if not Path(logg).is_dir() and Path(sibling).is_dir():
-            logg = sibling
-            log(f"logigraph data dir: using sibling layout {logg}")
+    if not depg or not logg:
+        bundle, _pname = resolve_bundle_layout(Path(project))
+        if not depg:
+            depg = str(bundle / "depgraph")
+        if not logg:
+            logg = str(bundle / "logigraph")
 
     unit = generate_systemd_unit(target, depg, logg)
 

@@ -231,5 +231,7 @@ def test_hooks_apply_backs_up_existing_file(tmp_path: Path, monkeypatch: pytest.
     args = argparse.Namespace(project=None, apply=True, force=False)
     rc = cmd_hooks(args)
     assert rc == 0
-    bak_files = list((fake_home / ".claude").glob("settings.json.bak.*"))
-    assert len(bak_files) == 1
+    # Single-suffix backup of the prior settings.json should exist.
+    assert (fake_home / ".claude" / "settings.json.bak").exists()
+    # And no legacy `.bak.<timestamp>` files accumulated.
+    assert list((fake_home / ".claude").glob("settings.json.bak.*")) == []

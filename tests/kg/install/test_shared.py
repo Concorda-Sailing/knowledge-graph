@@ -15,16 +15,17 @@ from kg.cli.install._shared import backup_file, check_prereqs, require
 # backup_file
 # ---------------------------------------------------------------------------
 
-def test_backup_file_creates_bak_with_mtime(tmp_path: Path) -> None:
-    """backup_file copies an existing file to <p>.bak.<mtime> and returns the path."""
+def test_backup_file_creates_single_suffix_bak(tmp_path: Path) -> None:
+    """backup_file copies an existing file to <p>.bak (single suffix,
+    no timestamp). Older versions used `.bak.<mtime>` which accumulated;
+    the new contract is a single `.bak` overwritten on each call."""
     original = tmp_path / "settings.json"
     original.write_text('{"key": "value"}')
 
     bak = backup_file(original)
 
     assert bak is not None
-    mtime = int(original.stat().st_mtime)
-    expected_bak = original.with_suffix(original.suffix + f".bak.{mtime}")
+    expected_bak = original.with_suffix(original.suffix + ".bak")
     assert bak == expected_bak
     assert bak.exists()
     assert bak.read_text() == '{"key": "value"}'
@@ -39,22 +40,42 @@ def test_backup_file_no_op_when_path_missing(tmp_path: Path) -> None:
     assert result is None
 
 
-def test_backup_file_does_not_clobber_existing_bak(tmp_path: Path) -> None:
-    """If <p>.bak.<mtime> already exists, backup_file does not overwrite it."""
+def test_backup_file_overwrites_existing_bak(tmp_path: Path) -> None:
+    """A second call to backup_file overwrites the previous `.bak`
+    with whatever the original currently holds. Only one `.bak` exists
+    at any time — older behaviour accumulated `.bak.<mtime>` files
+    across runs and is intentionally abandoned."""
     original = tmp_path / "settings.json"
     original.write_text("first content")
-
-    # Compute what the bak path will be and pre-create it with different content.
-    mtime = int(original.stat().st_mtime)
-    pre_existing_bak = original.with_suffix(original.suffix + f".bak.{mtime}")
-    pre_existing_bak.write_text("pre-existing backup content")
-
     bak = backup_file(original)
+    assert bak is not None and bak.read_text() == "first content"
 
-    # Should still return the bak path.
-    assert bak == pre_existing_bak
-    # The pre-existing backup should not have been overwritten.
-    assert pre_existing_bak.read_text() == "pre-existing backup content"
+    original.write_text("second content")
+    bak2 = backup_file(original)
+
+    assert bak2 == bak  # same .bak path
+    assert bak2.read_text() == "second content"  # overwritten with new pre-modify state
+    # No accumulated .bak.<digits> siblings
+    assert list(tmp_path.glob("settings.json.bak.*")) == []
+
+
+def test_backup_file_prunes_legacy_timestamped_backups(tmp_path: Path) -> None:
+    """Leftover `.bak.<digits>` files from older install runs are
+    deleted on the next call — the cleanup is self-healing so
+    re-bootstrapping a project sweeps the old cruft without manual
+    intervention."""
+    original = tmp_path / "settings.json"
+    original.write_text("current content")
+    # Pre-seed legacy timestamped backups (simulating prior installs).
+    (tmp_path / "settings.json.bak.1700000000").write_text("old1")
+    (tmp_path / "settings.json.bak.1700000001").write_text("old2")
+    (tmp_path / "settings.json.bak.1700000002").write_text("old3")
+
+    backup_file(original)
+
+    # All legacy timestamped backups are gone; only the single .bak remains.
+    assert (tmp_path / "settings.json.bak").exists()
+    assert list(tmp_path.glob("settings.json.bak.*")) == []
 
 
 # ---------------------------------------------------------------------------

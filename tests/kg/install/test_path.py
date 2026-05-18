@@ -306,6 +306,7 @@ def test_apply_force_creates_backup(
     new_target = str(tmp_path / "new-tools")
     cmd_path(_make_args(target=new_target, rcfile=str(rcfile), apply=True, force=True))
 
-    # A backup file with .bak.<timestamp> suffix should exist.
-    backups = list(tmp_path.glob(".profile.bak.*"))
-    assert len(backups) >= 1
+    # Single-suffix backup of the prior ~/.profile should exist.
+    assert (tmp_path / ".profile.bak").exists()
+    # And no legacy timestamped backups accumulated across the two apply runs.
+    assert list(tmp_path.glob(".profile.bak.*")) == []
