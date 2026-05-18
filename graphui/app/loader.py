@@ -675,8 +675,12 @@ def _group_flags_by_kind(items: list[dict]) -> list[dict]:
 
 
 def corpus_flags() -> dict:
-    """Return the logigraph corpus's flags partitioned by tracked/fresh and
-    grouped by kind within each. Reads _meta.json::flags written by reconcile.
+    """Return all corpus flags partitioned by tracked/fresh and grouped by
+    kind within each. Reads logigraph `_meta.json::flags` written by
+    reconcile AND synthesizes flags from depgraph `_meta.json` schema-
+    validation counters (`primitive_error_count`, `orphan_edge_count`,
+    `slug_collision_count`, plus any `edge_errors` in `validation_report`)
+    so schema-level defects show up on the Issues page (#23).
 
     Shape:
       {
@@ -687,9 +691,10 @@ def corpus_flags() -> dict:
       }
     """
     meta = load_meta()
-    flags = (meta.get("logigraph") or {}).get("flags") or []
+    flags = list((meta.get("logigraph") or {}).get("flags") or [])
     if not isinstance(flags, list):
         flags = []
+    flags.extend(_depgraph_validation_flags(meta.get("depgraph") or {}))
     fresh_flat = [f for f in flags if not f.get("tracked")]
     tracked_flat = [f for f in flags if f.get("tracked")]
     return {
@@ -698,6 +703,57 @@ def corpus_flags() -> dict:
         "count_fresh": len(fresh_flat),
         "count_tracked": len(tracked_flat),
     }
+
+
+def _depgraph_validation_flags(depgraph_meta: dict) -> list[dict]:
+    """Synthesize defect flags from depgraph `_meta.json` counters.
+
+    Returns one flag per non-zero counter so the Issues page can group
+    them under the `defect` kind. The validation_report itself can be
+    expensive to enumerate (thousands of edge_errors), so we surface the
+    counts as a single summary entry per class — the user goes to
+    `kg depgraph validate` for the detail dump.
+
+    Flags are emitted as `tracked=False` so they appear in the "fresh"
+    bucket (this is corpus-state right now, not historical drift).
+    """
+    out: list[dict] = []
+    counters = (
+        ("primitive_error_count", "schema_invalid_primitive",
+         "{n} primitive(s) violate the v2 schema"),
+        ("orphan_edge_count", "orphan_edge",
+         "{n} edge(s) point at a target neither in the corpus nor external::"),
+        ("slug_collision_count", "slug_collision",
+         "{n} primitive id(s) slugify to the same filename"),
+    )
+    for field, code, msg in counters:
+        n = depgraph_meta.get(field) or 0
+        if not n:
+            continue
+        out.append({
+            "code": code,
+            "kind": "defect",
+            "severity": "critical" if field == "slug_collision_count" else "high",
+            "count": n,
+            "message": msg.format(n=n),
+            "remedy": "Run `kg depgraph validate` for the full detail listing.",
+            "tracked": False,
+        })
+    # edge_errors aren't surfaced as their own counter — read from the
+    # validation_report. Same summary shape.
+    report = depgraph_meta.get("validation_report") or {}
+    edge_errors = report.get("edge_errors") if isinstance(report, dict) else None
+    if edge_errors:
+        out.append({
+            "code": "edge_kind_invalid",
+            "kind": "defect",
+            "severity": "high",
+            "count": len(edge_errors),
+            "message": f"{len(edge_errors)} edge(s) violate the EdgeKind source/target rules",
+            "remedy": "Run `kg depgraph validate` for the full detail listing.",
+            "tracked": False,
+        })
+    return out
 
 
 def warnings_for(node_id: str) -> list[dict]:
