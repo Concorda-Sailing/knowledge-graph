@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -58,12 +59,16 @@ def cmd_self_check(args: argparse.Namespace, ctx: Context) -> int:
             "tool_input": {"file_path": str(sample_path)},
         }
     )
+    # Forward LOGIGRAPH_DATA_DIR so the hook subprocess can resolve the same
+    # data dir the CLI just opened (the parent might have come in via
+    # `kg logigraph --project <name>` rather than the env var).
     proc = subprocess.run(
         ["python3", str(ctx.tool_root / "hooks" / "pre_edit_inject.py")],
         input=payload,
         capture_output=True,
         text=True,
         timeout=5,
+        env={**os.environ, "LOGIGRAPH_DATA_DIR": str(ctx.LOGIGRAPH)},
     )
     if proc.returncode != 0:
         print(f"FAILED rc={proc.returncode}", file=sys.stderr)

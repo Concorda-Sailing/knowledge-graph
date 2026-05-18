@@ -7,11 +7,14 @@ the one branch that returns early without shelling out: no repos configured.
 from __future__ import annotations
 
 import argparse
+import subprocess
 from pathlib import Path
+from unittest import mock
 
 import pytest
 
 from depgraph.lib.cli.context import Context
+from depgraph.lib.cli import self_check as self_check_mod
 from depgraph.lib.cli.self_check import cmd_self_check
 
 
@@ -35,3 +38,54 @@ def test_self_check_returns_int(
     args = argparse.Namespace()
     rc = cmd_self_check(args, ctx)
     assert isinstance(rc, int)
+
+
+def test_self_check_forwards_depgraph_data_dir_env(
+    data_dir: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The hook subprocess must receive DEPGRAPH_DATA_DIR explicitly so the
+    hook resolves the same data dir the CLI just opened (#14)."""
+    project_toml = data_dir / "project.toml"
+    project_toml.write_text(
+        '[project]\nname = "acme"\n\n[repos.api]\npath = "/tmp/acme-api"\n'
+    )
+    ctx = Context.from_data_dir(data_dir)
+
+    captured: dict = {}
+
+    def fake_run(cmd, **kw):  # noqa: ANN001 — test helper
+        captured["env"] = kw.get("env") or {}
+        return subprocess.CompletedProcess(cmd, returncode=0, stdout="ok", stderr="")
+
+    monkeypatch.setattr(self_check_mod.subprocess, "run", fake_run)
+
+    rc = cmd_self_check(argparse.Namespace(), ctx)
+
+    assert rc == 0
+    assert captured["env"].get("DEPGRAPH_DATA_DIR") == str(ctx.DEPGRAPH)
+
+
+def test_self_check_prints_stderr_on_failure(
+    data_dir: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Non-zero rc must surface the hook's stderr (was being swallowed, #14)."""
+    project_toml = data_dir / "project.toml"
+    project_toml.write_text(
+        '[project]\nname = "acme"\n\n[repos.api]\npath = "/tmp/acme-api"\n'
+    )
+    ctx = Context.from_data_dir(data_dir)
+
+    def fake_run(cmd, **kw):  # noqa: ANN001
+        return subprocess.CompletedProcess(
+            cmd, returncode=1, stdout="", stderr="something exploded",
+        )
+
+    monkeypatch.setattr(self_check_mod.subprocess, "run", fake_run)
+
+    rc = cmd_self_check(argparse.Namespace(), ctx)
+
+    assert rc == 1
+    err = capsys.readouterr().err
+    assert "something exploded" in err

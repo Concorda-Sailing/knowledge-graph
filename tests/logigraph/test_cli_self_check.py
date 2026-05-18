@@ -70,3 +70,27 @@ def test_self_check_hook_nonzero_rc_returns_1(
         args = argparse.Namespace()
         rc = cmd_self_check(args, ctx)
     assert rc == 1
+
+
+def test_self_check_forwards_logigraph_data_dir_env(
+    ctx: Context, tmp_path: Path
+) -> None:
+    """The hook subprocess must receive LOGIGRAPH_DATA_DIR explicitly (#14)."""
+    repo_path = tmp_path / "fake-repo"
+    repo_path.mkdir()
+    _write_project_toml_with_repos(ctx.LOGIGRAPH, repo_path)
+
+    captured: dict = {}
+
+    def fake_run(cmd, **kw):  # noqa: ANN001
+        captured["env"] = kw.get("env") or {}
+        mp = MagicMock()
+        mp.returncode = 0
+        mp.stdout = ""
+        mp.stderr = ""
+        return mp
+
+    with patch("subprocess.run", side_effect=fake_run):
+        cmd_self_check(argparse.Namespace(), ctx)
+
+    assert captured["env"].get("LOGIGRAPH_DATA_DIR") == str(ctx.LOGIGRAPH)
