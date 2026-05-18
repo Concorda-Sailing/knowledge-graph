@@ -195,6 +195,116 @@ def test_set_primary_repo(two_projects: dict) -> None:
     assert 'primary_repo = "api"' in cfg
 
 
+def test_set_primary_repo_inserts_inside_project_section(
+    two_projects: dict,
+) -> None:
+    """The key must land inside [project] as a sibling of `name`, NOT
+    immediately above the next table header. A reader seeing
+    `primary_repo = "api"` directly above `[repos.api]` would reasonably
+    conclude it belongs to that repo's table (#31)."""
+    _run(
+        two_projects["registry"], "project", "--project", "alpha",
+        "add-repo", "api", str(two_projects["tmp_path"] / "fake"),
+    )
+    cfg_path = two_projects["alpha"] / "depgraph" / "project.toml"
+    res = _run(
+        two_projects["registry"], "project", "--project", "alpha",
+        "set", "primary_repo", "api",
+    )
+    assert res.returncode == 0, f"stderr: {res.stderr}"
+    text = cfg_path.read_text()
+
+    name_idx = text.index('name =')
+    primary_idx = text.index('primary_repo =')
+    repos_idx = text.index('[repos.api]')
+
+    # primary_repo lives AFTER `name` but BEFORE `[repos.api]`.
+    assert name_idx < primary_idx < repos_idx, (
+        f"primary_repo at {primary_idx}; name at {name_idx}; [repos.api] at "
+        f"{repos_idx}. Full toml:\n{text}"
+    )
+    # And it lives "close" to `name` — not just before the table header.
+    # Strict check: no commented `[repos.*]` example between `name` and
+    # `primary_repo`. The previous bug planted `primary_repo` after such
+    # comments, immediately above the real table.
+    intermediate = text[primary_idx:repos_idx]
+    assert "# [repos." not in text[name_idx:primary_idx], (
+        f"primary_repo landed below a commented example block; visually it "
+        f"reads as part of the example, not as a [project] sibling. "
+        f"Between name and primary_repo: {text[name_idx:primary_idx]!r}"
+    )
+
+
+def test_write_toml_key_inserts_after_last_assignment_not_before_table(
+    tmp_path,
+) -> None:
+    """Focused unit test for the placement helper — reproduces the exact
+    file shape from #31 (commented `[repos.web]` example sitting in the
+    [project] body) and asserts the new key lands next to `name`, not
+    just above the [repos.api] header."""
+    from kg.cli.project import _write_toml_key
+
+    cfg = tmp_path / "project.toml"
+    cfg.write_text(
+        '[project]\n'
+        'name = "myproject"\n'
+        '\n'
+        '# Example — replace with your repos:\n'
+        '#\n'
+        '# [repos.web]\n'
+        '# path = "~/<project>-web"\n'
+        '# languages = ["typescript"]\n'
+        '\n'
+        '[repos.api]\n'
+        'path = "~/myproject-api"\n'
+    )
+    _write_toml_key(cfg, "project", "primary_repo", "api")
+    text = cfg.read_text()
+
+    name_idx = text.index('name =')
+    primary_idx = text.index('primary_repo =')
+    table_idx = text.index('[repos.api]')
+
+    assert name_idx < primary_idx < table_idx
+    # The new key must NOT sit below the commented example.
+    between_name_and_primary = text[name_idx:primary_idx]
+    assert "# [repos." not in between_name_and_primary, (
+        f"primary_repo landed below the commented example. Full file:\n{text}"
+    )
+    # The commented block and the real table both still appear, in order.
+    assert text.index('# [repos.web]') > primary_idx
+    assert text.index('[repos.api]') > text.index('# [repos.web]')
+
+
+def test_write_toml_key_idempotent_replaces_existing(tmp_path) -> None:
+    """Re-setting the same key updates in place rather than duplicating."""
+    from kg.cli.project import _write_toml_key
+
+    cfg = tmp_path / "project.toml"
+    cfg.write_text('[project]\nname = "x"\nprimary_repo = "old"\n')
+    _write_toml_key(cfg, "project", "primary_repo", "new")
+    text = cfg.read_text()
+    assert text.count("primary_repo") == 1
+    assert 'primary_repo = "new"' in text
+    assert 'primary_repo = "old"' not in text
+
+
+def test_write_toml_key_into_empty_section_inserts_at_top(tmp_path) -> None:
+    """A section that exists but has no key=value entries yet gets the
+    new key right after its header."""
+    from kg.cli.project import _write_toml_key
+
+    cfg = tmp_path / "project.toml"
+    cfg.write_text('[project]\n\n[repos.api]\npath = "x"\n')
+    _write_toml_key(cfg, "project", "primary_repo", "api")
+    text = cfg.read_text()
+    # After [project], the very next non-blank line is the new key.
+    project_idx = text.index("[project]")
+    after = text[project_idx + len("[project]\n"):]
+    first_nonblank = next(l for l in after.splitlines() if l.strip())
+    assert first_nonblank == 'primary_repo = "api"', f"got: {first_nonblank!r}\n\n{text}"
+
+
 def test_set_rejects_non_whitelist_field(two_projects: dict) -> None:
     res = _run(
         two_projects["registry"], "project", "--project", "alpha",

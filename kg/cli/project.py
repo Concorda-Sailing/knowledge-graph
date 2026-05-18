@@ -296,7 +296,24 @@ def _cmd_set(args: argparse.Namespace) -> int:
 
 
 def _write_toml_key(cfg_path: Path, section: str, key: str, value: str) -> None:
-    """Idempotently set [section] key = "value" in cfg_path. Preserves other content."""
+    """Idempotently set [section] key = "value" in cfg_path. Preserves other content.
+
+    When the key doesn't yet exist in the section, it is inserted directly
+    after the last existing `key = value` line in the section — NOT at the
+    bottom of the section body. Bottom-of-body placement (the prior
+    behavior) put new keys immediately above the next table header with
+    no blank-line separator; a reader (or another AI) seeing
+
+        [project]
+        name = "concorda"
+        # [repos.web]    <- commented example block in the way
+        primary_repo = "api"
+        [repos.api]
+
+    reasonably believed `primary_repo` belonged to `[repos.api]`. Putting
+    the new key next to the section's other key=value lines keeps the
+    visual association unambiguous (#31).
+    """
     import re
     text = cfg_path.read_text()
     section_header = f"[{section}]"
@@ -327,9 +344,44 @@ def _write_toml_key(cfg_path: Path, section: str, key: str, value: str) -> None:
     if key_re.search(body):
         new_body = key_re.sub(new_line, body)
     else:
-        new_body = body.rstrip() + ("\n" if body.rstrip() else "") + new_line + "\n"
+        new_body = _insert_after_last_assignment(body, new_line)
     text = text[: m.start(2)] + new_body + text[m.end(2):]
     cfg_path.write_text(text)
+
+
+def _insert_after_last_assignment(body: str, new_line: str) -> str:
+    """Insert `new_line` into a TOML section body right after the last
+    `key = value` line. Comments, blank lines, and commented-out table
+    examples are left in place so the inserted key visually lives with
+    its section's other settings.
+
+    If the section has no existing key=value lines yet, insert at the
+    top (immediately after the section header — i.e., at line 0 of body).
+    """
+    import re
+    assignment_re = re.compile(r"^\s*[A-Za-z_][\w.-]*\s*=")
+    # body usually ends with "\n"; splitlines() drops the trailing empty.
+    lines = body.split("\n")
+    # Track whether the body had a trailing newline so we can restore it.
+    had_trailing_newline = body.endswith("\n")
+    if had_trailing_newline and lines and lines[-1] == "":
+        lines.pop()
+    last_assignment_idx = -1
+    for i, line in enumerate(lines):
+        if assignment_re.match(line):
+            last_assignment_idx = i
+    if last_assignment_idx >= 0:
+        new_lines = (
+            lines[: last_assignment_idx + 1]
+            + [new_line]
+            + lines[last_assignment_idx + 1 :]
+        )
+    else:
+        new_lines = [new_line] + lines
+    out = "\n".join(new_lines)
+    if had_trailing_newline:
+        out += "\n"
+    return out
 
 
 def _cmd_health(args: argparse.Namespace) -> int:
