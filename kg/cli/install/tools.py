@@ -1,17 +1,20 @@
 """kg install tools — install/upgrade the framework binaries.
 
 Was `install.sh install`. Verifies the bundle layout exists, bootstraps
-graphui's venv if missing, optionally clones --data repos.
+graphui's venv if missing, provisions the depgraph extractor toolchain
+(Python deps for sqlglot/fastembed; npm deps for ts-morph/tsx), and
+optionally clones --data repos.
 """
 from __future__ import annotations
 
 import argparse
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 
-from ._shared import check_prereqs, color_yellow, err, log, ok
+from ._shared import check_prereqs, color_yellow, err, log, ok, warn
 
 
 BUNDLE_DIR = "knowledge-graph"
@@ -77,6 +80,52 @@ def cmd_tools(args: argparse.Namespace) -> int:
             check=True,
         )
     ok(f"graphui venv at {venv}")
+
+    # depgraph venv: Python deps for the extractor pipeline (sqlglot, fastembed,
+    # jsonschema). `kg depgraph regen` imports these in-process; without them
+    # the SQL pipeline and embeddings silently no-op.
+    d = bundle / "depgraph"
+    d_venv = d / ".venv"
+    d_reqs = d / "requirements.txt"
+    if d_reqs.exists():
+        if not d_venv.exists():
+            log("depgraph: creating venv + installing requirements")
+            subprocess.run([sys.executable, "-m", "venv", str(d_venv)], check=True)
+        else:
+            log("depgraph: venv present; upgrading requirements")
+        subprocess.run(
+            [str(d_venv / "bin" / "pip"), "install", "--quiet", "--upgrade",
+             "-r", str(d_reqs)],
+            check=True,
+        )
+        ok(f"depgraph venv at {d_venv}")
+    else:
+        warn(f"no {d_reqs} — skipping depgraph venv setup")
+
+    # depgraph typescript extractor npm deps. Missing ts-morph means TS
+    # extraction silently fails — bootstrap is the right place to surface that.
+    ts_pkg = d / "extractors" / "typescript"
+    if (ts_pkg / "package.json").exists():
+        npm = shutil.which("npm")
+        if npm is None:
+            warn(
+                "npm not found in PATH — TypeScript extractor dependencies "
+                "(ts-morph, tsx) will not be installed. Install Node.js and "
+                f"re-run `kg install tools`, or `cd {ts_pkg} && npm install` "
+                "by hand. Without this, `kg depgraph regen` will skip every "
+                "TypeScript repo."
+            )
+        else:
+            log(f"depgraph: npm install in {ts_pkg}")
+            r = subprocess.run(
+                [npm, "install", "--silent", "--no-audit", "--no-fund",
+                 "--prefix", str(ts_pkg)],
+                capture_output=True, text=True,
+            )
+            if r.returncode != 0:
+                warn(f"npm install failed in {ts_pkg}:\n{r.stderr.strip()}")
+            else:
+                ok(f"depgraph ts-morph deps at {ts_pkg}/node_modules")
 
     # --data clones
     org = os.environ.get("KNOWLEDGE_GRAPH_ORG")

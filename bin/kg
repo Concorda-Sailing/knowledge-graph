@@ -2,13 +2,32 @@
 """kg — knowledge-graph orchestrator CLI.
 
 Thin shim that locates the framework root and dispatches into ``kg.cli``.
+
+Re-execs into ``depgraph/.venv/bin/python3`` if it exists so subcommands can
+import the extractor toolchain (sqlglot, fastembed, jsonschema) without
+asking the user to babysit a venv. Falls back to the current interpreter
+when the venv hasn't been set up yet (e.g. pre-`kg install tools`).
 """
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
 TOOL_ROOT = Path(__file__).resolve().parent.parent
+
+# Re-exec into the depgraph venv if one was provisioned by `kg install tools`
+# and we're not already running under it. Skip when the user explicitly opted
+# out via $KG_NO_VENV_REEXEC (test isolation).
+_VENV_PY = TOOL_ROOT / "depgraph" / ".venv" / "bin" / "python3"
+if (
+    _VENV_PY.exists()
+    and os.environ.get("KG_NO_VENV_REEXEC") != "1"
+    and Path(sys.executable).resolve() != _VENV_PY.resolve()
+):
+    os.environ["KG_NO_VENV_REEXEC"] = "1"  # avoid infinite re-exec loops
+    os.execv(str(_VENV_PY), [str(_VENV_PY), __file__, *sys.argv[1:]])
+
 sys.path.insert(0, str(TOOL_ROOT))
 
 from kg.cli import main  # noqa: E402

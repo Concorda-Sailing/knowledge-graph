@@ -1,14 +1,28 @@
 #!/usr/bin/env python3
 """depgraph — CLI entrypoint. Constructs a Context from the resolved
 data dir and dispatches into depgraph.lib.cli subcommand modules.
+
+Re-execs into ``depgraph/.venv/bin/python3`` when `kg install tools` has
+provisioned one, so sqlglot/fastembed/jsonschema imports resolve without
+the user sourcing a venv.
 """
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
 # Add framework root so `depgraph.lib.*` resolves as a fully-qualified package.
 _FRAMEWORK_ROOT = Path(__file__).resolve().parents[2]  # ~/tools/knowledge-graph
+_VENV_PY = _FRAMEWORK_ROOT / "depgraph" / ".venv" / "bin" / "python3"
+if (
+    _VENV_PY.exists()
+    and os.environ.get("KG_NO_VENV_REEXEC") != "1"
+    and Path(sys.executable).resolve() != _VENV_PY.resolve()
+):
+    os.environ["KG_NO_VENV_REEXEC"] = "1"
+    os.execv(str(_VENV_PY), [str(_VENV_PY), __file__, *sys.argv[1:]])
+
 sys.path.insert(0, str(_FRAMEWORK_ROOT))
 
 from depgraph.lib.config import resolve_data_dir  # noqa: E402
