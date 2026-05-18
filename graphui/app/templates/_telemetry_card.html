@@ -1,20 +1,17 @@
-{# Shared "Telemetry (7d)" sidebar card — expects `telemetry` in context
-   with shape {injections_7d, acked_7d, ack_rate, last_fired}. Safe to
-   include in any detail template even when injections_7d is 0. #}
-{% if telemetry is defined %}
-<div class="card">
-  <h3>Telemetry (7d)</h3>
-  <div class="telemetry">
-    <div class="stat"><span class="num">{{ telemetry.injections_7d }}</span><span class="lbl">injections</span></div>
-    <div class="stat"><span class="num">{{ telemetry.acked_7d }}</span><span class="lbl">acked</span></div>
-    {% if telemetry.ack_rate is not none %}
-      <div class="stat"><span class="num">{{ (telemetry.ack_rate * 100) | round | int }}%</span><span class="lbl">ack rate</span></div>
-    {% endif %}
-  </div>
-  {% if telemetry.last_fired %}
-    <p class="empty" style="margin-top: 6px;">last fired: {{ telemetry.last_fired }}</p>
-  {% elif telemetry.injections_7d == 0 %}
-    <p class="empty" style="margin-top: 6px;">never injected in last 7d</p>
+{# Compact telemetry line. Shown only when there's been activity in the
+   last 7d — when there hasn't, the absent line is a cleaner signal than
+   yet another "never injected" tile. If the card grows new actionable
+   surface (drill-down, ack workflow, etc.), promote back to a full card. #}
+{% if telemetry is defined and telemetry.injections_7d %}
+<p class="telemetry-inline">
+  <span class="lbl">Telemetry (7d):</span>
+  <strong>{{ telemetry.injections_7d }}</strong> injection{% if telemetry.injections_7d != 1 %}s{% endif %}
+  · <strong>{{ telemetry.acked_7d }}</strong> acked
+  {% if telemetry.ack_rate is not none %}
+    · <strong>{{ (telemetry.ack_rate * 100) | round | int }}%</strong> ack rate
   {% endif %}
-</div>
+  {% if telemetry.last_fired %}
+    <span class="telemetry-last">· last fired {{ telemetry.last_fired }}</span>
+  {% endif %}
+</p>
 {% endif %}

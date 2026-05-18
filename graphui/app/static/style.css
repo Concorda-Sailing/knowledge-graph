@@ -628,6 +628,22 @@ h2 {
 .telemetry .stat { flex-direction: column; padding: 10px 14px; }
 .telemetry .stat .num { font-size: 18px; }
 
+/* Compact one-line variant used in the side aside instead of a full card.
+   Shows only when there's been 7d activity; otherwise the line is absent. */
+.telemetry-inline {
+  font-size: 12px;
+  color: var(--fg-mute);
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  line-height: 1.5;
+}
+.telemetry-inline .lbl { color: var(--fg-mute); margin-right: 4px; }
+.telemetry-inline strong { color: var(--fg); font-weight: 600; font-variant-numeric: tabular-nums; }
+.telemetry-inline .telemetry-last { color: var(--fg-mute); }
+
 .claims {
   width: 100%; border-collapse: separate; border-spacing: 0;
   font-family: var(--mono); font-size: 12px; margin: 12px 0 0;
