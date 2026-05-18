@@ -18,15 +18,28 @@ from depgraph.lib.cli.health import cmd_health
 def _make_node(ctx: Context, node_id: str, *, kind: str = "model",
                structural_hash: str = "aabbccdd11223344",
                dossier: str | None = None) -> Path:
-    """Write a minimal valid node JSON under nodes/."""
+    """Write a minimal valid v2 node JSON under nodes/."""
     node_file = ctx.NODES / f"{node_id.replace('::', '_')}.json"
     node_file.parent.mkdir(parents=True, exist_ok=True)
+    name = node_id.split("::")[-1]
     data: dict = {
-        "schema_version": 1,
+        "schema_version": 2,
         "id": node_id,
+        "primitive": "class",
         "kind": kind,
-        "source": {"repo": "test-api", "path": "models/foo.py"},
-        "extractor": "python",
+        "name": name,
+        "owner": None,
+        "source": {
+            "repo": "test-api",
+            "path": "models/foo.py",
+            "language": "python",
+            "line": 1,
+            "end_line": 5,
+        },
+        "signature": {},
+        "attributes": {},
+        "edges_out": [],
+        "extractor": "depgraph/extractors/python/extract.py@test",
         "structural_hash": structural_hash,
     }
     if dossier is not None:
