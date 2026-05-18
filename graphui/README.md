@@ -32,11 +32,20 @@ LOGIGRAPH_DATA_DIR=/path/to/project/logigraph \
 .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8081
 ```
 
-Or register it as a systemd `--user` service via the umbrella's
-installer:
+Or register it as a systemd `--user` service via the kg installer.
+Two flag styles are supported:
 
 ```bash
-~/tools/knowledge-graph/install.sh systemd --project /path/to/project --apply
+# Resolve from a project bundle (supports both the nested
+# <project>/knowledge-graph/ and sibling-with-hyphen
+# <project>-knowledge-graph/ layouts):
+kg install systemd --project /path/to/project-knowledge-graph --apply
+
+# Or set the data dirs explicitly (skips the bundle-layout resolver):
+kg install systemd \
+  --depgraph-data-dir /path/to/project/depgraph \
+  --logigraph-data-dir /path/to/project/logigraph \
+  --apply
 ```
 
 ## Environment
@@ -45,10 +54,11 @@ installer:
 |---|---|---|
 | `DEPGRAPH_DATA_DIR` | required | Path to the project's depgraph data dir (the dir containing `project.toml` + `nodes/`). |
 | `LOGIGRAPH_DATA_DIR` | required | Path to the project's logigraph data dir. |
-| `DEPGRAPH_BIN` | optional (default: `~/tools/knowledge-graph/depgraph/bin/depgraph`) | Path to the depgraph CLI (invoked by the Approve button). |
-| `LOGIGRAPH_BIN` | optional (default: `~/tools/knowledge-graph/logigraph/bin/logigraph`) | Path to the logigraph CLI (invoked by the Approve button for rule / domain nodes). |
+| `DEPGRAPH_BIN` | optional (default: `<bundle>/depgraph/bin/depgraph`, where `<bundle>` is the tools dir) | Path to the depgraph CLI (invoked by the Approve button). |
+| `LOGIGRAPH_BIN` | optional (default: `<bundle>/logigraph/bin/logigraph`) | Path to the logigraph CLI (invoked by the Approve button for rule / domain nodes). |
 
-Graphui fails loud at startup if the required data-dir env vars are unset. The systemd unit shipped by `install.sh` sets all four.
+Graphui fails loud at startup if the required data-dir env vars are unset.
+The systemd unit written by `kg install systemd --apply` sets all four.
 
 ## License
 

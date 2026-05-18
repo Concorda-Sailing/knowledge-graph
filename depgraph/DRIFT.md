@@ -32,7 +32,7 @@ The honest framing: structural drift is mostly mechanically catchable; intent dr
 
 **Detection.**
 - Extractor canonicalizes URLs by replacing `${...}` and `{}` segments with `*` wildcards, then matches against the FastAPI route table. Unresolvable URLs are recorded with a `warning: unresolved_string_url` and surface in the PreToolUse injection.
-- `bin/depgraph orphans` lists endpoints whose `dependents` is empty *and* lists call sites whose target is not a known route — both are likely victims of route renames.
+- `kg depgraph orphans` lists endpoints whose `dependents` is empty *and* lists call sites whose target is not a known route — both are likely victims of route renames.
 
 **Mitigation.** Edges are tagged `fuzzy` so I treat them as advisory; orphan check is a regular CI step.
 
@@ -74,7 +74,7 @@ The honest framing: structural drift is mostly mechanically catchable; intent dr
 
 **Mitigation.** Depth cap of 3 keeps the injection from exploding for foundational hooks (the `apiClient` would otherwise pull half the codebase).
 
-**Residual risk.** Depth-4+ effects are not surfaced. Acceptable for now; if a foundational change is being made, run `bin/depgraph dependents <id> --depth all` manually.
+**Residual risk.** Depth-4+ effects are not surfaced. Acceptable for now; if a foundational change is being made, run `kg depgraph dependents <id> --depth all` manually.
 
 ---
 
@@ -118,7 +118,7 @@ The honest framing: structural drift is mostly mechanically catchable; intent dr
 
 **Symptom.** Code changed; structural hash changed; dossier was auto-marked `stale` — but nobody updated it. Two months later a new edit reads the stale dossier and trusts it.
 
-**Detection.** PreToolUse injection prepends `⚠ STALE DOSSIER (last reviewed against hash X, current hash Y)` to any stale body. CI check `bin/depgraph validate --strict` fails when nodes touched in the diff have stale dossiers.
+**Detection.** PreToolUse injection prepends `⚠ STALE DOSSIER (last reviewed against hash X, current hash Y)` to any stale body. CI check `kg depgraph validate --strict` fails when nodes touched in the diff have stale dossiers.
 
 **Mitigation.** Stale text is still useful — much of it is invariant — so we surface it with a banner rather than hiding it.
 
@@ -144,7 +144,7 @@ The honest framing: structural drift is mostly mechanically catchable; intent dr
 
 **Detection.** Each node records `git_commit` at extraction. If the current `git rev-parse HEAD` differs from the node's commit by more than N hours of history, PreToolUse prepends `⚠ GRAPH IS BEHIND BY <N> COMMITS` and includes a "regen suggested" hint.
 
-**Mitigation.** Stop hook regenerates only touched files, so within a session the graph stays current. On branch switch, `bin/depgraph regen --since main` is a one-liner.
+**Mitigation.** Stop hook regenerates only touched files, so within a session the graph stays current. On branch switch, `kg depgraph regen --since main` is a one-liner.
 
 **Residual risk.** First edit on a fresh branch checkout is uncovered. Acceptable; the warning fires loudly.
 
@@ -166,7 +166,7 @@ The honest framing: structural drift is mostly mechanically catchable; intent dr
 
 **Symptom.** I add a new hook in a session, hit Stop, but the extractor errors out (TypeScript compile error, broken import, syntax issue). New hook is not extracted. Future edits on its consumers don't see the new dependent.
 
-**Detection.** Stop hook captures extractor exit code and surfaces extraction failures at end of turn. CI runs `bin/depgraph regen --all && git diff --exit-code nodes/` so a missing node fails build.
+**Detection.** Stop hook captures extractor exit code and surfaces extraction failures at end of turn. CI runs `kg depgraph regen --all && git diff --exit-code nodes/` so a missing node fails build.
 
 **Mitigation.** Loud failure on extraction error; CI catch.
 
@@ -182,7 +182,7 @@ The honest framing: structural drift is mostly mechanically catchable; intent dr
 
 **Mitigation.** "Crash visible to Claude" is the bar. The hook is allowed to fail; it is not allowed to fail invisibly.
 
-**Residual risk.** The hook is itself untracked code. Mitigation: hook has its own integration test (`bin/depgraph self-check`).
+**Residual risk.** The hook is itself untracked code. Mitigation: hook has its own integration test (`kg depgraph self-check`).
 
 ---
 
@@ -204,9 +204,9 @@ The honest framing: structural drift is mostly mechanically catchable; intent dr
 
 **Detection.** Reconciler runs a "live set" check: every node id should map to a real source symbol. Nodes whose `id` is not produced by any extractor in this run are marked `status: orphan`.
 
-**Mitigation.** Orphan nodes do *not* auto-delete. They move to `nodes/_archive/<original-path>` with a tombstone field `archived_at`, `archived_reason: source_missing`. This preserves the dossier (often the only record of why the thing existed). `bin/depgraph orphans --purge` is the only path to actual deletion, and it is explicit.
+**Mitigation.** Orphan nodes do *not* auto-delete. They move to `nodes/_archive/<original-path>` with a tombstone field `archived_at`, `archived_reason: source_missing`. This preserves the dossier (often the only record of why the thing existed). `kg depgraph orphans --purge` is the only path to actual deletion, and it is explicit.
 
-**Residual risk.** If a route is *temporarily* gone (mid-rebase), it gets archived prematurely. Mitigation: rebase scenarios should run `bin/depgraph regen` only at clean checkpoints, not mid-conflict.
+**Residual risk.** If a route is *temporarily* gone (mid-rebase), it gets archived prematurely. Mitigation: rebase scenarios should run `kg depgraph regen` only at clean checkpoints, not mid-conflict.
 
 ---
 

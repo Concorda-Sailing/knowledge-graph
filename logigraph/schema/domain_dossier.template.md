@@ -15,21 +15,31 @@ concrete predicates, and short sentences. A non-engineer being able to
 read this is a useful proxy for prose clarity, not the calibration
 target.
 
-Required sections (validated by `bin/logigraph validate`):
-  - ## The thing
-  - ## Why it exists
-  - ## Examples
-  - ## Counter-examples
-  - ## Decision table
-  - ## Edge cases
-  - ## Surfaces
-  - ## Open questions
+Validator enforcement (per `kg logigraph validate`) is narrow and
+subkind-specific:
 
-The first section heading differs by subkind but the body structure is
-the same. For role subkinds, the paragraph under `## The thing` describes
-who holds this role and by what predicate. For resource subkinds, it
-describes the entity and its identity tuple. For relationship and
-attribute subkinds, it describes the pairing or the field.
+  Role subkind — REQUIRED sections:
+    - ## Plain definition
+    - ## They can
+
+  Other subkinds (resource / relationship / attribute) — NO required
+  sections today; validate.py only enforces the role-subkind list above.
+
+Recommended sections (not validator-enforced, but expected for quality
+domain dossiers — every shipped role dossier should grow these once it
+leaves `definition_status: stub`):
+  - ## They cannot
+  - ## Becomes one when
+  - ## Stops being one when
+  - ## Examples / counter-examples
+  - ## Surfaces       (where the role is checked / displayed in code)
+
+The body sections shown below this comment block are an older
+template that doesn't match the role-subkind validator. They remain
+as a starting point for resource / relationship / attribute subkinds
+(which currently have no enforced shape). Role-subkind dossiers
+should override the section list with `## Plain definition` and
+`## They can` at minimum.
 
 The Decision table is mandatory: enumerate the realistic boundary
 conditions and the domain concept's verdict on each (e.g. "does this

@@ -14,7 +14,13 @@ Quality bar: written for the LLM collaborator first. The Decision table
 is the LLM's primary reading surface; treat it as the most important
 section and make it exhaustive over realistic boundary conditions.
 
-Required sections (validated by `bin/logigraph validate`):
+Process dossiers have NO validator-enforced required sections — the
+process node carries the structured `steps[]` and `flow` data on the
+JSON itself, so the dossier is pointer/prose semantics only. This
+template lists the conventional sections; treat them as recommended
+quality bar rather than enforcement.
+
+Recommended sections (not validator-enforced):
   - ## The process
   - ## Why it exists
   - ## Examples
@@ -28,10 +34,10 @@ transactional scope or a single endpoint. The dossier explains *why*
 the steps are grouped (what topology would be lost by splitting them)
 and documents the observable invariants across the flow.
 
-The Decision table is mandatory because it's how the LLM reasons about
-boundary conditions reliably. For processes, the table typically maps
-"which step fails / which condition holds" to "which outcome (error code,
-side-effect set, broadcast or no-broadcast)".
+The Decision table is the most valuable recommendation because it's how
+the LLM reasons about boundary conditions reliably. For processes, the
+table typically maps "which step fails / which condition holds" to
+"which outcome (error code, side-effect set, broadcast or no-broadcast)".
 -->
 
 # <Short process title>

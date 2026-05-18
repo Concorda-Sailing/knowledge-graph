@@ -137,10 +137,10 @@ Files or directories whose name (or any path component) starts with `_` are corp
                 │  source code             │
                 └────────────┬─────────────┘
                              │
-       Stop hook on touched file ↓ (or `bin/depgraph regen`)
+       Stop hook on touched file ↓ (or `kg depgraph regen`)
                              │
                 ┌──────────────────────────┐
-                │  bin/depgraph regen      │  ← marks _meta.regen_status=in_progress
+                │  kg depgraph regen      │  ← marks _meta.regen_status=in_progress
                 └────────────┬─────────────┘
                              │
                 ┌──────────────────────────┐
@@ -180,7 +180,7 @@ Five properties hold:
 2. **Per-node files are bit-stable.** Regen with no source change produces zero file diffs. No timestamps, no commit hashes, no derived data on the per-node files — those live in `_meta.json` and `_index/dependents.json`. Git diffs reflect real source edits, not regen churn.
 3. **Intent is reviewed, not auto-generated.** Dossiers are written by a human or by Claude with intent in mind. They go *stale* when their pinned `last_reviewed_against_hash` no longer matches the current `structural_hash`.
 4. **Drift is loud.** Stale dossiers, fuzzy string-URL edges, schema-version mismatches, orphan nodes, missing extractor manifests, in-progress regens, and external-consumer banners all surface as warnings during the PreToolUse injection — never silently.
-5. **Atomicity gates the truth.** `bin/depgraph regen` marks `_meta.regen_status: in_progress` before any extractor runs and `complete` only after reconciliation succeeds. The hook surfaces the in_progress state explicitly. Per-file writes use tmp+rename so a crash mid-write never produces a half-written JSON.
+5. **Atomicity gates the truth.** `kg depgraph regen` marks `_meta.regen_status: in_progress` before any extractor runs and `complete` only after reconciliation succeeds. The hook surfaces the in_progress state explicitly. Per-file writes use tmp+rename so a crash mid-write never produces a half-written JSON.
 
 See **DRIFT.md** for the full taxonomy of failure modes and how each is detected.
 
@@ -200,29 +200,29 @@ Set `DEPGRAPH_DATA_DIR` to point at your project's data dir, or `cd` into it bef
 
 ```bash
 # Full regen — runs every extractor and reconciles. Idempotent.
-bin/depgraph regen
+kg depgraph regen
 
 # Print the same context block the PreToolUse hook would inject
-bin/depgraph context <repo-name>/path/to/file.py
+kg depgraph context <repo-name>/path/to/file.py
 
 # Walk the reverse graph from a node id (transitive)
-bin/depgraph dependents '<METHOD>::/api/path' --depth 3
+kg depgraph dependents '<METHOD>::/api/path' --depth 3
 
 # Find orphans (nodes whose source file no longer exists)
-bin/depgraph orphans
+kg depgraph orphans
 
 # Validate every node file against the schema
-bin/depgraph validate
+kg depgraph validate
 
 # Smoke-test the PreToolUse hook end-to-end
-bin/depgraph self-check
+kg depgraph self-check
 
 # Compact summary for a commit body trailer (blind-spot audit)
-bin/depgraph commit-summary             # uses git diff
-bin/depgraph commit-summary file1 file2
+kg depgraph commit-summary             # uses git diff
+kg depgraph commit-summary file1 file2
 ```
 
-> **Commit message convention.** Every commit in any of the project's tracked repos should end with the output of `bin/depgraph commit-summary`. The trailer is greppable (`git log --grep="Depgraph:"`) so blind spots — bugs in nodes that don't appear in any commit's Depgraph trailer — surface during postmortems.
+> **Commit message convention.** Every commit in any of the project's tracked repos should end with the output of `kg depgraph commit-summary`. The trailer is greppable (`git log --grep="Depgraph:"`) so blind spots — bugs in nodes that don't appear in any commit's Depgraph trailer — surface during postmortems.
 
 > Selective regen (`--since <ref>`, `--only <file>`) is a planned enhancement — for now `regen` is full-graph each time. The Stop hook handles the per-edit case by running only the affected extractor.
 

@@ -17,8 +17,7 @@ Three stages, tracked by `definition_status` on each node:
 3. **human_reviewed** — a human reviewer signed off after reading. Ready
    to be trusted at edit time.
 
-Stub → drafted → reviewed. Don't skip stages. `bin/logigraph
-dossiers --status` reports the count at each stage.
+Stub → drafted → reviewed. Don't skip stages. `kg logigraph dossiers --status` reports the count at each stage.
 
 ## Adding a rule
 
@@ -43,8 +42,8 @@ dossiers --status` reports the count at each stage.
      conditions; this is the LLM's primary reading surface.
    - `## Edge cases` — subtleties not in the table.
    - `## Surfaces` — where the rule lives in code.
-4. Run `bin/logigraph regen` to validate claims and rebuild indexes.
-5. Run `bin/logigraph context <claimed-file>` to confirm injection.
+4. Run `kg logigraph regen` to validate claims and rebuild indexes.
+5. Run `kg logigraph context <claimed-file>` to confirm injection.
 
 ## Adding an domain node
 
@@ -66,20 +65,26 @@ For Phase 0, only the role template exists (`schema/domain_dossier.template.md`)
 ## Editing a live rule or concept
 
 If the rule's *meaning* changes (not just where it's enforced):
-- Bump the rule's `structural_hash` (recompute over statement + domain
-  refs + claim ids).
+- Bump the rule's `structural_hash` to any new value distinct from the
+  prior one. There is no automatic recompute today — logigraph nodes
+  initialize `structural_hash = sha256(<id>).hexdigest()` on stub
+  creation (`kg logigraph rule-stub` / `process-stub`) and after that
+  the field is only ever set manually. A future recompute over
+  (statement + domain refs + claim ids) is plausible but not
+  implemented; until it exists, any monotonic bump suffices to
+  invalidate cached `last_reviewed_against_hash` pointers.
 - Set `definition_status: llm_drafted` so the node re-enters review.
 - Update the dossier; refresh `last_reviewed_against_hash` in
   frontmatter only after re-reading.
 
 If the rule's *enforcement location* changes (refactor):
 - Update `claims_code` entries.
-- `bin/logigraph regen` re-pulls `remote_hash` from the depgraph; if a
+- `kg logigraph regen` re-pulls `remote_hash` from the depgraph; if a
   claim's code has drifted, the claim is marked stale.
 
 ## Quality bar checks
 
-`bin/logigraph validate` enforces:
+`kg logigraph validate` enforces:
 - JSON-Schema compliance (`schema/domain.schema.json`,
   `schema/rule.schema.json`).
 - Required dossier sections present (rule dossiers must have

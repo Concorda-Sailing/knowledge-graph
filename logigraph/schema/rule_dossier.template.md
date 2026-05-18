@@ -14,12 +14,16 @@ Quality bar: written for the LLM collaborator first. The Decision table
 is the LLM's primary reading surface; treat it as the most important
 section and make it exhaustive over realistic boundary conditions.
 
-Required sections (validated by `bin/logigraph validate`):
+Required sections (enforced by `kg logigraph validate`):
   - ## The rule
   - ## Why it exists
+  - ## Decision table       (truth-table over conditions)
+
+Recommended sections (not validator-enforced, but expected for quality
+rule dossiers — every shipped rule should grow these once it leaves
+`definition_status: stub`):
   - ## Examples
   - ## Counter-examples
-  - ## Decision table       (truth-table over conditions)
   - ## Edge cases
   - ## Surfaces
 

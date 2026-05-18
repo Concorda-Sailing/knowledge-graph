@@ -47,7 +47,7 @@ If a behavior change is real (not just whitespace), I am responsible for opening
 A new endpoint, component, or hook does not exist in the graph until extraction runs. The flow:
 
 1. Write the code.
-2. Run `bin/depgraph regen` (or let the Stop hook do it).
+2. Run `kg depgraph regen` (or let the Stop hook do it).
 3. The extractor emits a node JSON; the reconciler auto-stubs a dossier with `status: unreviewed`.
 4. Open the stub dossier and fill in **Purpose**, **Invariants**, **Gotchas**, **Cross-cutting concerns** before the PR is considered complete. Bump `status: current` and set `last_reviewed_against_hash` to the node's current hash.
 
@@ -68,10 +68,10 @@ If the hook is unavailable (running outside Claude Code, working in a different 
 
 ```bash
 # Dump everything the hook would inject for a given file
-bin/depgraph context <api-repo>/routers/invite.py
+kg depgraph context <api-repo>/routers/invite.py
 
 # Or, for a specific node id
-bin/depgraph context "POST::/api/invite/{invite_code}/accept"
+kg depgraph context "POST::/api/invite/{invite_code}/accept"
 ```
 
 The CLI output is the same content the hook would inject. No special path.

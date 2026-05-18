@@ -16,10 +16,15 @@ the current depgraph. Any divergence flips the claim to `stale: true`.
 `⚠ Stale claim: rule R claims this node but the code has changed since
 last review.`
 
-**Mitigation.** Re-read the rule against the new code. If the rule
-still applies, refresh the claim (`bin/logigraph claim-refresh <rule>
-<depgraph_id>`). If the rule no longer applies, drop the claim or
-update `claims_code[].role`.
+**Mitigation.** Re-read the rule against the new code. There is no
+dedicated `claim-refresh` subcommand today — the workflow is to
+re-review the rule and run `kg logigraph rule-bump <rule_id> --status
+human_reviewed --actor <you>`, which sets `last_reviewed_against_hash`
+to the current depgraph hash on the dossier. The next `kg logigraph
+regen` then re-pulls each claim's `remote_hash`, clearing the stale
+flag if the dossier confirms the rule still applies. If the rule no
+longer applies, drop the claim from `claims_code[]` or update
+`claims_code[].role`, then run `kg logigraph regen`.
 
 ## 2. Orphan rule (claim id no longer exists in depgraph)
 
@@ -29,8 +34,8 @@ still references the old id.
 **Detection.** `reconcile.py` validates every `claims_code[].depgraph_id`
 against the depgraph node corpus. Missing ids fail loud.
 
-**Surface.** `bin/logigraph regen` exits non-zero with a list of
-unresolved claims. `bin/logigraph gaps` reports them.
+**Surface.** `kg logigraph regen` exits non-zero with a list of
+unresolved claims. `kg logigraph gaps` reports them.
 
 **Mitigation.** Update the rule's claims to point at the renamed/new
 node, or remove the claim if the enforcement was deleted.
@@ -42,7 +47,7 @@ domain node id that doesn't exist (typo, rename, deleted concept).
 
 **Detection.** `reconcile.py` cross-checks against `nodes/domain/`.
 
-**Surface.** `bin/logigraph regen` exits non-zero. `bin/logigraph gaps`
+**Surface.** `kg logigraph regen` exits non-zero. `kg logigraph gaps`
 reports.
 
 **Mitigation.** Fix the typo, add the missing domain node, or remove
@@ -54,7 +59,7 @@ the reference.
 dossier wasn't authored. The hook would inject a TODO placeholder as
 intent, which is worse than nothing.
 
-**Detection.** `bin/logigraph validate` fails any node with
+**Detection.** `kg logigraph validate` fails any node with
 `definition_status: stub` whose dossier still contains the TODO marker.
 
 **Surface.** Validation error in CI / pre-commit. Hook injection skips
@@ -97,14 +102,14 @@ directories or vice-versa. The two corpora live under separate roots.
 
 ## 7. Torn regen
 
-**Scenario.** `bin/logigraph regen` was interrupted mid-run.
+**Scenario.** `kg logigraph regen` was interrupted mid-run.
 `_meta.json` reads `regen_status: in_progress`. Indexes are
 inconsistent.
 
 **Detection.** PreToolUse hook reads `_meta.json` first.
 
 **Surface.** Banner: `⚠ Regen in_progress — the logigraph may be in a
-torn state. Re-run bin/logigraph regen before trusting context.`
+torn state. Re-run kg logigraph regen before trusting context.`
 
 **Mitigation.** Re-run regen.
 
@@ -118,7 +123,7 @@ exists as a logigraph node, but is conceptually misaligned.
 
 **Mitigation.** Treat domain renames as structural events: rename
 the node id, update every rule's `references_domain`, regen.
-`bin/logigraph rename-domain <old> <new>` may eventually exist.
+`kg logigraph rename-domain <old> <new>` may eventually exist.
 
 ## 9. Phantom domain (referenced but never created)
 
