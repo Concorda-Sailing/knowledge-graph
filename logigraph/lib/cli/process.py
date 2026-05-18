@@ -286,13 +286,16 @@ def cmd_process_rank(args: argparse.Namespace, ctx: Context) -> int:
         })
 
     # --- Signal B: entrypoint_fan_in -------------------------------------
-    deps_index_path = ctx.depgraph_dir / "nodes" / "_index" / "dependents.json"
+    deps_index_path = ctx.depgraph_dir / "nodes" / "_index" / "by_target.json"
     deps_idx: dict[str, list[dict]] = {}
     if deps_index_path.exists():
         try:
             raw = json.loads(deps_index_path.read_text())
-            # Depgraph stores the actual reverse-edge map under "by_target"
-            deps_idx = raw.get("by_target") or {}
+            # v2 layout is a flat {target_id: [...]} dict; legacy wrapped under "by_target".
+            if isinstance(raw, dict) and "by_target" in raw and "schema_version" in raw:
+                deps_idx = raw.get("by_target") or {}
+            elif isinstance(raw, dict):
+                deps_idx = raw
         except (OSError, json.JSONDecodeError):
             deps_idx = {}
     # Iterate depgraph entrypoints (per-project: web-api -> endpoint, cli -> command, etc.)

@@ -13,7 +13,7 @@ def test_from_data_dir_derives_paths(data_dir: Path) -> None:
     ctx = Context.from_data_dir(data_dir)
     assert ctx.DEPGRAPH == data_dir
     assert ctx.NODES == data_dir / "nodes"
-    assert ctx.DEPENDENTS_INDEX == data_dir / "nodes" / "_index" / "dependents.json"
+    assert ctx.DEPENDENTS_INDEX == data_dir / "nodes" / "_index" / "by_target.json"
     assert ctx.CORPUS_META == data_dir / "nodes" / "_meta.json"
     assert ctx.TELEMETRY_DIR == data_dir / "telemetry"
     assert ctx.INJECTIONS_LOG == data_dir / "telemetry" / "injections.jsonl"

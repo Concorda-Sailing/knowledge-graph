@@ -38,7 +38,7 @@ class Context:
         return cls(
             DEPGRAPH=dd,
             NODES=nodes,
-            DEPENDENTS_INDEX=nodes / "_index" / "dependents.json",
+            DEPENDENTS_INDEX=nodes / "_index" / "by_target.json",
             CORPUS_META=nodes / "_meta.json",
             TELEMETRY_DIR=dd / "telemetry",
             INJECTIONS_LOG=dd / "telemetry" / "injections.jsonl",

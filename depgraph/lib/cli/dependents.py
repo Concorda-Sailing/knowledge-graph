@@ -15,7 +15,11 @@ from ._shared import load_dependents_index
 def cmd_dependents(args: argparse.Namespace, ctx: Context) -> int:
     dependents_index = load_dependents_index(ctx)
     if not dependents_index:
-        print("dependents index not built — run `bin/depgraph regen`", file=sys.stderr)
+        print(
+            f"dependents index not built (looked at {ctx.DEPENDENTS_INDEX}) — "
+            f"run `kg depgraph regen`",
+            file=sys.stderr,
+        )
         return 1
     seen: set[str] = set()
     frontier = [(args.id, 0)]

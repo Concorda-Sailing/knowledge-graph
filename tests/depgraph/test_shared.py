@@ -146,8 +146,24 @@ def test_load_dependents_index_handles_corrupt_json(
     assert result == {}
 
 
-def test_load_dependents_index_returns_by_target_on_valid_file(data_dir: Path) -> None:
-    """Well-formed index → returns the by_target dict."""
+def test_load_dependents_index_returns_flat_dict_on_valid_file(data_dir: Path) -> None:
+    """v2 by_target.json is a flat {target_id: [edges]} dict — returned as-is."""
+    ctx = Context.from_data_dir(data_dir)
+    ctx.DEPENDENTS_INDEX.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "api::models/foo.py::Foo": [{"source": "api::routes/x.py::view"}],
+    }
+    ctx.DEPENDENTS_INDEX.write_text(json.dumps(payload))
+
+    result = load_dependents_index(ctx)
+
+    assert "api::models/foo.py::Foo" in result
+    assert result["api::models/foo.py::Foo"][0]["source"] == "api::routes/x.py::view"
+
+
+def test_load_dependents_index_accepts_legacy_wrapped_format(data_dir: Path) -> None:
+    """Legacy reconcile.py emitted {"schema_version": 1, "by_target": {...}} —
+    still readable so a half-migrated data dir doesn't go dark."""
     ctx = Context.from_data_dir(data_dir)
     ctx.DEPENDENTS_INDEX.parent.mkdir(parents=True, exist_ok=True)
     payload = {

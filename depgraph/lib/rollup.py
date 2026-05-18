@@ -2,7 +2,7 @@
 nodes that operate on it.
 
 Reads the existing reverse-dependents index at
-`<data_dir>/nodes/_index/dependents.json` (built by `bin/depgraph regen`).
+`<data_dir>/nodes/_index/by_target.json` (built by `kg depgraph regen`).
 Pure functions; no I/O except reading already-loaded indexes.
 """
 from __future__ import annotations
@@ -138,7 +138,7 @@ def compute_rollup(
         anchor_id: the depgraph model node id to root the BFS at.
         depgraph_index: { id: node } for kind/title/path lookups.
         dependents_index: { target_id: [{source, via, where}, ...] } —
-            same shape as `nodes/_index/dependents.json::by_target`.
+            same shape as `nodes/_index/by_target.json`.
         depth: max BFS depth. 1 = direct dependents only. Spec default: 3.
         anchor_result: optional. If supplied, attached to the returned Rollup.
             When None, a placeholder AnchorResult is built from `anchor_id`.
@@ -274,20 +274,24 @@ def load_rollup_inputs(depgraph_data_dir) -> RollupInputs:
     """
     root = Path(depgraph_data_dir)
     nodes_dir = root / "nodes"
-    deps_path = nodes_dir / "_index" / "dependents.json"
+    deps_path = nodes_dir / "_index" / "by_target.json"
     if not deps_path.exists():
         raise FileNotFoundError(
             f"reverse-dependents index missing: {deps_path}. "
-            f"Run `bin/depgraph regen` to rebuild it."
+            f"Run `kg depgraph regen` to rebuild it."
         )
     try:
         deps_raw = json.loads(deps_path.read_text())
     except json.JSONDecodeError as e:
         raise FileNotFoundError(
             f"reverse-dependents index unreadable: {deps_path}: {e}. "
-            f"Run `bin/depgraph regen` to rebuild it."
+            f"Run `kg depgraph regen` to rebuild it."
         )
-    dependents = deps_raw.get("by_target") or {}
+    # v2: flat {target_id: [...]} dict. v1 (legacy) wrapped {"by_target": {...}}.
+    if isinstance(deps_raw, dict) and "by_target" in deps_raw and "schema_version" in deps_raw:
+        dependents = deps_raw.get("by_target") or {}
+    else:
+        dependents = deps_raw if isinstance(deps_raw, dict) else {}
 
     depgraph_index: dict[str, dict] = {}
     for nf in nodes_dir.rglob("*.json"):

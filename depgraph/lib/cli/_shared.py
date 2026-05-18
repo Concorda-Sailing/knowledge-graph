@@ -48,17 +48,20 @@ def mark_regen_in_progress(ctx: Context) -> None:
 
 
 def load_dependents_index(ctx: Context) -> dict[str, list[dict]]:
-    """Read the reverse-edge index. Empty dict if not yet built."""
+    """Read the reverse-edge index. Empty dict if not yet built.
+
+    v2 layout: nodes/_index/by_target.json is a flat {target_id: [edge, ...]} dict.
+    v1 layout (legacy reconcile.py): wrapped {"schema_version": 1, "by_target": {...}}.
+    Both shapes are accepted so we don't blow up on a mid-migration data dir."""
     if not ctx.DEPENDENTS_INDEX.exists():
         return {}
     try:
         idx = json.loads(ctx.DEPENDENTS_INDEX.read_text())
     except (OSError, json.JSONDecodeError):
         return {}
-    if idx.get("schema_version") != 1:
-        print("WARN: dependents index schema_version mismatch", file=sys.stderr)
-        return {}
-    return idx.get("by_target") or {}
+    if isinstance(idx, dict) and "by_target" in idx and "schema_version" in idx:
+        return idx.get("by_target") or {}
+    return idx if isinstance(idx, dict) else {}
 
 
 def find_nodes_for_target(ctx: Context, target: str) -> list[Path]:

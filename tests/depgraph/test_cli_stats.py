@@ -153,9 +153,7 @@ def test_stats_skips_underscore_files(
     (ctx.NODES / "_meta.json").write_text(json.dumps({"schema_version": 1}))
     index_dir = ctx.NODES / "_index"
     index_dir.mkdir(parents=True, exist_ok=True)
-    (index_dir / "dependents.json").write_text(
-        json.dumps({"schema_version": 1, "by_target": {}})
-    )
+    (index_dir / "by_target.json").write_text(json.dumps({}))
     args = argparse.Namespace(telemetry=False)
     rc = cmd_stats(args, ctx)
     assert rc == 0

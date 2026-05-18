@@ -13,9 +13,7 @@ from depgraph.lib.cli.dependents import cmd_dependents
 
 def _write_index(ctx: Context, by_target: dict) -> None:
     ctx.DEPENDENTS_INDEX.parent.mkdir(parents=True, exist_ok=True)
-    ctx.DEPENDENTS_INDEX.write_text(
-        json.dumps({"schema_version": 1, "by_target": by_target})
-    )
+    ctx.DEPENDENTS_INDEX.write_text(json.dumps(by_target))
 
 
 def test_dependents_depth1_returns_direct_dependents(

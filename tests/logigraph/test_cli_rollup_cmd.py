@@ -27,10 +27,14 @@ def _write_domain_node(ctx: Context, node_id: str, node: dict) -> None:
 
 
 def _write_dependents_index(depgraph_dir: Path, index: dict) -> None:
-    """Plant the dependents.json index that load_rollup_inputs requires."""
+    """Plant the by_target.json index that load_rollup_inputs requires.
+
+    `index` is the legacy wrapped shape ({"by_target": {...}}); we unwrap so the
+    on-disk file matches the v2 flat-dict format the loader expects."""
     idx_dir = depgraph_dir / "nodes" / "_index"
     idx_dir.mkdir(parents=True, exist_ok=True)
-    (idx_dir / "dependents.json").write_text(json.dumps(index) + "\n")
+    payload = index.get("by_target", index) if isinstance(index, dict) else {}
+    (idx_dir / "by_target.json").write_text(json.dumps(payload) + "\n")
 
 
 # ---------------------------------------------------------------------------
@@ -39,7 +43,7 @@ def _write_dependents_index(depgraph_dir: Path, index: dict) -> None:
 
 def test_rollup_missing_entity_exits_1(ctx: Context, capsys) -> None:
     """An entity_id not in logigraph nodes emits stderr and exits 1."""
-    # Need dependents.json so load_rollup_inputs doesn't raise first.
+    # Need by_target.json so load_rollup_inputs doesn't raise first.
     _write_dependents_index(ctx.depgraph_dir, {"by_target": {}})
     args = argparse.Namespace(
         entity_id="resource::test::nonexistent",
@@ -57,7 +61,7 @@ def test_rollup_missing_entity_exits_1(ctx: Context, capsys) -> None:
 # ---------------------------------------------------------------------------
 
 def test_rollup_missing_dependents_raises(ctx: Context) -> None:
-    """When dependents.json is absent, load_rollup_inputs raises FileNotFoundError."""
+    """When by_target.json is absent, load_rollup_inputs raises FileNotFoundError."""
     _write_domain_node(ctx, "resource::test::thing", {
         "id": "resource::test::thing", "kind": "domain", "subkind": "resource",
         "title": "Thing", "summary": "", "definition_status": "stub",
@@ -67,7 +71,7 @@ def test_rollup_missing_dependents_raises(ctx: Context) -> None:
         entity_id="resource::test::thing",
         kind=None, depth=3, format="text",
     )
-    with pytest.raises(FileNotFoundError, match="dependents"):
+    with pytest.raises(FileNotFoundError, match="reverse-dependents"):
         cmd_rollup(args, ctx)
 
 
