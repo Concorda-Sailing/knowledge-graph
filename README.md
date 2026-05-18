@@ -40,9 +40,10 @@ Other useful asks (Claude follows the runbook in the next section):
 The `kg` entry point handles everything; legacy `depgraph` / `logigraph` / `install.sh` invocations still work as aliases.
 
 ```bash
-# Put the kg CLI on PATH
-echo 'export PATH="$HOME/tools/knowledge-graph/bin:$PATH"' >> ~/.bashrc
-source ~/.bashrc
+# Put all three knowledge-graph bin dirs on PATH (kg, depgraph,
+# logigraph). Writes a sentinel-guarded block to ~/.profile so the
+# next shell starts with everything reachable.
+kg install path --apply
 
 # Set a default project so bare commands resolve from any cwd:
 kg project use <project-name>
@@ -53,7 +54,9 @@ kg logigraph health
 kg project list-repos
 ```
 
-Or run `kg install path --apply` to write a sentinel-guarded PATH block to `~/.profile` that puts the legacy `depgraph` and `logigraph` bin dirs on PATH too (preserves muscle memory).
+(If your shell doesn't read `~/.profile`, either re-run the snippet
+target with `--rcfile ~/.bashrc` or add the equivalent block by
+hand.)
 
 ---
 

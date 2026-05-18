@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import subprocess
+import sys
 from pathlib import Path
 
 from ._shared import color_yellow, log, ok, warn
@@ -59,14 +60,23 @@ def cmd_bootstrap(args: argparse.Namespace) -> int:
         return rc
     print()
 
-    # 4. register with kg orchestrator via `kg add <bundle>`.
-    #    Idempotent — re-running with the same path is a no-op success.
+    # 4. Register with the kg orchestrator. Use the canonical
+    #    `kg project add` form rather than the back-compat `kg add`
+    #    alias — bootstrap is fresh code, no muscle memory to honor.
+    #    Idempotent: re-running with the same path is a no-op success.
     log("registering project with kg orchestrator")
     tool_root = Path(__file__).resolve().parents[3]
     kg_bin = tool_root / "bin" / "kg"
-    r = subprocess.run([str(kg_bin), "add", str(bundle)])
+    # Flush the parent's stdout before spawning the child. Without this,
+    # the parent's log lines remain in Python's block-buffered stdout
+    # while the child writes directly to fd 1; the child's output then
+    # appears ABOVE the parent's header when output is captured (CI logs,
+    # `tee`, redirected stdout — anywhere stdout isn't a TTY).
+    sys.stdout.flush()
+    r = subprocess.run([str(kg_bin), "project", "add", str(bundle)])
     if r.returncode != 0:
-        warn(f"kg add failed; run '{kg_bin} add {bundle}' manually")
+        warn(f"`kg project add` failed; run "
+             f"'{kg_bin} project add {bundle}' manually")
     print()
 
     # 5. systemd unit for graphui.

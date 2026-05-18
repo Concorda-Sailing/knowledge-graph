@@ -28,17 +28,30 @@ def test_generate_path_snippet_contains_marker() -> None:
     assert snippet.startswith(PATH_BLOCK_MARKER)
 
 
-def test_generate_path_snippet_contains_both_bins() -> None:
-    """Snippet adds both depgraph/bin and logigraph/bin to PATH."""
+def test_generate_path_snippet_contains_all_three_bins() -> None:
+    """Snippet adds bin/ (where `kg` lives), depgraph/bin, and
+    logigraph/bin to PATH. kg/bin is prepended LAST so it ends up first
+    on PATH — new users hit the canonical entry point by default while
+    the legacy aliases remain reachable."""
     snippet = generate_path_snippet("/home/user/tools")
+    assert "/knowledge-graph/bin" in snippet           # the kg bin
     assert "depgraph/bin" in snippet
     assert "logigraph/bin" in snippet
     assert "export PATH" in snippet
+    # Order check: the kg bin's `PATH=...` line should come AFTER the
+    # legacy bins' lines so the shell prepends it last (so it ends up
+    # FIRST in PATH).
+    kg_pos = snippet.find('PATH="/home/user/tools/knowledge-graph/bin:$PATH"')
+    dep_pos = snippet.find('PATH="/home/user/tools/knowledge-graph/depgraph/bin:$PATH"')
+    log_pos = snippet.find('PATH="/home/user/tools/knowledge-graph/logigraph/bin:$PATH"')
+    assert kg_pos > dep_pos
+    assert kg_pos > log_pos
 
 
 def test_generate_path_snippet_target_embedded() -> None:
     """Snippet uses the supplied target path."""
     snippet = generate_path_snippet("/custom/target")
+    assert "/custom/target/knowledge-graph/bin" in snippet
     assert "/custom/target/knowledge-graph/depgraph/bin" in snippet
     assert "/custom/target/knowledge-graph/logigraph/bin" in snippet
 

@@ -41,8 +41,16 @@ def _default_rcfile() -> str:
 def generate_path_snippet(target: str) -> str:
     """Return the PATH block content for *target*.
 
-    Mirrors install.sh:generate_path_snippet() exactly.  The returned string
-    ends with a single trailing newline (as the bash heredoc produces).
+    Adds three knowledge-graph bin dirs to PATH:
+      - <bundle>/bin    — where `kg` lives (canonical entry point)
+      - <bundle>/depgraph/bin  — legacy `depgraph` alias (kept for muscle memory)
+      - <bundle>/logigraph/bin — legacy `logigraph` alias (same)
+
+    The kg bin is checked / prepended last so it ends up first in PATH —
+    new users hit the canonical entry point by default while the legacy
+    aliases remain reachable.
+
+    The returned string ends with a single trailing newline.
     """
     bundle = f"{target}/{_BUNDLE_DIR}"
     return (
@@ -52,6 +60,9 @@ def generate_path_snippet(target: str) -> str:
         f"fi\n"
         f'if [ -d "{bundle}/logigraph/bin" ] ; then\n'
         f'    PATH="{bundle}/logigraph/bin:$PATH"\n'
+        f"fi\n"
+        f'if [ -d "{bundle}/bin" ] ; then\n'
+        f'    PATH="{bundle}/bin:$PATH"\n'
         f"fi\n"
         f"export PATH\n"
     )

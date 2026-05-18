@@ -62,9 +62,10 @@ def test_bootstrap_orchestrates_all_steps_in_order(
 
     assert rc == 0
     assert calls == ["tools", "init", "hooks", "systemd", "path"]
-    # kg add is called via subprocess once
+    # `kg project add` (canonical, not the legacy `kg add` alias) is
+    # invoked once as a subprocess.
     assert len(proc_calls) == 1
-    assert "add" in proc_calls[0]
+    assert ["project", "add"] == proc_calls[0][-3:-1]
 
 
 def test_bootstrap_passes_data_to_tools(
@@ -201,11 +202,13 @@ def test_bootstrap_runs_init_when_no_layout(
 # ---------------------------------------------------------------------------
 
 
-def test_bootstrap_calls_kg_add_with_bundle_path(
+def test_bootstrap_calls_kg_project_add_with_bundle_path(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """The subprocess kg add call receives the <project>/knowledge-graph path."""
+    """The subprocess invocation uses the canonical `kg project add`
+    form (not the legacy `kg add` alias) and receives the
+    <project>/knowledge-graph path."""
     monkeypatch.setattr(bootstrap_mod, "cmd_tools", lambda *a, **k: 0)
     monkeypatch.setattr(bootstrap_mod, "cmd_init", lambda *a, **k: 0)
     monkeypatch.setattr(bootstrap_mod, "cmd_hooks", lambda *a, **k: 0)
@@ -226,18 +229,19 @@ def test_bootstrap_calls_kg_add_with_bundle_path(
 
     assert len(proc_calls) == 1
     cmd = proc_calls[0]
-    # Command: [<kg_bin>, "add", "<project>/knowledge-graph"]
-    assert cmd[-2] == "add"
+    # Command: [<kg_bin>, "project", "add", "<project>/knowledge-graph"]
+    assert cmd[-3:-1] == ["project", "add"]
     assert cmd[-1].endswith("knowledge-graph")
     assert str(project) in cmd[-1]
 
 
-def test_bootstrap_warns_but_continues_if_kg_add_fails(
+def test_bootstrap_warns_but_continues_if_kg_project_add_fails(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture,
 ) -> None:
-    """A non-zero kg add exit code emits a warning but bootstrap still returns 0."""
+    """A non-zero `kg project add` exit code emits a warning but
+    bootstrap still returns 0."""
     monkeypatch.setattr(bootstrap_mod, "cmd_tools", lambda *a, **k: 0)
     monkeypatch.setattr(bootstrap_mod, "cmd_init", lambda *a, **k: 0)
     monkeypatch.setattr(bootstrap_mod, "cmd_hooks", lambda *a, **k: 0)
@@ -254,7 +258,7 @@ def test_bootstrap_warns_but_continues_if_kg_add_fails(
 
     assert rc == 0
     err_out = capsys.readouterr().err
-    assert "kg add" in err_out or "manually" in err_out
+    assert "kg project add" in err_out or "manually" in err_out
 
 
 # ---------------------------------------------------------------------------
