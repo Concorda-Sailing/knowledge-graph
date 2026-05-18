@@ -97,7 +97,12 @@ def _extract_python(
     ))
 
 
-_DEFAULT_TS_HEAP_MB = 4096
+# Node's own default is ~4 GB, which OOMs on real-world Next.js codebases —
+# 276 source files of a moderate web app exhaust the heap loading ts-morph's
+# project graph + tsconfig path-alias resolution (#28). 8 GB clears the
+# common case without going overboard; users with monorepos can override by
+# setting NODE_OPTIONS=--max-old-space-size=... in the environment.
+_DEFAULT_TS_HEAP_MB = 8192
 
 
 def _ts_node_env(base_env: dict[str, str] | None = None) -> dict[str, str]:
@@ -121,12 +126,19 @@ def _extract_typescript(
     tool_root: Path,
     include_paths: list[str] | None = None,
     exclude_paths: list[str] | None = None,
-) -> list[dict]:
-    """Invoke the TS extractor as a subprocess, parse ndjson output."""
+) -> tuple[list[dict], str | None]:
+    """Invoke the TS extractor as a subprocess, parse ndjson output.
+
+    Returns (primitives, error_msg). error_msg is None on success; on
+    failure it carries the extractor's stderr (truncated) so the regen
+    loop can surface a single summary at end-of-run instead of burying
+    the warning in the output (#28).
+    """
     ts_extractor = tool_root / "extractors" / "typescript" / "extract.ts"
     if not ts_extractor.exists():
-        print(f"WARN: TS extractor not found at {ts_extractor}; skipping", file=sys.stderr)
-        return []
+        msg = f"TS extractor not found at {ts_extractor}"
+        print(f"ERROR: {msg}; skipping", file=sys.stderr)
+        return [], msg
     cmd = [
         "npx", "tsx", str(ts_extractor),
         "--repo-key", repo_key,
@@ -139,9 +151,17 @@ def _extract_typescript(
         cmd += ["--exclude-paths", ",".join(exclude_paths)]
     result = subprocess.run(cmd, env=_ts_node_env(), capture_output=True, text=True, timeout=120)
     if result.returncode != 0:
-        print(f"WARN: TS extractor exited {result.returncode}: {result.stderr[:400]}",
-              file=sys.stderr)
-        return []
+        # Full stderr — when ts-morph OOMs the diagnostic line is past
+        # the first 400 chars and the older truncation hid it.
+        print(
+            f"ERROR: TS extractor exited {result.returncode} for repo {repo_key!r}:\n"
+            f"{result.stderr}",
+            file=sys.stderr,
+        )
+        return [], (
+            f"exit={result.returncode}; "
+            f"first stderr line: {result.stderr.splitlines()[0] if result.stderr.strip() else '(empty)'}"
+        )
     prims: list[dict] = []
     for line in result.stdout.splitlines():
         line = line.strip()
@@ -151,7 +171,7 @@ def _extract_typescript(
             prims.append(json.loads(line))
         except json.JSONDecodeError as e:
             print(f"WARN: TS extractor bad JSON line: {e}", file=sys.stderr)
-    return prims
+    return prims, None
 
 
 # ---------------------------------------------------------------------------
@@ -298,6 +318,7 @@ def _run_v2_pipeline(
     """
     all_primitives: list[dict] = []
     repo_paths: dict[str, Path] = {}
+    extractor_errors: list[tuple[str, str, str]] = []  # (repo_key, language, msg)
 
     # --- Extraction pass (per repo × language) ---
     for repo_cfg in repos:
@@ -318,12 +339,15 @@ def _run_v2_pipeline(
             all_primitives.extend(prims)
 
         if "typescript" in languages:
-            prims = _extract_typescript(
+            prims, ts_err = _extract_typescript(
                 key, path, tool_root=tool_root,
                 include_paths=repo_cfg.get("include_paths"),
                 exclude_paths=repo_cfg.get("exclude_paths"),
             )
-            print(f"    typescript: {len(prims)} primitives")
+            marker = "  [EXTRACTOR FAILED]" if ts_err else ""
+            print(f"    typescript: {len(prims)} primitives{marker}")
+            if ts_err:
+                extractor_errors.append((key, "typescript", ts_err))
             all_primitives.extend(prims)
 
         if "sql" in languages:
@@ -414,11 +438,30 @@ def _run_v2_pipeline(
         "primitive_error_count": n_prim_errors,
         "git_commit": _primary_git_commit(data_dir),
         "validation_report": report,
+        "extractor_errors": [
+            {"repo": r, "language": lang, "error": msg}
+            for (r, lang, msg) in extractor_errors
+        ],
     }
     meta_path = data_dir / "nodes" / "_meta.json"
     meta_path.parent.mkdir(parents=True, exist_ok=True)
     meta_path.write_text(json.dumps(meta, indent=2) + "\n")
     print(f"--- done: {len(all_primitives)} primitives, {edge_count} edges")
+    if extractor_errors:
+        print(f"--- ERRORS: {len(extractor_errors)} extractor failure(s):",
+              file=sys.stderr)
+        for repo_key, lang, msg in extractor_errors:
+            print(f"    {repo_key} ({lang}): {msg}", file=sys.stderr)
+        if any(lang == "typescript" for _, lang, _ in extractor_errors):
+            print(
+                "    TS hint: if the message above contains "
+                "'JavaScript heap out of memory', try\n"
+                "      NODE_OPTIONS='--max-old-space-size=16384' "
+                "kg depgraph regen\n"
+                "    to give ts-morph more headroom (default is 8 GB).",
+                file=sys.stderr,
+            )
+        return 1
     return 0
 
 

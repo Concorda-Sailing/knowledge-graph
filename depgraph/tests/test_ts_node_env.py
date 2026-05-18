@@ -2,8 +2,8 @@
 subprocess that runs the TypeScript extractor.
 
 Real-world web apps (~hundreds of source files) exhaust ts-morph at
-Node's default ~2GB heap; the helper raises the floor with
---max-old-space-size=4096 while deferring to anything the caller has
+Node's default ~4GB heap; the helper raises the floor (currently 8 GB,
+see _DEFAULT_TS_HEAP_MB) while deferring to anything the caller has
 already set in NODE_OPTIONS.
 """
 from __future__ import annotations
