@@ -87,12 +87,20 @@ def build_config(
     disable: list[str] | None = None,
     auto: bool = True,
     local_plugin_paths: list[Path] | None = None,
+    languages: list[str] | None = None,
 ) -> tuple[ClassificationConfig, list[str]]:
     """Build the active ClassificationConfig for a single repo.
+
+    `languages` is the per-repo `[repos.<key>].languages` list from
+    project.toml. When supplied, plugins whose cue keys don't intersect
+    with it are skipped — e.g. a Python-only repo no longer activates
+    `general:typescript`. Pass None to disable the filter (legacy
+    behavior: every plugin contributes regardless of language).
 
     Returns `(config, active_plugin_names)` so the caller can log which
     plugins fired.
     """
+    allowed = set(languages) if languages is not None else None
     cues_by_lang, active_names = build_config_generic(
         repo_path,
         plugins_pkg=_DEPGRAPH_PLUGINS_PKG,
@@ -100,6 +108,7 @@ def build_config(
         cue_copier=_copy_language_cues,
         enable=enable, disable=disable, auto=auto,
         local_plugin_paths=local_plugin_paths,
+        allowed_cue_keys=allowed,
     )
     return ClassificationConfig(languages=cues_by_lang), active_names
 
@@ -111,8 +120,14 @@ def build_config_for_repos(
     disable: list[str] | None = None,
     auto: bool = True,
     local_plugin_paths: list[Path] | None = None,
+    languages_by_repo: dict[str, list[str]] | None = None,
 ) -> tuple[ClassificationConfig, dict[str, list[str]]]:
     """Multi-repo variant — unions cues across every repo's active set.
+
+    `languages_by_repo`: optional `{repo_key: [lang, ...]}` mapping. When
+    provided, each repo's plugin set is filtered by that repo's languages
+    (a Python-only repo doesn't load `general:typescript`). Keys missing
+    from the mapping fall back to "all plugins" (legacy behavior).
 
     Returns `(config, {repo_key: active_plugin_names})`. Local plugin
     paths apply across all repos in the project; the generic core
@@ -122,9 +137,11 @@ def build_config_for_repos(
     merged: dict[str, LanguageCues] = {}
     by_repo: dict[str, list[str]] = {}
     for key, path in repo_paths.items():
+        langs = (languages_by_repo or {}).get(key)
         cfg, names = build_config(
             path, enable=enable, disable=disable, auto=auto,
             local_plugin_paths=local_plugin_paths,
+            languages=langs,
         )
         by_repo[key] = names
         for lang, cues in cfg.languages.items():

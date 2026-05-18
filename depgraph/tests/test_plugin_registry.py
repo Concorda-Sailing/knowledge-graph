@@ -308,3 +308,48 @@ def test_build_config_for_repos_unions_across_repos(tmp_path):
     # Union: api contributes python.route_decorators, web contributes ts.hook_call_names
     assert cfg.languages["python"].route_decorators
     assert cfg.languages["typescript"].hook_call_names
+
+
+def test_build_config_languages_filter_drops_offlanguage_plugins(tmp_path):
+    """A Python-only repo must not activate `general:typescript` etc. (#15)."""
+    (tmp_path / "pyproject.toml").write_text('[project]\ndependencies = []\n')
+
+    cfg, active = build_config(tmp_path, languages=["python"])
+    assert "general:python" in active
+    assert "general:typescript" not in active
+    # No TS cues should bleed in.
+    assert "typescript" not in cfg.languages
+
+
+def test_build_config_languages_none_keeps_legacy_behavior(tmp_path):
+    """languages=None preserves the pre-fix behavior (every general:* fires)."""
+    cfg, active = build_config(tmp_path, languages=None)
+    assert "general:python" in active
+    assert "general:typescript" in active
+
+
+def test_build_config_for_repos_filters_per_repo_languages(tmp_path):
+    """languages_by_repo scopes each repo's plugin set independently (#15)."""
+    api = tmp_path / "api"; api.mkdir()
+    (api / "pyproject.toml").write_text('[project]\ndependencies = []\n')
+    web = tmp_path / "web"; web.mkdir()
+    (web / "package.json").write_text(json.dumps({"dependencies": {}}))
+
+    _, by_repo = build_config_for_repos(
+        {"api": api, "web": web},
+        languages_by_repo={"api": ["python"], "web": ["typescript"]},
+    )
+    assert "general:python" in by_repo["api"]
+    assert "general:typescript" not in by_repo["api"]
+    assert "general:typescript" in by_repo["web"]
+    assert "general:python" not in by_repo["web"]
+
+
+def test_build_config_explicit_enable_overrides_language_filter(tmp_path):
+    """An explicit `enable=["general:typescript"]` overrides the language
+    filter — the user is forcing the plugin on, that wins (#15)."""
+    (tmp_path / "pyproject.toml").write_text('[project]\ndependencies = []\n')
+    _, active = build_config(
+        tmp_path, languages=["python"], enable=["general:typescript"],
+    )
+    assert "general:typescript" in active

@@ -349,12 +349,23 @@ def _run_v2_pipeline(
     print("--- classify")
     from depgraph.plugins import build_config_for_repos
     classification_options = classification_options or {}
+    # Build the per-repo languages map from the repos we just extracted from,
+    # falling back to the inferred set when a repo didn't declare languages
+    # explicitly. This is what filters out `general:typescript` from a
+    # Python-only repo etc. (#15).
+    languages_by_repo: dict[str, list[str]] = {}
+    for repo_cfg in repos:
+        key = repo_cfg["key"]
+        langs = repo_cfg.get("languages") or _infer_languages(Path(repo_cfg["path"]))
+        if langs:
+            languages_by_repo[key] = list(langs)
     cfg, plugins_by_repo = build_config_for_repos(
         repo_paths,
         enable=classification_options.get("enable"),
         disable=classification_options.get("disable"),
         auto=classification_options.get("auto", True),
         local_plugin_paths=classification_options.get("local_plugin_paths"),
+        languages_by_repo=languages_by_repo,
     )
     for repo_key, names in plugins_by_repo.items():
         print(f"    {repo_key} plugins: {', '.join(names) if names else '(none)'}")

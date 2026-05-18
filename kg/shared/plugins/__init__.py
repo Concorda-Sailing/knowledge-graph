@@ -217,6 +217,7 @@ def build_config_generic(
     disable: list[str] | None = None,
     auto: bool = True,
     local_plugin_paths: list[Path] | None = None,
+    allowed_cue_keys: set[str] | None = None,
 ) -> tuple[dict[str, Any], list[str]]:
     """Build the active cue contributions for a single repo, generic
     over the cue type.
@@ -227,6 +228,11 @@ def build_config_generic(
       - `disable` vetoes (wins over `enable=False`, loses to explicit `enable`).
       - When `auto=True`, every other plugin runs its detector; when
         `auto=False`, only `general:*` and `enable` listings activate.
+      - When `allowed_cue_keys` is set, a plugin only activates if at
+        least one of its cue keys is in the set (after other rules pass).
+        Depgraph uses this to keep `general:typescript` from firing on a
+        Python-only repo, etc. Explicit `enable=[name]` still wins —
+        forcing a plugin is a user override of the auto-detect machinery.
 
     Returns `(cues_by_key, active_plugin_names)`. The caller's wrapper
     constructs whatever typed config object it wants from `cues_by_key`.
@@ -262,8 +268,19 @@ def build_config_generic(
             active = False
         if not active:
             continue
+        if (
+            allowed_cue_keys is not None
+            and p.name not in enable_set
+            and not (set(p.cues.keys()) & allowed_cue_keys)
+        ):
+            continue
         active_names.append(p.name)
         for key, cues in p.cues.items():
+            if allowed_cue_keys is not None and key not in allowed_cue_keys and p.name not in enable_set:
+                # Drop the contribution but keep the plugin in active_names
+                # only if some other cue key passes — handled by the outer
+                # `if not (set(...) & ...)` guard above.
+                continue
             if key in cues_by_key:
                 cues_by_key[key] = cue_merger(cues_by_key[key], cues)
             else:
