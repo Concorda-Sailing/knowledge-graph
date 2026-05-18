@@ -207,6 +207,22 @@ def project_primary_repo(data_dir: Path) -> Optional[str]:
     return None
 
 
+def project_primary_repo_explicit(data_dir: Path) -> Optional[str]:
+    """The value of `[project].primary_repo` from project.toml, or None if the
+    user hasn't set it (regardless of whether a fallback is available).
+
+    Callers that need to distinguish "user set this" from "first entry by
+    iteration order" should use this; everything else should call
+    project_primary_repo() and get the resolved value."""
+    cfg = load_project_config(data_dir)
+    proj = cfg.get("project") or {}
+    primary = proj.get("primary_repo")
+    if not primary:
+        return None
+    repos = project_repos(data_dir)
+    return primary if primary in repos else None
+
+
 def primary_repo_path(data_dir: Path) -> Optional[Path]:
     """Convenience: resolve the primary repo's path. Used by git-head stampers."""
     key = project_primary_repo(data_dir)

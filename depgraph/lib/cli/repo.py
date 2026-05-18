@@ -12,7 +12,11 @@ import sys
 from pathlib import Path
 
 from .context import Context
-from depgraph.lib.config import project_repos, project_primary_repo
+from depgraph.lib.config import (
+    project_repos,
+    project_primary_repo,
+    project_primary_repo_explicit,
+)
 
 
 # ── private helpers ──────────────────────────────────────────────────────────
@@ -98,9 +102,17 @@ def cmd_repo_list(args: argparse.Namespace, ctx: Context) -> int:
     if not repos:
         print("no repos configured")
         return 0
-    primary = project_primary_repo(ctx.DEPGRAPH)
+    explicit_primary = project_primary_repo_explicit(ctx.DEPGRAPH)
+    resolved_primary = project_primary_repo(ctx.DEPGRAPH)
     for key, r in repos.items():
-        marker = " (primary)" if key == primary else ""
+        if explicit_primary and key == explicit_primary:
+            marker = " (primary)"
+        elif explicit_primary is None and key == resolved_primary:
+            # No [project].primary_repo set; we fall back to first-by-order.
+            # Mark it as a default so the user can tell the difference.
+            marker = " (primary, default)"
+        else:
+            marker = ""
         print(f"{key}{marker}")
         print(f"  path:       {r['path']}")
         if r.get("extractor"):
@@ -109,6 +121,9 @@ def cmd_repo_list(args: argparse.Namespace, ctx: Context) -> int:
             print(f"  detectors:  {', '.join(r['detectors'])}")
         if r.get("files_arg"):
             print(f"  files_arg:  {r['files_arg']}")
+    if explicit_primary is None:
+        print("\n(no primary_repo set; first listed repo used as default — "
+              "`kg project set primary_repo <key>` to make it explicit)")
     return 0
 
 

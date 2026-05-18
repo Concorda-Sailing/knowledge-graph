@@ -86,6 +86,32 @@ def test_repo_list_no_repos_exits_0(tmp_path):
     assert "no repos" in r.stdout.lower()
 
 
+def test_repo_list_marks_implicit_primary_distinctly(tmp_path):
+    """Without [project].primary_repo, the first listed repo is marked
+    `(primary, default)` and a footer explains the fallback (#22)."""
+    (tmp_path / "nodes" / "_index").mkdir(parents=True)
+    (tmp_path / "project.toml").write_text(
+        '[project]\nname = "test"\n'
+        '[repos.first]\npath = "/tmp/first"\n'
+        '[repos.second]\npath = "/tmp/second"\n'
+    )
+    r = _run(["repo-list"], tmp_path)
+    assert r.returncode == 0, r.stderr
+    assert "first (primary, default)" in r.stdout
+    # Second repo must not get a primary marker.
+    assert "second\n" in r.stdout or r.stdout.rstrip().endswith("second")
+    assert "no primary_repo set" in r.stdout
+
+
+def test_repo_list_marks_explicit_primary_without_default_suffix(tmp_path):
+    """When primary_repo is set, the marker is plain `(primary)` — no `default`."""
+    data = _make_fixture(tmp_path)
+    r = _run(["repo-list"], data)
+    assert r.returncode == 0, r.stderr
+    assert "myrepo (primary)" in r.stdout
+    assert "default" not in r.stdout
+
+
 # ── repo-remove ───────────────────────────────────────────────────────────────
 
 def test_repo_remove_strips_block(tmp_path):
