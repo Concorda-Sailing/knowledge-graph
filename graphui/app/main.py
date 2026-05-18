@@ -185,7 +185,8 @@ def index(request: Request, sort: str = "activity", activity: str | None = None)
     """Top-level dashboard: activity strip, graph health, cross-cuts, then repos
     filtered by activity classification and sorted per `sort` param."""
     repos_all = loader.repo_summary()
-    counts = {"active": 0, "dormant": 0, "dead-candidate": 0, "all": len(repos_all)}
+    counts = {"active": 0, "dormant": 0, "dead-candidate": 0, "empty": 0,
+              "all": len(repos_all)}
     for r in repos_all:
         cls = r["activity"]["classification"]
         if cls in counts:

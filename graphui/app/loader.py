@@ -217,6 +217,7 @@ from depgraph.lib.rollup import (  # noqa: E402
     Rollup,
     AnchorResult,
 )
+from depgraph.lib.config import project_repos as _depgraph_project_repos  # noqa: E402
 
 
 def _tier_of(fan_out: int) -> str:
@@ -408,12 +409,16 @@ def load_dependents() -> dict[str, list[dict]]:
     cached = _DEPGRAPH_DEPS_CACHE.get(proj.depgraph_dir)
     if cached is not None and cached[0] == mt:
         return cached[1]
-    p = proj.depgraph_nodes_dir / "_index" / "dependents.json"
+    p = proj.depgraph_nodes_dir / "_index" / "by_target.json"
     if not p.exists():
         out: dict[str, list[dict]] = {}
     else:
         idx = json.loads(p.read_text())
-        out = idx.get("by_target") or {}
+        # v2 is flat {target: [...]}, v1 wraps in {"schema_version": 1, "by_target": {...}}.
+        if isinstance(idx, dict) and "by_target" in idx and "schema_version" in idx:
+            out = idx.get("by_target") or {}
+        else:
+            out = idx if isinstance(idx, dict) else {}
     _DEPGRAPH_DEPS_CACHE[proj.depgraph_dir] = (mt, out)
     return out
 
@@ -532,10 +537,28 @@ def _empty_state_counts() -> dict[str, int]:
     return {s: 0 for s in _STATES}
 
 
+def _configured_repo_basenames() -> dict[str, str]:
+    """Map of {basename: repo_key} from depgraph/project.toml. Empty when
+    project.toml is missing or has no [repos.*] tables — graphui then
+    falls back to nodes-only repo discovery."""
+    proj = current_project()
+    try:
+        repos = _depgraph_project_repos(proj.depgraph_dir)
+    except Exception:
+        # Malformed project.toml shouldn't crash the dashboard.
+        return {}
+    return {info["basename"]: key for key, info in repos.items()}
+
+
 def repo_summary() -> list[dict]:
-    """One entry per source repo seen in depgraph nodes' source.repo field.
+    """One entry per source repo seen in depgraph nodes' source.repo field,
+    PLUS one entry for every `[repos.<key>]` configured in project.toml that
+    produced zero primitives — those would otherwise vanish from the dashboard
+    and the user has no signal that extraction failed (#21).
+
     Returns: [{basename, node_count, state_counts: {current: n, ...},
-               current_pct, has_stale, kinds: [{kind, count}, ...]}]
+               current_pct, has_stale, kinds: [{kind, count}, ...],
+               empty_corpus: bool}]
     Sorted by node_count desc.
 
     All graph-derived per-repo aggregates (areas, cross-repo dep counts,
@@ -562,6 +585,18 @@ def repo_summary() -> list[dict]:
         kind = n.get("kind") or "—"
         bucket["kinds"][kind] = bucket["kinds"].get(kind, 0) + 1
 
+    # Inject configured-but-empty repos. Without this, a TS repo whose
+    # extractor crashed at regen time silently disappears from the dashboard.
+    configured = _configured_repo_basenames()
+    for basename in configured:
+        if basename not in by_repo:
+            by_repo[basename] = {
+                "basename": basename,
+                "node_count": 0,
+                "state_counts": _empty_state_counts(),
+                "kinds": {},
+            }
+
     out = []
     for r in by_repo.values():
         sc = r["state_counts"]
@@ -569,6 +604,7 @@ def repo_summary() -> list[dict]:
         total = r["node_count"]
         r["current_pct"] = round(100 * current / total) if total else 0
         r["has_stale"] = sc.get("stale", 0) > 0
+        r["empty_corpus"] = (total == 0)
         r["kinds"] = sorted(
             [{"kind": k, "count": v} for k, v in r["kinds"].items()],
             key=lambda x: -x["count"],
@@ -586,11 +622,15 @@ def repo_summary() -> list[dict]:
         stale = r["state_counts"].get("stale", 0)
         score = (age // 30) + (10 if inbound == 0 else 0) + stale
         r["dead_code_score"] = score
-        # refine classification with inbound-deps signal.
-        if r["activity"]["classification"] == "dormant" and age >= 180 and inbound == 0:
+        # Override classification for empty configured repos — "extractor
+        # produced nothing" is its own state, distinct from old code that
+        # nobody depends on.
+        if r["empty_corpus"]:
+            r["activity"]["classification"] = "empty"
+        elif r["activity"]["classification"] == "dormant" and age >= 180 and inbound == 0:
             r["activity"]["classification"] = "dead-candidate"
         out.append(r)
-    out.sort(key=lambda r: -r["node_count"])
+    out.sort(key=lambda r: (-r["node_count"], r["basename"]))
     return out
 
 

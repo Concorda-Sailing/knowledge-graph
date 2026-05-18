@@ -7,7 +7,9 @@
     <span class="repo-card-langs">
       {% for l in repo.languages %}{{ l.label }}{% if not loop.last %} · {% endif %}{% endfor %}
     </span>
-    {% if act.today_node_delta %}
+    {% if repo.empty_corpus %}
+      <span class="repo-card-quiet">⚠ no primitives extracted</span>
+    {% elif act.today_node_delta %}
       <span class="repo-card-today">+{{ act.today_node_delta }} today</span>
     {% elif act.classification == "dormant" or act.classification == "dead-candidate" %}
       <span class="repo-card-quiet">no activity today</span>
