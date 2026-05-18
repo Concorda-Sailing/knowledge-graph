@@ -164,168 +164,131 @@ def cmd_dossier_draft(args: argparse.Namespace, ctx: Context) -> int:
     nid = node["id"]
     src = node.get("source") or {}
     repo, rel, line = src.get("repo"), src.get("path"), src.get("line") or 1
-
-    # Source excerpt — ~80 lines centered on the symbol's line
-    src_excerpt = "(unavailable)"
+    end_line = src.get("end_line") or (line + 60)
     repo_info = repo_for_basename(ctx.DEPGRAPH, repo) if repo else None
-    if repo_info and rel:
-        full = repo_info["path"] / rel
-        if full.exists():
-            try:
-                lines = full.read_text().splitlines()
-                start = max(0, line - 10)
-                end = min(len(lines), line + 70)
-                numbered = [f"{i+1:>5}  {l}" for i, l in enumerate(lines[start:end], start=start)]
-                src_excerpt = "\n".join(numbered)
-            except OSError:
-                pass
 
-    # Dependents
+    # Tools mode = --auto + --tools. The thin prompt path expects the
+    # model to fetch source/deps/history via the agent loop instead of
+    # eating it pre-loaded. Skips the heavy gather entirely.
+    auto = bool(getattr(args, "auto", False))
+    tools_mode = auto and bool(getattr(args, "tools", False))
+
+    # Cheap counts the thin prompt still needs (so the model knows
+    # how many to fetch, and what file/line window to read).
     deps_idx = load_dependents_index(ctx)
     deps = deps_idx.get(nid) or []
-    deps_str = "\n".join(
-        f"  - {d.get('source','?')}  (via {d.get('via','?')}, {d.get('confidence','?')}, {d.get('where','—')})"
-        for d in deps[:15]
-    ) or "  (none)"
-    deps_more = f"  ... +{len(deps) - 15} more" if len(deps) > 15 else ""
+    n_deps = len(deps)
+    read_start = max(1, line - 5)
+    read_end = end_line + 5
 
-    # Recent git history
-    git_log = "(unavailable)"
-    if repo_info and rel:
-        try:
-            out = subprocess.run(
-                ["git", "log", "-15", "--oneline", "--", rel],
-                cwd=str(repo_info["path"]),
-                capture_output=True, text=True, timeout=10,
-            )
-            git_log = out.stdout.strip() or "(no recent commits)"
-        except (OSError, subprocess.SubprocessError):
-            pass
+    src_excerpt = "(skipped: tools mode)" if tools_mode else "(unavailable)"
+    deps_str = "(skipped: tools mode — call `dependents_of`)" if tools_mode else "  (none)"
+    deps_more = ""
+    git_log = "(skipped: tools mode — call `recent_history`)" if tools_mode else "(unavailable)"
+    adj_str = "(skipped: tools mode)" if tools_mode else "  (none reviewed yet in this module)"
+    rules_str = "  (none)"
 
-    # Adjacent dossiers — siblings in same module, only ones already
-    # reviewed (current) so we don't propagate stub style
-    adj_dossiers = []
-    if repo and rel:
-        same_dir_prefix = "/".join(rel.split("/")[:-1])
-        for nf in ctx.NODES.rglob("*.json"):
-            if nf.name.startswith("_") or any(p.startswith("_") for p in nf.parts):
-                continue
+    if not tools_mode:
+        # Full pre-load: rich prompt for --auto without --tools and for
+        # the non-auto "print prompt to stdout for a human to feed in"
+        # workflow. Both consume the same baked-in context.
+        if repo_info and rel:
+            full = repo_info["path"] / rel
+            if full.exists():
+                try:
+                    lines = full.read_text().splitlines()
+                    start = max(0, line - 10)
+                    end = min(len(lines), line + 70)
+                    numbered = [f"{i+1:>5}  {l}" for i, l in enumerate(lines[start:end], start=start)]
+                    src_excerpt = "\n".join(numbered)
+                except OSError:
+                    pass
+
+        deps_str = "\n".join(
+            f"  - {d.get('source','?')}  (via {d.get('via','?')}, {d.get('confidence','?')}, {d.get('where','—')})"
+            for d in deps[:15]
+        ) or "  (none)"
+        deps_more = f"  ... +{len(deps) - 15} more" if len(deps) > 15 else ""
+
+        if repo_info and rel:
             try:
-                d = json.loads(nf.read_text())
-            except (OSError, json.JSONDecodeError):
-                continue
-            s = d.get("source") or {}
-            if s.get("repo") != repo:
-                continue
-            sp = s.get("path", "") or ""
-            if not sp.startswith(same_dir_prefix):
-                continue
-            if d.get("id") == nid:
-                continue
-            if _dossier_state(d, ctx) != "current":
-                continue
-            dossier_path = ctx.DEPGRAPH / (d.get("dossier") or "")
-            if dossier_path.exists():
-                adj_dossiers.append((d["id"], dossier_path))
-    adj_str = "\n".join(
-        f"  - {nid_a}: see {p.relative_to(ctx.DEPGRAPH)}" for nid_a, p in adj_dossiers[:5]
-    ) or "  (none reviewed yet in this module)"
+                out = subprocess.run(
+                    ["git", "log", "-15", "--oneline", "--", rel],
+                    cwd=str(repo_info["path"]),
+                    capture_output=True, text=True, timeout=10,
+                )
+                git_log = out.stdout.strip() or "(no recent commits)"
+            except (OSError, subprocess.SubprocessError):
+                pass
 
-    # Logigraph rules claiming this node
-    rules_claiming = []
-    # Optional: surface logigraph rules claiming this depgraph node.
-    # Resolves from LOGIGRAPH_DATA_DIR or [logigraph].data_dir in project.toml.
-    cfg = load_project_config(ctx.DEPGRAPH)
-    logigraph_dir_str = (
-        os.environ.get("LOGIGRAPH_DATA_DIR")
-        or (cfg.get("logigraph") or {}).get("data_dir")
-    )
-    by_code_idx = (
-        Path(logigraph_dir_str).expanduser() / "nodes" / "_index" / "by_code.json"
-        if logigraph_dir_str
-        else None
-    )
-    if by_code_idx is not None and by_code_idx.exists():
-        try:
-            idx = json.loads(by_code_idx.read_text())
-            rules_claiming = idx.get("by_target", {}).get(nid, [])
-        except (OSError, json.JSONDecodeError):
-            pass
-    rules_str = "\n".join(f"  - {r}" for r in rules_claiming) or "  (none)"
+        # Adjacent dossiers — siblings in same module, only ones already
+        # reviewed (current) so we don't propagate stub style
+        adj_dossiers = []
+        if repo and rel:
+            same_dir_prefix = "/".join(rel.split("/")[:-1])
+            for nf in ctx.NODES.rglob("*.json"):
+                if nf.name.startswith("_") or any(p.startswith("_") for p in nf.parts):
+                    continue
+                try:
+                    d = json.loads(nf.read_text())
+                except (OSError, json.JSONDecodeError):
+                    continue
+                s = d.get("source") or {}
+                if s.get("repo") != repo:
+                    continue
+                sp = s.get("path", "") or ""
+                if not sp.startswith(same_dir_prefix):
+                    continue
+                if d.get("id") == nid:
+                    continue
+                if _dossier_state(d, ctx) != "current":
+                    continue
+                dossier_path = ctx.DEPGRAPH / (d.get("dossier") or "")
+                if dossier_path.exists():
+                    adj_dossiers.append((d["id"], dossier_path))
+        adj_str = "\n".join(
+            f"  - {nid_a}: see {p.relative_to(ctx.DEPGRAPH)}" for nid_a, p in adj_dossiers[:5]
+        ) or "  (none reviewed yet in this module)"
+
+        # Logigraph rules claiming this node — only useful with the rich
+        # prompt; the tools-mode model can fetch this separately if we
+        # ever expose a `rules_for_node` tool.
+        rules_claiming = []
+        cfg = load_project_config(ctx.DEPGRAPH)
+        logigraph_dir_str = (
+            os.environ.get("LOGIGRAPH_DATA_DIR")
+            or (cfg.get("logigraph") or {}).get("data_dir")
+        )
+        by_code_idx = (
+            Path(logigraph_dir_str).expanduser() / "nodes" / "_index" / "by_code.json"
+            if logigraph_dir_str
+            else None
+        )
+        if by_code_idx is not None and by_code_idx.exists():
+            try:
+                idx = json.loads(by_code_idx.read_text())
+                rules_claiming = idx.get("by_target", {}).get(nid, [])
+            except (OSError, json.JSONDecodeError):
+                pass
+        rules_str = "\n".join(f"  - {r}" for r in rules_claiming) or "  (none)"
 
     # Build the prompt
     dossier_path = ctx.DEPGRAPH / (node.get("dossier") or "")
 
-    prompt = f"""You are drafting a depgraph dossier for a code node. The
-dossier will be injected at edit time to give future LLM collaborators
-the *intent* and *gotchas* that source code alone doesn't carry.
+    if tools_mode:
+        prompt = _build_thin_prompt(
+            nid=nid, node=node, repo=repo, rel=rel, line=line,
+            read_start=read_start, read_end=read_end, n_deps=n_deps,
+            dossier_path=dossier_path, ctx=ctx,
+        )
+    else:
+        prompt = _build_full_prompt(
+            nid=nid, node=node, repo=repo, rel=rel, line=line,
+            src_excerpt=src_excerpt, deps_str=deps_str, deps_more=deps_more,
+            n_deps=n_deps, git_log=git_log, adj_str=adj_str, rules_str=rules_str,
+            dossier_path=dossier_path, ctx=ctx,
+        )
 
-# Node
-- id: {nid}
-- kind: {node.get("kind","?")}
-- source: {repo}/{rel}:{line}
-- structural_hash: {node.get("structural_hash","?")[:12]}
-
-# Source excerpt (around line {line})
-```
-{src_excerpt}
-```
-
-# Direct dependents ({len(deps)} total)
-{deps_str}
-{deps_more}
-
-# Recent commits touching this file (last 15)
-```
-{git_log}
-```
-
-# Adjacent reviewed dossiers in this module
-{adj_str}
-
-# Logigraph rules claiming this node
-{rules_str}
-
-# Authoring task
-
-Write the dossier in this exact structure (markdown headings, no
-frontmatter — the CLI adds frontmatter when saving):
-
-## Purpose
-~1 paragraph. What does this node do, and why does it exist? Frame in
-terms a future Claude could use to make a decision. No filler.
-
-## Invariants
-Bulleted list of things that must remain true. Look at the source
-+ recent commits for hard-learned truths.
-
-## Gotchas
-What has bitten? Surprising ordering, recent reverts, edge cases.
-Mine the git log — recent fix/revert commits are gold.
-
-## Cross-cutting concerns
-Auth, rate limits, websocket events, audit, side effects on other
-features. Be specific.
-
-## External consumers
-Apps, integrations, scheduled jobs, webhooks that depend on this.
-"None known" is a valid answer.
-
-## Open questions
-Unresolved design or implementation questions. Acceptable to leave
-empty if nothing comes up.
-
-Quality bar: substantive, not boilerplate. Surface what specifically
-bit recently (look at the git log). Be honest about uncertainty —
-"don't know" is better than confidently wrong.
-
-Output ONLY the dossier markdown body (no frontmatter, no
-``` fences around the whole thing). The CLI will save to:
-
-  {dossier_path.relative_to(ctx.DEPGRAPH)}
-"""
-
-    auto = bool(getattr(args, "auto", False))
     if not auto:
         print(prompt)
         print("\n---")
@@ -431,6 +394,210 @@ Output ONLY the dossier markdown body (no frontmatter, no
         file=sys.stderr,
     )
     return 0
+
+
+# Grounding rules + section schema are identical in both prompt variants.
+# Extracted as a constant so the two builders below stay short and so
+# the rules themselves are easy to find and edit.
+_GROUNDING_AND_SECTIONS = """## GROUNDING RULES (read before drafting)
+
+These rules override your priors. Violating them makes the dossier
+worse than empty.
+
+1. **Only assert what your evidence supports.** Your evidence base is
+   either the pre-loaded sections in this prompt or the results of
+   tool calls you've made this turn. If a claim cannot be traced to
+   one of those, do not write it.
+
+2. **No invented commit hashes.** If you cite a commit, it MUST appear
+   verbatim in your evidence (the "Recent commits" section, or a
+   `recent_history` tool result). Do not invent SHAs. Quote the commit
+   message verbatim. If you have no commit history, do not write
+   anything in Gotchas that references git history.
+
+3. **No invented callers, consumers, or integrations.** "External
+   consumers" must be grounded in "Direct dependents" or a
+   `dependents_of` tool result. If dependents is empty or only test
+   files, write "None known from corpus." Do not list plausible-
+   sounding routers, jobs, or webhooks.
+
+4. **No invented exception types, return shapes, or error formats.**
+   Read the actual source. If it raises `HTTPException`, say
+   `HTTPException`, not `PermissionDenied`. Match identifiers exactly.
+
+5. **No speculative performance, security, or scale claims** unless
+   the source or commits contain evidence. Do not invent thresholds,
+   benchmarks, or "occasional spikes."
+
+6. **Prefer omission over invention.** Empty sections are fine.
+   "None observed in corpus" or "Not visible from this excerpt" beats
+   a confident fabrication. The dossier is read by future LLMs at
+   edit time — wrong facts are worse than missing ones.
+
+## Sections (write in this exact order)
+
+## Purpose
+~1 paragraph. What this node does and why it exists, grounded in the
+source. Frame so a future Claude can make a decision. No filler. If
+the source is too thin to support a purpose claim, say that explicitly.
+
+## Invariants
+Bulleted list of things that must remain true, each traceable to the
+source or to a specific recent commit. No generic invariants
+("must be idempotent", "must not modify state") unless the source
+actually demonstrates them.
+
+## Gotchas
+What has bitten, grounded in recent commits (quote the line) or
+visible in the source. Do not invent reverts, edge cases, or
+historical incidents. If nothing is visible, write "None visible
+from recent commits."
+
+## Cross-cutting concerns
+Auth, rate limits, audit, side effects on other features — only
+those visible in the source or in dependent call sites. "Not visible
+from this excerpt" is a valid entry per topic.
+
+## External consumers
+Grounded in dependents. If dependents is empty or only test files,
+write "None known from corpus." Do not invent apps, jobs, webhooks,
+or CLIs.
+
+## Open questions
+Unresolved design or implementation questions that surfaced from
+reading the source/commits. Empty is fine.
+
+Quality bar: substantive AND grounded. A short, accurate dossier is
+infinitely more valuable than a long fabricated one. "I cannot tell
+from the available evidence" is a legitimate answer."""
+
+
+def _build_thin_prompt(
+    *,
+    nid: str,
+    node: dict,
+    repo: Optional[str],
+    rel: Optional[str],
+    line: int,
+    read_start: int,
+    read_end: int,
+    n_deps: int,
+    dossier_path: Path,
+    ctx: Context,
+) -> str:
+    """Tool-driven prompt: deliberately omits source/deps/git so the
+    agent loop has to fetch via tools before drafting. Without the
+    explicit MUST-call list, the model is content to draft from
+    priors — see issue #48."""
+    return f"""You are drafting a depgraph dossier for a code node. You
+have tools and you MUST use them. This prompt deliberately does not
+pre-load source, callers, or git history — fetching is the job.
+
+# Node
+- id: {nid}
+- kind: {node.get("kind","?")}
+- source: {repo}/{rel}:{line}
+- structural_hash: {node.get("structural_hash","?")[:12]}
+- direct dependents: {n_deps} recorded
+
+# Required exploration (do this BEFORE writing prose)
+
+You MUST call these tools at minimum. Skipping any of them means the
+dossier will be wrong:
+
+1. `read_source(repo="{repo}", path="{rel}", start_line={read_start}, end_line={read_end})`
+   — see the actual symbol body. Adjust the window if too narrow.
+
+2. `dependents_of(node_id="{nid}", limit=50)`
+   — list who depends on this node. The prompt only tells you the
+   count ({n_deps}); the tool returns the actual ids and call sites.
+
+3. `recent_history(repo="{repo}", path="{rel}", limit=25)`
+   — last commits touching this file. Commit messages are the source
+   of truth for what bit recently. If empty, you have no Gotchas.
+
+Then make additional calls as needed: `read_source` on dependent
+files to verify call patterns; `node_info(node_id="...")` to inspect
+a specific dependent's structure.
+
+# Authoring task
+
+After exploration, write the dossier in this exact structure
+(markdown headings, no frontmatter — the CLI adds frontmatter when
+saving).
+
+{_GROUNDING_AND_SECTIONS}
+
+Output ONLY the dossier markdown body (no frontmatter, no
+``` fences around the whole thing). The CLI will save to:
+
+  {dossier_path.relative_to(ctx.DEPGRAPH)}
+"""
+
+
+def _build_full_prompt(
+    *,
+    nid: str,
+    node: dict,
+    repo: Optional[str],
+    rel: Optional[str],
+    line: int,
+    src_excerpt: str,
+    deps_str: str,
+    deps_more: str,
+    n_deps: int,
+    git_log: str,
+    adj_str: str,
+    rules_str: str,
+    dossier_path: Path,
+    ctx: Context,
+) -> str:
+    """Pre-loaded prompt: bakes source, deps, git log, adjacent
+    dossiers into the prompt itself. Used when the model has no tool
+    access (one-shot --auto, or the print-to-stdout mode where a
+    human will paste the prompt into another tool)."""
+    return f"""You are drafting a depgraph dossier for a code node. The
+dossier will be injected at edit time to give future LLM collaborators
+the *intent* and *gotchas* that source code alone doesn't carry.
+
+# Node
+- id: {nid}
+- kind: {node.get("kind","?")}
+- source: {repo}/{rel}:{line}
+- structural_hash: {node.get("structural_hash","?")[:12]}
+
+# Source excerpt (around line {line})
+```
+{src_excerpt}
+```
+
+# Direct dependents ({n_deps} total)
+{deps_str}
+{deps_more}
+
+# Recent commits touching this file (last 15)
+```
+{git_log}
+```
+
+# Adjacent reviewed dossiers in this module
+{adj_str}
+
+# Logigraph rules claiming this node
+{rules_str}
+
+# Authoring task
+
+Write the dossier in this exact structure (markdown headings, no
+frontmatter — the CLI adds frontmatter when saving).
+
+{_GROUNDING_AND_SECTIONS}
+
+Output ONLY the dossier markdown body (no frontmatter, no
+``` fences around the whole thing). The CLI will save to:
+
+  {dossier_path.relative_to(ctx.DEPGRAPH)}
+"""
 
 
 def _save_drafted_dossier(
