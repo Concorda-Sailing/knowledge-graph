@@ -946,14 +946,20 @@ function attachImportsEdges(
     // Attributed to the enclosing module (same as static imports), so impact
     // analysis and `kg depgraph dependents` see them. The Function-constructor
     // shim form is handled separately in attachCallEdges.
-    for (const call of sf.getDescendantsOfKind(SyntaxKind.CallExpression)) {
-      if (call.getExpression().getKind() !== SyntaxKind.ImportKeyword) continue;
+    //
+    // Visitor walk rather than getDescendantsOfKind so the CallExpression
+    // descendant array is never materialized — #44 traced an RSS spike to that
+    // allocation.
+    sf.forEachDescendant((node) => {
+      if (!Node.isCallExpression(node)) return;
+      const call = node;
+      if (call.getExpression().getKind() !== SyntaxKind.ImportKeyword) return;
       const args = call.getArguments();
-      if (args.length === 0) continue;
+      if (args.length === 0) return;
       const first = args[0];
       // Non-literal spec (template w/ interpolation, identifier, etc.) — can't
       // resolve statically. Skip rather than emit a wrong edge.
-      if (!Node.isStringLiteral(first) && !Node.isNoSubstitutionTemplateLiteral(first)) continue;
+      if (!Node.isStringLiteral(first) && !Node.isNoSubstitutionTemplateLiteral(first)) return;
       const specText = (first as any).getLiteralText();
       let target: string;
       let confidence: "exact" | "fuzzy" | "unresolved";
@@ -974,15 +980,18 @@ function attachImportsEdges(
         target, kind: "imports", via: "dynamic_import",
         where: `${rel}:${call.getStartLineNumber()}`, confidence,
       });
-    }
+    });
   }
 }
 
 // ---------------------------------------------------------------------------
-// L2 edge resolution — Task 3.4: calls + instantiates (intra-fn type binding)
+// L2 edge resolution — Task 3.4/3.5: calls + instantiates (intra-fn type
+// binding) + reads/assigns. Combined into a single per-function descendant
+// walk so the AST is traversed once per fn instead of twice (#44 — fewer
+// resident ts-morph wrapper nodes at any moment).
 // ---------------------------------------------------------------------------
 
-function attachCallEdges(
+function attachCallAndVarAccessEdges(
   prims: Primitive[],
   sourceFiles: SourceFile[],
   repoKey: string,
@@ -992,8 +1001,13 @@ function attachCallEdges(
   const methodsByClass = new Map<string, Map<string, string>>(); // classId -> {methodName -> fnId}
   const fnByPathAndLine = new Map<string, Primitive>(); // "path:line" -> prim
   const modByPath = new Map<string, Primitive>();
+  const varsByPath = new Map<string, Map<string, string>>(); // path -> name -> varId (module-scope)
   for (const p of prims) {
     if (p.primitive === "module") modByPath.set(p.source.path, p);
+    if (p.primitive === "variable" && p.owner === null) {
+      if (!varsByPath.has(p.source.path)) varsByPath.set(p.source.path, new Map());
+      varsByPath.get(p.source.path)!.set(p.name, p.id);
+    }
   }
 
   for (const p of prims) {
@@ -1085,6 +1099,7 @@ function attachCallEdges(
     const localNames = localByPath.get(rel) ?? new Map<string, string>();
     const imports = importsByPath.get(rel) ?? new Map<string, string>();
     const shims = importShimsByPath.get(rel);
+    const localVars = varsByPath.get(rel);  // module-scope variables; undefined if file has none
 
     const resolveClass = (name: string): string | undefined => {
       const id = localNames.get(name) ?? imports.get(name);
@@ -1121,9 +1136,45 @@ function attachCallEdges(
         if (cid) varTypes.set(param.getName(), cid);
       }
 
-      // Walk descendants in document order
-      const descendants = fnNode.getDescendants?.() ?? [];
-      for (const node of descendants) {
+      // Visitor walk: getDescendants() would materialize every wrapper Node in
+      // the function body up-front, holding all of them resident until the
+      // outer for-loop finished — on large codebases that was a primary OOM
+      // driver (#44). forEachDescendant streams nodes so each can be GC'd
+      // after the callback returns. Document order is preserved.
+      //
+      // This single walk handles three edge kinds: calls/instantiates
+      // (CallExpression, NewExpression), var-type seeding for method-call
+      // receivers (VariableDeclaration), and reads/assigns against
+      // module-scope variables (Identifier). They share the same fn-list
+      // iteration so combining keeps wrapper-node churn proportional to one
+      // pass, not three.
+      fnNode.forEachDescendant?.((node: Node) => {
+        // reads/assigns: module-scope variable access. Cheapest check first
+        // (Identifier matches a huge fraction of nodes; only emit when the
+        // file actually has module-scope vars).
+        if (localVars && Node.isIdentifier(node)) {
+          const idName = node.getText();
+          const varId = localVars.get(idName);
+          if (varId) {
+            const parent = node.getParent();
+            let isWrite = false;
+            if (parent && Node.isBinaryExpression(parent)) {
+              const op = parent.getOperatorToken().getText();
+              if (op === "=" && parent.getLeft() === node) isWrite = true;
+            }
+            fnPrim.edges_out.push({
+              target: varId,
+              kind: isWrite ? "assigns" : "reads",
+              via: isWrite ? "assignment_lhs" : "identifier_read",
+              where: `${rel}:${node.getStartLineNumber()}`,
+              confidence: "exact",
+            });
+          }
+          // Identifier nodes can't simultaneously be the other kinds handled
+          // below; fall through is harmless but skipping is cleaner.
+          return;
+        }
+
         // Pattern 1: const/let t: Service = new Service()
         if (Node.isVariableDeclaration(node)) {
           const typeNode = node.getTypeNode?.();
@@ -1181,7 +1232,7 @@ function attachCallEdges(
                   confidence: specText.startsWith(".") ? "unresolved" : "fuzzy",
                 });
               }
-              continue;
+              return;
             }
             const targetId = localNames.get(name) ?? imports.get(name);
             // Emit `calls` when the target is a known function primitive OR an
@@ -1225,7 +1276,7 @@ function attachCallEdges(
             }
           }
         }
-      }
+      });
     }
   }
 }
@@ -1301,10 +1352,10 @@ function attachTestsEdges(
       const fnPrim = fnByPathAndLine.get(`${rel}:${startLine}`);
       if (!fnPrim) continue;
 
-      // Walk descendants looking for CallExpressions
-      const descendants = fnNode.getDescendants?.() ?? [];
-      for (const node of descendants) {
-        if (!Node.isCallExpression(node)) continue;
+      // Visitor walk over CallExpressions — see #44: getDescendants()
+      // materialized every Node wrapper in the function body.
+      fnNode.forEachDescendant?.((node: Node) => {
+        if (!Node.isCallExpression(node)) return;
 
         // Check if this call is inside an expect(...) ancestor.
         // expect(add(1, 2)).toBe(3):
@@ -1315,7 +1366,7 @@ function attachTestsEdges(
         // Detection: walk up ancestors; if we reach a CallExpression whose
         // callee (or callee's object) is Identifier "expect", this node is
         // assertion-scoped.
-        if (!isInsideExpect(node)) continue;
+        if (!isInsideExpect(node)) return;
 
         const callExpr = node.getExpression();
         let calleeName: string | null = null;
@@ -1324,7 +1375,7 @@ function attachTestsEdges(
         } else if (Node.isPropertyAccessExpression(callExpr)) {
           calleeName = callExpr.getName();
         }
-        if (!calleeName || TS_TEST_FRAMEWORK_PRIMITIVES.has(calleeName)) continue;
+        if (!calleeName || TS_TEST_FRAMEWORK_PRIMITIVES.has(calleeName)) return;
 
         const targetId = localNames.get(calleeName) ?? imports.get(calleeName);
         if (targetId && !targetId.startsWith("external::")) {
@@ -1333,7 +1384,7 @@ function attachTestsEdges(
             where: `${rel}:${node.getStartLineNumber()}`, confidence: "exact",
           });
         }
-      }
+      });
     }
   }
 }
@@ -1361,85 +1412,8 @@ function isInsideExpect(node: Node): boolean {
   return false;
 }
 
-// ---------------------------------------------------------------------------
-// L2 edge resolution — Task 3.5: reads / assigns (TS)
-// ---------------------------------------------------------------------------
-
-function attachVarAccessEdges(
-  prims: Primitive[],
-  sourceFiles: SourceFile[],
-  repoKey: string,
-  repoPath: string,
-): void {
-  // Index module-scope variable primitives per file: name -> id
-  const varsByPath = new Map<string, Map<string, string>>();
-  for (const p of prims) {
-    if (p.primitive === "variable" && p.owner === null) {
-      if (!varsByPath.has(p.source.path)) varsByPath.set(p.source.path, new Map());
-      varsByPath.get(p.source.path)!.set(p.name, p.id);
-    }
-  }
-
-  // Index function primitives by path:line for fast lookup
-  const fnByPathAndLine = new Map<string, Primitive>();
-  for (const p of prims) {
-    if (p.primitive === "function") {
-      fnByPathAndLine.set(`${p.source.path}:${p.source.line}`, p);
-    }
-  }
-
-  for (const sf of sourceFiles) {
-    const rel = relative(repoPath, sf.getFilePath());
-    const localVars = varsByPath.get(rel);
-    if (!localVars || localVars.size === 0) continue;
-
-    // Walk all function nodes
-    const allFns = [
-      ...sf.getFunctions(),
-      ...sf.getClasses().flatMap((c) => c.getMethods()),
-      ...sf.getVariableStatements().flatMap((vs) =>
-        vs.getDeclarations().filter((d) => {
-          const init = d.getInitializer();
-          return init && (Node.isArrowFunction(init) || Node.isFunctionExpression(init));
-        })
-      ),
-    ];
-
-    for (const fnNode of allFns as any[]) {
-      const startLine = fnNode.getStartLineNumber();
-      const fnPrim = fnByPathAndLine.get(`${rel}:${startLine}`);
-      if (!fnPrim) continue;
-
-      // Walk all Identifier descendants
-      const descendants = fnNode.getDescendants?.() ?? [];
-      for (const node of descendants) {
-        if (!Node.isIdentifier(node)) continue;
-        const name = node.getText();
-        const varId = localVars.get(name);
-        if (!varId) continue;
-
-        // Determine if this is a read or write
-        const parent = node.getParent();
-        let isWrite = false;
-        if (parent && Node.isBinaryExpression(parent)) {
-          // Left-hand side of assignment: x = 1
-          const op = parent.getOperatorToken().getText();
-          if (op === "=" && parent.getLeft() === node) {
-            isWrite = true;
-          }
-        }
-
-        fnPrim.edges_out.push({
-          target: varId,
-          kind: isWrite ? "assigns" : "reads",
-          via: isWrite ? "assignment_lhs" : "identifier_read",
-          where: `${rel}:${node.getStartLineNumber()}`,
-          confidence: "exact",
-        });
-      }
-    }
-  }
-}
+// reads/assigns (#44): folded into attachCallAndVarAccessEdges so the per-fn
+// descendant walk runs once for both edge categories instead of twice.
 
 function splitCsv(s: string | undefined): string[] {
   if (!s) return [];
@@ -1526,8 +1500,13 @@ function _routeCallPrimitive(
 }
 
 function extractRouteCalls(sf: SourceFile, repoKey: string, relPath: string): Primitive[] {
+  // Visitor-based walk: avoids materializing the full CallExpression descendant
+  // array (which on large Next.js codebases pushed RSS past available RAM per
+  // #44). Each visited Node is released to GC after the callback returns.
   const out: Primitive[] = [];
-  for (const call of sf.getDescendantsOfKind(SyntaxKind.CallExpression)) {
+  sf.forEachDescendant((node) => {
+    if (!Node.isCallExpression(node)) return;
+    const call = node;
     const callee = call.getExpression();
     let method: string | null = null;
     let urlArg: Node | undefined;
@@ -1545,13 +1524,13 @@ function extractRouteCalls(sf: SourceFile, repoKey: string, relPath: string): Pr
       }
     }
 
-    if (!method || !urlArg) continue;
+    if (!method || !urlArg) return;
     const urlPattern = _urlPatternFromExpression(urlArg);
-    if (!urlPattern) continue;
+    if (!urlPattern) return;
     const line = call.getStartLineNumber();
     const endLine = call.getEndLineNumber();
     out.push(_routeCallPrimitive(method, urlPattern, line, endLine, repoKey, relPath));
-  }
+  });
   return out;
 }
 
@@ -1621,8 +1600,8 @@ function main() {
   attachDefinesEdges(allPrims);
   attachInheritanceEdges(allPrims, sourceFiles, repoKey, repoPath);
   attachImportsEdges(allPrims, sourceFiles, repoKey, repoPath);
-  attachCallEdges(allPrims, sourceFiles, repoKey, repoPath);
-  attachVarAccessEdges(allPrims, sourceFiles, repoKey, repoPath);
+  // calls + instantiates + reads/assigns share one per-fn descendant walk (#44).
+  attachCallAndVarAccessEdges(allPrims, sourceFiles, repoKey, repoPath);
   attachTestsEdges(allPrims, sourceFiles, repoKey, repoPath);
 
   for (const p of allPrims) emit(p);

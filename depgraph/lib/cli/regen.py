@@ -107,8 +107,13 @@ def _extract_python(
 # Node's own default is ~4 GB, which OOMs on real-world Next.js codebases —
 # 276 source files of a moderate web app exhaust the heap loading ts-morph's
 # project graph + tsconfig path-alias resolution (#28). 8 GB clears the
-# common case without going overboard; users with monorepos can override by
-# setting NODE_OPTIONS=--max-old-space-size=... in the environment.
+# common case without going overboard.
+#
+# CAUTION: raising this further (or setting --max-old-space-size higher via
+# the environment) only helps when stderr says "JavaScript heap out of
+# memory". For kernel OOM-kills (exit -9/137), a larger heap ceiling makes
+# things worse — V8 grabs more RSS before GC. See #44 and the runtime hint
+# printed by the regen entrypoint.
 _DEFAULT_TS_HEAP_MB = 8192
 
 
@@ -117,6 +122,9 @@ def _ts_node_env(base_env: dict[str, str] | None = None) -> dict[str, str]:
     enough for ts-morph to load hundreds of files. ts-morph's default 2GB
     heap OOMs on real-world web apps; we raise the floor but defer to any
     --max-old-space-size the caller has already set in NODE_OPTIONS.
+
+    This addresses V8 heap exhaustion only — physical-RAM OOMs (#44) need a
+    different remedy and are surfaced separately by the regen hint.
     """
     env = dict(base_env if base_env is not None else os.environ)
     existing = env.get("NODE_OPTIONS", "")
@@ -848,14 +856,36 @@ def _run_v2_pipeline(
         for repo_key, lang, msg in extractor_errors:
             print(f"    {repo_key} ({lang}): {msg}", file=sys.stderr)
         if any(lang == "typescript" for _, lang, _ in extractor_errors):
-            print(
-                "    TS hint: if the message above contains "
-                "'JavaScript heap out of memory', try\n"
-                "      NODE_OPTIONS='--max-old-space-size=16384' "
-                "kg depgraph regen\n"
-                "    to give ts-morph more headroom (default is 8 GB).",
-                file=sys.stderr,
-            )
+            # Two distinct OOM modes need different advice (#44):
+            #   - V8 heap exhaustion: stderr carries "JavaScript heap out of
+            #     memory"; raising --max-old-space-size genuinely helps.
+            #   - Kernel OOM-kill (exit 137 / "Killed"): RSS exceeded physical
+            #     RAM. Raising the heap ceiling makes this WORSE — V8 grabs
+            #     more memory before triggering GC. The fix is reducing the
+            #     working set (narrow include-paths, run per-repo) or moving
+            #     to a host with more RAM.
+            ts_errors = [m for _, lang, m in extractor_errors if lang == "typescript"]
+            heap_oom = any("JavaScript heap out of memory" in m for m in ts_errors)
+            killed = any("exit=137" in m or "exit=-9" in m for m in ts_errors)
+            if heap_oom:
+                print(
+                    "    TS hint (V8 heap OOM): try\n"
+                    "      NODE_OPTIONS='--max-old-space-size=16384' "
+                    "kg depgraph regen\n"
+                    "    to give ts-morph more heap (default is 8 GB).",
+                    file=sys.stderr,
+                )
+            if killed:
+                print(
+                    "    TS hint (kernel OOM-killed, exit 137): the process\n"
+                    "    exceeded available physical RAM. Do NOT raise\n"
+                    "    --max-old-space-size — it makes this worse. Try:\n"
+                    "      - narrow [repos.*].include-paths in project.toml\n"
+                    "        so fewer files are loaded into ts-morph's project\n"
+                    "      - regen one repo at a time with --repo-key/--repo-path\n"
+                    "      - run on a host with more RAM (see #44).",
+                    file=sys.stderr,
+                )
         return 1
     return 0
 
