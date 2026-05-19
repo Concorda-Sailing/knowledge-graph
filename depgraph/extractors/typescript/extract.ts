@@ -1253,13 +1253,14 @@ function attachCallAndVarAccessEdges(
             const objExpr = callExpr.getExpression();
             const methodName = callExpr.getName();
             const recvName = objExpr.getText();
+            const where = `${rel}:${node.getStartLineNumber()}`;
             const recvClassId = varTypes.get(recvName);
             if (recvClassId) {
               const methodId = methodsByClass.get(recvClassId)?.get(methodName);
               if (methodId) {
                 fnPrim.edges_out.push({
                   target: methodId, kind: "calls", via: "method_call",
-                  where: `${rel}:${node.getStartLineNumber()}`, confidence: "exact",
+                  where, confidence: "exact",
                 });
               } else {
                 // Canonical external-terminal shape is `external::<ecosystem>::<symbol>`
@@ -1270,7 +1271,81 @@ function attachCallAndVarAccessEdges(
                 fnPrim.edges_out.push({
                   target: `external::unresolved::${className}.${methodName}`,
                   kind: "calls", via: "method_call",
-                  where: `${rel}:${node.getStartLineNumber()}`, confidence: "unresolved",
+                  where, confidence: "unresolved",
+                });
+              }
+            } else {
+              // Issue #69 (R7): the receiver isn't a typed local, but it might
+              // be an imported namespace or module — consult the imports map
+              // before declaring defeat. Previously we silently dropped the
+              // edge, which is worse than the Python case (#68) because the
+              // `unresolved` counter never ticked. Always emit *something*.
+              const importTarget = imports.get(recvName);
+              if (importTarget && importTarget.startsWith("external::")) {
+                // `import * as fs from "fs"` → imports.get("fs") is
+                // `external::npm::fs`. Extending with `::<method>` produces
+                // the canonical 4-segment external terminal.
+                // Also covers `import fs from "fs"` (default) or named
+                // imports of namespace-like values; for those the import
+                // target already includes a trailing symbol segment, so
+                // appending `::<method>` would over-nest. Detect by segment
+                // count: an `external::npm::<pkg>` namespace is 3 segments;
+                // anything longer means the import already named a leaf
+                // symbol and the method call is on that symbol — fall back
+                // to the unresolved bucket rather than fabricate a deeper
+                // terminal.
+                const segCount = importTarget.split("::").length;
+                if (segCount === 3) {
+                  fnPrim.edges_out.push({
+                    target: `${importTarget}::${methodName}`,
+                    kind: "calls", via: "method_call",
+                    where, confidence: "exact",
+                  });
+                } else {
+                  fnPrim.edges_out.push({
+                    target: `external::unresolved::${recvName}.${methodName}`,
+                    kind: "calls", via: "method_call",
+                    where, confidence: "unresolved",
+                  });
+                }
+              } else if (importTarget) {
+                // In-corpus import. Two shapes:
+                //   `<repo>::<path>`            → namespace import of a module;
+                //                                 look up <methodName> in that
+                //                                 file's top-level symbols.
+                //   `<repo>::<path>::<symbol>`  → named/default import; can't
+                //                                 do member resolution from
+                //                                 here, so fall through.
+                const parts = importTarget.split("::");
+                let resolved: string | undefined;
+                if (parts.length === 2) {
+                  const targetPath = parts[1];
+                  resolved = localByPath.get(targetPath)?.get(methodName);
+                }
+                if (resolved && (allFunctionIds.has(resolved) || allClassIds.has(resolved))) {
+                  // Confidence=fuzzy because we resolved through the imports
+                  // map by symbol name, not by tracing the actual call-site
+                  // type. Matches the convention in attachImportsEdges for
+                  // re-export hops.
+                  fnPrim.edges_out.push({
+                    target: resolved, kind: "calls", via: "method_call",
+                    where, confidence: "fuzzy",
+                  });
+                } else {
+                  fnPrim.edges_out.push({
+                    target: `external::unresolved::${recvName}.${methodName}`,
+                    kind: "calls", via: "method_call",
+                    where, confidence: "unresolved",
+                  });
+                }
+              } else {
+                // Bare receiver with no var-type and no import binding.
+                // Emit an unresolved terminal so the call shows up in stats
+                // instead of vanishing — silent drops were the R7 violation.
+                fnPrim.edges_out.push({
+                  target: `external::unresolved::${recvName}.${methodName}`,
+                  kind: "calls", via: "method_call",
+                  where, confidence: "unresolved",
                 });
               }
             }

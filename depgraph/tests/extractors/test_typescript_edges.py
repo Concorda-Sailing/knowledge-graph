@@ -145,6 +145,44 @@ def test_method_call_on_annotated_local_resolves():
 
 
 # ---------------------------------------------------------------------------
+# Issue #69: method calls on imported namespaces / modules must not drop
+# silently. Previously the resolver only consulted `varTypes`; receivers
+# whose binding lived in the imports map produced zero edges.
+# ---------------------------------------------------------------------------
+
+def test_method_call_on_npm_namespace_import_resolves_external():
+    """`import * as fs from "fs"; fs.readFile(...)` should emit
+    `external::npm::fs::readFile` (confidence=exact), not drop silently."""
+    prims = run_extractor("method_call_on_import", which="edges")
+    root = next(p for p in prims if p["name"] == "root")
+    calls = [e for e in root["edges_out"] if e["kind"] == "calls"]
+    fs_calls = [e for e in calls if e["target"] == "external::npm::fs::readFile"]
+    assert fs_calls, [e["target"] for e in calls]
+    assert fs_calls[0]["confidence"] == "exact"
+
+
+def test_method_call_on_in_corpus_namespace_import_resolves():
+    """`import * as util from "./local/util.js"; util.greet()` should emit
+    an edge to the exporting symbol in the corpus."""
+    prims = run_extractor("method_call_on_import", which="edges")
+    root = next(p for p in prims if p["name"] == "root")
+    calls = [e for e in root["edges_out"] if e["kind"] == "calls"]
+    targets = {e["target"] for e in calls}
+    assert "fixture::src/local/util.ts::greet" in targets, targets
+
+
+def test_method_call_on_unbound_receiver_emits_unresolved_not_silent():
+    """`mystery.doSomething()` with no var-type and no import: never drop;
+    fall through to `external::unresolved::mystery.doSomething` so the
+    unresolved counter ticks (R7)."""
+    prims = run_extractor("method_call_on_import", which="edges")
+    root = next(p for p in prims if p["name"] == "root")
+    calls = [e for e in root["edges_out"] if e["kind"] == "calls"]
+    targets = {e["target"] for e in calls}
+    assert "external::unresolved::mystery.doSomething" in targets, targets
+
+
+# ---------------------------------------------------------------------------
 # Task 3.5: reads / assigns edges (TS)
 # ---------------------------------------------------------------------------
 
