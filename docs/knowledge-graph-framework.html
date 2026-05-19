@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>A Conceptual Framework for the Knowledge Graph</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg: #faf9f4;
+    --paper: #ffffff;
+    --ink: #1f1c17;
+    --ink-soft: #524b3f;
+    --rule: #ddd6c4;
+    --c-dep: #3f5d8a;
+    --c-dep-soft: #e7edf6;
+    --c-log: #4f7a4f;
+    --c-log-soft: #e6efe6;
+    --c-com: #b66c35;
+    --c-com-soft: #f6eadc;
+    --cross: #8a8276;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: Georgia, "Iowan Old Style", "Apple Garamond", "Source Serif Pro", serif;
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  main {
+    max-width: 740px;
+    margin: 0 auto;
+    padding: 4rem 1.6rem 6rem;
+  }
+  h1 {
+    font-size: 2.2rem;
+    line-height: 1.15;
+    margin: 0 0 0.4rem;
+    letter-spacing: -0.012em;
+    font-weight: 700;
+  }
+  .subtitle {
+    color: var(--ink-soft);
+    font-style: italic;
+    margin: 0 0 3rem;
+    font-size: 1.08rem;
+  }
+  h2 {
+    font-size: 1.45rem;
+    margin: 3.2rem 0 1rem;
+    padding-top: 1.6rem;
+    border-top: 1px solid var(--rule);
+    letter-spacing: -0.005em;
+    font-weight: 700;
+  }
+  h3 {
+    font-size: 1.18rem;
+    margin: 2.2rem 0 0.7rem;
+    font-weight: 700;
+  }
+  h3.layer-dep { color: var(--c-dep); }
+  h3.layer-log { color: var(--c-log); }
+  h3.layer-com { color: var(--c-com); }
+  p { margin: 0 0 1rem; }
+  figure {
+    margin: 2rem 0;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 1.5rem 1rem 1.2rem;
+    border-radius: 4px;
+  }
+  figcaption {
+    margin-top: 0.8rem;
+    font-size: 0.92rem;
+    color: var(--ink-soft);
+    font-style: italic;
+    text-align: center;
+    padding: 0 1rem;
+  }
+  svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+  .term { font-weight: 700; }
+  .term-dep { color: var(--c-dep); font-weight: 700; }
+  .term-log { color: var(--c-log); font-weight: 700; }
+  .term-com { color: var(--c-com); font-weight: 700; }
+  ul { margin: 0 0 1rem; padding-left: 1.4rem; }
+  li { margin: 0.35rem 0; }
+  em { font-style: italic; }
+  .pull {
+    margin: 1.4rem 0;
+    padding: 0.2rem 1.2rem;
+    border-left: 3px solid var(--rule);
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+  .footer-note {
+    margin-top: 4rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid var(--rule);
+    color: var(--ink-soft);
+    font-size: 0.92rem;
+  }
+  /* SVG defaults */
+  svg text {
+    font-family: Georgia, "Iowan Old Style", serif;
+    fill: var(--ink);
+  }
+  svg .label-edge {
+    font-family: Georgia, serif;
+    font-style: italic;
+    font-size: 13px;
+    fill: var(--ink-soft);
+  }
+  svg .label-node {
+    font-family: Georgia, serif;
+    font-weight: 700;
+    font-size: 14px;
+    text-anchor: middle;
+  }
+  svg .label-caption {
+    font-family: Georgia, serif;
+    font-size: 12px;
+    fill: var(--ink-soft);
+    font-style: italic;
+    text-anchor: middle;
+  }
+  svg .label-attr {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 11px;
+    fill: var(--ink-soft);
+    text-anchor: middle;
+  }
+</style>
+</head>
+<body>
+<main>
+
+  <h1>A Conceptual Framework for the Knowledge Graph</h1>
+  <p class="subtitle">Three layers of facts about a software system, and the simple shape that holds them.</p>
+
+  <h2>The starting idea</h2>
+  <p>Software systems are full of relationships. A function uses another function. A page calls a server. A business rule constrains a sign-up flow. These relationships exist whether or not anyone writes them down — and they exist whether or not anyone agrees on what they should be. The system described here writes them down in a single, consistent shape called a <span class="term">graph</span>.</p>
+  <p>A graph, in this document, is the simplest possible structure for "what relates to what." It has only two ingredients, defined in the next two sections.</p>
+
+  <h2>Nodes — the things the graph knows about</h2>
+  <p>A <span class="term">node</span> is one identifiable thing. Something you can point to and give a name. In this system, a node could be:</p>
+  <ul>
+    <li>a function inside a code file,</li>
+    <li>a service running on a server,</li>
+    <li>an endpoint reachable at a URL,</li>
+    <li>a domain concept like "post draft,"</li>
+    <li>a business rule like "posts must be reviewed before publishing."</li>
+  </ul>
+  <p>Every node has an <span class="term">identity</span> (a stable name the graph uses to refer to it) and a small set of <span class="term">facts</span> about what it is — its kind, where it lives, when it was last updated. Nothing more. Nodes do not contain other nodes; they sit alongside one another, each one a peer.</p>
+
+  <figure>
+    <svg viewBox="0 0 600 220" role="img" aria-label="Three example nodes side by side">
+      <!-- node 1: a function -->
+      <text x="100" y="40" class="label-caption">a function in a file</text>
+      <circle cx="100" cy="100" r="42" fill="#fff" stroke="#3f5d8a" stroke-width="2"/>
+      <text x="100" y="98" class="label-node">create</text>
+      <text x="100" y="115" class="label-node">_post</text>
+      <text x="100" y="175" class="label-attr">posts.py : 120</text>
+
+      <!-- node 2: a service -->
+      <text x="300" y="40" class="label-caption">a service on a host</text>
+      <circle cx="300" cy="100" r="42" fill="#fff" stroke="#b66c35" stroke-width="2"/>
+      <text x="300" y="98" class="label-node">posts</text>
+      <text x="300" y="115" class="label-node">-api</text>
+      <text x="300" y="175" class="label-attr">api.example.com</text>
+
+      <!-- node 3: a rule -->
+      <text x="500" y="40" class="label-caption">a business rule</text>
+      <circle cx="500" cy="100" r="42" fill="#fff" stroke="#4f7a4f" stroke-width="2"/>
+      <text x="500" y="92" class="label-node">posts require</text>
+      <text x="500" y="108" class="label-node">review before</text>
+      <text x="500" y="124" class="label-node">publish</text>
+      <text x="500" y="175" class="label-attr">rule</text>
+    </svg>
+    <figcaption>Three nodes. Each one is a distinct, named thing with a small set of facts attached. They are peers — none of them is inside another.</figcaption>
+  </figure>
+
+  <h2>Edges — the connections between nodes</h2>
+  <p>An <span class="term">edge</span> is a labeled connection between exactly two nodes. It says: <em>this node relates to that node, in this specific way</em>. An edge carries three things:</p>
+  <ul>
+    <li><span class="term">A type.</span> What kind of relationship this is. "Calls." "Imports." "Publishes to." "Governs." "Owns." The type is a small fixed vocabulary; the graph only allows types it understands.</li>
+    <li><span class="term">A direction.</span> Which side initiated the relationship. The function that does the calling sits on one side; the function being called sits on the other. Most edges are <em>directional</em> in this sense. A few are <em>symmetric</em>, where the two nodes are peers on a shared channel and neither one started it — the edge type marks those explicitly so they aren't read as caller-and-callee by mistake.</li>
+    <li><span class="term">Attributes.</span> Small extras describing the edge itself: the file and line where the relationship is visible, how confident the graph is in the connection, a reference to the contract being honored, and so on.</li>
+  </ul>
+
+  <figure>
+    <svg viewBox="0 0 600 200" role="img" aria-label="Two nodes connected by a directional edge">
+      <defs>
+        <marker id="arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#524b3f"/>
+        </marker>
+      </defs>
+      <circle cx="120" cy="100" r="44" fill="#fff" stroke="#1f1c17" stroke-width="2"/>
+      <text x="120" y="96" class="label-node">create</text>
+      <text x="120" y="113" class="label-node">_post</text>
+
+      <circle cx="480" cy="100" r="44" fill="#fff" stroke="#1f1c17" stroke-width="2"/>
+      <text x="480" y="96" class="label-node">validate</text>
+      <text x="480" y="113" class="label-node">_payload</text>
+
+      <line x1="170" y1="100" x2="430" y2="100" stroke="#524b3f" stroke-width="2" marker-end="url(#arrow-ink)"/>
+      <text x="300" y="88" class="label-edge" text-anchor="middle">calls</text>
+      <text x="300" y="125" class="label-attr">posts.py : 124</text>
+    </svg>
+    <figcaption>Two nodes connected by one edge. The label above the arrow names the relationship; the small note below records where in the code it appears. The arrowhead tells you which side initiated.</figcaption>
+  </figure>
+
+  <h2>Why nodes and edges are enough</h2>
+  <p>Once a system is described as nodes and edges, you can answer questions by <span class="term">walking the graph</span>: starting at one node, following its outgoing edges to the nodes they lead to, then following <em>their</em> outgoing edges, and so on. The shape of every question stays the same; the answers come from how the graph is filled out. Examples:</p>
+  <ul>
+    <li>"What does this function rely on, directly and through the chain?" — start at the function node, walk out along edges of type <em>calls</em> and <em>imports</em>.</li>
+    <li>"What would break if I removed this endpoint?" — start at the endpoint node, walk <em>inward</em> along edges of type <em>calls</em> to find every place that depends on it.</li>
+    <li>"Which rules govern this process?" — start at the process node, walk inward along edges of type <em>governs</em>.</li>
+  </ul>
+  <p class="pull">A graph is useful in proportion to how complete and how trustworthy it is. The framework is built around protecting both: extractors keep it full, and validation rules keep it honest.</p>
+
+  <h2>Three graphs, one system</h2>
+  <p>A single graph of everything would be unreadable and impossible to maintain. Different kinds of facts answer different kinds of questions, and they come from different sources of truth. The framework keeps three graphs side by side, each one focused on one kind of fact.</p>
+
+  <h3 class="layer-dep">depgraph — the code graph</h3>
+  <p><span class="term-dep">depgraph</span> records what is actually in the source code. Its nodes are the things a programmer can point to in a file: functions, classes, modules, the long-lived variables that hold a server or a database connection. Its edges are the relationships visible in the code itself: this function calls that one (at this exact line), this file imports that module, this class is built on top of that base class.</p>
+  <p>The source of truth is the source code. When the code changes, depgraph re-reads the affected files and updates its nodes and edges. Anything depgraph claims can be checked by opening the file at the line the edge points to.</p>
+
+  <figure>
+    <svg viewBox="0 0 600 230" role="img" aria-label="A small depgraph cluster">
+      <defs>
+        <marker id="arrow-dep" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#3f5d8a"/>
+        </marker>
+      </defs>
+      <circle cx="100" cy="120" r="46" fill="#e7edf6" stroke="#3f5d8a" stroke-width="2"/>
+      <text x="100" y="116" class="label-node" fill="#1f1c17">create</text>
+      <text x="100" y="133" class="label-node" fill="#1f1c17">_post</text>
+      <text x="100" y="190" class="label-attr">function</text>
+
+      <circle cx="320" cy="60" r="46" fill="#e7edf6" stroke="#3f5d8a" stroke-width="2"/>
+      <text x="320" y="56" class="label-node" fill="#1f1c17">validate</text>
+      <text x="320" y="73" class="label-node" fill="#1f1c17">_payload</text>
+      <text x="320" y="20" class="label-attr">function</text>
+
+      <circle cx="500" cy="180" r="46" fill="#e7edf6" stroke="#3f5d8a" stroke-width="2"/>
+      <text x="500" y="176" class="label-node" fill="#1f1c17">Post</text>
+      <text x="500" y="193" class="label-node" fill="#1f1c17">Create</text>
+      <text x="500" y="220" class="label-attr">class</text>
+
+      <line x1="143" y1="105" x2="277" y2="74" stroke="#3f5d8a" stroke-width="2" marker-end="url(#arrow-dep)"/>
+      <text x="200" y="80" class="label-edge" fill="#3f5d8a">calls</text>
+
+      <line x1="146" y1="138" x2="455" y2="178" stroke="#3f5d8a" stroke-width="2" marker-end="url(#arrow-dep)"/>
+      <text x="290" y="170" class="label-edge" fill="#3f5d8a">uses type</text>
+
+      <line x1="349" y1="103" x2="468" y2="158" stroke="#3f5d8a" stroke-width="2" marker-end="url(#arrow-dep)"/>
+      <text x="430" y="120" class="label-edge" fill="#3f5d8a">uses type</text>
+    </svg>
+    <figcaption>A small slice of depgraph. The function on the left calls a helper on the upper right, and both refer to a shared class on the lower right. Every edge points to a specific line in a specific file.</figcaption>
+  </figure>
+
+  <h3 class="layer-log">logigraph — the meaning graph</h3>
+  <p><span class="term-log">logigraph</span> records what the system <em>means</em> — the concepts, rules, and processes the software is meant to embody. Its nodes are not lines of code; they are ideas: "post draft," "content category," "publish flow," "drafts must be reviewed before publishing." Its edges describe how those ideas relate: this rule governs this process, this concept belongs to that larger concept, this step comes before that step.</p>
+  <p>The source of truth here is human judgment. logigraph is written and maintained deliberately, in plain prose, and reviewed. It is the layer where <em>intent</em> lives — the layer where you can ask "why does this exist?" and expect an answer that isn't just a pointer to a line of code.</p>
+
+  <figure>
+    <svg viewBox="0 0 600 220" role="img" aria-label="A small logigraph cluster">
+      <defs>
+        <marker id="arrow-log" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#4f7a4f"/>
+        </marker>
+      </defs>
+      <circle cx="120" cy="120" r="52" fill="#e6efe6" stroke="#4f7a4f" stroke-width="2"/>
+      <text x="120" y="112" class="label-node" fill="#1f1c17">publish</text>
+      <text x="120" y="130" class="label-node" fill="#1f1c17">flow</text>
+      <text x="120" y="190" class="label-attr">process</text>
+
+      <circle cx="400" cy="60" r="52" fill="#e6efe6" stroke="#4f7a4f" stroke-width="2"/>
+      <text x="400" y="52" class="label-node" fill="#1f1c17">review before</text>
+      <text x="400" y="70" class="label-node" fill="#1f1c17">publish</text>
+      <text x="400" y="20" class="label-attr">rule</text>
+
+      <circle cx="450" cy="180" r="52" fill="#e6efe6" stroke="#4f7a4f" stroke-width="2"/>
+      <text x="450" y="176" class="label-node" fill="#1f1c17">content</text>
+      <text x="450" y="193" class="label-node" fill="#1f1c17">lifecycle</text>
+      <text x="450" y="220" class="label-attr">domain concept</text>
+
+      <line x1="170" y1="105" x2="354" y2="75" stroke="#4f7a4f" stroke-width="2" marker-end="url(#arrow-log)"/>
+      <text x="260" y="80" class="label-edge" fill="#4f7a4f">governed by</text>
+
+      <line x1="170" y1="138" x2="402" y2="170" stroke="#4f7a4f" stroke-width="2" marker-end="url(#arrow-log)"/>
+      <text x="290" y="170" class="label-edge" fill="#4f7a4f">part of</text>
+    </svg>
+    <figcaption>A small slice of logigraph. A process is governed by a rule and is part of a larger domain concept. None of these nodes are code; they are ideas the code is meant to honor.</figcaption>
+  </figure>
+
+  <h3 class="layer-com">comgraph — the communication graph</h3>
+  <p><span class="term-com">comgraph</span> records how the parts of the system talk to one another across boundaries. Its nodes are <span class="term">services</span> (a backend server, a web client, a mobile app, an outside provider like a payments processor) and the <span class="term">addressable channels</span> those services use to communicate — endpoints reachable at URLs, topics on a message bus, named files, signal handlers. Its edges are the interactions themselves: this service calls that endpoint, this publisher sends messages to that topic, this subscriber listens for them.</p>
+  <p>Communication has shape, and comgraph records it through the <em>direction</em> on its edges:</p>
+  <ul>
+    <li><span class="term">Directional</span> — one side initiates, the other responds. A web client calling a backend endpoint. A publisher sending an event to a topic. Most interactions are this shape.</li>
+    <li><span class="term">Bidirectional</span> — a persistent open channel where either side can speak first. A live notifications stream between a server and a browser, for example. Rarer, but real.</li>
+    <li><span class="term">Fan-out</span> — one publisher sending to a channel that many subscribers listen on, with the publisher unaware of who's listening.</li>
+  </ul>
+
+  <figure>
+    <svg viewBox="0 0 600 260" role="img" aria-label="A small comgraph cluster">
+      <defs>
+        <marker id="arrow-com" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#b66c35"/>
+        </marker>
+      </defs>
+      <!-- web service -->
+      <rect x="20" y="90" width="120" height="60" rx="6" fill="#f6eadc" stroke="#b66c35" stroke-width="2"/>
+      <text x="80" y="115" class="label-node" fill="#1f1c17">reader</text>
+      <text x="80" y="132" class="label-node" fill="#1f1c17">-web</text>
+      <text x="80" y="80" class="label-attr">service</text>
+
+      <!-- endpoint node -->
+      <circle cx="260" cy="80" r="40" fill="#fff" stroke="#b66c35" stroke-width="2"/>
+      <text x="260" y="76" class="label-node" fill="#1f1c17">POST</text>
+      <text x="260" y="92" class="label-node" fill="#1f1c17">/posts</text>
+      <text x="260" y="40" class="label-attr">endpoint</text>
+
+      <!-- api service -->
+      <rect x="400" y="50" width="120" height="60" rx="6" fill="#f6eadc" stroke="#b66c35" stroke-width="2"/>
+      <text x="460" y="75" class="label-node" fill="#1f1c17">posts</text>
+      <text x="460" y="92" class="label-node" fill="#1f1c17">-api</text>
+      <text x="460" y="40" class="label-attr">service</text>
+
+      <!-- topic node -->
+      <circle cx="260" cy="200" r="40" fill="#fff" stroke="#b66c35" stroke-width="2"/>
+      <text x="260" y="196" class="label-node" fill="#1f1c17">topic:</text>
+      <text x="260" y="213" class="label-node" fill="#1f1c17">post.published</text>
+      <text x="260" y="250" class="label-attr">channel</text>
+
+      <!-- mobile service -->
+      <rect x="400" y="170" width="120" height="60" rx="6" fill="#f6eadc" stroke="#b66c35" stroke-width="2"/>
+      <text x="460" y="195" class="label-node" fill="#1f1c17">editor</text>
+      <text x="460" y="212" class="label-node" fill="#1f1c17">-app</text>
+      <text x="460" y="250" class="label-attr">service</text>
+
+      <!-- web -> endpoint: calls (directional) -->
+      <line x1="140" y1="110" x2="222" y2="86" stroke="#b66c35" stroke-width="2" marker-end="url(#arrow-com)"/>
+      <text x="175" y="92" class="label-edge" fill="#b66c35">calls</text>
+
+      <!-- api -> endpoint: serves (directional, reversed) -->
+      <line x1="400" y1="80" x2="302" y2="80" stroke="#b66c35" stroke-width="2" marker-end="url(#arrow-com)"/>
+      <text x="350" y="72" class="label-edge" fill="#b66c35">serves</text>
+
+      <!-- api -> topic: publishes -->
+      <line x1="420" y1="115" x2="294" y2="180" stroke="#b66c35" stroke-width="2" marker-end="url(#arrow-com)"/>
+      <text x="370" y="145" class="label-edge" fill="#b66c35">publishes</text>
+
+      <!-- expo -> topic: subscribes -->
+      <line x1="400" y1="200" x2="302" y2="200" stroke="#b66c35" stroke-width="2" marker-end="url(#arrow-com)"/>
+      <text x="350" y="192" class="label-edge" fill="#b66c35">subscribes</text>
+    </svg>
+    <figcaption>A small slice of comgraph. The reader web client calls an endpoint; the backend serves that endpoint. The backend also publishes to a topic that the editor app subscribes to — a fan-out shape where the backend doesn't need to know who's listening.</figcaption>
+  </figure>
+
+  <p>Notice that the endpoint and the topic in the diagram above are nodes of their own — not just labels on edges. That's deliberate. An endpoint can exist with no caller (a dead endpoint, deployed but unused). A topic can exist with no subscriber (a publisher firing into the void). If those addressable channels were collapsed into edge labels, the graph could not distinguish "unused" from "absent." Giving them their own nodes makes the orphan visible the moment it appears.</p>
+
+  <h2>How the three layers compose</h2>
+  <p>The three graphs are not isolated. A single concern — say, the act of publishing a post — appears in all three layers at once: as functions and classes in the code (depgraph), as a process and the rules governing it (logigraph), and as endpoints and messages travelling between services (comgraph). The layers join through <span class="term">cross-graph references</span>: edges that point from a node in one graph to a node in another.</p>
+
+  <figure>
+    <svg viewBox="0 0 620 320" role="img" aria-label="The three layers composing">
+      <defs>
+        <marker id="arrow-cross" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#8a8276"/>
+        </marker>
+      </defs>
+
+      <!-- logigraph band -->
+      <rect x="20" y="20" width="580" height="80" fill="#e6efe6" stroke="#4f7a4f" stroke-width="1.5" rx="4"/>
+      <text x="40" y="44" class="label-attr" style="font-style: normal; font-weight: 700;" fill="#4f7a4f">logigraph — meaning</text>
+      <circle cx="220" cy="70" r="20" fill="#fff" stroke="#4f7a4f" stroke-width="2"/>
+      <text x="220" y="74" class="label-attr" fill="#1f1c17" style="font-style: normal;">rule</text>
+      <circle cx="380" cy="70" r="20" fill="#fff" stroke="#4f7a4f" stroke-width="2"/>
+      <text x="380" y="74" class="label-attr" fill="#1f1c17" style="font-style: normal;">process</text>
+
+      <!-- comgraph band -->
+      <rect x="20" y="120" width="580" height="80" fill="#f6eadc" stroke="#b66c35" stroke-width="1.5" rx="4"/>
+      <text x="40" y="144" class="label-attr" style="font-style: normal; font-weight: 700;" fill="#b66c35">comgraph — communication</text>
+      <circle cx="220" cy="170" r="20" fill="#fff" stroke="#b66c35" stroke-width="2"/>
+      <text x="220" y="174" class="label-attr" fill="#1f1c17" style="font-style: normal;">endpoint</text>
+      <circle cx="380" cy="170" r="20" fill="#fff" stroke="#b66c35" stroke-width="2"/>
+      <text x="380" y="174" class="label-attr" fill="#1f1c17" style="font-style: normal;">service</text>
+
+      <!-- depgraph band -->
+      <rect x="20" y="220" width="580" height="80" fill="#e7edf6" stroke="#3f5d8a" stroke-width="1.5" rx="4"/>
+      <text x="40" y="244" class="label-attr" style="font-style: normal; font-weight: 700;" fill="#3f5d8a">depgraph — code</text>
+      <circle cx="220" cy="270" r="20" fill="#fff" stroke="#3f5d8a" stroke-width="2"/>
+      <text x="220" y="274" class="label-attr" fill="#1f1c17" style="font-style: normal;">function</text>
+      <circle cx="380" cy="270" r="20" fill="#fff" stroke="#3f5d8a" stroke-width="2"/>
+      <text x="380" y="274" class="label-attr" fill="#1f1c17" style="font-style: normal;">module</text>
+
+      <!-- cross-graph dashed lines -->
+      <line x1="220" y1="90" x2="220" y2="150" stroke="#8a8276" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow-cross)"/>
+      <line x1="220" y1="190" x2="220" y2="250" stroke="#8a8276" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow-cross)"/>
+
+      <line x1="380" y1="90" x2="380" y2="150" stroke="#8a8276" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow-cross)"/>
+      <line x1="380" y1="190" x2="380" y2="250" stroke="#8a8276" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow-cross)"/>
+
+      <text x="500" y="115" class="label-edge" fill="#8a8276">cross-graph references</text>
+    </svg>
+    <figcaption>One concern viewed across all three layers. The horizontal bands are the three graphs; the vertical dashed lines are cross-graph references that link a piece of meaning to the channel that carries it to the code that implements it.</figcaption>
+  </figure>
+
+  <p>With cross-graph references in place, the system can answer questions no single layer could answer on its own:</p>
+  <ul>
+    <li>"What code implements this business rule?" — start at the rule in <span class="term-log">logigraph</span>, follow its <em>governs</em> edges to the endpoints in <span class="term-com">comgraph</span> it constrains, then follow each endpoint's cross-graph reference into the function in <span class="term-dep">depgraph</span> that declared it.</li>
+    <li>"What would break if we changed this endpoint's contract?" — start at the endpoint in <span class="term-com">comgraph</span>, walk incoming <em>calls</em> edges to find every service that depends on it, then follow each service's references back into <span class="term-dep">depgraph</span> to land on the exact call sites that need updating.</li>
+    <li>"Is this endpoint orphaned?" — find every endpoint node in <span class="term-com">comgraph</span> with no incoming <em>calls</em> edges. Each one is either dead, or about to be.</li>
+  </ul>
+
+  <h2>What this gives us</h2>
+  <p>None of these questions ask the graph to be "smart." They ask the graph to be <em>complete</em> and <em>correct</em>: full enough that the answer is in there somewhere, and trustworthy enough that you can act on what you find. The whole framework is built around protecting those two properties.</p>
+  <p>The payoff is that the system as a whole becomes legible. Anyone — a new contributor, the author six months later, a tool reasoning about a change — can walk in at any node and follow the edges out to the surrounding context, in whichever layer is relevant. The graph is the shared map.</p>
+
+  <p class="footer-note">
+    Two of the three layers are running today: <span class="term-dep">depgraph</span> reads the source code and maintains the code-level graph; <span class="term-log">logigraph</span> holds the deliberately-written domain and rules. <span class="term-com">comgraph</span> is the proposed third layer — a graph of communication between services. Its shape, as described here, is the working sketch: services and addressable channels as nodes, interactions as typed directional edges, with cross-graph references binding the three layers into a single picture.
+  </p>
+
+</main>
+</body>
+</html>
