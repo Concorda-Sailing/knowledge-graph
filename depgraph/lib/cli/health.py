@@ -38,85 +38,93 @@ def cmd_health(args: argparse.Namespace, ctx: Context) -> int:
     problems: list[str] = []
     summary: list[str] = []
 
-    # ---- validate (schema) ----------------------------------------------
+    # ---- single corpus walk (#70) ---------------------------------------
+    # Health runs on every SessionStart hook; the previous implementation
+    # walked ctx.NODES.rglob("*.json") four separate times and re-parsed
+    # each node JSON on every pass, so cost scaled as 4 × corpus_size.
+    # Collapse to one walk: parse each node once, then apply each pass's
+    # filters and counters in turn.
     try:
         import jsonschema  # type: ignore[import-untyped]
         schema = json.loads((ctx.tool_root / "schema" / "node.schema.json").read_text())
-        invalid = 0
-        for node_file in ctx.NODES.rglob("*.json"):
-            if node_file.name.startswith("_") or any(p.startswith("_") for p in node_file.parts):
-                continue
-            try:
-                data = json.loads(node_file.read_text())
-                jsonschema.validate(data, schema)
-            except (json.JSONDecodeError, jsonschema.ValidationError):
-                invalid += 1
-        if invalid:
-            problems.append(f"{invalid} invalid node(s) — run `depgraph validate`")
+        validate_enabled = True
     except ImportError:
+        jsonschema = None  # type: ignore[assignment]
+        schema = None
+        validate_enabled = False
         summary.append("validate: skipped (jsonschema not installed)")
 
-    # ---- orphans (node points at missing source file) -------------------
+    invalid = 0
     orphan_n = 0
-    basename_to_path = basename_path_map(ctx.DEPGRAPH)
-    for node_file in ctx.NODES.rglob("*.json"):
-        if node_file.name.startswith("_") or any(p.startswith("_") for p in node_file.parts):
-            continue
-        try:
-            data = json.loads(node_file.read_text())
-        except (OSError, json.JSONDecodeError):
-            continue
-        src = data.get("source") or {}
-        repo, rel = src.get("repo"), src.get("path")
-        if not repo or not rel:
-            continue
-        repo_path = basename_to_path.get(repo)
-        if repo_path is None:
-            continue
-        if not (repo_path / rel).exists():
-            orphan_n += 1
-    if orphan_n:
-        problems.append(f"{orphan_n} orphan node(s) (source file gone) — run `depgraph orphans`")
-
-    # ---- stale dossiers (hash drift) ------------------------------------
     stale_n = 0
-    for node_file in ctx.NODES.rglob("*.json"):
-        if node_file.name.startswith("_") or any(p.startswith("_") for p in node_file.parts):
-            continue
-        try:
-            data = json.loads(node_file.read_text())
-        except (OSError, json.JSONDecodeError):
-            continue
-        if dossier_state(data, ctx.DEPGRAPH) == "stale":
-            stale_n += 1
-    if stale_n:
-        problems.append(f"{stale_n} stale dossier(s) (structural_hash drifted) — run `depgraph dossier-rank --only-stale`")
-
-    # ---- tier-A coverage shortfall --------------------------------------
     a_total = 0
     a_covered = 0
+    basename_to_path = basename_path_map(ctx.DEPGRAPH)
     dependents = load_dependents_index(ctx)
+
     for node_file in ctx.NODES.rglob("*.json"):
         if node_file.name.startswith("_") or any(p.startswith("_") for p in node_file.parts):
             continue
+
+        # Read+parse the file exactly once.
         try:
-            data = json.loads(node_file.read_text())
-        except (OSError, json.JSONDecodeError):
+            raw = node_file.read_text()
+        except OSError:
             continue
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError:
+            # An invalid JSON file fails the schema pass; the other three
+            # passes (orphan/stale/tier-A) need a parsed dict and skip it.
+            if validate_enabled:
+                invalid += 1
+            continue
+
+        # Pass 1: schema validate.
+        if validate_enabled:
+            try:
+                jsonschema.validate(data, schema)
+            except jsonschema.ValidationError:
+                invalid += 1
+
+        # Pass 2: orphans (node points at missing source file).
+        src = data.get("source") or {}
+        repo, rel = src.get("repo"), src.get("path")
+        if repo and rel:
+            repo_path = basename_to_path.get(repo)
+            if repo_path is not None and not (repo_path / rel).exists():
+                orphan_n += 1
+
+        # Compute dossier_state once per node — both pass 3 and pass 4
+        # consult it, and walking the dossier file twice would defeat
+        # half the savings from collapsing the corpus walk.
+        d_state = dossier_state(data, ctx.DEPGRAPH)
+
+        # Pass 3: stale dossiers (hash drift).
+        if d_state == "stale":
+            stale_n += 1
+
+        # Pass 4: tier-A coverage shortfall.
         nid = data.get("id")
         if not nid:
             continue
         if not is_dossier_eligible(data):
             continue
-        kind = data.get("kind", "")
-        if kind == "test":
+        if data.get("kind", "") == "test":
             continue
         fan_out = len(dependents.get(nid) or [])
         if fan_out < 10:
             continue
         a_total += 1
-        if dossier_state(data, ctx.DEPGRAPH) == "current":
+        if d_state == "current":
             a_covered += 1
+
+    if invalid:
+        problems.append(f"{invalid} invalid node(s) — run `depgraph validate`")
+    if orphan_n:
+        problems.append(f"{orphan_n} orphan node(s) (source file gone) — run `depgraph orphans`")
+    if stale_n:
+        problems.append(f"{stale_n} stale dossier(s) (structural_hash drifted) — run `depgraph dossier-rank --only-stale`")
     a_pct = int(round(100 * a_covered / a_total)) if a_total else 100
     if a_pct < 80 and a_total > 0:
         problems.append(f"Tier-A dossier coverage at {a_pct}% ({a_covered}/{a_total}) — run `depgraph dossier-rank --tier A`")
