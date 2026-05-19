@@ -48,10 +48,19 @@ def _post_json(
     we catch HTTPError to read the body before re-raising as our own type.
     """
     data = json.dumps(payload).encode("utf-8")
+    # Set a real User-Agent: Cloudflare-fronted providers (Groq, sometimes
+    # OpenAI) block the stdlib default "Python-urllib/X.Y" UA with HTTP
+    # 403 / error 1010. Identifying as the framework satisfies the WAF
+    # without pretending to be a browser. Caller-provided UA wins.
+    final_headers = {
+        "Content-Type": "application/json",
+        "User-Agent": "knowledge-graph-depgraph/0.1 (+https://github.com/Concorda-Sailing/knowledge-graph)",
+        **headers,
+    }
     req = urllib.request.Request(
         url,
         data=data,
-        headers={"Content-Type": "application/json", **headers},
+        headers=final_headers,
         method="POST",
     )
     try:

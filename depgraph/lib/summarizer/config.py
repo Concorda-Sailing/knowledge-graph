@@ -44,6 +44,11 @@ class ModelConfig:
     api_key_env: Optional[str] = None
     timeout: int = 120
     max_tokens: int = 4096
+    # Reasoning-effort hint for models that expose it via the OpenAI-style
+    # `reasoning_effort` parameter (e.g. xAI grok-4.3, OpenAI o-series).
+    # Typical values: "low" | "medium" | "high". Omit for non-reasoning
+    # models — most providers reject the field, some ignore it.
+    reasoning_effort: Optional[str] = None
 
     def resolve_api_key(self) -> Optional[str]:
         """Return the API key from env, or None if not configured / unset.
@@ -131,6 +136,11 @@ def load_models(data_dir: Path) -> SummarizerConfig:
             api_key_env=entry.get("api_key_env"),
             timeout=int(entry.get("timeout") or 120),
             max_tokens=int(entry.get("max_tokens") or 4096),
+            reasoning_effort=(
+                str(entry["reasoning_effort"])
+                if entry.get("reasoning_effort") is not None
+                else None
+            ),
         )
 
     default = section.get("default_model")

@@ -49,7 +49,7 @@ def run_agent(
     system: Optional[str] = None,
     tools: Optional[list[ToolDefinition]] = None,
     tool_handlers: Optional[dict[str, ToolHandler]] = None,
-    max_turns: int = 8,
+    max_turns: int = 64,
     temperature: float = 0.2,
 ) -> AgentResult:
     """Drive a tool-use conversation to completion.

@@ -49,9 +49,25 @@ class OpenAILLMClient(BaseLLMClient):
             "max_tokens": self._resolved_max_tokens(max_tokens),
             "temperature": temperature,
         }
+        if self.cfg.reasoning_effort:
+            # OpenAI-spec field for reasoning models (xAI grok-4.3, OpenAI
+            # o-series). Providers that don't support it generally either
+            # ignore the field or return a 400; configure it only for
+            # models known to honor it.
+            payload["reasoning_effort"] = self.cfg.reasoning_effort
         if tools:
             payload["tools"] = [_tool_to_openai(t) for t in tools]
-            payload["tool_choice"] = "auto"
+            # Force at least one tool call on the first agent-loop turn:
+            # when no prior assistant turn carries tool_calls, the model
+            # has not yet consulted any tool, and Granite (in particular)
+            # otherwise drafts confidently from priors instead of calling
+            # the registered tools. After the first tool round-trip the
+            # follow-up turns revert to "auto" so the model can decide
+            # when it has enough evidence to write the final response.
+            prior_tool_use = any(
+                m.role == "assistant" and m.tool_calls for m in messages
+            )
+            payload["tool_choice"] = "auto" if prior_tool_use else "required"
 
         headers: dict[str, str] = {}
         key = self.cfg.resolve_api_key()
@@ -110,13 +126,38 @@ def _tool_to_openai(t: ToolDefinition) -> dict:
     }
 
 
+def _extract_text_from_content(content) -> str:
+    """OpenAI-compatible servers return `message.content` as either a
+    plain string (most providers) or a list of typed blocks (Mistral's
+    Magistral reasoning model and similar). For block lists, keep the
+    `text`-type blocks and drop `thinking`-type blocks — the reasoning
+    trace doesn't belong in the dossier body. Unknown block types are
+    skipped to stay forward-compatible."""
+    if content is None:
+        return ""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts: list[str] = []
+        for block in content:
+            if not isinstance(block, dict):
+                continue
+            btype = block.get("type")
+            if btype == "text":
+                parts.append(block.get("text") or "")
+            # Skip "thinking", "image_url", and any other non-text blocks.
+        return "".join(parts)
+    # Unknown shape — best-effort stringify rather than crash.
+    return str(content)
+
+
 def _from_openai_response(raw: dict) -> LLMResponse:
     choices = raw.get("choices") or []
     if not choices:
         raise RuntimeError(f"OpenAI response had no choices: {raw}")
     choice = choices[0]
     msg = choice.get("message") or {}
-    text = msg.get("content") or ""
+    text = _extract_text_from_content(msg.get("content"))
     tool_calls: list[ToolCall] = []
     for tc in (msg.get("tool_calls") or []):
         fn = tc.get("function") or {}

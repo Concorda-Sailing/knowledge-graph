@@ -272,8 +272,17 @@ def repo_basenames(data_dir: Path) -> set[str]:
 
 
 def repo_for_basename(data_dir: Path, basename: str) -> Optional[dict]:
-    """Look up a repo_info by its basename (e.g. '<project>-api')."""
-    for info in project_repos(data_dir).values():
+    """Look up a repo_info by its repo key (e.g. 'api') or basename
+    (e.g. '<project>-api'). Key match wins; basename is the fallback.
+
+    Callers in dossier.py / post_edit_regen.py pass `source.repo` from
+    node JSON, which holds the [repos.<key>] key, not the path basename.
+    The name is preserved for backward compat with existing imports."""
+    repos = project_repos(data_dir)
+    info = repos.get(basename)
+    if info is not None:
+        return info
+    for info in repos.values():
         if info["basename"] == basename:
             return info
     return None
