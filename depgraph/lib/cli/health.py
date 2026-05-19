@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 from .context import Context
-from ._shared import load_dependents_index, dossier_state
+from ._shared import is_dossier_eligible, load_dependents_index, dossier_state
 
 # Make depgraph/lib/config.py importable.
 _DEPGRAPH_LIB = Path(__file__).resolve().parents[1]
@@ -95,6 +95,8 @@ def cmd_health(args: argparse.Namespace, ctx: Context) -> int:
             continue
         nid = data.get("id")
         if not nid:
+            continue
+        if not is_dossier_eligible(data):
             continue
         kind = data.get("kind", "")
         if kind == "test":

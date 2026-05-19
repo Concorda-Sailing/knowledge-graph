@@ -59,7 +59,7 @@ from depgraph.extractors.reconcile import (  # noqa: E402
     validate_corpus,
 )
 
-from ._shared import mark_regen_in_progress
+from ._shared import is_dossier_eligible, mark_regen_in_progress
 from .context import Context
 from .orphans import archive_node_file
 
@@ -309,13 +309,6 @@ def _write_index(index_dir: Path, name: str, payload: dict) -> None:
     tmp.replace(target)
 
 
-# Primitive types we never auto-stub — modules, packages, and variables
-# generate a lot of "this file/constant has no narrative" noise on big
-# corpora. Symbols worth a stub (function / class / endpoint / hook /
-# component / service / model / schema / test / util) fall through.
-_STUB_SKIP_PRIMITIVES: frozenset[str] = frozenset({"module", "package", "variable"})
-
-
 _STUB_TEMPLATE = """---
 node_id: {id}
 node_kind: {kind}
@@ -372,7 +365,7 @@ def _stub_missing_dossiers(
     today = _dt.date.today().isoformat()
     created = 0
     for p in primitives:
-        if p.get("primitive") in _STUB_SKIP_PRIMITIVES:
+        if not is_dossier_eligible(p):
             continue
         decision = decisions.get(p["id"])
         decision_kind = decision.kind if decision is not None else None

@@ -64,6 +64,21 @@ def load_dependents_index(ctx: Context) -> dict[str, list[dict]]:
     return idx if isinstance(idx, dict) else {}
 
 
+# Primitive types the dossier stubber never writes a dossier for —
+# modules, packages, and variables generate a lot of "this file/constant
+# has no narrative" noise on big corpora. The Tier-A coverage health
+# check uses the same predicate so its denominator stays reachable.
+DOSSIER_INELIGIBLE_PRIMITIVES: frozenset[str] = frozenset({"module", "package", "variable"})
+
+
+def is_dossier_eligible(node: dict) -> bool:
+    """Return True iff this node is one the dossier stubber will emit a
+    dossier for. The single source of truth for `dossier-eligible` —
+    used by both the stubber in regen and the Tier-A coverage check in
+    health, so the two cannot drift."""
+    return node.get("primitive") not in DOSSIER_INELIGIBLE_PRIMITIVES
+
+
 def dossier_state(node: dict, depgraph: Path) -> str:
     """Return one of: 'current', 'unreviewed', 'stale', 'missing'.
 
