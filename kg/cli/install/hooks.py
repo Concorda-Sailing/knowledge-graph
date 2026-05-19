@@ -13,7 +13,16 @@ import os
 import sys
 from pathlib import Path
 
+from kg.hook import HOOK_PHASES
+
 from ._shared import backup_file, log, ok, warn
+
+
+# Local lookup so the f-strings below read the phase names from the
+# single-source HOOK_PHASES tuple instead of repeating string literals.
+# If a phase is renamed in kg/hook.py, this dict's KeyError surfaces the
+# missing wiring immediately.
+_PHASE = {name: name for name in HOOK_PHASES}
 
 
 _SETTINGS_REL = Path(".claude") / "settings.json"
@@ -46,7 +55,7 @@ def _hook_block(tool_root: Path) -> dict:
                 "hooks": [
                     {
                         "type": "command",
-                        "command": f"{kg} hook pre-edit",
+                        "command": f"{kg} hook {_PHASE['pre-edit']}",
                         "timeout": 10,
                     }
                 ],
@@ -56,7 +65,7 @@ def _hook_block(tool_root: Path) -> dict:
                 "hooks": [
                     {
                         "type": "command",
-                        "command": f"{kg} hook pre-irreversible",
+                        "command": f"{kg} hook {_PHASE['pre-irreversible']}",
                         "timeout": 5,
                     }
                 ],
@@ -67,7 +76,7 @@ def _hook_block(tool_root: Path) -> dict:
                 "hooks": [
                     {
                         "type": "command",
-                        "command": f"{kg} hook post-edit",
+                        "command": f"{kg} hook {_PHASE['post-edit']}",
                         "timeout": 120,
                     }
                 ]
@@ -78,7 +87,7 @@ def _hook_block(tool_root: Path) -> dict:
                 "hooks": [
                     {
                         "type": "command",
-                        "command": f"{kg} hook session-start",
+                        "command": f"{kg} hook {_PHASE['session-start']}",
                         "timeout": 30,
                     }
                 ]
@@ -89,7 +98,7 @@ def _hook_block(tool_root: Path) -> dict:
                 "hooks": [
                     {
                         "type": "command",
-                        "command": f"{kg} hook session-end",
+                        "command": f"{kg} hook {_PHASE['session-end']}",
                         "timeout": 30,
                     }
                 ]

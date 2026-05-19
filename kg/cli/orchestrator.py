@@ -11,6 +11,7 @@ import sys
 from pathlib import Path
 
 from kg import registry
+from kg.hook import HOOK_PHASES
 
 
 def cmd_list(args: argparse.Namespace) -> int:
@@ -98,6 +99,6 @@ def register_alias(sub: argparse._SubParsersAction) -> None:
     p_hook = sub.add_parser("hook", help="Hook dispatcher invoked by Claude Code settings.json.")
     p_hook.add_argument(
         "phase",
-        choices=["pre-edit", "post-edit", "session-start", "session-end", "pre-irreversible"],
+        choices=list(HOOK_PHASES),
     )
     p_hook.set_defaults(func=cmd_hook)

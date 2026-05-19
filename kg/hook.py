@@ -31,21 +31,31 @@ from kg import project, registry
 TOOL_ROOT = Path(__file__).resolve().parents[1]
 
 
+# Single source of truth for hook phase names. Consumed by:
+#   * ``kg.cli.orchestrator`` — argparse ``choices`` for ``kg hook <phase>``.
+#   * ``kg.cli.install.hooks`` — commands emitted into Claude Code's
+#     ``settings.json`` hook block.
+#   * ``run()`` below — dispatch table.
+# Adding a phase means: (1) add the name here, (2) add the handler here,
+# (3) wire it into the installer's hook block. Tests in
+# ``tests/kg/test_hook_phases_single_source.py`` catch drift.
+HOOK_PHASES: tuple[str, ...] = (
+    "pre-edit",
+    "post-edit",
+    "session-start",
+    "session-end",
+    "pre-irreversible",
+)
+
+
 def run(phase: str) -> int:
     """Entry point invoked by ``kg.cli``."""
-    if phase == "session-start":
-        return _session_start()
-    if phase == "pre-edit":
-        return _pre_edit()
-    if phase == "post-edit":
-        return _post_edit()
-    if phase == "session-end":
-        return _session_end()
-    if phase == "pre-irreversible":
-        return _pre_irreversible()
-    # argparse should prevent this, but be safe.
-    _emit("UnknownHook", f"Unknown hook phase: {phase}")
-    return 0
+    handler = _DISPATCH.get(phase)
+    if handler is None:
+        # argparse should prevent this, but be safe.
+        _emit("UnknownHook", f"Unknown hook phase: {phase}")
+        return 0
+    return handler()
 
 
 # ---------------------------------------------------------------------------
@@ -540,3 +550,17 @@ def _pre_irreversible() -> int:
     if proc.stdout:
         sys.stdout.write(proc.stdout)
     return 0
+
+
+# ---------------------------------------------------------------------------
+# Dispatch table — keyed on HOOK_PHASES so adding a phase here forces a
+# matching entry in HOOK_PHASES (the test suite asserts the two agree).
+# ---------------------------------------------------------------------------
+
+_DISPATCH: dict[str, "callable"] = {
+    "pre-edit": _pre_edit,
+    "post-edit": _post_edit,
+    "session-start": _session_start,
+    "session-end": _session_end,
+    "pre-irreversible": _pre_irreversible,
+}
