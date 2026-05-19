@@ -28,6 +28,7 @@ from ._shared import (
     default_actor,
     rewrite_dossier_frontmatter,
 )
+from depgraph.lib.edges import REVERSE_INDEX_FILENAME
 from logigraph.plugins import build_config_for_repos, get_logigraph_cues
 from logigraph.plugins.base import LogigraphCues
 
@@ -286,7 +287,7 @@ def cmd_process_rank(args: argparse.Namespace, ctx: Context) -> int:
         })
 
     # --- Signal B: entrypoint_fan_in -------------------------------------
-    deps_index_path = ctx.depgraph_dir / "nodes" / "_index" / "by_target.json"
+    deps_index_path = ctx.depgraph_dir / "nodes" / "_index" / REVERSE_INDEX_FILENAME
     deps_idx: dict[str, list[dict]] = {}
     if deps_index_path.exists():
         try:

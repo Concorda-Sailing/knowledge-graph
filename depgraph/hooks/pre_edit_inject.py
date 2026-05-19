@@ -42,6 +42,7 @@ from depgraph.lib.config import (  # noqa: E402
     load_project_config,
     path_to_repo_key_relative,
 )
+from depgraph.lib.edges import REVERSE_INDEX_FILENAME  # noqa: E402
 from depgraph.lib.primitives import slugify_id_for_filename  # noqa: E402
 from kg.shared.env import DEPGRAPH_DATA_DIR  # noqa: E402
 
@@ -50,7 +51,7 @@ NODES = DEPGRAPH / "nodes"
 # v2 reverse index — built by depgraph.lib.cli.regen._build_by_target.
 # Flat {target_id: [{source, kind, via, where, confidence}, ...]} dict;
 # no schema_version wrapper (writer uses indent=2, sort_keys=True).
-DEPENDENTS_INDEX = NODES / "_index" / "by_target.json"
+DEPENDENTS_INDEX = NODES / "_index" / REVERSE_INDEX_FILENAME
 CORPUS_META = NODES / "_meta.json"
 TELEMETRY_DIR = DEPGRAPH / "telemetry"
 INJECTIONS_LOG = TELEMETRY_DIR / "injections.jsonl"

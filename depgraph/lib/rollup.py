@@ -12,6 +12,8 @@ import json
 from pathlib import Path
 from dataclasses import dataclass
 
+from depgraph.lib.edges import REVERSE_INDEX_FILENAME
+
 
 @dataclass(frozen=True)
 class AnchorResult:
@@ -274,7 +276,7 @@ def load_rollup_inputs(depgraph_data_dir) -> RollupInputs:
     """
     root = Path(depgraph_data_dir)
     nodes_dir = root / "nodes"
-    deps_path = nodes_dir / "_index" / "by_target.json"
+    deps_path = nodes_dir / "_index" / REVERSE_INDEX_FILENAME
     if not deps_path.exists():
         raise FileNotFoundError(
             f"reverse-dependents index missing: {deps_path}. "

@@ -395,7 +395,7 @@ def _depgraph() -> Path:
 from depgraph.lib.primitives import (  # noqa: E402
     validate_primitive, check_slug_collisions, is_external_terminal,
 )
-from depgraph.lib.edges import validate_edge  # noqa: E402
+from depgraph.lib.edges import REVERSE_INDEX_FILENAME, validate_edge  # noqa: E402
 
 
 def validate_corpus(primitives: list[dict]) -> dict:
@@ -872,7 +872,7 @@ def main() -> int:
     DEPGRAPH = _depgraph()
     NODES = DEPGRAPH / "nodes"
     INDEX_DIR = NODES / "_index"
-    DEPENDENTS_INDEX = INDEX_DIR / "by_target.json"
+    DEPENDENTS_INDEX = INDEX_DIR / REVERSE_INDEX_FILENAME
     CORPUS_META = NODES / "_meta.json"
     MANIFEST_DIR = NODES / "_manifests"
     ARCHIVE_DIR = NODES / "_archive"

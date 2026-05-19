@@ -132,12 +132,16 @@ def test_reconcile_reports_slug_collision():
 def test_reconcile_dependents_index_filename():
     """Regression for #43: reconcile.py used to wire DEPENDENTS_INDEX at the
     pre-rename `dependents.json` path while the rest of the framework writes
-    to `by_target.json`. Guard against the literal drifting again."""
+    to `by_target.json`. Post-#66 reconcile composes the path from the
+    shared constant in `depgraph.lib.edges`, so the literal lives in exactly
+    one place — verified here."""
     import inspect
     from depgraph.extractors import reconcile
+    from depgraph.lib.edges import REVERSE_INDEX_FILENAME
 
+    assert REVERSE_INDEX_FILENAME == "by_target.json"
     src = inspect.getsource(reconcile.main)
-    assert 'INDEX_DIR / "by_target.json"' in src
+    assert "INDEX_DIR / REVERSE_INDEX_FILENAME" in src
     assert 'INDEX_DIR / "dependents.json"' not in src
 
 
