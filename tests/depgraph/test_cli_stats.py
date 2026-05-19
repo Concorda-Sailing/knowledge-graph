@@ -57,6 +57,14 @@ def _write_jsonl(path: Path, events: list[dict]) -> None:
             f.write(json.dumps(ev) + "\n")
 
 
+def _make_args(**overrides) -> argparse.Namespace:
+    """Build a Namespace that mirrors what `register()`'s parser would
+    produce — so tests don't break every time a new flag lands."""
+    defaults = {"telemetry": False, "edges": False, "unresolved_top": 15}
+    defaults.update(overrides)
+    return argparse.Namespace(**defaults)
+
+
 # ---------------------------------------------------------------------------
 # Tests: corpus rollup
 # ---------------------------------------------------------------------------
@@ -66,7 +74,7 @@ def test_stats_empty_graph(
 ) -> None:
     """Empty nodes/ → prints header with 0 total, returns 0."""
     ctx = Context.from_data_dir(data_dir)
-    args = argparse.Namespace(telemetry=False)
+    args = _make_args()
     rc = cmd_stats(args, ctx)
     assert rc == 0
     out = capsys.readouterr().out
@@ -82,7 +90,7 @@ def test_stats_single_node_missing_dossier(
     """One node with no dossier → shows 1 total, miss=1."""
     ctx = Context.from_data_dir(data_dir)
     _make_node(ctx, "test-api::models/foo.py::Foo", kind="model")
-    args = argparse.Namespace(telemetry=False)
+    args = _make_args()
     rc = cmd_stats(args, ctx)
     assert rc == 0
     out = capsys.readouterr().out
@@ -99,7 +107,7 @@ def test_stats_node_with_current_dossier(
     _make_dossier(ctx, "dossiers/foo.md", status="current")
     _make_node(ctx, "test-api::models/foo.py::Foo", kind="model",
                dossier="dossiers/foo.md")
-    args = argparse.Namespace(telemetry=False)
+    args = _make_args()
     rc = cmd_stats(args, ctx)
     assert rc == 0
     out = capsys.readouterr().out
@@ -117,7 +125,7 @@ def test_stats_node_with_llm_drafted_dossier(
     _make_dossier(ctx, "dossiers/bar.md", status="llm_drafted")
     _make_node(ctx, "test-api::models/bar.py::Bar", kind="model",
                dossier="dossiers/bar.md")
-    args = argparse.Namespace(telemetry=False)
+    args = _make_args()
     rc = cmd_stats(args, ctx)
     assert rc == 0
     out = capsys.readouterr().out
@@ -133,7 +141,7 @@ def test_stats_multiple_nodes_mixed_kinds(
     _make_node(ctx, "test-api::models/foo.py::Foo", kind="model")
     _make_node(ctx, "test-api::routes/bar.py::BarRoute", kind="route")
     _make_node(ctx, "test-api::models/baz.py::Baz", kind="model")
-    args = argparse.Namespace(telemetry=False)
+    args = _make_args()
     rc = cmd_stats(args, ctx)
     assert rc == 0
     out = capsys.readouterr().out
@@ -154,7 +162,7 @@ def test_stats_skips_underscore_files(
     index_dir = ctx.NODES / "_index"
     index_dir.mkdir(parents=True, exist_ok=True)
     (index_dir / "by_target.json").write_text(json.dumps({}))
-    args = argparse.Namespace(telemetry=False)
+    args = _make_args()
     rc = cmd_stats(args, ctx)
     assert rc == 0
     out = capsys.readouterr().out
@@ -171,7 +179,7 @@ def test_stats_telemetry_no_log_files(
 ) -> None:
     """--telemetry with no log files → shows 0 counts, no crash."""
     ctx = Context.from_data_dir(data_dir)
-    args = argparse.Namespace(telemetry=True)
+    args = _make_args(telemetry=True)
     rc = cmd_stats(args, ctx)
     assert rc == 0
     out = capsys.readouterr().out
@@ -203,7 +211,7 @@ def test_stats_telemetry_with_events(
     _write_jsonl(ctx.INJECTIONS_LOG, injections)
     _write_jsonl(ctx.ACKS_LOG, acks)
 
-    args = argparse.Namespace(telemetry=True)
+    args = _make_args(telemetry=True)
     rc = cmd_stats(args, ctx)
     assert rc == 0
     out = capsys.readouterr().out
