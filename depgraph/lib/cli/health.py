@@ -113,6 +113,40 @@ def cmd_health(args: argparse.Namespace, ctx: Context) -> int:
     else:
         summary.append(f"tier-A coverage: {a_pct}% ({a_covered}/{a_total})")
 
+    # ---- coverage caveats (corpus-wide blind-spot histogram) -------------
+    # Per #55: surface the "what is this graph blind to, at corpus scale?"
+    # view. Counts are informational — not a problem to be fixed (extractor
+    # coverage gaps aren't graph-health bugs), but visible signal so the
+    # operator knows where investment in extractors would pay off.
+    from depgraph.lib.coverage_caveats import (
+        CAVEAT_REGISTRY,
+        aggregate_caveat_counts,
+        caveat_title,
+    )
+    caveat_counts: dict[str, int] = {}
+    for node_file in ctx.NODES.rglob("*.json"):
+        if node_file.name.startswith("_") or any(p.startswith("_") for p in node_file.parts):
+            continue
+        try:
+            data = json.loads(node_file.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        for c in data.get("coverage_caveats") or []:
+            caveat_counts[c] = caveat_counts.get(c, 0) + 1
+    if caveat_counts:
+        summary.append("coverage caveats stamped:")
+        for c in sorted(caveat_counts, key=lambda k: -caveat_counts[k]):
+            summary.append(f"  {caveat_counts[c]:>5}  {c} ({caveat_title(c)})")
+    # Registry entries with zero corpus coverage = a gap nothing surfaces
+    # yet. Worth listing so the operator can see "we have a vocabulary
+    # for this blind spot but no extractor stamps it" — i.e., either the
+    # detector is missing or the corpus genuinely has no such nodes.
+    untouched = sorted(set(CAVEAT_REGISTRY) - set(caveat_counts))
+    if untouched and caveat_counts:
+        summary.append("registered caveats not stamped on any node:")
+        for c in untouched:
+            summary.append(f"        {c}")
+
     # ---- output ---------------------------------------------------------
     print("# Depgraph health")
     if problems:

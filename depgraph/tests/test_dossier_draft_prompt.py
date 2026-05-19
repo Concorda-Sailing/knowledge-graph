@@ -11,6 +11,7 @@ from depgraph.lib.cli.dossier import (
     _GROUNDING_AND_SECTIONS,
     _build_full_prompt,
     _build_thin_prompt,
+    _render_caveats_block,
 )
 
 
@@ -64,6 +65,7 @@ def test_full_prompt_includes_outgoing_dependencies_block(tmp_path: Path):
         src_excerpt="def process(): pass", deps_str="  (none)", deps_more="",
         n_deps=0, out_str=out_str, out_more="", n_out=len(out_edges),
         git_log="(empty)", adj_str="  (none)", rules_str="  (none)",
+        caveats_str=_render_caveats_block([]),
         dossier_path=tmp_path / "dossiers" / "functions" / "p.md",
         ctx=_ctx(tmp_path),
     )
@@ -89,6 +91,7 @@ def test_thin_prompt_includes_outgoing_count_and_node_info_instruction(tmp_path:
     prompt = _build_thin_prompt(
         nid=node["id"], node=node, repo="api", rel="svc.py", line=10,
         read_start=5, read_end=35, n_deps=0, n_out=n_out,
+        caveats_str=_render_caveats_block([]),
         dossier_path=tmp_path / "dossiers" / "functions" / "p.md",
         ctx=_ctx(tmp_path),
     )
@@ -109,3 +112,55 @@ def test_grounding_template_carries_dependencies_section():
     assert inv < deps < cross, (
         "Dependencies must slot between Invariants and Cross-cutting concerns"
     )
+
+
+def test_render_caveats_block_lists_enum_and_description():
+    """When the node has caveats stamped, the rendered block must carry
+    both the enum (so the dossier can mirror it verbatim) and the
+    registry's long description (so the model has the language to
+    write the prose). See #55."""
+    rendered = _render_caveats_block([
+        "orm_relationships_not_extracted",
+        "fk_references_not_extracted",
+    ])
+    assert "`orm_relationships_not_extracted`" in rendered
+    assert "`fk_references_not_extracted`" in rendered
+    # Long description text from the registry — verifies we resolved
+    # through caveat_description, not just rendered the enum twice.
+    assert "ORM" in rendered or "relationship(" in rendered
+
+
+def test_render_caveats_block_empty_falls_through_cleanly():
+    rendered = _render_caveats_block([])
+    assert "(none stamped)" in rendered
+
+
+def test_grounding_template_carries_coverage_caveats_section():
+    """The `## Coverage caveats` section must slot before `## External
+    consumers` and after `## Cross-cutting concerns` so the reader sees
+    the gap-acknowledgment before the (necessarily-incomplete) consumer
+    list."""
+    text = _GROUNDING_AND_SECTIONS
+    assert "## Coverage caveats" in text
+    cross = text.index("## Cross-cutting concerns")
+    caveats = text.index("## Coverage caveats")
+    consumers = text.index("## External consumers")
+    assert cross < caveats < consumers
+
+
+def test_full_prompt_surfaces_stamped_caveats(tmp_path: Path):
+    """End-to-end through `_build_full_prompt`: a node with caveats
+    stamped on it has the rendered block reach the prompt body."""
+    node = _node()
+    node["coverage_caveats"] = ["orm_relationships_not_extracted"]
+    prompt = _build_full_prompt(
+        nid=node["id"], node=node, repo="api", rel="svc.py", line=10,
+        src_excerpt="class Foo: pass", deps_str="  (none)", deps_more="",
+        n_deps=0, out_str="  (none)", out_more="", n_out=0,
+        git_log="(empty)", adj_str="  (none)", rules_str="  (none)",
+        caveats_str=_render_caveats_block(node["coverage_caveats"]),
+        dossier_path=tmp_path / "dossiers" / "classes" / "f.md",
+        ctx=_ctx(tmp_path),
+    )
+    assert "# Coverage caveats" in prompt
+    assert "`orm_relationships_not_extracted`" in prompt

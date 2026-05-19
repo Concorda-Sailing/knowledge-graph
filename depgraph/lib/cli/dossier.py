@@ -198,6 +198,7 @@ def cmd_dossier_draft(args: argparse.Namespace, ctx: Context) -> int:
     git_log = "(skipped: tools mode — call `recent_history`)" if tools_mode else "(unavailable)"
     adj_str = "(skipped: tools mode)" if tools_mode else "  (none reviewed yet in this module)"
     rules_str = "  (none)"
+    caveats_str = _render_caveats_block(node.get("coverage_caveats") or [])
 
     if not tools_mode:
         # Full pre-load: rich prompt for --auto without --tools and for
@@ -317,7 +318,8 @@ def cmd_dossier_draft(args: argparse.Namespace, ctx: Context) -> int:
         prompt = _build_thin_prompt(
             nid=nid, node=node, repo=repo, rel=rel, line=line,
             read_start=read_start, read_end=read_end, n_deps=n_deps,
-            n_out=n_out, dossier_path=dossier_path, ctx=ctx,
+            n_out=n_out, caveats_str=caveats_str,
+            dossier_path=dossier_path, ctx=ctx,
         )
     else:
         prompt = _build_full_prompt(
@@ -325,6 +327,7 @@ def cmd_dossier_draft(args: argparse.Namespace, ctx: Context) -> int:
             src_excerpt=src_excerpt, deps_str=deps_str, deps_more=deps_more,
             n_deps=n_deps, out_str=out_str, out_more=out_more, n_out=n_out,
             git_log=git_log, adj_str=adj_str, rules_str=rules_str,
+            caveats_str=caveats_str,
             dossier_path=dossier_path, ctx=ctx,
         )
 
@@ -508,6 +511,16 @@ Auth, rate limits, audit, side effects on other features — only
 those visible in the source or in dependent call sites. "Not visible
 from this excerpt" is a valid entry per topic.
 
+## Coverage caveats
+Render each entry from the "Coverage caveats" block above (or
+`coverage_caveats` on the node in tools mode) using the registry's
+long description. If the block lists no caveats, write
+"None — the graph models this node's expected dependency classes."
+Do NOT invent caveats; only enumerate ones the framework stamped.
+This section is what tells the reader where the graph is *known to
+be blind*, so the rest of the dossier can be trusted within those
+bounds.
+
 ## External consumers
 Grounded in dependents. If dependents is empty or only test files,
 write "None known from corpus." Do not invent apps, jobs, webhooks,
@@ -563,6 +576,24 @@ from the available evidence" is a legitimate answer — but only after
 the architecture-synthesis probes were actually run."""
 
 
+def _render_caveats_block(caveats: list[str]) -> str:
+    """Format `coverage_caveats` from a node into the prompt block that
+    the LLM consumes to author the `## Coverage caveats` section. Each
+    entry pairs the enum (machine identifier the dossier should mirror)
+    with the registry's long description so the prose can name the gap
+    honestly. See #55."""
+    if not caveats:
+        return "  (none stamped)"
+    from depgraph.lib.coverage_caveats import caveat_description, caveat_title
+    lines: list[str] = []
+    for c in caveats:
+        title = caveat_title(c)
+        desc = caveat_description(c) or "(unregistered caveat — describe the gap honestly or omit)"
+        lines.append(f"  - `{c}` — {title}")
+        lines.append(f"      {desc}")
+    return "\n".join(lines)
+
+
 def _build_thin_prompt(
     *,
     nid: str,
@@ -574,6 +605,7 @@ def _build_thin_prompt(
     read_end: int,
     n_deps: int,
     n_out: int,
+    caveats_str: str,
     dossier_path: Path,
     ctx: Context,
 ) -> str:
@@ -592,6 +624,9 @@ pre-load source, callers, or git history — fetching is the job.
 - structural_hash: {node.get("structural_hash","?")[:12]}
 - direct dependents: {n_deps} recorded
 - outgoing dependencies (edges_out excluding `defines`): {n_out} recorded
+
+# Coverage caveats (graph blind spots stamped for this node)
+{caveats_str}
 
 # Required exploration (do this BEFORE writing prose)
 
@@ -701,6 +736,7 @@ def _build_full_prompt(
     git_log: str,
     adj_str: str,
     rules_str: str,
+    caveats_str: str,
     dossier_path: Path,
     ctx: Context,
 ) -> str:
@@ -730,6 +766,9 @@ the *intent* and *gotchas* that source code alone doesn't carry.
 # Outgoing dependencies ({n_out} total, grouped by edge kind)
 {out_str}
 {out_more}
+
+# Coverage caveats (graph blind spots stamped for this node)
+{caveats_str}
 
 # Recent commits touching this file (last 15)
 ```

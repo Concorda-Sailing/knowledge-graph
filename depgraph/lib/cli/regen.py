@@ -753,6 +753,17 @@ def _run_v2_pipeline(
     rc_edges = _join_route_calls_v2(all_primitives, decisions)
     print(f"--- route_call join: {rc_edges} edge(s)")
 
+    # --- Stamp coverage caveats ---
+    # Mark nodes where the graph is known-blind to a class of edges
+    # relevant to that node's shape (SQLAlchemy ORM relationships,
+    # Pydantic field refs, FastAPI Depends chain, etc.). The dossier
+    # render path picks these up and surfaces a `## Coverage caveats`
+    # section so readers can calibrate trust to what's actually
+    # captured. See #55.
+    from depgraph.lib.coverage_caveats import stamp_caveats
+    caveat_count = stamp_caveats(all_primitives)
+    print(f"--- coverage caveats: {caveat_count} node(s) stamped")
+
     # --- Stub missing dossiers ---
     # Run before write_classified so the dossier field is persisted into
     # each node JSON (dossier-finalize/bump/draft all read this field).

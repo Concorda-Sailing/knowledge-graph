@@ -85,6 +85,11 @@
       "description": "Test nodes that exercise this one.",
       "items": { "type": "string" }
     },
+    "coverage_caveats": {
+      "type": "array",
+      "description": "Enum-keyed list of known blind spots for this node — graph edges the current extractors cannot capture given the node's shape (SQLAlchemy ORM relationships, FastAPI Depends chain, Pydantic field refs, etc.). The framework registry (depgraph/lib/coverage_caveats.py) owns the enum-to-description mapping; the dossier renderer surfaces them so readers know where the graph is known to be blind. See #55.",
+      "items": { "type": "string" }
+    },
     "warnings": {
       "type": "array",
       "description": "Extractor-emitted warnings: ambiguous call sites, dynamic URLs, unresolved symbols.",
