@@ -178,12 +178,23 @@ def cmd_dossier_draft(args: argparse.Namespace, ctx: Context) -> int:
     deps_idx = load_dependents_index(ctx)
     deps = deps_idx.get(nid) or []
     n_deps = len(deps)
+    # Outgoing edges (what this node depends on). `defines` is filtered
+    # because the children of a class/module are intrinsic to the node,
+    # not dependencies — a class's columns aren't dependencies of the
+    # class itself (#56).
+    out_edges = [
+        e for e in (node.get("edges_out") or [])
+        if e.get("kind") != "defines"
+    ]
+    n_out = len(out_edges)
     read_start = max(1, line - 5)
     read_end = end_line + 5
 
     src_excerpt = "(skipped: tools mode)" if tools_mode else "(unavailable)"
     deps_str = "(skipped: tools mode — call `dependents_of`)" if tools_mode else "  (none)"
     deps_more = ""
+    out_str = "(skipped: tools mode — call `node_info` on this id)" if tools_mode else "  (none)"
+    out_more = ""
     git_log = "(skipped: tools mode — call `recent_history`)" if tools_mode else "(unavailable)"
     adj_str = "(skipped: tools mode)" if tools_mode else "  (none reviewed yet in this module)"
     rules_str = "  (none)"
@@ -209,6 +220,33 @@ def cmd_dossier_draft(args: argparse.Namespace, ctx: Context) -> int:
             for d in deps[:15]
         ) or "  (none)"
         deps_more = f"  ... +{len(deps) - 15} more" if len(deps) > 15 else ""
+
+        # Outgoing-edge block: group by kind, render top 15 within each
+        # group's order. Mirrors the dependents block's shape so the model
+        # can read both sections the same way.
+        if out_edges:
+            by_kind: dict[str, list[dict]] = {}
+            for e in out_edges:
+                by_kind.setdefault(e.get("kind") or "?", []).append(e)
+            shown = 0
+            buckets: list[str] = []
+            for kind in sorted(by_kind):
+                rows = by_kind[kind]
+                buckets.append(f"  {kind} ({len(rows)}):")
+                for e in rows[:15]:
+                    target = e.get("target", "?")
+                    via = e.get("via") or "?"
+                    conf = e.get("confidence") or "?"
+                    where = e.get("where") or "—"
+                    buckets.append(f"    - {target}  (via {via}, {conf}, {where})")
+                    shown += 1
+                if len(rows) > 15:
+                    buckets.append(f"    ... +{len(rows) - 15} more")
+            out_str = "\n".join(buckets)
+            out_more = ""
+        else:
+            out_str = "  (none)"
+            out_more = ""
 
         if repo_info and rel:
             try:
@@ -279,13 +317,14 @@ def cmd_dossier_draft(args: argparse.Namespace, ctx: Context) -> int:
         prompt = _build_thin_prompt(
             nid=nid, node=node, repo=repo, rel=rel, line=line,
             read_start=read_start, read_end=read_end, n_deps=n_deps,
-            dossier_path=dossier_path, ctx=ctx,
+            n_out=n_out, dossier_path=dossier_path, ctx=ctx,
         )
     else:
         prompt = _build_full_prompt(
             nid=nid, node=node, repo=repo, rel=rel, line=line,
             src_excerpt=src_excerpt, deps_str=deps_str, deps_more=deps_more,
-            n_deps=n_deps, git_log=git_log, adj_str=adj_str, rules_str=rules_str,
+            n_deps=n_deps, out_str=out_str, out_more=out_more, n_out=n_out,
+            git_log=git_log, adj_str=adj_str, rules_str=rules_str,
             dossier_path=dossier_path, ctx=ctx,
         )
 
@@ -447,6 +486,17 @@ source or to a specific recent commit. No generic invariants
 ("must be idempotent", "must not modify state") unless the source
 actually demonstrates them.
 
+## Dependencies
+What this node depends on, grouped by relationship kind (inherits /
+imports / calls / instantiates / references). Grounded in the
+"Outgoing dependencies" block above (or `node_info`'s
+`edges_out_by_kind` in tools mode). Be concrete: name the target
+symbol and where it lives. Label external libraries explicitly
+(`external::pypi::sqlalchemy`, `external::npm::react`, etc.) rather
+than describing them as if they were in-corpus. If a meaningful
+fraction of outgoing edges are unresolved, say so and point at the
+"Coverage caveats" section.
+
 ## Gotchas
 What has bitten, grounded in recent commits (quote the line) or
 visible in the source. Do not invent reverts, edge cases, or
@@ -523,6 +573,7 @@ def _build_thin_prompt(
     read_start: int,
     read_end: int,
     n_deps: int,
+    n_out: int,
     dossier_path: Path,
     ctx: Context,
 ) -> str:
@@ -540,6 +591,7 @@ pre-load source, callers, or git history — fetching is the job.
 - source: {repo}/{rel}:{line}
 - structural_hash: {node.get("structural_hash","?")[:12]}
 - direct dependents: {n_deps} recorded
+- outgoing dependencies (edges_out excluding `defines`): {n_out} recorded
 
 # Required exploration (do this BEFORE writing prose)
 
@@ -557,9 +609,15 @@ dossier will be wrong:
    — last commits touching this file. Commit messages are the source
    of truth for what bit recently. If empty, you have no Gotchas.
 
-Then make additional calls as needed: `read_source` on dependent
-files to verify call patterns; `node_info(node_id="...")` to inspect
-a specific dependent's structure.
+4. `node_info(node_id="{nid}")`
+   — see this node's own outgoing edges grouped by kind (extends /
+   imports / calls / instantiates / references). The prompt only tells
+   you the count ({n_out}); the tool returns the actual targets, which
+   you'll need for the `## Dependencies` section.
+
+Then make additional calls as needed: `read_source` on dependent or
+dependency files to verify patterns; `node_info(node_id="...")` to
+inspect a specific neighbor's structure.
 
 # Curiosity probes (drive deeper exploration before drafting)
 
@@ -637,6 +695,9 @@ def _build_full_prompt(
     deps_str: str,
     deps_more: str,
     n_deps: int,
+    out_str: str,
+    out_more: str,
+    n_out: int,
     git_log: str,
     adj_str: str,
     rules_str: str,
@@ -665,6 +726,10 @@ the *intent* and *gotchas* that source code alone doesn't carry.
 # Direct dependents ({n_deps} total)
 {deps_str}
 {deps_more}
+
+# Outgoing dependencies ({n_out} total, grouped by edge kind)
+{out_str}
+{out_more}
 
 # Recent commits touching this file (last 15)
 ```

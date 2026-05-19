@@ -168,8 +168,11 @@ _NODE_INFO_DEF = ToolDefinition(
     description=(
         "Return structural metadata for a node by id: primitive kind, "
         "classification kind, signature, source location, attributes, "
-        "and its outbound edge summary. Use this when you want to "
-        "ground yourself in a symbol before reading its source."
+        "outbound edge counts by kind, and the actual outbound edges "
+        "grouped by kind (extends / imports / calls / instantiates / "
+        "references; `defines` excluded). Per-kind list is capped at 30. "
+        "Use this when you want to ground yourself in a symbol before "
+        "reading its source, or to enumerate a node's dependencies."
     ),
     input_schema={
         "type": "object",
@@ -179,6 +182,9 @@ _NODE_INFO_DEF = ToolDefinition(
         "required": ["node_id"],
     },
 )
+
+
+_NODE_INFO_EDGES_CAP = 30  # per-kind cap; total payload bounded ~5–10 kinds × 30
 
 
 def _make_node_info(ctx: ToolContext) -> ToolHandler:
@@ -194,6 +200,24 @@ def _make_node_info(ctx: ToolContext) -> ToolHandler:
         edge_kinds: dict[str, int] = {}
         for e in edges:
             edge_kinds[e.get("kind") or "?"] = edge_kinds.get(e.get("kind") or "?", 0) + 1
+        # Per-kind grouping + per-kind cap so the dossier-draft path
+        # (#56) has detail to render `## Dependencies` from, without
+        # blowing the context window for high-fan-out nodes. `defines`
+        # is intrinsic to the node and not a dependency — strip it from
+        # the detailed view (still counted in the summary).
+        edges_by_kind: dict[str, list[dict]] = {}
+        for e in edges:
+            k = e.get("kind") or "?"
+            if k == "defines":
+                continue
+            bucket = edges_by_kind.setdefault(k, [])
+            if len(bucket) < _NODE_INFO_EDGES_CAP:
+                bucket.append({
+                    "target": e.get("target"),
+                    "via": e.get("via"),
+                    "confidence": e.get("confidence"),
+                    "where": e.get("where"),
+                })
         summary = {
             "id": nid,
             "primitive": node.get("primitive"),
@@ -209,6 +233,7 @@ def _make_node_info(ctx: ToolContext) -> ToolHandler:
             "signature": node.get("signature") or {},
             "attributes": node.get("attributes") or {},
             "edges_out_summary": edge_kinds,
+            "edges_out_by_kind": edges_by_kind,
         }
         return json.dumps(summary, indent=2)
     return handler

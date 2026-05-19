@@ -119,6 +119,45 @@ def test_node_info_returns_structured_summary(tmp_path: Path) -> None:
     assert parsed["edges_out_summary"] == {"reads": 2, "imports": 1}
 
 
+def test_node_info_returns_edges_by_kind_excluding_defines(tmp_path: Path) -> None:
+    """`edges_out_by_kind` must enumerate outgoing edges grouped by kind
+    so the dossier-draft prompt has detail to render `## Dependencies`.
+    `defines` edges are intrinsic to the node and excluded from this
+    detailed view (still counted in `edges_out_summary`)."""
+    ctx, _ = _ctx(tmp_path)
+    # Augment the foo node with a `defines` edge to verify it's filtered.
+    ctx.nodes_by_id["api::a.py::foo"]["edges_out"].append(
+        {"target": "api::a.py::foo.inner", "kind": "defines"}
+    )
+    out = builtin_tool_handlers(ctx)["node_info"]({"node_id": "api::a.py::foo"})
+    parsed = json.loads(out)
+
+    by_kind = parsed["edges_out_by_kind"]
+    assert "defines" not in by_kind, "defines edges must be excluded from edges_out_by_kind"
+    assert sorted(by_kind) == ["imports", "reads"]
+    assert len(by_kind["reads"]) == 2
+    assert by_kind["reads"][0]["target"] == "api::a.py::bar"
+    assert by_kind["imports"][0]["target"] == "external::pypi::os"
+    # Summary still counts defines (it's the count-by-kind, not the
+    # dependency view).
+    assert parsed["edges_out_summary"]["defines"] == 1
+
+
+def test_node_info_caps_per_kind_edges(tmp_path: Path) -> None:
+    """High-fan-out nodes must not blow the context window. Per-kind
+    list is capped at 30."""
+    ctx, _ = _ctx(tmp_path)
+    big_edges = [
+        {"target": f"api::other.py::sym{i}", "kind": "calls"}
+        for i in range(50)
+    ]
+    ctx.nodes_by_id["api::a.py::foo"]["edges_out"] = big_edges
+    out = builtin_tool_handlers(ctx)["node_info"]({"node_id": "api::a.py::foo"})
+    parsed = json.loads(out)
+    assert len(parsed["edges_out_by_kind"]["calls"]) == 30
+    assert parsed["edges_out_summary"]["calls"] == 50
+
+
 def test_node_info_unknown(tmp_path: Path) -> None:
     ctx, _ = _ctx(tmp_path)
     out = builtin_tool_handlers(ctx)["node_info"]({"node_id": "ghost"})
