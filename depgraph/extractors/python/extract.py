@@ -9,6 +9,7 @@ import ast
 from pathlib import Path
 from typing import Iterator, Sequence
 
+from depgraph.lib.edges import EdgeKind
 from depgraph.lib.path_filters import included
 
 from .canonical import canonical_id, structural_hash
@@ -347,7 +348,7 @@ def _attach_defines_edges(primitives: list[dict]) -> None:
                         and child["primitive"] in {"class", "function", "variable"}):
                     p["edges_out"].append({
                         "target": child["id"],
-                        "kind": "defines",
+                        "kind": EdgeKind.DEFINES.value,
                         "via": "lexical_scope",
                         "where": f"{path}:{child['source']['line']}",
                         "confidence": "exact",
@@ -357,7 +358,7 @@ def _attach_defines_edges(primitives: list[dict]) -> None:
                 if child.get("owner") == p["id"]:
                     p["edges_out"].append({
                         "target": child["id"],
-                        "kind": "defines",
+                        "kind": EdgeKind.DEFINES.value,
                         "via": "class_body",
                         "where": f"{p['source']['path']}:{child['source']['line']}",
                         "confidence": "exact",
@@ -374,7 +375,7 @@ def _attach_defines_edges(primitives: list[dict]) -> None:
                 if child_dir == pkg_path:
                     p["edges_out"].append({
                         "target": child["id"],
-                        "kind": "defines",
+                        "kind": EdgeKind.DEFINES.value,
                         "via": "package_member",
                         "where": f"{pkg_path}/",
                         "confidence": "exact",
@@ -428,7 +429,7 @@ def _attach_inheritance_edges(primitives: list[dict],
                 if target_id:
                     target_class["edges_out"].append({
                         "target": target_id,
-                        "kind": "extends",
+                        "kind": EdgeKind.EXTENDS.value,
                         "via": "class_decl",
                         "where": f"{path}:{node.lineno}",
                         "confidence": "exact",
@@ -438,7 +439,7 @@ def _attach_inheritance_edges(primitives: list[dict],
                 if imported and imported in classes_by_id:
                     target_class["edges_out"].append({
                         "target": imported,
-                        "kind": "extends",
+                        "kind": EdgeKind.EXTENDS.value,
                         "via": "class_decl",
                         "where": f"{path}:{node.lineno}",
                         "confidence": "exact",
@@ -447,7 +448,7 @@ def _attach_inheritance_edges(primitives: list[dict],
                 if imported and _is_external_symbol_id(imported):
                     target_class["edges_out"].append({
                         "target": imported,
-                        "kind": "extends",
+                        "kind": EdgeKind.EXTENDS.value,
                         "via": "class_decl",
                         "where": f"{path}:{node.lineno}",
                         "confidence": "unresolved",
@@ -455,7 +456,7 @@ def _attach_inheritance_edges(primitives: list[dict],
                     continue
                 target_class["edges_out"].append({
                     "target": f"external::pypi::unknown::{base_name}",
-                    "kind": "extends",
+                    "kind": EdgeKind.EXTENDS.value,
                     "via": "class_decl",
                     "where": f"{path}:{node.lineno}",
                     "confidence": "unresolved",
@@ -598,7 +599,7 @@ def _attach_imports_edges(primitives: list[dict],
                             if target_mod_prim:
                                 mod_prim["edges_out"].append({
                                     "target": target_mod_prim["id"],
-                                    "kind": "imports", "via": "wildcard_import",
+                                    "kind": EdgeKind.IMPORTS.value, "via": "wildcard_import",
                                     "where": f"{path}:{node.lineno}",
                                     "confidence": "fuzzy",
                                 })
@@ -621,7 +622,7 @@ def _attach_imports_edges(primitives: list[dict],
                             confidence = "unresolved"
                         mod_prim["edges_out"].append({
                             "target": target,
-                            "kind": "imports",
+                            "kind": EdgeKind.IMPORTS.value,
                             "via": "import_from",
                             "where": f"{path}:{node.lineno}",
                             "confidence": confidence,
@@ -640,7 +641,7 @@ def _attach_imports_edges(primitives: list[dict],
                             if target_mod_id:
                                 mod_prim["edges_out"].append({
                                     "target": target_mod_id,
-                                    "kind": "imports", "via": "wildcard_import",
+                                    "kind": EdgeKind.IMPORTS.value, "via": "wildcard_import",
                                     "where": f"{path}:{node.lineno}",
                                     "confidence": "fuzzy",
                                 })
@@ -648,7 +649,7 @@ def _attach_imports_edges(primitives: list[dict],
                                 root_pkg = module_name.split(".")[0]
                                 mod_prim["edges_out"].append({
                                     "target": f"external::pypi::{root_pkg}",
-                                    "kind": "imports", "via": "wildcard_import",
+                                    "kind": EdgeKind.IMPORTS.value, "via": "wildcard_import",
                                     "where": f"{path}:{node.lineno}",
                                     "confidence": "unresolved",
                                 })
@@ -671,7 +672,7 @@ def _attach_imports_edges(primitives: list[dict],
                             confidence = "unresolved"
                         mod_prim["edges_out"].append({
                             "target": target,
-                            "kind": "imports",
+                            "kind": EdgeKind.IMPORTS.value,
                             "via": "import_from",
                             "where": f"{path}:{node.lineno}",
                             "confidence": confidence,
@@ -693,7 +694,7 @@ def _attach_imports_edges(primitives: list[dict],
                         confidence = "unresolved"
                     mod_prim["edges_out"].append({
                         "target": target,
-                        "kind": "imports",
+                        "kind": EdgeKind.IMPORTS.value,
                         "via": "import",
                         "where": f"{path}:{node.lineno}",
                         "confidence": confidence,
@@ -902,12 +903,12 @@ def _resolve_call_edge(call: ast.Call, *, local_names: dict, imports: dict,
         if target is None:
             return []
         if target in classes_by_id:
-            kind = "instantiates"
+            kind = EdgeKind.INSTANTIATES.value
         elif target in functions_by_id or target.startswith("external::"):
             # External terminals (e.g. `external::pypi::requests::get`) skip
             # target-kind validation in reconcile and carry semantically-
             # meaningful information about the call site — keep them.
-            kind = "calls"
+            kind = EdgeKind.CALLS.value
         else:
             # Target is an in-corpus variable, module, or other non-callable
             # primitive. Skip the edge: the reads pass picks up the identifier
@@ -925,7 +926,7 @@ def _resolve_call_edge(call: ast.Call, *, local_names: dict, imports: dict,
             recv_class_id = var_types.get(recv)
             if recv_class_id is None:
                 return [{"target": f"external::unresolved::{recv}.{method}",
-                          "kind": "calls", "via": "method_call",
+                          "kind": EdgeKind.CALLS.value, "via": "method_call",
                           "where": f"{path}:{call.lineno}",
                           "confidence": "unresolved"}]
             if recv_class_id.startswith("external::"):
@@ -934,17 +935,17 @@ def _resolve_call_edge(call: ast.Call, *, local_names: dict, imports: dict,
                 # external class isn't verified, but the edge is exact for
                 # graph-traversal purposes.
                 return [{"target": f"{recv_class_id}::{method}",
-                          "kind": "calls", "via": "method_call",
+                          "kind": EdgeKind.CALLS.value, "via": "method_call",
                           "where": f"{path}:{call.lineno}",
                           "confidence": "exact"}]
             method_id = methods_by_class.get(recv_class_id, {}).get(method)
             if method_id:
-                return [{"target": method_id, "kind": "calls",
+                return [{"target": method_id, "kind": EdgeKind.CALLS.value,
                           "via": "method_call",
                           "where": f"{path}:{call.lineno}",
                           "confidence": "exact"}]
             return [{"target": f"external::unresolved::{recv_class_id}.{method}",
-                      "kind": "calls", "via": "method_call",
+                      "kind": EdgeKind.CALLS.value, "via": "method_call",
                       "where": f"{path}:{call.lineno}",
                       "confidence": "unresolved"}]
         # Chained attribute (a.b.c()) — unresolved for v0
@@ -953,7 +954,7 @@ def _resolve_call_edge(call: ast.Call, *, local_names: dict, imports: dict,
     # Computed callee (getattr, call[0](), etc.) — emit unresolved rather than
     # silently dropping, so the call site is preserved in the corpus.
     return [{"target": "external::unresolved::computed_callee",
-              "kind": "calls", "via": "computed_callee",
+              "kind": EdgeKind.CALLS.value, "via": "computed_callee",
               "where": f"{path}:{call.lineno}",
               "confidence": "unresolved"}]
 
@@ -993,14 +994,14 @@ def _attach_var_access_edges(primitives: list[dict],
                     var_id = local_vars[sub.id]
                     if isinstance(sub.ctx, ast.Load):
                         fn_prim["edges_out"].append({
-                            "target": var_id, "kind": "reads",
+                            "target": var_id, "kind": EdgeKind.READS.value,
                             "via": "name_load",
                             "where": f"{path}:{sub.lineno}",
                             "confidence": "exact",
                         })
                     elif isinstance(sub.ctx, ast.Store):
                         fn_prim["edges_out"].append({
-                            "target": var_id, "kind": "assigns",
+                            "target": var_id, "kind": EdgeKind.ASSIGNS.value,
                             "via": "name_store",
                             "where": f"{path}:{sub.lineno}",
                             "confidence": "exact",
@@ -1070,7 +1071,7 @@ def _attach_decorator_edges(primitives: list[dict],
             if source_prim["primitive"] in {"module", "package"}:
                 continue
             source_prim["edges_out"].append({
-                "target": p["id"], "kind": "decorates",
+                "target": p["id"], "kind": EdgeKind.DECORATES.value,
                 "via": dec,
                 "where": f"{path}:{p['source']['line']}",
                 "confidence": "exact",
@@ -1147,7 +1148,7 @@ def _attach_tests_edges(primitives: list[dict],
                 target_id = local_names.get(callee_name) or imports.get(callee_name)
                 if target_id and not target_id.startswith("external::"):
                     fn_prim["edges_out"].append({
-                        "target": target_id, "kind": "tests",
+                        "target": target_id, "kind": EdgeKind.TESTS.value,
                         "via": "asserted_call",
                         "where": f"{path}:{sub.lineno}",
                         "confidence": "exact",
