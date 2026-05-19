@@ -1001,6 +1001,65 @@ def _split_csv(value: str | None) -> list[str]:
 
 
 # ---------------------------------------------------------------------------
+# Mode A — single repo from project.toml
+# ---------------------------------------------------------------------------
+
+def _mode_a_single_repo(args: argparse.Namespace, ctx: Context) -> int:
+    """Regen a single repo using its project.toml [repos.<key>] table.
+
+    Looks up the named repo's full config (path, languages, migrations_dirs,
+    include_paths, exclude_paths) from project.toml and runs the v2 pipeline
+    against just that one repo. This is what the kernel-OOM mitigation hint
+    in `_run_v2_pipeline` recommends — `regen --repo-key <key>` should work
+    without forcing the user to duplicate paths already in project.toml.
+    """
+    repos_cfg = project_repos(ctx.DEPGRAPH)
+    if not repos_cfg:
+        print(
+            "No [repos.*] tables found in project.toml — pass --repo-path "
+            "alongside --repo-key to regen a single repo without project.toml.",
+            file=sys.stderr,
+        )
+        return 1
+
+    info = repos_cfg.get(args.repo_key)
+    if info is None:
+        known = ", ".join(sorted(repos_cfg)) or "(none)"
+        print(
+            f"Error: --repo-key {args.repo_key!r} not found in project.toml. "
+            f"Known keys: {known}.",
+            file=sys.stderr,
+        )
+        return 1
+
+    if not info.get("languages"):
+        print(
+            f"Error: [repos.{args.repo_key}] uses the v1 'extractor =' syntax, "
+            f"which the single-repo path does not support. Run `kg depgraph regen` "
+            f"with no --repo-key to use the v1 fallback for all repos.",
+            file=sys.stderr,
+        )
+        return 1
+
+    repo = {
+        "key": args.repo_key,
+        "path": info["path"],
+        "languages": info["languages"],
+        "migrations_dirs": [
+            info["path"] / d for d in (info.get("migrations_dirs") or [])
+        ],
+        "include_paths": info.get("include_paths") or [],
+        "exclude_paths": info.get("exclude_paths") or [],
+    }
+
+    classification_options = project_classification_options(ctx.DEPGRAPH)
+    return _run_v2_pipeline(
+        data_dir=ctx.DEPGRAPH, repos=[repo], tool_root=ctx.tool_root,
+        classification_options=classification_options,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Mode B — single-repo direct invocation
 # ---------------------------------------------------------------------------
 
@@ -1048,10 +1107,30 @@ def _mode_b(args: argparse.Namespace, ctx: Context) -> int:
 # ---------------------------------------------------------------------------
 
 def cmd_regen(args: argparse.Namespace, ctx: Context) -> int:
-    """Dispatch to Mode A or Mode B based on whether --repo-key is present."""
+    """Dispatch to Mode A, Mode A-single, or Mode B based on the supplied flags.
+
+    --repo-key alone (no --repo-path): single-repo subset of Mode A — looks
+    up the repo's path/languages/etc. from project.toml's [repos.<key>] table.
+    This is the path the kernel-OOM hint message recommends.
+
+    --repo-key + --repo-path: Mode B (fully standalone, no project.toml).
+
+    Neither flag: Mode A (full multi-repo regen from project.toml).
+    """
     mark_regen_in_progress(ctx)
-    if getattr(args, "repo_key", None):
+    repo_key = getattr(args, "repo_key", None)
+    repo_path = getattr(args, "repo_path", None)
+    if repo_key and repo_path:
         return _mode_b(args, ctx)
+    if repo_key:
+        return _mode_a_single_repo(args, ctx)
+    if repo_path:
+        print(
+            "Error: --repo-path requires --repo-key. Pass both for a standalone "
+            "single-repo regen, or pass neither to regen all repos from project.toml.",
+            file=sys.stderr,
+        )
+        return 2
     return _mode_a(args, ctx)
 
 
