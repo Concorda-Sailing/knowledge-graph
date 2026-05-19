@@ -111,7 +111,6 @@ def test_tools_translated_to_functions_format(monkeypatch: pytest.MonkeyPatch) -
         input_schema={"type": "object", "properties": {"path": {"type": "string"}}, "required": ["path"]},
     )]
     c.complete([LLMMessage(role="user", content="x")], tools=tools)
-    assert captured["payload"]["tool_choice"] == "auto"
     assert captured["payload"]["tools"] == [{
         "type": "function",
         "function": {
@@ -120,6 +119,38 @@ def test_tools_translated_to_functions_format(monkeypatch: pytest.MonkeyPatch) -
             "parameters": {"type": "object", "properties": {"path": {"type": "string"}}, "required": ["path"]},
         },
     }]
+
+
+def test_tool_choice_required_on_first_turn(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured: dict = {}
+    monkeypatch.setattr(
+        OpenAILLMClient, "_post",
+        _stub_post(captured, {"choices": [{"message": {"content": "ok"}, "finish_reason": "stop"}]}),
+    )
+    c = OpenAILLMClient(_cfg())
+    tools = [ToolDefinition(name="read_source", description="", input_schema={"type": "object"})]
+    c.complete([LLMMessage(role="user", content="x")], tools=tools)
+    assert captured["payload"]["tool_choice"] == "required"
+
+
+def test_tool_choice_auto_after_prior_tool_use(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured: dict = {}
+    monkeypatch.setattr(
+        OpenAILLMClient, "_post",
+        _stub_post(captured, {"choices": [{"message": {"content": "ok"}, "finish_reason": "stop"}]}),
+    )
+    c = OpenAILLMClient(_cfg())
+    tools = [ToolDefinition(name="read_source", description="", input_schema={"type": "object"})]
+    history = [
+        LLMMessage(role="user", content="x"),
+        LLMMessage(
+            role="assistant",
+            tool_calls=[ToolCall(id="call_1", name="read_source", arguments={"path": "a.py"})],
+        ),
+        LLMMessage(role="tool", tool_results=[ToolResult(tool_call_id="call_1", content="…")]),
+    ]
+    c.complete(history, tools=tools)
+    assert captured["payload"]["tool_choice"] == "auto"
 
 
 def test_tool_call_response_parsed(monkeypatch: pytest.MonkeyPatch) -> None:
