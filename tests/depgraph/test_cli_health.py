@@ -15,11 +15,33 @@ from depgraph.lib.cli.health import cmd_health
 # Helpers
 # ---------------------------------------------------------------------------
 
+def _make_meta(ctx: Context, *, node_count: int = 1) -> Path:
+    """Write a minimal _meta.json so health/validate accept that extraction ran.
+
+    Tests that add nodes via :func:`_make_node` get a meta for free; tests
+    that want to exercise the pre-extraction state should *not* call this.
+    """
+    meta_path = ctx.CORPUS_META
+    meta_path.parent.mkdir(parents=True, exist_ok=True)
+    meta_path.write_text(json.dumps({
+        "schema_version": 2,
+        "regen_status": "complete",
+        "node_count": node_count,
+    }))
+    return meta_path
+
+
 def _make_node(ctx: Context, node_id: str, *, primitive: str = "class",
                kind: str = "model",
                structural_hash: str = "aabbccdd11223344",
                dossier: str | None = None) -> Path:
-    """Write a minimal valid v2 node JSON under nodes/."""
+    """Write a minimal valid v2 node JSON under nodes/.
+
+    Also writes a minimal _meta.json (idempotent) so the liveness gate in
+    cmd_health accepts the corpus as "extraction has run."
+    """
+    if not ctx.CORPUS_META.exists():
+        _make_meta(ctx)
     node_file = ctx.NODES / f"{node_id.replace('::', '_')}.json"
     node_file.parent.mkdir(parents=True, exist_ok=True)
     name = node_id.split("::")[-1]
@@ -80,16 +102,35 @@ def _make_dossier(ctx: Context, rel_path: str, *,
 # Tests
 # ---------------------------------------------------------------------------
 
-def test_health_empty_graph_exits_0(
+def test_health_no_extraction_signals_not_clean(
     data_dir: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """Empty nodes/ → no problems → exit 0."""
+    """No _meta.json (regen never ran) must NOT report 'clean' (#61).
+
+    Previous buggy behavior: an empty corpus reported '✓ clean' with exit 0,
+    feeding a false all-clear into the SessionStart hook."""
     ctx = Context.from_data_dir(data_dir)
+    args = argparse.Namespace()
+    rc = cmd_health(args, ctx)
+    assert rc != 0
+    out = capsys.readouterr().out
+    assert "clean" not in out
+    assert "no extraction" in out.lower() or "regen" in out.lower()
+
+
+def test_health_meta_with_zero_nodes_exits_0(
+    data_dir: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Meta exists but node_count is 0 → regen ran intentionally → exit 0.
+
+    Distinct from the no-extraction case above: the user has run regen and
+    knows there's nothing in the corpus yet."""
+    ctx = Context.from_data_dir(data_dir)
+    _make_meta(ctx, node_count=0)
     args = argparse.Namespace()
     rc = cmd_health(args, ctx)
     assert rc == 0
     out = capsys.readouterr().out
-    assert "Depgraph health" in out
     assert "clean" in out
 
 
@@ -149,6 +190,7 @@ def test_health_skips_underscore_files(
 ) -> None:
     """Files starting with _ (e.g. _meta.json, _index/) are skipped."""
     ctx = Context.from_data_dir(data_dir)
+    _make_meta(ctx)  # corpus has been extracted
     # Write a broken JSON file under an underscore name — should be ignored.
     (ctx.NODES / "_broken.json").write_text("NOT VALID JSON")
     args = argparse.Namespace()

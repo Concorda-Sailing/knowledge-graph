@@ -25,6 +25,16 @@ def cmd_health(args: argparse.Namespace, ctx: Context) -> int:
     """Compact graph-health report. Bundles validate + orphans + stale-dossier
     detection + tier-A coverage shortfall into one summary suitable for
     SessionStart injection. Exits non-zero if anything is wrong."""
+    # Liveness gate (#61): "no extraction has run" must not look like "clean."
+    # _meta.json is the canonical "regen completed" signal; without it we
+    # cannot distinguish a healthy empty corpus from one that was never
+    # extracted, so refuse to claim clean.
+    if not ctx.CORPUS_META.exists():
+        print("# Depgraph health")
+        print()
+        print("  ⚠ no extraction has run yet — run `depgraph regen`")
+        return 1
+
     problems: list[str] = []
     summary: list[str] = []
 
