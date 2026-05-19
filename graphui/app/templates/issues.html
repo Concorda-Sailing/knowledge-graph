@@ -102,7 +102,11 @@
 {% endif %}
 
 {% if not flags.fresh and not flags.tracked %}
+  {% if not flags.extraction_ran %}
+<p class="empty">No extraction has run for this project yet. Run <code>kg depgraph regen</code> (and <code>kg logigraph regen</code> if you author rules) to populate the corpus.</p>
+  {% else %}
 <p class="empty">No issues. Corpus is clean.</p>
+  {% endif %}
 {% endif %}
 
 <script>
