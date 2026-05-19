@@ -42,7 +42,10 @@ from depgraph.lib.config import (  # noqa: E402
     load_project_config,
     path_to_repo_key_relative,
 )
-from depgraph.lib.edges import REVERSE_INDEX_FILENAME  # noqa: E402
+from depgraph.lib.edges import (  # noqa: E402
+    INJECTIONS_LOG_FILENAME,
+    REVERSE_INDEX_FILENAME,
+)
 from depgraph.lib.primitives import slugify_id_for_filename  # noqa: E402
 from kg.shared.env import DEPGRAPH_DATA_DIR  # noqa: E402
 
@@ -54,7 +57,7 @@ NODES = DEPGRAPH / "nodes"
 DEPENDENTS_INDEX = NODES / "_index" / REVERSE_INDEX_FILENAME
 CORPUS_META = NODES / "_meta.json"
 TELEMETRY_DIR = DEPGRAPH / "telemetry"
-INJECTIONS_LOG = TELEMETRY_DIR / "injections.jsonl"
+INJECTIONS_LOG = TELEMETRY_DIR / INJECTIONS_LOG_FILENAME
 DOSSIER_LINE_LIMIT = 200
 TRANSITIVE_DEPTH = 3
 DEPENDENTS_PER_DEPTH_CAP = 30

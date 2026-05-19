@@ -54,6 +54,7 @@ def _project_name() -> str:
     cfg = load_project_config(LOGIGRAPH)
     return (cfg.get("project") or {}).get("name", "")
 
+from depgraph.lib.edges import INJECTIONS_LOG_FILENAME  # noqa: E402
 from kg.shared.env import DEPGRAPH_DATA_DIR, LOGIGRAPH_DATA_DIR  # noqa: E402
 
 LOGIGRAPH = resolve_data_dir(LOGIGRAPH_DATA_DIR)
@@ -80,7 +81,7 @@ DOMAIN_DIR = NODES / "domain"
 BY_FILE_INDEX = NODES / "_index" / "by_file.json"
 CORPUS_META = NODES / "_meta.json"
 TELEMETRY_DIR = LOGIGRAPH / "telemetry"
-INJECTIONS_LOG = TELEMETRY_DIR / "injections.jsonl"
+INJECTIONS_LOG = TELEMETRY_DIR / INJECTIONS_LOG_FILENAME
 DOSSIER_LINE_LIMIT = 200
 NODE_SCHEMA_VERSION = 2
 

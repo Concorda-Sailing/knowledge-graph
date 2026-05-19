@@ -42,12 +42,16 @@ TOOL_ROOT = Path(__file__).resolve().parent.parent
 _FRAMEWORK_ROOT = TOOL_ROOT.parent  # ~/tools/knowledge-graph
 sys.path.insert(0, str(_FRAMEWORK_ROOT))
 from depgraph.lib.config import resolve_data_dir  # noqa: E402
+from depgraph.lib.edges import (  # noqa: E402
+    ACKNOWLEDGMENTS_LOG_FILENAME,
+    INJECTIONS_LOG_FILENAME,
+)
 from kg.shared.env import DEPGRAPH_DATA_DIR  # noqa: E402
 
 DEPGRAPH = resolve_data_dir(DEPGRAPH_DATA_DIR)
 TELEMETRY_DIR = DEPGRAPH / "telemetry"
-INJECTIONS_LOG = TELEMETRY_DIR / "injections.jsonl"
-ACKS_LOG = TELEMETRY_DIR / "acknowledgments.jsonl"
+INJECTIONS_LOG = TELEMETRY_DIR / INJECTIONS_LOG_FILENAME
+ACKS_LOG = TELEMETRY_DIR / ACKNOWLEDGMENTS_LOG_FILENAME
 NODES_DIR = DEPGRAPH / "nodes"
 
 SESSION_WINDOW_HOURS = 6
