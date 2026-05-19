@@ -1409,16 +1409,34 @@ def _resolve_call_edge(call: ast.Call, *, local_names: dict, imports: dict,
             method = call.func.attr
             recv_class_ids = var_types.get(recv) or []
             if not recv_class_ids:
-                # #91 (b2): imports fallback. When the receiver isn't
-                # type-bound but IS an imported name pointing at an
-                # in-corpus module (e.g. `import click; click.echo(...)`
-                # from an examples/ subtree, after the cross-binding pass
-                # aliased the registered name to the in-corpus module
-                # id), resolve `method` as a top-level symbol of that
-                # module. `symbols_by_module` includes both directly-
-                # defined names and re-exported ones so a barrel package
-                # like `click` (where `echo` is `from .utils import echo
-                # as echo`) still resolves.
+                # Module-named receiver fallback (#68): `import requests;
+                # requests.get(...)` leaves `var_types[recv]` unset because
+                # the receiver is a name bound by an import statement, not
+                # a typed local. Consult the imports table to recover the
+                # canonical external target before falling through.
+                imported = imports.get(recv)
+                if imported and imported.startswith("external::"):
+                    # External package: emit `external::pypi::<pkg>::<method>`
+                    # by appending the method name as an extra id segment.
+                    # The imports pass typically stores a bare-package id
+                    # (3-component, from `import requests`) here; symbol-id
+                    # receivers are unusual but the same suffix shape stays
+                    # parseable downstream.
+                    return [{"target": f"{imported}::{method}",
+                              "kind": EdgeKind.CALLS.value,
+                              "via": "method_call",
+                              "where": f"{path}:{call.lineno}",
+                              "confidence": "exact"}]
+                # #91 (b2): in-corpus imports fallback. When the receiver
+                # is an imported name pointing at an in-corpus module
+                # (e.g. `import click; click.echo(...)` from an examples/
+                # subtree, after the cross-binding pass aliased the
+                # registered name to the in-corpus module id), resolve
+                # `method` as a top-level symbol of that module.
+                # `symbols_by_module` includes both directly-defined names
+                # and re-exported ones so a barrel package like `click`
+                # (where `echo` is `from .utils import echo as echo`)
+                # still resolves.
                 if symbols_by_module is not None:
                     import_target = imports.get(recv)
                     if (import_target is not None
