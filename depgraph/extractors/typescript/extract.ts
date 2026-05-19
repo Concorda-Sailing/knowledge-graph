@@ -30,6 +30,30 @@ interface Primitive {
 const EXTRACTOR_TAG = "depgraph/extractors/typescript/extract.ts@2026-05-16";
 const EXTS = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"];
 
+// Per-resolver hit-rate counters (R7, issue #77). Each resolver branch ticks
+// a (resolver, outcome) pair; main() serializes the counter as a terminal
+// ndjson sentinel (kind: "resolver_stats") which regen.py separates from the
+// primitive stream and merges into nodes/_meta.json. Outcomes match the
+// Python side: hit / fuzzy / fallthrough.
+const RESOLVER_STATS = new Map<string, Map<string, number>>();
+function tickResolver(resolver: string, outcome: string): void {
+  let outcomes = RESOLVER_STATS.get(resolver);
+  if (!outcomes) {
+    outcomes = new Map<string, number>();
+    RESOLVER_STATS.set(resolver, outcomes);
+  }
+  outcomes.set(outcome, (outcomes.get(outcome) ?? 0) + 1);
+}
+function resolverStatsAsObject(): Record<string, Record<string, number>> {
+  const out: Record<string, Record<string, number>> = {};
+  for (const [resolver, outcomes] of RESOLVER_STATS) {
+    const o: Record<string, number> = {};
+    for (const [outcome, n] of outcomes) o[outcome] = n;
+    out[resolver] = o;
+  }
+  return out;
+}
+
 /**
  * Compile a path glob to a regex matching the full rel-path. Port of
  * `depgraph.lib.path_filters.compile_glob` — the two must stay in sync.
@@ -1243,10 +1267,16 @@ function attachCallAndVarAccessEdges(
             // are intentionally dropped here; the reads pass picks them up.
             const isExternal = targetId?.startsWith("external::");
             if (targetId && (allFunctionIds.has(targetId) || isExternal)) {
+              tickResolver("ts.call.bare_name", "hit");
               fnPrim.edges_out.push({
                 target: targetId, kind: "calls", via: "function_call",
                 where: `${rel}:${node.getStartLineNumber()}`, confidence: "exact",
               });
+            } else {
+              // No edge emitted — either unknown identifier or in-corpus
+              // non-callable. Both are fallthroughs for resolver-stats
+              // purposes (the reads pass may still pick up the identifier).
+              tickResolver("ts.call.bare_name", "fallthrough");
             }
           } else if (Node.isPropertyAccessExpression(callExpr)) {
             // receiver.method()
@@ -1258,6 +1288,7 @@ function attachCallAndVarAccessEdges(
             if (recvClassId) {
               const methodId = methodsByClass.get(recvClassId)?.get(methodName);
               if (methodId) {
+                tickResolver("ts.call.method_via_var_types", "hit");
                 fnPrim.edges_out.push({
                   target: methodId, kind: "calls", via: "method_call",
                   where, confidence: "exact",
@@ -1267,6 +1298,7 @@ function attachCallAndVarAccessEdges(
                 // (3 segments). Use the bare class name as the symbol prefix —
                 // embedding the full primitive id (`<repo>::<path>::<cls>`) would
                 // produce a 5-segment string that fails the terminal format.
+                tickResolver("ts.call.method_via_var_types", "fallthrough");
                 const className = recvClassId.split("::").pop() ?? recvClassId;
                 fnPrim.edges_out.push({
                   target: `external::unresolved::${className}.${methodName}`,
@@ -1296,12 +1328,14 @@ function attachCallAndVarAccessEdges(
                 // terminal.
                 const segCount = importTarget.split("::").length;
                 if (segCount === 3) {
+                  tickResolver("ts.call.method_via_imports_npm", "hit");
                   fnPrim.edges_out.push({
                     target: `${importTarget}::${methodName}`,
                     kind: "calls", via: "method_call",
                     where, confidence: "exact",
                   });
                 } else {
+                  tickResolver("ts.call.method_via_imports_npm", "fallthrough");
                   fnPrim.edges_out.push({
                     target: `external::unresolved::${recvName}.${methodName}`,
                     kind: "calls", via: "method_call",
@@ -1327,11 +1361,13 @@ function attachCallAndVarAccessEdges(
                   // map by symbol name, not by tracing the actual call-site
                   // type. Matches the convention in attachImportsEdges for
                   // re-export hops.
+                  tickResolver("ts.call.method_via_imports_in_corpus", "fuzzy");
                   fnPrim.edges_out.push({
                     target: resolved, kind: "calls", via: "method_call",
                     where, confidence: "fuzzy",
                   });
                 } else {
+                  tickResolver("ts.call.method_via_imports_in_corpus", "fallthrough");
                   fnPrim.edges_out.push({
                     target: `external::unresolved::${recvName}.${methodName}`,
                     kind: "calls", via: "method_call",
@@ -1342,6 +1378,7 @@ function attachCallAndVarAccessEdges(
                 // Bare receiver with no var-type and no import binding.
                 // Emit an unresolved terminal so the call shows up in stats
                 // instead of vanishing — silent drops were the R7 violation.
+                tickResolver("ts.call.method_unresolved", "fallthrough");
                 fnPrim.edges_out.push({
                   target: `external::unresolved::${recvName}.${methodName}`,
                   kind: "calls", via: "method_call",
@@ -1680,6 +1717,16 @@ function main() {
   attachTestsEdges(allPrims, sourceFiles, repoKey, repoPath);
 
   for (const p of allPrims) emit(p);
+
+  // Resolver-stats sentinel — last line of stdout. regen.py separates it
+  // from the primitive ndjson stream by checking for the `_kind` discriminator
+  // and merges `data` into nodes/_meta.json::resolver_stats. Counters here
+  // mirror the Python-side taxonomy (see depgraph/extractors/python/extract.py
+  // `consume_resolver_stats`) for issue #77.
+  process.stdout.write(JSON.stringify({
+    _kind: "resolver_stats",
+    data: resolverStatsAsObject(),
+  }) + "\n");
 }
 
 // Only run main() when invoked as a script (`tsx extract.ts ...`). Skip

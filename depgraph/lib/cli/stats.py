@@ -44,6 +44,50 @@ def _categorize_unresolved(target: str) -> tuple[str, str]:
     return ("other", target)
 
 
+def _render_resolver_stats(ctx: Context) -> None:
+    """Read `_meta.json::resolver_stats` and print a small per-resolver
+    table — one row per resolver branch with hit / fuzzy / fallthrough
+    counts and the resulting hit rate.
+
+    Surface for R7 (issue #77): each resolver branch in the Python and TS
+    extractors ticks an outcome counter; regen.py merges them under this
+    key. The table answers "the imports-table fallback I added (#68/#69) —
+    how often does it hit vs miss?".
+
+    Silently no-op when the key is missing so older corpora keep rendering
+    cleanly. Also no-op on JSON parse errors — the corpus rollup above us
+    is the load-bearing report; resolver stats are an observational extra.
+    """
+    meta_path = ctx.CORPUS_META
+    if not meta_path.exists():
+        return
+    try:
+        meta = json.loads(meta_path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return
+    resolver_stats = meta.get("resolver_stats")
+    if not resolver_stats:
+        return
+
+    print()
+    print("## Resolver stats (R7)")
+    # Column header: resolver name, hit / fuzzy / fallthrough, total, hit %.
+    print(f"  {'resolver':<46} {'hit':>6} {'fuzzy':>6} {'fall':>6} {'total':>6} {'hit%':>5}")
+    for resolver in sorted(resolver_stats):
+        outcomes = resolver_stats[resolver] or {}
+        hit = int(outcomes.get("hit", 0))
+        fuzzy = int(outcomes.get("fuzzy", 0))
+        fall = int(outcomes.get("fallthrough", 0))
+        total = hit + fuzzy + fall
+        # Surface any unexpected outcome keys instead of silently dropping
+        # — same convention as the confidence histogram above.
+        extra = sum(int(v) for k, v in outcomes.items()
+                    if k not in {"hit", "fuzzy", "fallthrough"})
+        total += extra
+        pct = int(round(100 * hit / total)) if total else 0
+        print(f"  {resolver:<46} {hit:>6} {fuzzy:>6} {fall:>6} {total:>6} {pct:>4}%")
+
+
 def cmd_stats(args: argparse.Namespace, ctx: Context) -> int:
     """Corpus rollup + optional telemetry. Mirrors `logigraph stats`."""
     # ---- corpus rollup --------------------------------------------------
@@ -154,6 +198,11 @@ def cmd_stats(args: argparse.Namespace, ctx: Context) -> int:
                 print(f"## Top unresolved prefixes (top {len(head)})")
                 for group, n in head:
                     print(f"  {n:>6}  {group}")
+
+    # Per-resolver hit-rate table (R7, #77). Populated by `kg depgraph regen`
+    # — see resolver_stats key in nodes/_meta.json. Skipped silently when the
+    # key is absent so older corpora keep rendering cleanly.
+    _render_resolver_stats(ctx)
 
     if args.telemetry:
         injections = load_telemetry_events(ctx.INJECTIONS_LOG)
