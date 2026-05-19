@@ -859,7 +859,7 @@ def test_decorates_edge_skips_module_source_py():
     ]
     imports_by_path = {"caller.py": {"something": "fixture::pkg/__init__.py"}}
 
-    _attach_decorator_edges(primitives, trees_by_path={},
+    _attach_decorator_edges(primitives,
                             imports_by_path=imports_by_path)
 
     # No decorates edge on the module — modules are never valid decorator sources.
