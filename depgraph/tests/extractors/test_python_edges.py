@@ -37,6 +37,33 @@ def test_extends_py():
     assert any(e["target"] == "fixture::src.py::Base" for e in ex)
 
 
+def test_extends_resolves_via_relative_import_py():
+    prims = list(extract_repo(repo_key="fixture",
+                              repo_path=FIXTURE_DIR / "inheritance_via_import"))
+    user = next(p for p in prims if p["name"] == "User")
+    ex = [e for e in user["edges_out"] if e["kind"] == "extends"]
+    assert any(e["target"] == "fixture::pkg/base.py::BaseModel"
+               and e["confidence"] == "exact" for e in ex), ex
+
+
+def test_extends_resolves_via_absolute_import_py():
+    prims = list(extract_repo(repo_key="fixture",
+                              repo_path=FIXTURE_DIR / "inheritance_via_import"))
+    account = next(p for p in prims if p["name"] == "Account")
+    ex = [e for e in account["edges_out"] if e["kind"] == "extends"]
+    assert any(e["target"] == "fixture::pkg/base.py::BaseModel"
+               and e["confidence"] == "exact" for e in ex), ex
+
+
+def test_extends_external_keeps_pkg_attribution_py():
+    prims = list(extract_repo(repo_key="fixture",
+                              repo_path=FIXTURE_DIR / "inheritance_external"))
+    item = next(p for p in prims if p["name"] == "Item")
+    ex = [e for e in item["edges_out"] if e["kind"] == "extends"]
+    assert any(e["target"] == "external::pypi::pydantic::BaseModel"
+               and e["confidence"] == "unresolved" for e in ex), ex
+
+
 # ---------------------------------------------------------------------------
 # Task 3.3: imports edges
 # ---------------------------------------------------------------------------

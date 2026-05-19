@@ -114,13 +114,14 @@ def extract_repo(
 
     # L2 edge resolution passes (ordered: each pass may read edges added by prior)
     _attach_defines_edges(primitives)
-    _attach_inheritance_edges(primitives, trees_by_path=trees_by_path)
     _attach_imports_edges(primitives, trees_by_path=trees_by_path, repo_key=repo_key,
                           repo_path=repo_path)
+    imports_by_path = _build_imports_by_path(primitives)
+    _attach_inheritance_edges(primitives, trees_by_path=trees_by_path,
+                               imports_by_path=imports_by_path)
     _attach_call_edges(primitives, trees_by_path=trees_by_path)
     _attach_var_access_edges(primitives, trees_by_path=trees_by_path)
 
-    imports_by_path = _build_imports_by_path(primitives)
     _attach_decorator_edges(primitives, trees_by_path=trees_by_path,
                              imports_by_path=imports_by_path)
     _attach_tests_edges(primitives, trees_by_path=trees_by_path)
@@ -385,9 +386,22 @@ def _attach_defines_edges(primitives: list[dict]) -> None:
 # ---------------------------------------------------------------------------
 
 def _attach_inheritance_edges(primitives: list[dict],
-                               *, trees_by_path: dict[str, ast.Module]) -> None:
+                               *, trees_by_path: dict[str, ast.Module],
+                               imports_by_path: dict[str, dict[str, str]]) -> None:
     """Walk each class's bases AST, resolve base names to local class ids,
-    append `extends` edges in-place."""
+    append `extends` edges in-place.
+
+    Resolution order for each base name:
+      1. Top-level class in the same module.
+      2. The module's imports table (`from .base import BaseModel` etc.) — uses
+         the target the imports pass already resolved, so re-exports and
+         absolute/relative imports are handled uniformly. The target must look
+         like a class (in-corpus class id, or external symbol id of the form
+         `external::pypi::<pkg>::<symbol>`) to be accepted; module-shaped
+         targets fall through to the unresolved sentinel to keep `extends`
+         taxonomy-valid.
+      3. `external::pypi::unknown::<name>` with `unresolved` confidence.
+    """
     # top-level class name -> id, per file
     by_path: dict[str, dict[str, str]] = {}
     for p in primitives:
@@ -398,6 +412,7 @@ def _attach_inheritance_edges(primitives: list[dict],
 
     for path, tree in trees_by_path.items():
         local_names = by_path.get(path, {})
+        imports = imports_by_path.get(path, {})
         for node in tree.body:
             if not isinstance(node, ast.ClassDef):
                 continue
@@ -418,14 +433,40 @@ def _attach_inheritance_edges(primitives: list[dict],
                         "where": f"{path}:{node.lineno}",
                         "confidence": "exact",
                     })
-                else:
+                    continue
+                imported = imports.get(base_name)
+                if imported and imported in classes_by_id:
                     target_class["edges_out"].append({
-                        "target": f"external::pypi::unknown::{base_name}",
+                        "target": imported,
+                        "kind": "extends",
+                        "via": "class_decl",
+                        "where": f"{path}:{node.lineno}",
+                        "confidence": "exact",
+                    })
+                    continue
+                if imported and _is_external_symbol_id(imported):
+                    target_class["edges_out"].append({
+                        "target": imported,
                         "kind": "extends",
                         "via": "class_decl",
                         "where": f"{path}:{node.lineno}",
                         "confidence": "unresolved",
                     })
+                    continue
+                target_class["edges_out"].append({
+                    "target": f"external::pypi::unknown::{base_name}",
+                    "kind": "extends",
+                    "via": "class_decl",
+                    "where": f"{path}:{node.lineno}",
+                    "confidence": "unresolved",
+                })
+
+
+def _is_external_symbol_id(target_id: str) -> bool:
+    """external::pypi::<pkg>::<symbol> shape — distinguishes a symbol id
+    (4 components) from a bare package id (3 components, `external::pypi::pkg`).
+    Only symbol-shaped ids represent something that could be a class."""
+    return target_id.startswith("external::") and len(target_id.split("::")) >= 4
 
 
 def _name_from_base(base: ast.expr) -> str | None:
