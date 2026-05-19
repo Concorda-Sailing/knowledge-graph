@@ -12,6 +12,15 @@ def cmd_health(args: argparse.Namespace, ctx: Context) -> int:
     """Compact graph-health summary: validate + gaps + curation-backlog
     counts in one block. Exit non-zero if anything is wrong. Used by the
     SessionStart hook for at-a-glance freshness."""
+    # Liveness gate (#62): "no extraction has run" must not look like "clean."
+    # _meta.json is the canonical "regen completed" signal; without it the
+    # empty curation backlog is meaningless and we refuse to claim clean.
+    if not ctx.CORPUS_META.exists():
+        print("# Logigraph health")
+        print()
+        print("  ⚠ no extraction has run yet — run `logigraph regen`")
+        return 1
+
     domain_schema = ctx.tool_root / "schema" / "domain.schema.json"
     rule_schema = ctx.tool_root / "schema" / "rule.schema.json"
     process_schema = ctx.tool_root / "schema" / "process.schema.json"

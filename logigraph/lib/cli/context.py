@@ -44,6 +44,7 @@ class Context:
     """Per-invocation paths derived from the resolved logigraph data dir."""
     LOGIGRAPH: Path
     NODES: Path
+    CORPUS_META: Path
     DOSSIERS_DIR: Path
     CALIBRATION_DIR: Path
     TELEMETRY_DIR: Path
@@ -54,9 +55,11 @@ class Context:
     @classmethod
     def from_data_dir(cls, data_dir: Path) -> "Context":
         dd = Path(data_dir).expanduser().resolve()
+        nodes = dd / "nodes"
         return cls(
             LOGIGRAPH=dd,
-            NODES=dd / "nodes",
+            NODES=nodes,
+            CORPUS_META=nodes / "_meta.json",
             DOSSIERS_DIR=dd / "dossiers",
             CALIBRATION_DIR=dd / "calibration",
             TELEMETRY_DIR=dd / "telemetry",
