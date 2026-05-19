@@ -51,7 +51,17 @@ class OpenAILLMClient(BaseLLMClient):
         }
         if tools:
             payload["tools"] = [_tool_to_openai(t) for t in tools]
-            payload["tool_choice"] = "auto"
+            # Force at least one tool call on the first agent-loop turn:
+            # when no prior assistant turn carries tool_calls, the model
+            # has not yet consulted any tool, and Granite (in particular)
+            # otherwise drafts confidently from priors instead of calling
+            # the registered tools. After the first tool round-trip the
+            # follow-up turns revert to "auto" so the model can decide
+            # when it has enough evidence to write the final response.
+            prior_tool_use = any(
+                m.role == "assistant" and m.tool_calls for m in messages
+            )
+            payload["tool_choice"] = "auto" if prior_tool_use else "required"
 
         headers: dict[str, str] = {}
         key = self.cfg.resolve_api_key()
