@@ -126,8 +126,6 @@ def cmd_validate(args: argparse.Namespace, ctx: Context) -> int:
 
 def register(sub: argparse._SubParsersAction) -> None:
     p = sub.add_parser("validate")
-    p.add_argument("--strict", action="store_true",
-                   help="Reserved; currently has no effect.")
     p.add_argument("--verbose", action="store_true",
                    help="Print jsonschema's full failure context (long output).")
     p.add_argument("--all", action="store_true",
