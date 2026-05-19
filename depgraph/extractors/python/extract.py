@@ -469,6 +469,44 @@ def _is_external_symbol_id(target_id: str) -> bool:
     return target_id.startswith("external::") and len(target_id.split("::")) >= 4
 
 
+def _is_class_target(target_id: str | None, classes_by_id: dict) -> bool:
+    """Predicate for "this target is class-shaped". An annotation in type
+    position can name an in-corpus class, an external symbol (e.g.
+    `external::pypi::sqlalchemy::Session`), or — incorrectly — a module
+    binding. The last case is filtered out by rejecting bare-package
+    externals and in-corpus module ids."""
+    if target_id is None:
+        return False
+    if target_id in classes_by_id:
+        return True
+    if target_id.startswith("external::"):
+        return _is_external_symbol_id(target_id)
+    return False
+
+
+def _annotation_root_name(ann: ast.expr) -> str | None:
+    """Extract the most-likely class name from a type annotation. Handles
+    bare names (`Session`), generic subscripts (`Optional[Session]`,
+    `Annotated[Session, Depends(get_db)]`), and dotted access
+    (`orm.Session`). Returns the inner type name when the outer wrapper is
+    one of the well-known transparent generics (Optional/Union/Annotated/
+    ClassVar/Final); otherwise returns the outer name (so `List[Item]`
+    returns `List`, since `.append()` is called on the List)."""
+    if isinstance(ann, ast.Name):
+        return ann.id
+    if isinstance(ann, ast.Attribute):
+        return ann.attr
+    if isinstance(ann, ast.Subscript):
+        outer = _annotation_root_name(ann.value)
+        if outer in {"Optional", "Union", "Annotated", "ClassVar", "Final"}:
+            slice_node = ann.slice
+            if isinstance(slice_node, ast.Tuple) and slice_node.elts:
+                return _annotation_root_name(slice_node.elts[0])
+            return _annotation_root_name(slice_node)
+        return outer
+    return None
+
+
 def _name_from_base(base: ast.expr) -> str | None:
     """Recover the rightmost name from a base class expression.
     e.g. `Base` -> 'Base', `pkg.Base` -> 'Base', `Generic[T]` -> 'Generic'."""
@@ -798,14 +836,21 @@ def _attach_call_edges(primitives: list[dict],
             if fn_prim is None:
                 continue
 
-            # Seed type binding from parameter annotations
+            # Seed type binding from parameter annotations. Annotation
+            # position implies the target is a class — accept both in-corpus
+            # classes and external symbol-shaped ids (e.g. SQLAlchemy
+            # `Session`, FastAPI `APIRouter`). Module-shaped externals
+            # (3-component ids) are rejected so a bare `import foo` doesn't
+            # masquerade as a type.
             var_types: dict[str, str] = {}  # local_name -> class_id
             for arg in fn_node.args.args + fn_node.args.kwonlyargs:
                 if arg.annotation is None:
                     continue
-                ann_text = ast.unparse(arg.annotation).split("[")[0].strip()
+                ann_text = _annotation_root_name(arg.annotation)
+                if ann_text is None:
+                    continue
                 target_id = local_names.get(ann_text) or imports.get(ann_text)
-                if target_id and target_id in classes_by_id:
+                if _is_class_target(target_id, classes_by_id):
                     var_types[arg.arg] = target_id
 
             # Walk body in source order; update var_types on assignments,
@@ -813,10 +858,11 @@ def _attach_call_edges(primitives: list[dict],
             for sub in ast.walk(fn_node):
                 # Pattern 1: x: SomeClass = ...
                 if isinstance(sub, ast.AnnAssign) and isinstance(sub.target, ast.Name):
-                    ann_text = ast.unparse(sub.annotation).split("[")[0].strip()
-                    cid = local_names.get(ann_text) or imports.get(ann_text)
-                    if cid and cid in classes_by_id:
-                        var_types[sub.target.id] = cid
+                    ann_text = _annotation_root_name(sub.annotation)
+                    if ann_text is not None:
+                        cid = local_names.get(ann_text) or imports.get(ann_text)
+                        if _is_class_target(cid, classes_by_id):
+                            var_types[sub.target.id] = cid
 
                 # Pattern 2: x = SomeClass(...)
                 if (isinstance(sub, ast.Assign)
@@ -882,6 +928,15 @@ def _resolve_call_edge(call: ast.Call, *, local_names: dict, imports: dict,
                           "kind": "calls", "via": "method_call",
                           "where": f"{path}:{call.lineno}",
                           "confidence": "unresolved"}]
+            if recv_class_id.startswith("external::"):
+                # External typed receiver (e.g. `db: Session` from sqlalchemy).
+                # Receiver class is known exactly; method existence on the
+                # external class isn't verified, but the edge is exact for
+                # graph-traversal purposes.
+                return [{"target": f"{recv_class_id}::{method}",
+                          "kind": "calls", "via": "method_call",
+                          "where": f"{path}:{call.lineno}",
+                          "confidence": "exact"}]
             method_id = methods_by_class.get(recv_class_id, {}).get(method)
             if method_id:
                 return [{"target": method_id, "kind": "calls",

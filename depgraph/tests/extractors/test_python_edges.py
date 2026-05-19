@@ -130,6 +130,115 @@ def test_method_call_on_parameter_annotation_py():
     assert any(e["target"] == "fixture::src.py::Service.do_work" for e in calls)
 
 
+# Issue #51: method calls on receivers typed by external classes were
+# emitted as `external::unresolved::<recv>.<method>` because the resolver
+# only seeded var_types for in-corpus classes. Receivers typed by sqlalchemy
+# Session / fastapi APIRouter / etc. should resolve through the imports
+# table to an `external::pypi::<pkg>::<class>::<method>` target with `exact`
+# confidence — the receiver class is known exactly even though the method
+# body lives outside the corpus.
+
+def test_method_call_external_param_annotation_py():
+    """`db: Session` from sqlalchemy.orm — `db.query()` resolves to
+    `external::pypi::sqlalchemy::Session::query` exactly."""
+    prims = list(extract_repo(repo_key="fixture",
+                              repo_path=FIXTURE_DIR / "method_call_external_recv"))
+    fn = next(p for p in prims if p["name"] == "list_users")
+    calls = [e for e in fn["edges_out"] if e["kind"] == "calls"]
+    assert any(
+        e["target"] == "external::pypi::sqlalchemy::Session::query"
+        and e["confidence"] == "exact"
+        and e["via"] == "method_call"
+        for e in calls
+    ), calls
+    # Should NOT contain the pre-fix unresolved shape on `db`.
+    assert not any(
+        e["target"].startswith("external::unresolved::db.") for e in calls
+    ), calls
+
+
+def test_method_call_external_param_emits_multiple_methods_py():
+    """Two distinct method calls on the same external-typed receiver
+    each emit a separate edge — confirms the resolver isn't deduplicating
+    by receiver."""
+    prims = list(extract_repo(repo_key="fixture",
+                              repo_path=FIXTURE_DIR / "method_call_external_recv"))
+    fn = next(p for p in prims if p["name"] == "commit_tx")
+    method_targets = {
+        e["target"] for e in fn["edges_out"]
+        if e["kind"] == "calls" and e["via"] == "method_call"
+    }
+    assert "external::pypi::sqlalchemy::Session::add" in method_targets
+    assert "external::pypi::sqlalchemy::Session::commit" in method_targets
+
+
+def test_method_call_annotated_param_py():
+    """`db: Annotated[Session, ...]` (the FastAPI Depends shape) — the
+    annotation root walker pulls Session out of the Annotated wrapper."""
+    prims = list(extract_repo(repo_key="fixture",
+                              repo_path=FIXTURE_DIR / "method_call_external_recv"))
+    fn = next(p for p in prims if p["name"] == "annotated_param")
+    calls = [e for e in fn["edges_out"] if e["kind"] == "calls"]
+    assert any(e["target"] == "external::pypi::sqlalchemy::Session::refresh"
+               and e["confidence"] == "exact"
+               for e in calls), calls
+
+
+def test_method_call_optional_param_py():
+    """`db: Optional[Session]` — same unwrap as Annotated."""
+    prims = list(extract_repo(repo_key="fixture",
+                              repo_path=FIXTURE_DIR / "method_call_external_recv"))
+    fn = next(p for p in prims if p["name"] == "optional_param")
+    calls = [e for e in fn["edges_out"] if e["kind"] == "calls"]
+    assert any(e["target"] == "external::pypi::sqlalchemy::Session::flush"
+               and e["confidence"] == "exact"
+               for e in calls), calls
+
+
+def test_method_call_external_param_different_pkg_py():
+    """APIRouter from fastapi — confirms the resolver routes attribution
+    to the importing package, not just `sqlalchemy`."""
+    prims = list(extract_repo(repo_key="fixture",
+                              repo_path=FIXTURE_DIR / "method_call_external_recv"))
+    fn = next(p for p in prims if p["name"] == "register")
+    calls = [e for e in fn["edges_out"] if e["kind"] == "calls"]
+    assert any(e["target"] == "external::pypi::fastapi::APIRouter::get"
+               and e["confidence"] == "exact"
+               for e in calls), calls
+
+
+def test_method_call_annassign_external_class_py():
+    """`db: Session = _get_session()` inside a function — AnnAssign also
+    seeds var_types from the external-typed annotation."""
+    prims = list(extract_repo(repo_key="fixture",
+                              repo_path=FIXTURE_DIR / "method_call_external_recv"))
+    fn = next(p for p in prims if p["name"] == "reassigned")
+    calls = [e for e in fn["edges_out"] if e["kind"] == "calls"]
+    assert any(e["target"] == "external::pypi::sqlalchemy::Session::rollback"
+               and e["confidence"] == "exact"
+               for e in calls), calls
+
+
+def test_method_call_in_corpus_unknown_method_still_unresolved_py():
+    """Regression guard: in-corpus class + method-not-on-class should
+    keep emitting the unresolved sentinel — only the external-receiver
+    path changes."""
+    prims = list(extract_repo(repo_key="fixture",
+                              repo_path=FIXTURE_DIR / "calls"))
+    handler = next(p for p in prims if p["name"] == "handler")
+    calls = [e for e in handler["edges_out"] if e["kind"] == "calls"]
+    # `Service.do_work` resolves exact (it exists). Sanity-check that the
+    # taxonomy invariant holds: every method_call edge from `handler` is
+    # either an in-corpus method id or an unresolved sentinel.
+    for e in calls:
+        if e["via"] != "method_call":
+            continue
+        assert (e["confidence"] == "exact"
+                and e["target"] == "fixture::src.py::Service.do_work") or \
+               (e["confidence"] == "unresolved"
+                and e["target"].startswith("external::unresolved::")), e
+
+
 # ---------------------------------------------------------------------------
 # Task 3.5: reads / assigns / decorates edges
 # ---------------------------------------------------------------------------
