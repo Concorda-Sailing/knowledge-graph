@@ -372,7 +372,7 @@ def cmd_dossier_draft(args: argparse.Namespace, ctx: Context) -> int:
             user_prompt=prompt,
             tools=tools_defs,
             tool_handlers=tools_handlers,
-            max_turns=int(getattr(args, "max_turns", None) or 8),
+            max_turns=int(getattr(args, "max_turns", None) or 64),
         )
     except Exception as e:
         print(f"summarizer call failed: {type(e).__name__}: {e}", file=sys.stderr)
@@ -465,11 +465,52 @@ or CLIs.
 
 ## Open questions
 Unresolved design or implementation questions that surfaced from
-reading the source/commits. Empty is fine.
+reading the source/commits. Empty is fine. Before listing one,
+check the architecture-synthesis probes below — many "open questions"
+can be resolved by one more tool call.
+
+## ARCHITECTURE SYNTHESIS (run before finalizing Open questions)
+
+An open question is honest when human judgment is required; it's a
+cop-out when a tool call would resolve it. Before you punt to Open
+questions, do these three synthesis checks. State the answer in the
+appropriate section above (Invariants, Gotchas, Cross-cutting) instead
+of leaving the question dangling.
+
+1. **Dead-field check.** Does the source declare a field whose
+   comment/name/context suggests it's *legacy* (named `*_ids`,
+   commented "kept for migration", retained for SQLite compat, etc.)?
+   If so, you do not yet know if it's still live. Call `read_source`
+   on the file again searching for write sites (`<field> =`), and call
+   `dependents_of` to see if any consumer reads it. **Zero writers =
+   dead column / migration ghost.** Say so in Invariants, name the
+   replacement (the actual source of truth that current code uses).
+
+2. **Multi-source-of-truth check.** If two parts of the codebase
+   address the same concept (ownership, identity, active state, etc.)
+   via *different mechanisms* — one via a column on this symbol, one
+   via a join table, one via a `role`/`status` filter — they cannot
+   both be authoritative. Find writers of each via `read_source`. The
+   one with active writers is current; the other is legacy or
+   intermediate. State the truth in Invariants. Do not list both
+   without resolving which is current.
+
+3. **Workflow synthesis.** If the dependents cluster around a related
+   set of operations (e.g. `X_invite`, `X_promotion`, `X_removal`,
+   `X_transfer`), don't enumerate them flatly under External consumers
+   — synthesize the *workflow* under Cross-cutting concerns:
+   "This symbol participates in the X lifecycle via the cluster of
+   operations in <module>." Name the lifecycle, not just the files.
+
+The point of a dossier is to surface architectural truth a future
+Claude can act on, not to log what you couldn't figure out. If a tool
+call can answer a question, the question goes in Invariants /
+Gotchas / Cross-cutting *with the answer*, not in Open questions.
 
 Quality bar: substantive AND grounded. A short, accurate dossier is
 infinitely more valuable than a long fabricated one. "I cannot tell
-from the available evidence" is a legitimate answer."""
+from the available evidence" is a legitimate answer — but only after
+the architecture-synthesis probes were actually run."""
 
 
 def _build_thin_prompt(
@@ -519,6 +560,56 @@ dossier will be wrong:
 Then make additional calls as needed: `read_source` on dependent
 files to verify call patterns; `node_info(node_id="...")` to inspect
 a specific dependent's structure.
+
+# Curiosity probes (drive deeper exploration before drafting)
+
+These probes target the gap between "accurate but shallow" and "useful."
+A correct purpose paragraph plus a list of callers is the floor; the
+ceiling is finding the *non-obvious* thing a future Claude would want
+to know. Answer each probe with a tool call or explicitly mark it
+unanswerable. Do NOT guess.
+
+1. **Sibling contrast.** Are there sibling symbols in the same file
+   with similar names? (e.g. `require_auth` vs `require_session_auth`,
+   `save_X` vs `delete_X`, getter/setter pairs, `_internal` variant
+   alongside the public one.) Call `read_source` on the surrounding
+   ±50 lines to see them. The most informative gotchas come from
+   contrasts between near-twins that behave differently — note the
+   contrast in Gotchas if it changes how the symbol should be used.
+
+2. **Dependent diversity.** Pick 2 callers from different parts of
+   the codebase (not two from the same module) and use
+   `node_info` or `read_source` to see HOW they call this. Look for
+   patterns: do some pass extra kwargs that others don't? Is one
+   async and another sync? Is one wrapping it in a class method?
+   Capture the dominant call pattern in Invariants if there is one,
+   or note the variability in Open questions.
+
+3. **Type-system check.** For any non-obvious type the symbol depends
+   on (a class from this corpus, a `Mapped[X]` column, a custom
+   exception), call `node_info` on that type. Often the real gotcha
+   lives in how the type is constructed/cached/lazy-loaded, not in
+   the function body itself. (Example: a function that takes an
+   `AuthUser` may be safe in isolation but the gotcha lives in how
+   `AuthUser.permissions` is computed and cached.)
+
+4. **Hidden-history scan.** In `recent_history` output, look for
+   commits whose subject doesn't mention the symbol by name but
+   touches the file anyway — broad refactors, "fix X" without
+   naming X. Those often introduce silent behavior changes. If you
+   see one within the last ~10 commits, read its diff via
+   `read_source` (around the line numbers in the commit) or flag it
+   as an Open question.
+
+5. **Implicit-contract check.** Does this symbol assume something
+   about its caller that isn't in its signature? (Auth state, an
+   open transaction, a specific role, a singleton being initialized,
+   an env var being set.) If yes, name the assumption in Invariants
+   and where it's enforced (or admit it isn't).
+
+Skipping these probes makes the dossier accurate but shallow. The
+point of a dossier is to surface what source alone doesn't carry —
+that's almost always one of the above five.
 
 # Authoring task
 
@@ -832,7 +923,7 @@ def register(sub: argparse._SubParsersAction) -> None:
     )
     p_dd.add_argument(
         "--max-turns", dest="max_turns", type=int, default=None,
-        help="[--auto --tools] Cap on agent round-trips (default 8).",
+        help="[--auto --tools] Cap on agent round-trips (default 64). Hub nodes with many dependents and the architecture-synthesis probe can exceed 16 turns; the higher default lets them complete without truncation.",
     )
     p_dd.set_defaults(func=cmd_dossier_draft)
 
