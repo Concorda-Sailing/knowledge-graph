@@ -14,7 +14,7 @@ from depgraph.lib.path_filters import included
 from .canonical import canonical_id, structural_hash
 
 
-EXTRACTOR_TAG = "depgraph/extractors/python/extract.py@2026-05-16"
+EXTRACTOR_TAG = "depgraph/extractors/python/extract.py@2026-05-19"
 SCHEMA_VERSION = 2
 
 
@@ -547,6 +547,7 @@ def _attach_imports_edges(primitives: list[dict],
                             "where": f"{path}:{node.lineno}",
                             "confidence": confidence,
                             "local_binding": local_binding,
+                            "imported_name": alias.name,
                         })
                 else:
                     # Absolute ImportFrom: from X.Y.Z import name
@@ -596,6 +597,7 @@ def _attach_imports_edges(primitives: list[dict],
                             "where": f"{path}:{node.lineno}",
                             "confidence": confidence,
                             "local_binding": local_binding,
+                            "imported_name": alias.name,
                         })
 
             elif isinstance(node, ast.Import):
@@ -618,6 +620,76 @@ def _attach_imports_edges(primitives: list[dict],
                         "confidence": confidence,
                         "local_binding": local_binding,
                     })
+
+    _resolve_package_reexports(primitives)
+
+
+def _resolve_package_reexports(primitives: list[dict]) -> None:
+    """Rewrite `import_from` edges that target a package `__init__.py` to
+    point at the underlying defining symbol when the package re-exports the
+    requested name.
+
+    Why: `from pkg import Name` collapses to the `pkg/__init__.py` module
+    when the per-file symbol index doesn't find `Name` directly defined
+    there — but `pkg/__init__.py` typically re-exports `Name` via
+    `from .sub import Name`. Without this pass, every consumer of a barrel-
+    exported symbol appears to import the package rather than the symbol,
+    silently under-counting the symbol's reverse dependencies.
+
+    Iterates to a fixpoint (capped) so transitive re-exports through
+    multiple `__init__.py` layers also resolve.
+    """
+    # Identify package __init__.py modules and map their re-exports:
+    #   pkg_module_id -> {exposed_name -> target_id}
+    # exposed_name is the package edge's local_binding (i.e. what the
+    # package names the symbol externally).
+    pkg_ids: set[str] = set()
+    for p in primitives:
+        if p["primitive"] != "module":
+            continue
+        src = p["source"]["path"]
+        if src.endswith("/__init__.py") or src == "__init__.py":
+            pkg_ids.add(p["id"])
+
+    def build_reexports() -> dict[str, dict[str, str]]:
+        out: dict[str, dict[str, str]] = {}
+        for p in primitives:
+            if p["id"] not in pkg_ids:
+                continue
+            m: dict[str, str] = {}
+            for e in p["edges_out"]:
+                if e.get("kind") != "imports":
+                    continue
+                if e.get("via") not in ("import_from", "import"):
+                    continue
+                lb = e.get("local_binding")
+                tgt = e.get("target")
+                if lb and tgt:
+                    m[lb] = tgt
+            out[p["id"]] = m
+        return out
+
+    for _ in range(10):
+        reexports = build_reexports()
+        changed = False
+        for p in primitives:
+            if p["primitive"] != "module":
+                continue
+            for e in p["edges_out"]:
+                if e.get("kind") != "imports" or e.get("via") != "import_from":
+                    continue
+                tgt = e.get("target")
+                if tgt not in pkg_ids:
+                    continue
+                requested = e.get("imported_name")
+                if not requested:
+                    continue
+                real = reexports.get(tgt, {}).get(requested)
+                if real and real != tgt:
+                    e["target"] = real
+                    changed = True
+        if not changed:
+            break
 
 
 # ---------------------------------------------------------------------------
