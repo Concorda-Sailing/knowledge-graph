@@ -59,7 +59,9 @@ try:
 except ImportError:
     _EMBEDDING_AVAILABLE = False
 
-LOGIGRAPH = resolve_data_dir("LOGIGRAPH_DATA_DIR")
+from kg.shared.env import DEPGRAPH_DATA_DIR, LOGIGRAPH_DATA_DIR  # noqa: E402
+
+LOGIGRAPH = resolve_data_dir(LOGIGRAPH_DATA_DIR)
 
 
 def _depgraph_dir() -> Path:
@@ -68,7 +70,7 @@ def _depgraph_dir() -> Path:
        2. [depgraph].data_dir from logigraph's project.toml
        3. SystemExit (caller can't proceed without it)
     """
-    env = os.environ.get("DEPGRAPH_DATA_DIR")
+    env = os.environ.get(DEPGRAPH_DATA_DIR)
     if env:
         return Path(env).expanduser().resolve()
     cfg = load_project_config(LOGIGRAPH)

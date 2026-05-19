@@ -39,8 +39,9 @@ TOOL_ROOT = Path(__file__).resolve().parent.parent
 _FRAMEWORK_ROOT = TOOL_ROOT.parent  # ~/tools/knowledge-graph
 sys.path.insert(0, str(_FRAMEWORK_ROOT))
 from logigraph.lib.config import resolve_data_dir  # noqa: E402
+from kg.shared.env import LOGIGRAPH_DATA_DIR  # noqa: E402
 
-LOGIGRAPH = resolve_data_dir("LOGIGRAPH_DATA_DIR")
+LOGIGRAPH = resolve_data_dir(LOGIGRAPH_DATA_DIR)
 TELEMETRY_DIR = LOGIGRAPH / "telemetry"
 INJECTIONS_LOG = TELEMETRY_DIR / "injections.jsonl"
 ACKS_LOG = TELEMETRY_DIR / "acknowledgments.jsonl"

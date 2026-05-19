@@ -17,6 +17,7 @@ _DEPGRAPH_LIB = Path(__file__).resolve().parents[1]
 if str(_DEPGRAPH_LIB) not in sys.path:
     sys.path.insert(0, str(_DEPGRAPH_LIB))
 from depgraph.lib.config import project_repos  # noqa: E402
+from kg.shared.env import DEPGRAPH_DATA_DIR  # noqa: E402
 
 from .context import Context
 
@@ -46,7 +47,7 @@ def cmd_self_check(args: argparse.Namespace, ctx: Context) -> int:
         capture_output=True,
         text=True,
         timeout=5,
-        env={**os.environ, "DEPGRAPH_DATA_DIR": str(ctx.DEPGRAPH)},
+        env={**os.environ, DEPGRAPH_DATA_DIR: str(ctx.DEPGRAPH)},
     )
     print("hook stdout:")
     print(proc.stdout)

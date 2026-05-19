@@ -19,6 +19,7 @@ from pathlib import Path
 
 from kg import registry
 from kg.cli import resolve
+from kg.shared.env import DEPGRAPH_DATA_DIR, LOGIGRAPH_DATA_DIR
 
 
 def _delegate_to_depgraph(proj: "resolve.Project", *args: str) -> int:
@@ -27,7 +28,7 @@ def _delegate_to_depgraph(proj: "resolve.Project", *args: str) -> int:
     import subprocess
     tool_root = Path(__file__).resolve().parents[2]
     depgraph_bin = tool_root / "depgraph" / "bin" / "depgraph"
-    env = {**os.environ, "DEPGRAPH_DATA_DIR": str(proj.depgraph_dir)}
+    env = {**os.environ, DEPGRAPH_DATA_DIR: str(proj.depgraph_dir)}
     return subprocess.run([str(depgraph_bin), *args], env=env).returncode
 
 
@@ -404,7 +405,7 @@ def _cmd_health(args: argparse.Namespace) -> int:
     if proj.depgraph_dir.exists():
         rc = subprocess.run(
             [str(tool_root / "depgraph" / "bin" / "depgraph"), "health"],
-            env={**os.environ, "DEPGRAPH_DATA_DIR": str(proj.depgraph_dir)},
+            env={**os.environ, DEPGRAPH_DATA_DIR: str(proj.depgraph_dir)},
         ).returncode
         overall |= rc
     else:
@@ -418,7 +419,7 @@ def _cmd_health(args: argparse.Namespace) -> int:
     if proj.logigraph_dir.exists():
         rc = subprocess.run(
             [str(tool_root / "logigraph" / "bin" / "logigraph"), "health"],
-            env={**os.environ, "LOGIGRAPH_DATA_DIR": str(proj.logigraph_dir)},
+            env={**os.environ, LOGIGRAPH_DATA_DIR: str(proj.logigraph_dir)},
         ).returncode
         overall |= rc
     else:

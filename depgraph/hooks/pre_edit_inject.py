@@ -43,8 +43,9 @@ from depgraph.lib.config import (  # noqa: E402
     path_to_repo_key_relative,
 )
 from depgraph.lib.primitives import slugify_id_for_filename  # noqa: E402
+from kg.shared.env import DEPGRAPH_DATA_DIR  # noqa: E402
 
-DEPGRAPH = resolve_data_dir("DEPGRAPH_DATA_DIR")
+DEPGRAPH = resolve_data_dir(DEPGRAPH_DATA_DIR)
 NODES = DEPGRAPH / "nodes"
 # v2 reverse index — built by depgraph.lib.cli.regen._build_by_target.
 # Flat {target_id: [{source, kind, via, where, confidence}, ...]} dict;

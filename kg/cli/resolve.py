@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Optional
 
 from kg import registry
+from kg.shared.env import DEPGRAPH_DATA_DIR, LOGIGRAPH_DATA_DIR
 
 
 class ProjectResolutionError(Exception):
@@ -115,7 +116,7 @@ def resolve_project(
         return _project_from_entry(entry, "$KG_PROJECT")
 
     # Rule 3: $DEPGRAPH_DATA_DIR / $LOGIGRAPH_DATA_DIR env vars
-    for var in ("DEPGRAPH_DATA_DIR", "LOGIGRAPH_DATA_DIR"):
+    for var in (DEPGRAPH_DATA_DIR, LOGIGRAPH_DATA_DIR):
         val = os.environ.get(var)
         if val:
             return _project_from_data_dir(Path(val), f"${var}")

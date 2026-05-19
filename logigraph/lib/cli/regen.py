@@ -41,7 +41,8 @@ def cmd_regen(args: argparse.Namespace, ctx: Context) -> int:
     insurance for the day logigraph grows project-owned extractors with their
     own path defaults."""
     _mark_regen_in_progress(ctx)
-    env = {**os.environ, "LOGIGRAPH_DATA_DIR": str(ctx.LOGIGRAPH)}
+    from kg.shared.env import LOGIGRAPH_DATA_DIR
+    env = {**os.environ, LOGIGRAPH_DATA_DIR: str(ctx.LOGIGRAPH)}
     rc = subprocess.call(
         [ctx.framework_python, str(ctx.tool_root / "extractors" / "reconcile.py")],
         env=env,

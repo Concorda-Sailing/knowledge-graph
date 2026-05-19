@@ -118,8 +118,10 @@ def _resolve(env_var: str) -> Path | None:
     return Path(val).expanduser().resolve()
 
 
-_ENV_DEPGRAPH = _resolve("DEPGRAPH_DATA_DIR")
-_ENV_LOGIGRAPH = _resolve("LOGIGRAPH_DATA_DIR")
+from kg.shared.env import DEPGRAPH_DATA_DIR, LOGIGRAPH_DATA_DIR  # noqa: E402
+
+_ENV_DEPGRAPH = _resolve(DEPGRAPH_DATA_DIR)
+_ENV_LOGIGRAPH = _resolve(LOGIGRAPH_DATA_DIR)
 
 # Synthesize a "default" Project from env vars when present — preserves the
 # pre-multiproject startup path. graph_dir is the common parent of the two

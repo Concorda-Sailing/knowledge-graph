@@ -16,6 +16,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from kg.shared.env import DEPGRAPH_DATA_DIR, LOGIGRAPH_DATA_DIR
+
 from ._shared import backup_file, die, err, log, ok, warn
 
 _BUNDLE_DIR = "knowledge-graph"
@@ -51,8 +53,8 @@ def generate_systemd_unit(
         "Type=simple\n"
         f"WorkingDirectory={bundle}/graphui\n"
         f"Environment=PATH={bundle}/graphui/.venv/bin:/usr/local/bin:/usr/bin:/bin\n"
-        f"Environment=DEPGRAPH_DATA_DIR={depg}\n"
-        f"Environment=LOGIGRAPH_DATA_DIR={logg}\n"
+        f"Environment={DEPGRAPH_DATA_DIR}={depg}\n"
+        f"Environment={LOGIGRAPH_DATA_DIR}={logg}\n"
         f"Environment=DEPGRAPH_BIN={bundle}/depgraph/bin/depgraph\n"
         f"Environment=LOGIGRAPH_BIN={bundle}/logigraph/bin/logigraph\n"
         f"ExecStart={bundle}/graphui/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port {port}\n"
@@ -124,9 +126,9 @@ def cmd_systemd(args: argparse.Namespace) -> int:
     bundle = f"{target}/{_BUNDLE_DIR}"
     missing: list[str] = []
     if not Path(depg).is_dir():
-        missing.append(f"DEPGRAPH_DATA_DIR={depg}")
+        missing.append(f"{DEPGRAPH_DATA_DIR}={depg}")
     if not Path(logg).is_dir():
-        missing.append(f"LOGIGRAPH_DATA_DIR={logg}")
+        missing.append(f"{LOGIGRAPH_DATA_DIR}={logg}")
     if missing:
         err("refusing to write unit — data dir(s) do not exist:")
         for m in missing:
