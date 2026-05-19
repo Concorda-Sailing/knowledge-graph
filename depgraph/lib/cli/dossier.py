@@ -255,8 +255,9 @@ def cmd_dossier_draft(args: argparse.Namespace, ctx: Context) -> int:
         # ever expose a `rules_for_node` tool.
         rules_claiming = []
         cfg = load_project_config(ctx.DEPGRAPH)
+        from kg.shared.env import LOGIGRAPH_DATA_DIR
         logigraph_dir_str = (
-            os.environ.get("LOGIGRAPH_DATA_DIR")
+            os.environ.get(LOGIGRAPH_DATA_DIR)
             or (cfg.get("logigraph") or {}).get("data_dir")
         )
         by_code_idx = (

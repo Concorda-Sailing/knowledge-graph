@@ -24,7 +24,8 @@ def _resolve_depgraph_dir(logigraph_dir: Path) -> Path:
        2. [depgraph].data_dir in logigraph's project.toml
        3. SystemExit.
     """
-    env = os.environ.get("DEPGRAPH_DATA_DIR")
+    from kg.shared.env import DEPGRAPH_DATA_DIR
+    env = os.environ.get(DEPGRAPH_DATA_DIR)
     if env:
         return Path(env).expanduser().resolve()
     cfg_path = logigraph_dir / "project.toml"

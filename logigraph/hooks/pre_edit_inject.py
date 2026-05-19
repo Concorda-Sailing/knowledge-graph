@@ -54,11 +54,13 @@ def _project_name() -> str:
     cfg = load_project_config(LOGIGRAPH)
     return (cfg.get("project") or {}).get("name", "")
 
-LOGIGRAPH = resolve_data_dir("LOGIGRAPH_DATA_DIR")
+from kg.shared.env import DEPGRAPH_DATA_DIR, LOGIGRAPH_DATA_DIR  # noqa: E402
+
+LOGIGRAPH = resolve_data_dir(LOGIGRAPH_DATA_DIR)
 
 
 def _depgraph_dir() -> Path:
-    env = os.environ.get("DEPGRAPH_DATA_DIR")
+    env = os.environ.get(DEPGRAPH_DATA_DIR)
     if env:
         return Path(env).expanduser().resolve()
     cfg = load_project_config(LOGIGRAPH)

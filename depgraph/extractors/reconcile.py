@@ -384,7 +384,8 @@ def _depgraph() -> Path:
     """Lazy resolver — only called from functions that actually need the data
     dir. Avoids the SystemExit on import when DEPGRAPH_DATA_DIR isn't set
     (e.g. unit-test imports of validate_corpus)."""
-    return resolve_data_dir("DEPGRAPH_DATA_DIR")
+    from kg.shared.env import DEPGRAPH_DATA_DIR
+    return resolve_data_dir(DEPGRAPH_DATA_DIR)
 
 
 # ---------------------------------------------------------------------------

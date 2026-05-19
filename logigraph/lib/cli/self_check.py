@@ -12,6 +12,7 @@ _SELF_CHECK_LIB = Path(__file__).resolve().parents[1]
 if str(_SELF_CHECK_LIB) not in sys.path:
     sys.path.insert(0, str(_SELF_CHECK_LIB))
 from logigraph.lib.config import project_repos  # noqa: E402
+from kg.shared.env import LOGIGRAPH_DATA_DIR  # noqa: E402
 
 from .context import Context
 
@@ -68,7 +69,7 @@ def cmd_self_check(args: argparse.Namespace, ctx: Context) -> int:
         capture_output=True,
         text=True,
         timeout=5,
-        env={**os.environ, "LOGIGRAPH_DATA_DIR": str(ctx.LOGIGRAPH)},
+        env={**os.environ, LOGIGRAPH_DATA_DIR: str(ctx.LOGIGRAPH)},
     )
     if proc.returncode != 0:
         print(f"FAILED rc={proc.returncode}", file=sys.stderr)

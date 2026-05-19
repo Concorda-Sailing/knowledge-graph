@@ -16,6 +16,7 @@ import sys
 from pathlib import Path
 
 from kg.cli import resolve
+from kg.shared.env import DEPGRAPH_DATA_DIR
 
 # bin/kg already adds the framework root to sys.path, so fully-qualified
 # logigraph.lib.* imports resolve without any additional sys.path mutation.
@@ -38,7 +39,7 @@ def _run(args: argparse.Namespace, extra: list[str]) -> int:
         sub_parser.print_help()
         return 0
     sub_args = sub_parser.parse_args(extra)
-    os.environ["DEPGRAPH_DATA_DIR"] = str(proj.depgraph_dir)
+    os.environ[DEPGRAPH_DATA_DIR] = str(proj.depgraph_dir)
     ctx = _LogigraphContext.from_data_dir(proj.logigraph_dir)
     return sub_args.func(sub_args, ctx)
 

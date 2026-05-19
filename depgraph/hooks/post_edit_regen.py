@@ -49,8 +49,9 @@ from depgraph.lib.config import (  # noqa: E402
     repo_for_basename,
     path_to_repo_relative,
 )
+from kg.shared.env import DEPGRAPH_DATA_DIR  # noqa: E402
 
-DEPGRAPH = resolve_data_dir("DEPGRAPH_DATA_DIR")
+DEPGRAPH = resolve_data_dir(DEPGRAPH_DATA_DIR)
 HOME = Path.home()
 
 

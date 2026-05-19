@@ -961,7 +961,8 @@ def _mode_a_v1_fallback(
     repos_cfg: dict,
 ) -> int:
     """v1 subprocess-based regen — kept for backward compat with extractor= configs."""
-    env = {**os.environ, "DEPGRAPH_DATA_DIR": str(ctx.DEPGRAPH)}
+    from kg.shared.env import DEPGRAPH_DATA_DIR
+    env = {**os.environ, DEPGRAPH_DATA_DIR: str(ctx.DEPGRAPH)}
     failed: list[str] = []
     for key, info in repos_cfg.items():
         cmd = render_extractor(info, ctx.DEPGRAPH)
