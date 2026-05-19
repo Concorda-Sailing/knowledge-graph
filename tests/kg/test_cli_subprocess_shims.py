@@ -24,6 +24,15 @@ def single_project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict:
     )
     (root / "depgraph" / "project.toml").write_text('[project]\nname = "solo"\n')
     (root / "logigraph" / "project.toml").write_text('[project]\nname = "solo"\n')
+    # Stub _meta.json on the depgraph side so `validate`/`health` pass the
+    # post-#61/#72 liveness gate. These tests exercise the CLI shim
+    # plumbing, not the never-extracted state.
+    (root / "depgraph" / "nodes" / "_meta.json").write_text(
+        '{"schema_version": 2, "regen_status": "complete", "node_count": 0}'
+    )
+    (root / "logigraph" / "nodes" / "_meta.json").write_text(
+        '{"schema_version": 1, "regen_status": "complete", "node_count": 0}'
+    )
     subprocess.run(
         [sys.executable, str(KG_BIN), "project", "add", str(root)],
         check=True, env={**os.environ, "KG_REGISTRY_PATH": str(reg)},
