@@ -13,11 +13,45 @@ from .context import Context
 from ._shared import load_dependents_index, load_telemetry_events
 
 
+_UNRESOLVED_CATEGORIES = (
+    ("external_library", "external library (deliberately not indexed)"),
+    ("missed_internal", "missed in-corpus (resolver gap — bug indicator)"),
+    ("typed_receiver", "typed-receiver method call (see #51)"),
+    ("dynamic_or_other", "dynamic / other"),
+    ("other", "other"),
+)
+
+
+def _categorize_unresolved(target: str) -> tuple[str, str]:
+    """Bucket an unresolved edge target for resolver-priority triage.
+
+    Returns ``(category, group_key)`` where ``category`` is one of the keys in
+    ``_UNRESOLVED_CATEGORIES`` and ``group_key`` is the prefix used to collapse
+    similar targets (e.g. all ``external::npm::react::*`` symbols share the
+    ``external::npm::react`` group).
+    """
+    parts = target.split("::")
+    if (target.startswith("external::npm::unknown")
+            or target.startswith("external::pypi::unknown")):
+        return ("missed_internal", "::".join(parts[:3]))
+    if target.startswith("external::npm::") or target.startswith("external::pypi::"):
+        return ("external_library", "::".join(parts[:3]))
+    if target.startswith("external::unresolved::"):
+        rest = "::".join(parts[2:])
+        if "." in rest:
+            return ("typed_receiver", target)
+        return ("dynamic_or_other", target)
+    return ("other", target)
+
+
 def cmd_stats(args: argparse.Namespace, ctx: Context) -> int:
     """Corpus rollup + optional telemetry. Mirrors `logigraph stats`."""
     # ---- corpus rollup --------------------------------------------------
     by_kind_tier_state: dict[str, dict[str, dict[str, int]]] = {}
     total = 0
+    confidence_counts: dict[str, int] = {}
+    # category -> group_key -> count
+    unresolved_by_category: dict[str, dict[str, int]] = {}
     dependents = load_dependents_index(ctx)
     for nf in ctx.NODES.rglob("*.json"):
         if nf.name.startswith("_"):
@@ -34,6 +68,13 @@ def cmd_stats(args: argparse.Namespace, ctx: Context) -> int:
         kind = d.get("kind", "?")
         fan_out = len(dependents.get(nid) or [])
         tier = "A" if fan_out >= 10 else "B" if fan_out >= 3 else "C"
+        for edge in d.get("edges_out") or []:
+            conf = edge.get("confidence") or "?"
+            confidence_counts[conf] = confidence_counts.get(conf, 0) + 1
+            if conf == "unresolved":
+                cat, group = _categorize_unresolved(edge.get("target") or "")
+                buckets = unresolved_by_category.setdefault(cat, {})
+                buckets[group] = buckets.get(group, 0) + 1
         # Compute dossier state inline (avoid importing the FastAPI loader).
         rel = d.get("dossier")
         if not rel:
@@ -79,6 +120,40 @@ def cmd_stats(args: argparse.Namespace, ctx: Context) -> int:
             miss = buckets.get("missing", 0)
             pct = int(round(100 * (cur + llm) / t)) if t else 0
             print(f"  {kind:<11} {tier:<5} {pct:>4}% {t:>6} {cur:>5} {llm:>5} {unr:>5} {miss:>5}")
+
+    if args.edges:
+        total_edges = sum(confidence_counts.values())
+        print()
+        print("## Edges by confidence")
+        for conf in ("exact", "fuzzy", "unresolved"):
+            n = confidence_counts.get(conf, 0)
+            print(f"  {conf:<11} {n:>7}")
+        # surface any unexpected confidence values rather than silently dropping them
+        for conf in sorted(c for c in confidence_counts if c not in ("exact", "fuzzy", "unresolved")):
+            print(f"  {conf:<11} {confidence_counts[conf]:>7}")
+        print(f"  {'total':<11} {total_edges:>7}")
+
+        unresolved_total = confidence_counts.get("unresolved", 0)
+        if unresolved_total:
+            print()
+            print("## Unresolved edges by category")
+            for cat, label in _UNRESOLVED_CATEGORIES:
+                buckets = unresolved_by_category.get(cat)
+                if not buckets:
+                    continue
+                n = sum(buckets.values())
+                print(f"  {n:>6}  {label}")
+
+            # head of unresolved targets so the report doubles as a worklist
+            all_groups = [(g, n) for buckets in unresolved_by_category.values()
+                          for g, n in buckets.items()]
+            all_groups.sort(key=lambda kv: -kv[1])
+            head = all_groups[: args.unresolved_top]
+            if head:
+                print()
+                print(f"## Top unresolved prefixes (top {len(head)})")
+                for group, n in head:
+                    print(f"  {n:>6}  {group}")
 
     if args.telemetry:
         injections = load_telemetry_events(ctx.INJECTIONS_LOG)
@@ -138,5 +213,18 @@ def register(sub: argparse._SubParsersAction) -> None:
         "--telemetry",
         action="store_true",
         help="Include last-7d and all-time injection/acknowledgment rollup",
+    )
+    p.add_argument(
+        "--edges",
+        action="store_true",
+        help="Include edge confidence histogram + unresolved-edge categorization "
+             "(external library vs missed in-corpus vs typed-receiver vs dynamic)",
+    )
+    p.add_argument(
+        "--unresolved-top",
+        type=int,
+        default=15,
+        metavar="N",
+        help="When --edges is set, show the top N unresolved prefixes (default: 15)",
     )
     p.set_defaults(func=cmd_stats)
