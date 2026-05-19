@@ -2146,12 +2146,6 @@ function attachCallAndVarAccessEdges(
           const methodName = ev.method_name;
           const where = `${rel}:${ev.line}`;
           const recvClassId = varTypes.get(recvName);
-          // Baseline behavior: emit a method-call edge only when we can
-          // bind the receiver to a class via var_types (parameter annotation
-          // or `new Cls()` initializer). Otherwise drop the call silently.
-          // The earlier #69 elaboration (imports-table fallback emitting
-          // external::unresolved terminals) was reverted in main and isn't
-          // restored here.
           if (recvClassId) {
             const methodId = methodsByClass.get(recvClassId)?.get(methodName);
             if (methodId) {
@@ -2165,6 +2159,72 @@ function attachCallAndVarAccessEdges(
               fnPrim.edges_out.push({
                 target: sentinel,
                 kind: "calls", via: "method_call",
+                where, confidence: confidenceForExternalTarget(sentinel),
+              });
+            }
+          } else {
+            // Issue #69 (R7): receiver isn't a typed local, but it may be
+            // an imported namespace or module — consult the imports map
+            // before declaring defeat. Previously we silently dropped the
+            // edge, which is worse than the Python case (#68) because the
+            // `unresolved` counter never ticked. Always emit *something*.
+            const importTarget = imports.get(recvName);
+            if (importTarget && importTarget.startsWith("external::")) {
+              // `import * as fs from "fs"` → imports.get("fs") is
+              // `external::npm::fs` (3 segments). Extending with
+              // `::<method>` produces the canonical 4-segment external
+              // terminal. Longer external ids (already-named leaf symbols)
+              // fall through to unresolved rather than fabricate a deeper
+              // terminal.
+              const segCount = importTarget.split("::").length;
+              if (segCount === 3) {
+                const ext = `${importTarget}::${methodName}`;
+                fnPrim.edges_out.push({
+                  target: ext, kind: "calls", via: "method_call",
+                  where, confidence: confidenceForExternalTarget(ext),
+                });
+              } else {
+                const sentinel = `external::unresolved::${recvName}.${methodName}`;
+                fnPrim.edges_out.push({
+                  target: sentinel, kind: "calls", via: "method_call",
+                  where, confidence: confidenceForExternalTarget(sentinel),
+                });
+              }
+            } else if (importTarget) {
+              // In-corpus namespace import (`<repo>::<path>`) — look up
+              // <methodName> in the target module's top-level symbols.
+              // Named/default imports (`<repo>::<path>::<symbol>`) fall
+              // through to unresolved; member resolution from that shape
+              // would need a separate index.
+              const parts = importTarget.split("::");
+              let resolved: string | undefined;
+              if (parts.length === 2) {
+                const targetPath = parts[1];
+                resolved = localByPath.get(targetPath)?.get(methodName);
+              }
+              if (resolved && (allFunctionIds.has(resolved) || allClassIds.has(resolved))) {
+                // Confidence=fuzzy because we resolved through the imports
+                // map by symbol name, not by tracing the actual call-site
+                // type. Matches the convention in attachImportsEdges for
+                // re-export hops.
+                fnPrim.edges_out.push({
+                  target: resolved, kind: "calls", via: "method_call",
+                  where, confidence: "fuzzy",
+                });
+              } else {
+                const sentinel = `external::unresolved::${recvName}.${methodName}`;
+                fnPrim.edges_out.push({
+                  target: sentinel, kind: "calls", via: "method_call",
+                  where, confidence: confidenceForExternalTarget(sentinel),
+                });
+              }
+            } else {
+              // Bare receiver with no var-type and no import binding.
+              // Emit an unresolved terminal so the call shows up in stats
+              // instead of vanishing — silent drops were the R7 violation.
+              const sentinel = `external::unresolved::${recvName}.${methodName}`;
+              fnPrim.edges_out.push({
+                target: sentinel, kind: "calls", via: "method_call",
                 where, confidence: confidenceForExternalTarget(sentinel),
               });
             }
