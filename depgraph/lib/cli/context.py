@@ -8,7 +8,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from depgraph.lib.edges import REVERSE_INDEX_FILENAME
+from depgraph.lib.edges import (
+    ACKNOWLEDGMENTS_LOG_FILENAME,
+    INJECTIONS_LOG_FILENAME,
+    REVERSE_INDEX_FILENAME,
+)
 
 
 # Tool location (where this package lives) — schemas, framework code.
@@ -43,8 +47,8 @@ class Context:
             DEPENDENTS_INDEX=nodes / "_index" / REVERSE_INDEX_FILENAME,
             CORPUS_META=nodes / "_meta.json",
             TELEMETRY_DIR=dd / "telemetry",
-            INJECTIONS_LOG=dd / "telemetry" / "injections.jsonl",
-            ACKS_LOG=dd / "telemetry" / "acknowledgments.jsonl",
+            INJECTIONS_LOG=dd / "telemetry" / INJECTIONS_LOG_FILENAME,
+            ACKS_LOG=dd / "telemetry" / ACKNOWLEDGMENTS_LOG_FILENAME,
             framework_python=_FRAMEWORK_PYTHON,
             tool_root=_TOOL_ROOT,
         )

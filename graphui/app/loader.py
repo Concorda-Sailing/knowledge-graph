@@ -30,7 +30,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from depgraph.lib.edges import REVERSE_INDEX_FILENAME
+from depgraph.lib.edges import (
+    ACKNOWLEDGMENTS_LOG_FILENAME,
+    INJECTIONS_LOG_FILENAME,
+    REVERSE_INDEX_FILENAME,
+)
 
 HOME = Path.home()
 
@@ -1185,19 +1189,19 @@ def dependents_of(node_id: str) -> list[dict]:
 
 
 def _logigraph_injections_path() -> Path:
-    return current_project().logigraph_dir / "telemetry" / "injections.jsonl"
+    return current_project().logigraph_dir / "telemetry" / INJECTIONS_LOG_FILENAME
 
 
 def _logigraph_acks_path() -> Path:
-    return current_project().logigraph_dir / "telemetry" / "acknowledgments.jsonl"
+    return current_project().logigraph_dir / "telemetry" / ACKNOWLEDGMENTS_LOG_FILENAME
 
 
 def _depgraph_injections_path() -> Path:
-    return current_project().depgraph_dir / "telemetry" / "injections.jsonl"
+    return current_project().depgraph_dir / "telemetry" / INJECTIONS_LOG_FILENAME
 
 
 def _depgraph_acks_path() -> Path:
-    return current_project().depgraph_dir / "telemetry" / "acknowledgments.jsonl"
+    return current_project().depgraph_dir / "telemetry" / ACKNOWLEDGMENTS_LOG_FILENAME
 
 
 def _telemetry_for_id(

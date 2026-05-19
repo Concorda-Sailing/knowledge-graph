@@ -1,6 +1,7 @@
 from depgraph.lib.edges import (
     EdgeKind, validate_edge, ALL_EDGE_KINDS, EDGE_KIND_RULES,
     REVERSE_INDEX_FILENAME, FORWARD_INDEX_FILENAME,
+    INJECTIONS_LOG_FILENAME, ACKNOWLEDGMENTS_LOG_FILENAME,
 )
 
 
@@ -13,6 +14,16 @@ def test_reverse_index_filename_constant():
 def test_forward_index_filename_constant():
     """#66: same shape for the forward index, written alongside by_target."""
     assert FORWARD_INDEX_FILENAME == "by_source.json"
+
+
+def test_injections_log_filename_constant():
+    """#76: hooks and stats readers must agree on the telemetry filename."""
+    assert INJECTIONS_LOG_FILENAME == "injections.jsonl"
+
+
+def test_acknowledgments_log_filename_constant():
+    """#76: same shape for the acknowledgments log."""
+    assert ACKNOWLEDGMENTS_LOG_FILENAME == "acknowledgments.jsonl"
 
 
 def test_edge_kinds_taxonomy_complete():

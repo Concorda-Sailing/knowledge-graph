@@ -38,13 +38,17 @@ from pathlib import Path
 TOOL_ROOT = Path(__file__).resolve().parent.parent
 _FRAMEWORK_ROOT = TOOL_ROOT.parent  # ~/tools/knowledge-graph
 sys.path.insert(0, str(_FRAMEWORK_ROOT))
+from depgraph.lib.edges import (  # noqa: E402
+    ACKNOWLEDGMENTS_LOG_FILENAME,
+    INJECTIONS_LOG_FILENAME,
+)
 from logigraph.lib.config import resolve_data_dir  # noqa: E402
 from kg.shared.env import LOGIGRAPH_DATA_DIR  # noqa: E402
 
 LOGIGRAPH = resolve_data_dir(LOGIGRAPH_DATA_DIR)
 TELEMETRY_DIR = LOGIGRAPH / "telemetry"
-INJECTIONS_LOG = TELEMETRY_DIR / "injections.jsonl"
-ACKS_LOG = TELEMETRY_DIR / "acknowledgments.jsonl"
+INJECTIONS_LOG = TELEMETRY_DIR / INJECTIONS_LOG_FILENAME
+ACKS_LOG = TELEMETRY_DIR / ACKNOWLEDGMENTS_LOG_FILENAME
 RULES_DIR = LOGIGRAPH / "nodes" / "rules"
 
 SESSION_WINDOW_HOURS = 6

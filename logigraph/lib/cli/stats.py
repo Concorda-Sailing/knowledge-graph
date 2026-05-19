@@ -7,6 +7,10 @@ from pathlib import Path
 
 from .context import Context
 from ._shared import load_all_nodes
+from depgraph.lib.edges import (
+    ACKNOWLEDGMENTS_LOG_FILENAME,
+    INJECTIONS_LOG_FILENAME,
+)
 
 
 def _load_telemetry_events(path: Path, since_hours: int | None = None) -> list[dict]:
@@ -46,8 +50,8 @@ def _load_telemetry_events(path: Path, since_hours: int | None = None) -> list[d
 def cmd_stats(args: argparse.Namespace, ctx: Context) -> int:
     """Curation backlog + (optional) telemetry rollup. Designed to fit in
     ~30 lines of output for typical state — eyeballable, not dashboard."""
-    injections_log = ctx.TELEMETRY_DIR / "injections.jsonl"
-    acks_log = ctx.TELEMETRY_DIR / "acknowledgments.jsonl"
+    injections_log = ctx.TELEMETRY_DIR / INJECTIONS_LOG_FILENAME
+    acks_log = ctx.TELEMETRY_DIR / ACKNOWLEDGMENTS_LOG_FILENAME
 
     nodes = load_all_nodes(ctx)
     rules = [(nid, data) for nid, (_, data) in nodes.items() if data.get("kind") == "rule"]

@@ -20,6 +20,15 @@ from typing import Any
 REVERSE_INDEX_FILENAME = "by_target.json"
 FORWARD_INDEX_FILENAME = "by_source.json"
 
+# Telemetry log filenames written under `<data_dir>/telemetry/`. Same shape
+# as the index filenames above — writers (pre_edit_inject, post_edit_telemetry)
+# and readers (Context, stats, graphui loader) used to spell the literals
+# independently across depgraph and logigraph (#76). Both subsystems write
+# identically-named files under their respective telemetry/ dirs, so a single
+# constant is correct for both.
+INJECTIONS_LOG_FILENAME = "injections.jsonl"
+ACKNOWLEDGMENTS_LOG_FILENAME = "acknowledgments.jsonl"
+
 
 class EdgeKind(str, Enum):
     DEFINES = "defines"
