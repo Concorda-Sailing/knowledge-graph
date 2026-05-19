@@ -118,7 +118,7 @@ The honest framing: structural drift is mostly mechanically catchable; intent dr
 
 **Symptom.** Code changed; structural hash changed; dossier was auto-marked `stale` — but nobody updated it. Two months later a new edit reads the stale dossier and trusts it.
 
-**Detection.** PreToolUse injection prepends `⚠ STALE DOSSIER (last reviewed against hash X, current hash Y)` to any stale body. CI check `kg depgraph validate --strict` fails when nodes touched in the diff have stale dossiers.
+**Detection.** PreToolUse injection prepends `⚠ STALE DOSSIER (last reviewed against hash X, current hash Y)` to any stale body. A future CI check (not yet implemented) should fail when nodes touched in the diff have stale dossiers.
 
 **Mitigation.** Stale text is still useful — much of it is invariant — so we surface it with a banner rather than hiding it.
 

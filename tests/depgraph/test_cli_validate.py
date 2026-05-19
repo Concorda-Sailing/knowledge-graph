@@ -12,7 +12,7 @@ from depgraph.lib.cli.validate import cmd_validate
 
 
 def _args(**overrides) -> argparse.Namespace:
-    defaults = {"strict": False, "verbose": False, "all": False}
+    defaults = {"verbose": False, "all": False}
     defaults.update(overrides)
     return argparse.Namespace(**defaults)
 

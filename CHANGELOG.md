@@ -57,5 +57,4 @@ Notable user-visible changes to the knowledge-graph framework.
 
 ## Known deferred work
 
-- **`depgraph validate --strict`** flag is wired but unused by the handler. Pre-existing from before this work; preserved verbatim through Phase 2.
 - **`logigraph context` quirk on `rule::nonexistent`** — emits the missing-rule WARN to stderr instead of the "no rules apply" stdout message. Pre-existing from before this work; preserved through Phase 3.
