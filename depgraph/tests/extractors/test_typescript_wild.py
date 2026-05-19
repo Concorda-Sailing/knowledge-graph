@@ -25,7 +25,10 @@ def _run_extractor(fixture_root: Path) -> list[dict]:
         "--repo-key", "fixture", "--repo-path", str(fixture_root),
         "--format", "ndjson",
     ], capture_output=True, text=True, check=True, cwd=EXTRACTOR.parent)
-    return [json.loads(l) for l in proc.stdout.splitlines() if l.strip()]
+    # Drop the resolver-stats sentinel (#77) — it's a terminal ndjson line
+    # with `_kind: "resolver_stats"` rather than a primitive.
+    objs = [json.loads(l) for l in proc.stdout.splitlines() if l.strip()]
+    return [o for o in objs if o.get("_kind") != "resolver_stats"]
 
 
 @pytest.mark.parametrize("fixture", _fixtures(), ids=lambda f: f.name)

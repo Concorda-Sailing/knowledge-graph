@@ -98,14 +98,28 @@ def _extract_python(
     *,
     include_paths: list[str] | None = None,
     exclude_paths: list[str] | None = None,
-) -> list[dict]:
-    from depgraph.extractors.python.extract import extract_repo
-    return list(extract_repo(
+) -> tuple[list[dict], dict[tuple[str, str], int]]:
+    """Run the in-process Python extractor and return (primitives, stats).
+
+    Stats is the per-resolver hit-rate counter accumulated during this run
+    (R7, #77). Drained via `consume_resolver_stats()` so the module-level
+    state is reset before the next call.
+    """
+    from depgraph.extractors.python.extract import (
+        consume_resolver_stats,
+        extract_repo,
+    )
+    # Reset any leftover counter from a prior call (defensive — the call
+    # below should drain it, but if a previous run raised partway through
+    # this prevents stats from leaking across repos).
+    consume_resolver_stats()
+    prims = list(extract_repo(
         repo_key=repo_key,
         repo_path=repo_path,
         include_paths=include_paths or (),
         exclude_paths=exclude_paths or (),
     ))
+    return prims, consume_resolver_stats()
 
 
 # Node's own default is ~4 GB, which OOMs on real-world Next.js codebases —
@@ -145,19 +159,25 @@ def _extract_typescript(
     tool_root: Path,
     include_paths: list[str] | None = None,
     exclude_paths: list[str] | None = None,
-) -> tuple[list[dict], str | None]:
+) -> tuple[list[dict], dict[tuple[str, str], int], str | None]:
     """Invoke the TS extractor as a subprocess, parse ndjson output.
 
-    Returns (primitives, error_msg). error_msg is None on success; on
-    failure it carries the extractor's stderr (truncated) so the regen
-    loop can surface a single summary at end-of-run instead of burying
-    the warning in the output (#28).
+    Returns (primitives, resolver_stats, error_msg). error_msg is None on
+    success; on failure it carries the extractor's stderr (truncated) so
+    the regen loop can surface a single summary at end-of-run instead of
+    burying the warning in the output (#28).
+
+    resolver_stats holds the per-resolver hit-rate counters (R7, #77),
+    parsed from the terminal ndjson sentinel line — `{"_kind":
+    "resolver_stats", "data": {...}}` — that the TS extractor writes after
+    the primitive stream. Empty on a successful run with no calls (and on
+    extractor failure, since the sentinel won't be present).
     """
     ts_extractor = tool_root / "extractors" / "typescript" / "extract.ts"
     if not ts_extractor.exists():
         msg = f"TS extractor not found at {ts_extractor}"
         print(f"ERROR: {msg}; skipping", file=sys.stderr)
-        return [], msg
+        return [], {}, msg
     cmd = [
         "npx", "tsx", str(ts_extractor),
         "--repo-key", repo_key,
@@ -177,20 +197,40 @@ def _extract_typescript(
             f"{result.stderr}",
             file=sys.stderr,
         )
-        return [], (
+        return [], {}, (
             f"exit={result.returncode}; "
             f"first stderr line: {result.stderr.splitlines()[0] if result.stderr.strip() else '(empty)'}"
         )
     prims: list[dict] = []
+    resolver_stats: dict[tuple[str, str], int] = {}
     for line in result.stdout.splitlines():
         line = line.strip()
         if not line:
             continue
         try:
-            prims.append(json.loads(line))
+            obj = json.loads(line)
         except json.JSONDecodeError as e:
             print(f"WARN: TS extractor bad JSON line: {e}", file=sys.stderr)
-    return prims, None
+            continue
+        # Resolver-stats sentinel — emitted after the primitive stream.
+        # Convert nested {resolver: {outcome: n}} to (resolver, outcome) keys
+        # so the merge in _run_v2_pipeline uses the same shape as the
+        # Python side.
+        if isinstance(obj, dict) and obj.get("_kind") == "resolver_stats":
+            data = obj.get("data") or {}
+            for resolver, outcomes in data.items():
+                if not isinstance(outcomes, dict):
+                    continue
+                for outcome, count in outcomes.items():
+                    try:
+                        n = int(count)
+                    except (TypeError, ValueError):
+                        continue
+                    key = (str(resolver), str(outcome))
+                    resolver_stats[key] = resolver_stats.get(key, 0) + n
+            continue
+        prims.append(obj)
+    return prims, resolver_stats, None
 
 
 # ---------------------------------------------------------------------------
@@ -877,6 +917,11 @@ def _run_v2_pipeline(
     # the domain-orphan pass can tell "this extractor ran and chose not to
     # emit X" from "this extractor didn't run this round" (partial regen).
     extraction_manifests: dict[tuple[str, str], set[str]] = {}
+    # Per-resolver hit-rate counters merged across all (repo, language)
+    # pairs (R7, #77). Key is (resolver_name, outcome); value is the count.
+    # Serialized into nodes/_meta.json::resolver_stats below and rendered
+    # by `kg depgraph stats`.
+    resolver_stats: dict[tuple[str, str], int] = {}
 
     # --- Extraction pass (per repo × language) ---
     for repo_cfg in repos:
@@ -888,7 +933,7 @@ def _run_v2_pipeline(
         print(f"--- extract {key} (languages: {', '.join(languages) or 'none detected'})")
 
         if "python" in languages:
-            prims = _extract_python(
+            prims, py_resolver_stats = _extract_python(
                 key, path,
                 include_paths=repo_cfg.get("include_paths"),
                 exclude_paths=repo_cfg.get("exclude_paths"),
@@ -900,9 +945,11 @@ def _run_v2_pipeline(
             extraction_manifests[(key, "python")] = {
                 p["id"] for p in prims if p.get("id")
             }
+            for stat_key, count in py_resolver_stats.items():
+                resolver_stats[stat_key] = resolver_stats.get(stat_key, 0) + count
 
         if "typescript" in languages:
-            prims, ts_err = _extract_typescript(
+            prims, ts_resolver_stats, ts_err = _extract_typescript(
                 key, path, tool_root=tool_root,
                 include_paths=repo_cfg.get("include_paths"),
                 exclude_paths=repo_cfg.get("exclude_paths"),
@@ -919,6 +966,11 @@ def _run_v2_pipeline(
                 extraction_manifests[(key, "typescript")] = {
                     p["id"] for p in prims if p.get("id")
                 }
+            # Stats arrive even on partial output, but the sentinel is only
+            # written on a clean run — so this is effectively a no-op on
+            # failure. Merge unconditionally regardless; safer than a guard.
+            for stat_key, count in ts_resolver_stats.items():
+                resolver_stats[stat_key] = resolver_stats.get(stat_key, 0) + count
 
         if "sql" in languages:
             migrations_dirs = [Path(d) for d in repo_cfg.get("migrations_dirs", [])]
@@ -1167,6 +1219,14 @@ def _run_v2_pipeline(
         print(f"    status: {embedding_status}")
 
     # --- Write _meta.json ---
+    # Resolver-stats shape: { resolver_name: { outcome: count } }. The
+    # tuple-keyed counter in this function flattens cleanly via sorted-key
+    # iteration; sorting also keeps the on-disk layout deterministic for
+    # the regen-determinism check (#71).
+    resolver_stats_meta: dict[str, dict[str, int]] = {}
+    for (resolver, outcome), count in sorted(resolver_stats.items()):
+        resolver_stats_meta.setdefault(resolver, {})[outcome] = count
+
     meta = {
         "schema_version": 2,
         "regen_status": "complete",
@@ -1189,6 +1249,10 @@ def _run_v2_pipeline(
             {"repo": r, "language": lang, "error": msg}
             for (r, lang, msg) in extractor_errors
         ],
+        # Per-resolver hit-rate counters (R7, #77). Empty {} on corpora
+        # that don't exercise any of the tracked branches — preserves the
+        # key so consumers can rely on its presence in schema_version 2.
+        "resolver_stats": resolver_stats_meta,
     }
     meta_path = data_dir / "nodes" / "_meta.json"
     meta_path.parent.mkdir(parents=True, exist_ok=True)

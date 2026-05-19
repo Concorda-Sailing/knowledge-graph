@@ -25,7 +25,7 @@ from depgraph.lib.path_filters import included
 from .canonical import canonical_id, structural_hash
 
 
-EXTRACTOR_TAG = "depgraph/extractors/python/extract.py@2026-05-23c"
+EXTRACTOR_TAG = "depgraph/extractors/python/extract.py@2026-05-23d"
 SCHEMA_VERSION = 2
 
 # Builtins commonly used as parameter / variable type annotations. When an
@@ -51,6 +51,53 @@ _TYPING_BUILTIN_ALIASES: dict[str, str] = {
     "FrozenSet": "frozenset", "Tuple": "tuple",
     "Type": "type",
 }
+
+
+# ---------------------------------------------------------------------------
+# Per-resolver hit-rate counters (R7, issue #77)
+# ---------------------------------------------------------------------------
+#
+# Each resolver branch ticks a counter keyed by (resolver_name, outcome) so the
+# `kg depgraph stats` report can answer "how often does <branch> resolve vs fall
+# through?". The counter survives across files within one extract_repo() run
+# (call resolution is per-file, but we want an aggregate across the corpus) and
+# is exposed via `consume_resolver_stats()` — a read-then-reset accessor that
+# regen.py drains after each extractor call.
+#
+# Outcomes are a closed set:
+#   hit         resolved to an in-corpus or canonical external target with
+#               exact confidence
+#   fuzzy       resolved heuristically (re-export chase, wildcard imports,
+#               etc.) — confidence carries through to the edge as 'fuzzy'
+#   fallthrough resolver gave up and either emitted an unresolved sentinel
+#               or nothing at all
+#
+# Module-level state is the lightest touch given the post-#71 streaming
+# refactor: the resolver branches sit several call-frames deep inside
+# extract_repo(), threading a Counter dict through every signature would be
+# noisier than the value of the isolation.
+
+_RESOLVER_STATS: dict[tuple[str, str], int] = {}
+
+
+def _tick(resolver: str, outcome: str) -> None:
+    """Bump the (resolver, outcome) counter."""
+    key = (resolver, outcome)
+    _RESOLVER_STATS[key] = _RESOLVER_STATS.get(key, 0) + 1
+
+
+def consume_resolver_stats() -> dict[tuple[str, str], int]:
+    """Return the accumulated resolver-stats counter and reset it.
+
+    Called by regen.py after each `extract_repo()` so per-repo counters can be
+    merged into the corpus-wide `_meta.json::resolver_stats` map. Returning a
+    copy of the live dict (rather than handing the live dict over) keeps the
+    contract symmetric with the TS side, which serializes its counter then
+    discards it.
+    """
+    snapshot = dict(_RESOLVER_STATS)
+    _RESOLVER_STATS.clear()
+    return snapshot
 
 
 def _base_primitive(*, schema_id: str, primitive: str, name: str,
@@ -827,6 +874,7 @@ def _attach_inheritance_edges(primitives: list[dict],
                     continue
                 target_id = local_names.get(base_name)
                 if target_id:
+                    _tick("python.extends.local", "hit")
                     target_class["edges_out"].append({
                         "target": target_id,
                         "kind": EdgeKind.EXTENDS.value,
@@ -837,6 +885,7 @@ def _attach_inheritance_edges(primitives: list[dict],
                     continue
                 imported = imports.get(base_name)
                 if imported and imported in classes_by_id:
+                    _tick("python.extends.imports_table", "hit")
                     target_class["edges_out"].append({
                         "target": imported,
                         "kind": EdgeKind.EXTENDS.value,
@@ -846,6 +895,12 @@ def _attach_inheritance_edges(primitives: list[dict],
                     })
                     continue
                 if imported and _is_external_symbol_id(imported):
+                    # Imports table found an external symbol — emit with
+                    # unresolved confidence (we don't verify the symbol is
+                    # class-shaped). Counts as a fallthrough on the
+                    # imports_table branch so the hit rate stays a clean
+                    # "in-corpus class fraction".
+                    _tick("python.extends.imports_table", "fallthrough")
                     target_class["edges_out"].append({
                         "target": imported,
                         "kind": EdgeKind.EXTENDS.value,
@@ -857,6 +912,7 @@ def _attach_inheritance_edges(primitives: list[dict],
                 # Builtin class extension (`class X(list)`,
                 # `class CustomError(Exception)`).
                 if base_name in _BUILTIN_CLASS_NAMES:
+                    _tick("python.extends.unknown", "hit")
                     builtin_target = f"external::builtins::{base_name}"
                     target_class["edges_out"].append({
                         "target": builtin_target,
@@ -866,6 +922,7 @@ def _attach_inheritance_edges(primitives: list[dict],
                         "confidence": confidence_for_external_target(builtin_target),
                     })
                     continue
+                _tick("python.extends.unknown", "fallthrough")
                 fallback_target = f"external::pypi::unknown::{base_name}"
                 target_class["edges_out"].append({
                     "target": fallback_target,
@@ -1399,12 +1456,15 @@ def _attach_imports_edges(primitives: list[dict],
                         # / module contents and isn't statically analyzed here.
                         if alias_name == "*":
                             if target_mod_prim:
+                                _tick("python.imports.wildcard", "fuzzy")
                                 mod_prim["edges_out"].append({
                                     "target": target_mod_prim["id"],
                                     "kind": EdgeKind.IMPORTS.value, "via": "wildcard_import",
                                     "where": f"{path}:{lineno}",
                                     "confidence": "fuzzy",
                                 })
+                            else:
+                                _tick("python.imports.wildcard", "fallthrough")
                             continue
                         local_binding = alias_asname or alias_name
                         if target_mod_prim:
@@ -1417,11 +1477,13 @@ def _attach_imports_edges(primitives: list[dict],
                             else:
                                 target = target_mod_prim["id"]
                                 confidence = "exact"
+                            _tick("python.imports.from_module", "hit")
                         else:
                             # Can't resolve — external or unindexed
                             root_pkg = module_name.split(".")[0] if module_name else "unknown"
                             target = f"external::pypi::{root_pkg}::{alias_name}"
                             confidence = confidence_for_external_target(target)
+                            _tick("python.imports.from_module", "fallthrough")
                         mod_prim["edges_out"].append({
                             "target": target,
                             "kind": EdgeKind.IMPORTS.value,
@@ -1441,6 +1503,7 @@ def _attach_imports_edges(primitives: list[dict],
                         # See the relative branch above for the rationale.
                         if alias_name == "*":
                             if target_mod_id:
+                                _tick("python.imports.wildcard", "fuzzy")
                                 mod_prim["edges_out"].append({
                                     "target": target_mod_id,
                                     "kind": EdgeKind.IMPORTS.value, "via": "wildcard_import",
@@ -1448,6 +1511,7 @@ def _attach_imports_edges(primitives: list[dict],
                                     "confidence": "fuzzy",
                                 })
                             elif module_name:
+                                _tick("python.imports.wildcard", "fallthrough")
                                 root_pkg = module_name.split(".")[0]
                                 wildcard_target = f"external::pypi::{root_pkg}"
                                 mod_prim["edges_out"].append({
@@ -1456,6 +1520,8 @@ def _attach_imports_edges(primitives: list[dict],
                                     "where": f"{path}:{lineno}",
                                     "confidence": confidence_for_external_target(wildcard_target),
                                 })
+                            else:
+                                _tick("python.imports.wildcard", "fallthrough")
                             continue
                         local_binding = alias_asname or alias_name
                         if target_mod_id:
@@ -1468,11 +1534,13 @@ def _attach_imports_edges(primitives: list[dict],
                             else:
                                 target = target_mod_id
                             confidence = "exact"
+                            _tick("python.imports.from_module", "hit")
                         else:
                             # Module not in corpus — external package
                             root_pkg = module_name.split(".")[0] if module_name else "unknown"
                             target = f"external::pypi::{root_pkg}::{alias_name}"
                             confidence = confidence_for_external_target(target)
+                            _tick("python.imports.from_module", "fallthrough")
                         mod_prim["edges_out"].append({
                             "target": target,
                             "kind": EdgeKind.IMPORTS.value,
@@ -1492,10 +1560,12 @@ def _attach_imports_edges(primitives: list[dict],
                     if target_id:
                         target = target_id
                         confidence = "exact"
+                        _tick("python.imports.module", "hit")
                     else:
                         root_pkg = alias_name.split(".")[0]
                         target = f"external::pypi::{root_pkg}"
                         confidence = confidence_for_external_target(target)
+                        _tick("python.imports.module", "fallthrough")
                     mod_prim["edges_out"].append({
                         "target": target,
                         "kind": EdgeKind.IMPORTS.value,
@@ -1845,6 +1915,7 @@ def _resolve_call_edge(call: dict, *, local_names: dict, imports: dict,
         name = call["callee_name"]
         target = local_names.get(name) or imports.get(name)
         if target is None:
+            _tick("python.call.bare_name", "fallthrough")
             return []
         if target in classes_by_id:
             kind = EdgeKind.INSTANTIATES.value
@@ -1858,7 +1929,9 @@ def _resolve_call_edge(call: dict, *, local_names: dict, imports: dict,
             # primitive. Skip the edge: the reads pass picks up the identifier
             # reference, preserving call-graph reachability without violating
             # the calls/instantiates target-kind rules.
+            _tick("python.call.bare_name", "fallthrough")
             return []
+        _tick("python.call.bare_name", "hit")
         return [{"target": target, "kind": kind, "via": "function_call",
                   "where": f"{path}:{lineno}", "confidence": "exact"}]
 
@@ -1877,6 +1950,11 @@ def _resolve_call_edge(call: dict, *, local_names: dict, imports: dict,
             if imported and imported.startswith("external::"):
                 # External package: emit `external::pypi::<pkg>::<method>`
                 # by appending the method name as an extra id segment.
+                # The imports pass typically stores a bare-package id
+                # (3-component, from `import requests`) here; symbol-id
+                # receivers are unusual but the same suffix shape stays
+                # parseable downstream.
+                _tick("python.call.method_via_imports", "hit")
                 return [{"target": f"{imported}::{method}",
                           "kind": EdgeKind.CALLS.value,
                           "via": "method_call",
@@ -1903,10 +1981,18 @@ def _resolve_call_edge(call: dict, *, local_names: dict, imports: dict,
                         else:
                             sym_kind = None
                         if sym_kind is not None:
+                            # In-corpus module-named receiver resolved to a
+                            # top-level symbol — counts as a hit on the
+                            # imports-table resolver (the #68 branch
+                            # extended for in-corpus targets in #91 b2).
+                            _tick("python.call.method_via_imports", "hit")
                             return [{"target": sym_id,
                                       "kind": sym_kind, "via": "method_call",
                                       "where": f"{path}:{lineno}",
                                       "confidence": "exact"}]
+            # Untyped receiver with no usable import binding — the
+            # legacy "method_unresolved" branch from the pre-#91 code.
+            _tick("python.call.method_unresolved", "fallthrough")
             unr_target = f"external::unresolved::{recv}.{method}"
             return [{"target": unr_target,
                       "kind": EdgeKind.CALLS.value, "via": "method_call",
@@ -1919,6 +2005,7 @@ def _resolve_call_edge(call: dict, *, local_names: dict, imports: dict,
                 # never parsed the package, so neither class shape nor
                 # method existence is verified. Confidence mirrors the
                 # upstream `from pkg import X` edge.
+                _tick("python.call.method_via_var_types", "hit")
                 ext_target = f"{recv_class_id}::{method}"
                 edges.append({"target": ext_target,
                                "kind": EdgeKind.CALLS.value, "via": "method_call",
@@ -1927,11 +2014,14 @@ def _resolve_call_edge(call: dict, *, local_names: dict, imports: dict,
                 continue
             method_id = methods_by_class.get(recv_class_id, {}).get(method)
             if method_id:
+                _tick("python.call.method_via_var_types", "hit")
                 edges.append({"target": method_id, "kind": EdgeKind.CALLS.value,
                                "via": "method_call",
                                "where": f"{path}:{lineno}",
                                "confidence": "exact"})
             else:
+                # Receiver class is known but the method isn't on it.
+                _tick("python.call.method_via_var_types", "fallthrough")
                 sentinel = f"external::unresolved::{recv_class_id}.{method}"
                 edges.append({"target": sentinel,
                                "kind": EdgeKind.CALLS.value, "via": "method_call",
@@ -1941,6 +2031,7 @@ def _resolve_call_edge(call: dict, *, local_names: dict, imports: dict,
 
     if func_kind == "attr_on_other":
         # Chained attribute (a.b.c()) — dropped for v0 (see EDGE-2).
+        _tick("python.call.attr_on_other", "fallthrough")
         return []
 
     # Computed callee — recognize known dynamic-dispatch AST shapes (#90)
@@ -1952,12 +2043,18 @@ def _resolve_call_edge(call: dict, *, local_names: dict, imports: dict,
     # the legacy `external::unresolved::computed_callee` sentinel.
     dyn_shape = call.get("dyn_shape")
     if dyn_shape is not None:
+        # Structured dynamic dispatch (getattr / Reflect.get / call[0]())
+        # — emitted with a distinct sentinel, still counts as a
+        # fallthrough on the computed_callee resolver since no concrete
+        # callee was resolved.
+        _tick("python.call.computed_callee", "fallthrough")
         dyn_target = f"external::dynamic::{dyn_shape}::{path}:{lineno}"
         return [{"target": dyn_target,
                   "kind": EdgeKind.CALLS.value, "via": f"dynamic_{dyn_shape}",
                   "where": f"{path}:{lineno}",
                   "confidence": confidence_for_external_target(dyn_target)}]
 
+    _tick("python.call.computed_callee", "fallthrough")
     callee_target = "external::unresolved::computed_callee"
     return [{"target": callee_target,
               "kind": EdgeKind.CALLS.value, "via": "computed_callee",

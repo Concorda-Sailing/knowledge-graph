@@ -26,7 +26,10 @@ def run_extractor(fixture_name: str, which: str = "edges") -> list[dict]:
            "--format", "ndjson"]
     proc = subprocess.run(cmd, capture_output=True, text=True,
                           cwd=EXTRACTOR.parent, check=True)
-    return [json.loads(line) for line in proc.stdout.splitlines() if line.strip()]
+    # Drop the resolver-stats sentinel (#77) — it's a terminal ndjson line
+    # with `_kind: "resolver_stats"` rather than a primitive.
+    objs = [json.loads(line) for line in proc.stdout.splitlines() if line.strip()]
+    return [o for o in objs if o.get("_kind") != "resolver_stats"]
 
 
 # ---------------------------------------------------------------------------

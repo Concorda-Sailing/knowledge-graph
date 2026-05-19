@@ -45,7 +45,9 @@ def _run(fixture: Path) -> list[dict]:
             capture_output=True, text=True, check=True,
             cwd=TS_EXTRACTOR.parent,
         )
-        return [json.loads(line) for line in proc.stdout.splitlines() if line.strip()]
+        # Drop the resolver-stats sentinel (#77) — terminal ndjson line.
+        objs = [json.loads(line) for line in proc.stdout.splitlines() if line.strip()]
+        return [o for o in objs if o.get("_kind") != "resolver_stats"]
     else:
         from depgraph.extractors.python.extract import extract_repo
         return list(extract_repo(repo_key="fixture", repo_path=fixture / "src"))

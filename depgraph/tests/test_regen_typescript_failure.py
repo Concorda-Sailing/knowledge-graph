@@ -3,6 +3,10 @@
 After the #28 fix, the function returns (prims, error_msg) rather than
 just `prims`, so the regen loop can summarize failures at end-of-run
 instead of burying them as a single WARN line.
+
+After #77 (R7 per-resolver hit-rate counters), the return shape grew a
+third element — `(prims, resolver_stats, error_msg)` — so the resolver
+stats from the TS sentinel can be merged into `_meta.json`.
 """
 from __future__ import annotations
 
@@ -31,11 +35,13 @@ def test_returns_prims_and_none_on_success(tmp_path: Path) -> None:
         "depgraph.lib.cli.regen.subprocess.run",
         return_value=_completed(0, stdout=stdout),
     ):
-        prims, err = _extract_typescript(
+        prims, stats, err = _extract_typescript(
             "web", tmp_path, tool_root=tool_root,
         )
     assert err is None
     assert [p["id"] for p in prims] == ["x", "y"]
+    # No resolver_stats sentinel in this stdout → empty dict, not missing.
+    assert stats == {}
 
 
 def test_returns_empty_and_error_on_nonzero_exit(tmp_path: Path) -> None:
@@ -54,10 +60,11 @@ def test_returns_empty_and_error_on_nonzero_exit(tmp_path: Path) -> None:
         "depgraph.lib.cli.regen.subprocess.run",
         return_value=_completed(134, stderr=stderr),
     ):
-        prims, err = _extract_typescript(
+        prims, stats, err = _extract_typescript(
             "web", tmp_path, tool_root=tool_root,
         )
     assert prims == []
+    assert stats == {}
     assert err is not None
     assert "exit=134" in err
 
@@ -69,7 +76,8 @@ def test_missing_extractor_returns_error(tmp_path: Path) -> None:
     tool_root.mkdir()
     # No extractors/typescript/extract.ts planted.
 
-    prims, err = _extract_typescript("web", tmp_path, tool_root=tool_root)
+    prims, stats, err = _extract_typescript("web", tmp_path, tool_root=tool_root)
     assert prims == []
+    assert stats == {}
     assert err is not None
     assert "TS extractor not found" in err

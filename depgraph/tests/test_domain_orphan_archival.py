@@ -138,9 +138,11 @@ def test_manifest_not_written_on_ts_extractor_failure(tmp_path, monkeypatch):
     api.mkdir()
     (api / "core.ts").write_text("export const x = 1;\n")
 
-    # Force TS extractor to look like it failed.
+    # Force TS extractor to look like it failed. The third tuple element is
+    # the resolver-stats dict added in #77 — empty on failure since the
+    # sentinel ndjson line isn't emitted when the extractor exits non-zero.
     def _fake_ts_extract(*args, **kwargs):
-        return [], "exit=137; OOM"
+        return [], {}, "exit=137; OOM"
     monkeypatch.setattr(regen_mod, "_extract_typescript", _fake_ts_extract)
 
     rc = regen_mod._run_v2_pipeline(

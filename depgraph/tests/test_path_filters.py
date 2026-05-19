@@ -300,8 +300,13 @@ def _ts_extract(repo, *, include=None, exclude=None):
     prims = []
     for line in result.stdout.splitlines():
         line = line.strip()
-        if line:
-            prims.append(json.loads(line))
+        if not line:
+            continue
+        obj = json.loads(line)
+        # Drop the resolver-stats sentinel (#77) — terminal ndjson line.
+        if obj.get("_kind") == "resolver_stats":
+            continue
+        prims.append(obj)
     return prims
 
 
