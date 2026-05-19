@@ -8,6 +8,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from depgraph.lib.edges import REVERSE_INDEX_FILENAME
+
 
 # Tool location (where this package lives) — schemas, framework code.
 _TOOL_ROOT = Path(__file__).resolve().parents[2]
@@ -38,7 +40,7 @@ class Context:
         return cls(
             DEPGRAPH=dd,
             NODES=nodes,
-            DEPENDENTS_INDEX=nodes / "_index" / "by_target.json",
+            DEPENDENTS_INDEX=nodes / "_index" / REVERSE_INDEX_FILENAME,
             CORPUS_META=nodes / "_meta.json",
             TELEMETRY_DIR=dd / "telemetry",
             INJECTIONS_LOG=dd / "telemetry" / "injections.jsonl",

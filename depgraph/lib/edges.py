@@ -9,6 +9,18 @@ from enum import Enum
 from typing import Any
 
 
+# Filenames for the two indexes written under `nodes/_index/`. The reverse
+# index used to drift from its readers (closed #12 fixed that round of drift)
+# and #66 turns the literal into a single source so a future rename is atomic.
+# Read sites build paths like `nodes / "_index" / REVERSE_INDEX_FILENAME`
+# instead of repeating the literal string.
+#
+# Docstrings/prose that name the file to the reader may still spell it out;
+# the rule is for code that builds the path, not for documentation.
+REVERSE_INDEX_FILENAME = "by_target.json"
+FORWARD_INDEX_FILENAME = "by_source.json"
+
+
 # Valid confidence values (issue #53 Option A). The old ternary
 # `exact / fuzzy / unresolved` collapsed four very different situations
 # into one bucket; the taxonomy below subdivides the previously-unresolved

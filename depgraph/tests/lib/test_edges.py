@@ -1,6 +1,18 @@
 from depgraph.lib.edges import (
     EdgeKind, validate_edge, ALL_EDGE_KINDS, EDGE_KIND_RULES,
+    REVERSE_INDEX_FILENAME, FORWARD_INDEX_FILENAME,
 )
+
+
+def test_reverse_index_filename_constant():
+    """#66: writer + readers must agree on the reverse-index filename.
+    The constant pins the value at the single point that owns it."""
+    assert REVERSE_INDEX_FILENAME == "by_target.json"
+
+
+def test_forward_index_filename_constant():
+    """#66: same shape for the forward index, written alongside by_target."""
+    assert FORWARD_INDEX_FILENAME == "by_source.json"
 
 
 def test_edge_kinds_taxonomy_complete():

@@ -30,6 +30,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from depgraph.lib.edges import REVERSE_INDEX_FILENAME
+
 HOME = Path.home()
 
 # Where `kg project add` writes the registered-graphs list. The orchestrator
@@ -416,7 +418,7 @@ def load_dependents() -> dict[str, list[dict]]:
     cached = _DEPGRAPH_DEPS_CACHE.get(proj.depgraph_dir)
     if cached is not None and cached[0] == mt:
         return cached[1]
-    p = proj.depgraph_nodes_dir / "_index" / "by_target.json"
+    p = proj.depgraph_nodes_dir / "_index" / REVERSE_INDEX_FILENAME
     if not p.exists():
         out: dict[str, list[dict]] = {}
     else:

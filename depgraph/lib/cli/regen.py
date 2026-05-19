@@ -58,6 +58,10 @@ from depgraph.extractors.reconcile import (  # noqa: E402
     _normalize_url_pattern,
     validate_corpus,
 )
+from depgraph.lib.edges import (  # noqa: E402
+    FORWARD_INDEX_FILENAME,
+    REVERSE_INDEX_FILENAME,
+)
 
 from ._shared import is_dossier_eligible, mark_regen_in_progress
 from .context import Context
@@ -1140,8 +1144,8 @@ def _run_v2_pipeline(
     index_dir = data_dir / "nodes" / "_index"
     by_target = _build_by_target(all_primitives)
     by_source = _build_by_source(all_primitives)
-    _write_index(index_dir, "by_target.json", by_target)
-    _write_index(index_dir, "by_source.json", by_source)
+    _write_index(index_dir, REVERSE_INDEX_FILENAME, by_target)
+    _write_index(index_dir, FORWARD_INDEX_FILENAME, by_source)
     edge_count = sum(len(v) for v in by_target.values())
     print(f"    by_target: {len(by_target)} targets, {edge_count} edges")
     print(f"    by_source: {len(by_source)} sources")
