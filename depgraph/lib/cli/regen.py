@@ -633,6 +633,7 @@ def _run_v2_pipeline(
     repos: list[dict],  # each: {key, path, languages, migrations_dirs}
     tool_root: Path,
     classification_options: dict | None = None,
+    skip_embeddings: bool = False,
 ) -> int:
     """
     Run the full v2 extraction + classification + reconcile pipeline.
@@ -819,6 +820,22 @@ def _run_v2_pipeline(
     print(f"    by_target: {len(by_target)} targets, {edge_count} edges")
     print(f"    by_source: {len(by_source)} sources")
 
+    # --- Embedding pass ---
+    # Per-node summary + dossier-body chunks → embedding index. Required for
+    # `/graph/search` and any semantic-search consumer to have surface area
+    # on a freshly-regenerated corpus. v1's reconcile.py called this at end
+    # of finalization; the v2 cutover dropped it (#38 gap A). Block-only
+    # failure semantics — fastembed/numpy absent → "skipped" (search falls
+    # back to the lexical BM25 path).
+    if skip_embeddings:
+        embedding_status = "skipped"
+        print("--- embeddings: skipped (--no-embeddings)")
+    else:
+        from depgraph.extractors.reconcile import _run_embedding_pass
+        print("--- embeddings")
+        embedding_status = _run_embedding_pass(all_primitives, data_dir)
+        print(f"    status: {embedding_status}")
+
     # --- Write _meta.json ---
     meta = {
         "schema_version": 2,
@@ -834,6 +851,7 @@ def _run_v2_pipeline(
         "primitive_error_count": n_prim_errors,
         "git_commit": _primary_git_commit(data_dir),
         "validation_report": report,
+        "embedding_status": embedding_status,
         "extractor_errors": [
             {"repo": r, "language": lang, "error": msg}
             for (r, lang, msg) in extractor_errors
@@ -952,6 +970,7 @@ def _mode_a(args: argparse.Namespace, ctx: Context) -> int:
     return _run_v2_pipeline(
         data_dir=ctx.DEPGRAPH, repos=repos, tool_root=tool_root,
         classification_options=classification_options,
+        skip_embeddings=getattr(args, "no_embeddings", False),
     )
 
 
@@ -1056,6 +1075,7 @@ def _mode_a_single_repo(args: argparse.Namespace, ctx: Context) -> int:
     return _run_v2_pipeline(
         data_dir=ctx.DEPGRAPH, repos=[repo], tool_root=ctx.tool_root,
         classification_options=classification_options,
+        skip_embeddings=getattr(args, "no_embeddings", False),
     )
 
 
@@ -1099,6 +1119,7 @@ def _mode_b(args: argparse.Namespace, ctx: Context) -> int:
     return _run_v2_pipeline(
         data_dir=data_dir, repos=repos, tool_root=tool_root,
         classification_options=classification_options,
+        skip_embeddings=getattr(args, "no_embeddings", False),
     )
 
 
@@ -1162,4 +1183,7 @@ def register(sub: argparse._SubParsersAction) -> None:
                    help="[Mode B] Comma-separated globs against rel-path; "
                         "matching files are skipped. Applied by every "
                         "language extractor (Python, TypeScript, SQL).")
+    p.add_argument("--no-embeddings", dest="no_embeddings", action="store_true",
+                   help="Skip the embedding-index pass. Faster regen; "
+                        "/graph/search falls back to the lexical BM25 path.")
     p.set_defaults(func=cmd_regen)
