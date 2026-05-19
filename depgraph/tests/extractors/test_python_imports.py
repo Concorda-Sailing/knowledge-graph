@@ -4,7 +4,7 @@ re-exports through package __init__.py barrels.
 Regression: `from pkg import Name` where `pkg/__init__.py` re-exports `Name`
 from a submodule used to collapse the edge to the package module instead of
 the underlying defining symbol, under-counting consumers of barrel-exported
-classes (e.g. the Boat model in concorda's models package).
+classes (e.g. a model class re-exported via a package's `__init__.py`).
 """
 from __future__ import annotations
 
