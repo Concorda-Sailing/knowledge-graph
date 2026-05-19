@@ -674,6 +674,16 @@ def _group_flags_by_kind(items: list[dict]) -> list[dict]:
     return out
 
 
+def _extraction_ran(meta: dict) -> bool:
+    """True iff at least one of depgraph/logigraph has written `_meta.json`
+    for this project (#63).
+
+    `load_meta()` returns `{"depgraph": {}, "logigraph": {}}` both when
+    meta files are absent and when they're empty, so a non-empty dict on
+    either side is the canonical "regen has run at least once" signal."""
+    return bool(meta.get("depgraph") or meta.get("logigraph"))
+
+
 def corpus_flags() -> dict:
     """Return all corpus flags partitioned by tracked/fresh and grouped by
     kind within each. Reads logigraph `_meta.json::flags` written by
@@ -688,6 +698,7 @@ def corpus_flags() -> dict:
         "tracked": [{kind, count, items}, ...],
         "count_fresh": N,
         "count_tracked": N,
+        "extraction_ran": bool,   # #63: distinguish "no data yet" from "clean"
       }
     """
     meta = load_meta()
@@ -702,6 +713,7 @@ def corpus_flags() -> dict:
         "tracked": _group_flags_by_kind(tracked_flat),
         "count_fresh": len(fresh_flat),
         "count_tracked": len(tracked_flat),
+        "extraction_ran": _extraction_ran(meta),
     }
 
 

@@ -34,6 +34,15 @@ def single_project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict:
     (root / "logigraph" / "project.toml").write_text(
         f'[project]\nname = "solo"\n\n[depgraph]\ndata_dir = "{depgraph_dir}"\n'
     )
+    # Stub _meta.json on both sides so health passes the post-#61/#62
+    # liveness gate. These tests exercise cross-graph dispatch — they
+    # simulate a post-regen project, not the never-extracted state.
+    (root / "depgraph" / "nodes" / "_meta.json").write_text(
+        '{"schema_version": 2, "regen_status": "complete", "node_count": 0}'
+    )
+    (root / "logigraph" / "nodes" / "_meta.json").write_text(
+        '{"schema_version": 1, "regen_status": "complete", "node_count": 0}'
+    )
     subprocess.run(
         [sys.executable, str(KG_BIN), "project", "add", str(root)],
         check=True, env={**os.environ, "KG_REGISTRY_PATH": str(reg)},
