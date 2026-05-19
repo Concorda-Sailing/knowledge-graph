@@ -55,6 +55,18 @@ def test_extends_resolves_via_absolute_import_py():
                and e["confidence"] == "exact" for e in ex), ex
 
 
+def test_extends_resolves_through_package_barrel_reexport_py():
+    """`from pkg import BaseModel` where pkg/__init__.py does
+    `from .base import BaseModel` — the imports pass chases the re-export
+    (see commit 03eb61f) so extends should land on the defining symbol."""
+    prims = list(extract_repo(repo_key="fixture",
+                              repo_path=FIXTURE_DIR / "inheritance_via_import"))
+    session = next(p for p in prims if p["name"] == "Session")
+    ex = [e for e in session["edges_out"] if e["kind"] == "extends"]
+    assert any(e["target"] == "fixture::pkg/base.py::BaseModel"
+               and e["confidence"] == "exact" for e in ex), ex
+
+
 def test_extends_external_keeps_pkg_attribution_py():
     prims = list(extract_repo(repo_key="fixture",
                               repo_path=FIXTURE_DIR / "inheritance_external"))
