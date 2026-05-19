@@ -42,6 +42,14 @@ def _print_section(title: str, items: list[str], *, cap: int, full: bool) -> Non
 
 
 def cmd_validate(args: argparse.Namespace, ctx: Context) -> int:
+    # Liveness gate (#72): empty corpus + no _meta.json means regen has
+    # never run for this project. Returning 0 would let `validate &&
+    # next-step` scripts proceed as if the corpus was clean. Refuse.
+    if not ctx.CORPUS_META.exists():
+        print("validate: no extraction has run yet — run `depgraph regen`",
+              file=sys.stderr)
+        return 1
+
     try:
         import jsonschema  # type: ignore[import-untyped]
     except ImportError:
