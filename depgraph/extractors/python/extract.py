@@ -925,6 +925,30 @@ def _resolve_call_edge(call: ast.Call, *, local_names: dict, imports: dict,
             method = call.func.attr
             recv_class_id = var_types.get(recv)
             if recv_class_id is None:
+                # Module-named receiver fallback: `import requests;
+                # requests.get(...)` leaves `var_types[recv]` unset because
+                # the receiver isn't a typed local — it's a name bound by
+                # an import statement. Consult the imports table to recover
+                # the canonical external target.
+                imported = imports.get(recv)
+                if imported and imported.startswith("external::"):
+                    # External package: emit `external::pypi::<pkg>::<method>`
+                    # by appending the method name as an extra id segment.
+                    # The imports pass typically stores a bare-package id
+                    # (3-component, from `import requests`) here; symbol-id
+                    # receivers are unusual but the same suffix shape stays
+                    # parseable downstream.
+                    return [{"target": f"{imported}::{method}",
+                              "kind": EdgeKind.CALLS.value,
+                              "via": "method_call",
+                              "where": f"{path}:{call.lineno}",
+                              "confidence": "exact"}]
+                # TODO(#68 follow-up): in-corpus module-named receivers
+                # (`import mymod; mymod.foo()`) should resolve `foo` to the
+                # function id defined inside `mymod`. Requires a
+                # module-id -> {symbol_name: symbol_id} index threaded into
+                # this function; deferred to keep this change focused on
+                # the external-package case from the issue.
                 return [{"target": f"external::unresolved::{recv}.{method}",
                           "kind": EdgeKind.CALLS.value, "via": "method_call",
                           "where": f"{path}:{call.lineno}",
