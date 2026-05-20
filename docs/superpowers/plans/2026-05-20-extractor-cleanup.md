@@ -48,20 +48,20 @@ Legend: `pending`, `dispatched`, `[x]` (done with sha), `[FAIL]`.
 
 | Lane | Wave | Issue | Title | Status | Notes |
 |---|---|---|---|---|---|
-| A.1 | 1 | #83 | py-extractor edge cases (walrus, vararg, multi-attr, builtin extends) | pending | |
+| A.1 | 1 | #83 | py-extractor edge cases (walrus, vararg, multi-attr, builtin extends) | dispatched | agent af5eeba6 (worktree) |
 | A.2 | 2 | #54 | SQLAlchemy ORM extractor | pending | depends on A.1 |
 | A.3 | 2 | #45 | non-deterministic structural_hash | pending | investigation; can parallel A.2 if it touches canonical.py only |
-| B.1 | 1 | #82 | TS scope shadowing in reads/assigns | pending | |
+| B.1 | 1 | #82 | TS scope shadowing in reads/assigns | dispatched | agent a9ce3f50 (worktree) |
 | B.2 | 2 | #47 | TS sf.forget streaming | pending | depends on B.1 |
-| C.1 | 1 | #57 | Dossier-draft generate-then-classify split | pending | prereqs #55 #56 done |
+| C.1 | 1 | #57 | Dossier-draft generate-then-classify split | dispatched | agent a9c2e282 (worktree) |
 | C.2 | 2 | #58 | Stale-dossier reverse-edge drift | pending | likely tiny after #57 |
-| D.1 | 1 | #78 | Coverage caveat detector for typed_receiver_unresolved | pending | |
+| D.1 | 1 | #78 | Coverage caveat detector for typed_receiver_unresolved | dispatched | agent a37b95ea (worktree) |
 | D.2 | 1 | #79 | Wild-corpus probe infrastructure | pending | NEEDS HUMAN: repo curation |
-| D.3 | 1 | #80 | Test convention gate | pending | |
-| D.4 | 1 | #81 | TS memory budget gate | pending | |
+| D.3 | 1 | #80 | Test convention gate | dispatched | agent aac30deb (worktree) |
+| D.4 | 1 | #81 | TS memory budget gate | dispatched | agent a7d76f3b (worktree) |
 | D.5 | 1 | #52 | Tests included with kind=test tag | pending | NEEDS HUMAN: pick Option A/B/C |
-| E.1 | 1 | #38-E | Stale-dossier corpus pass wired into regen | pending | |
-| E.2 | 1 | #38-G | Legacy field stripping in regen | pending | check if fac7c0b already covers |
+| E.1 | 1 | #38-E | Stale-dossier corpus pass wired into regen | dispatched | agent ad5a3e39 (worktree) |
+| E.2 | 1 | #38-G | Legacy field stripping in regen | pending | serialize after E.1 (regen.py conflict) |
 | F.1 | 3 | #53 | Confidence taxonomy redesign | pending | run last; serializer |
 
 **Lanes**:
@@ -509,3 +509,7 @@ Do NOT auto-implement.
 dispatched / completed.)
 
 - 2026-05-20 — roadmap created; loop ready to start
+- 2026-05-20 — Wave 1 firing 1: dispatched 7 agents in parallel with worktree isolation
+  - A.1 #83, B.1 #82, C.1 #57, D.1 #78, D.3 #80, D.4 #81, E.1 #38-E
+  - Skipped: D.2 #79 (NEEDS HUMAN), D.5 #52 (NEEDS HUMAN), E.2 #38-G (E lane conflict)
+  - Awaiting agent completion notifications
