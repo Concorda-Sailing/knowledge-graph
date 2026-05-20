@@ -52,7 +52,7 @@ Legend: `pending`, `dispatched`, `[x]` (done with sha), `[FAIL]`.
 | A.2 | 2 | #54 | SQLAlchemy ORM extractor | [x] | c47e3b4 |
 | A.3 | 2 | #45 | non-deterministic structural_hash | [x] | 93b5b6c (no repro found; expanded determinism gate as catch-net) |
 | B.1 | 1 | #82 | TS scope shadowing in reads/assigns | [x] | 1c01ec0 (merged w/ 9a6a93f) |
-| B.2 | 2 | #47 | TS sf.forget streaming | dispatched | agent a475c8e5 (worktree) |
+| B.2 | 2 | #47 | TS sf.forget streaming | [x] | 473305e (architectural; byte-identical output verified) |
 | C.1 | 1 | #57 | Dossier-draft generate-then-classify split | [x] | 0887b89 + ea3c2c2 (signature fix) |
 | C.2 | 2 | #58 | Stale-dossier reverse-edge drift | [x] | 1d011c4 (Option B: inbound-count drift) |
 | D.1 | 1 | #78 | Coverage caveat detector for typed_receiver_unresolved | [x] | 6b2c429 |
@@ -524,3 +524,10 @@ dispatched / completed.)
   - Deferred A.3 #45 (might overlap A.2 on canonical.py)
   - Each agent prompt now starts with a `git reset --hard main` step
     to avoid the "old base" issue that bit several Wave 1 agents
+- 2026-05-20 — Wave 2 firing 2: A.2 returned safely; dispatched A.3 (canonical.py-only)
+- 2026-05-20 — Wave 2 complete: all 5 issues landed
+  - E.2 #38-G (9e74e6b), A.2 #54 (c47e3b4), C.2 #58 (1d011c4 Option B),
+    A.3 #45 (93b5b6c — no repro), B.2 #47 (473305e architectural)
+  - All cherry-picks clean (no merge conflicts in Wave 2)
+  - Wave 3 unblocked: F.1 #53 (confidence taxonomy redesign — needs human design)
+  - Pending human: D.2 #79 (wild-probe repo curation), D.5 #52 (kind=test option)
