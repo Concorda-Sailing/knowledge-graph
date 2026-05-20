@@ -51,6 +51,13 @@ def _sample_result() -> ClassifierResult:
     )
 
 
+# Defaults for the prompt-builder kwargs added since #56 / #55 landed
+# (28baf60 outgoing-deps section; cb0d2eb coverage caveats). Tests don't
+# exercise those code paths; pass empty/no-op values.
+_OUT_KW = dict(out_str="  (none)", out_more="", n_out=0)
+_CAVEATS_KW = dict(caveats_str="")
+
+
 # ---------------------------------------------------------------------------
 # Pass A output appears verbatim in both prompt builders
 # ---------------------------------------------------------------------------
@@ -73,6 +80,7 @@ def test_full_prompt_embeds_classifier_block(tmp_path: Path) -> None:
         adj_str="  (none)", rules_str="  (none)",
         dossier_path=dossier_path, ctx=ctx,
         classifier_block=block,
+        **_OUT_KW, **_CAVEATS_KW,
     )
     # The whole block, with its header, must be present verbatim.
     assert block in prompt
@@ -97,6 +105,7 @@ def test_thin_prompt_embeds_classifier_block(tmp_path: Path) -> None:
         read_start=1, read_end=70, n_deps=0,
         dossier_path=dossier_path, ctx=ctx,
         classifier_block=block,
+        n_out=0, **_CAVEATS_KW,
     )
     assert block in prompt
     assert "node_kind: `model`" in prompt
@@ -119,6 +128,7 @@ def test_classifier_block_appears_before_grounding_rules(tmp_path: Path) -> None
         adj_str="  (none)", rules_str="  (none)",
         dossier_path=tmp_path / "x.md", ctx=ctx,
         classifier_block=block,
+        **_OUT_KW, **_CAVEATS_KW,
     )
     pos_block = prompt.find("Pass A output")
     pos_rules = prompt.find("GROUNDING RULES")
@@ -144,6 +154,7 @@ def test_full_prompt_without_classifier_block_still_renders(tmp_path: Path) -> N
         n_deps=0, git_log="(none)",
         adj_str="  (none)", rules_str="  (none)",
         dossier_path=tmp_path / "x.md", ctx=ctx,
+        **_OUT_KW, **_CAVEATS_KW,
     )
     assert "GROUNDING RULES" in prompt
     assert "## Purpose" in prompt
@@ -159,6 +170,7 @@ def test_thin_prompt_without_classifier_block_still_renders(tmp_path: Path) -> N
         repo="api", rel="a.py", line=1,
         read_start=1, read_end=70, n_deps=0,
         dossier_path=tmp_path / "x.md", ctx=ctx,
+        n_out=0, **_CAVEATS_KW,
     )
     assert "Required exploration" in prompt
     assert "Pass A output" not in prompt
@@ -185,6 +197,7 @@ def test_grounding_rules_reference_pass_a(tmp_path: Path) -> None:
         adj_str="(none)", rules_str="(none)",
         dossier_path=tmp_path / "x.md", ctx=ctx,
         classifier_block=block,
+        **_OUT_KW, **_CAVEATS_KW,
     )
     # The exact phrasing in dossier.py is "The Pass A structural facts
     # above are authoritative." Search for the discriminating bit.
