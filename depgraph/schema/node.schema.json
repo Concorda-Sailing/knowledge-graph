@@ -80,6 +80,10 @@
       "type": ["string", "null"],
       "description": "Optional path to an LLM-curated companion markdown (relative to depgraph/). Set by dossier-* tooling; not emitted by extractors."
     },
+    "dossier_state": {
+      "enum": ["current", "unreviewed", "stale", "missing"],
+      "description": "Persisted dossier-state stamp written by `depgraph regen` (#38 sub-item E). Set only when the regen pass detected hash drift (`stale`) — otherwise computed live from the dossier file by `_shared.dossier_state`. Downstream consumers (graphui, dossier-rank) prefer this field when present."
+    },
     "tests": {
       "type": "array",
       "description": "Test nodes that exercise this one.",

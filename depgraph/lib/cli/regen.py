@@ -388,6 +388,64 @@ def _stub_missing_dossiers(
     return created
 
 
+def _detect_stale_dossiers(
+    *, primitives: list[dict], data_dir: Path
+) -> list[str]:
+    """For each primitive whose dossier file exists, compare the file's
+    `last_reviewed_against_hash` frontmatter against the primitive's current
+    `structural_hash`. When they differ (or the field is absent), stamp
+    `dossier_state: "stale"` on the primitive in place and add its id to the
+    returned list.
+
+    Runs AFTER `_stub_missing_dossiers` so freshly-stubbed dossiers (whose
+    pinned hash equals the just-computed `structural_hash`) are never
+    flagged. Only previously-reviewed dossiers whose source structurally
+    drifted since last review come through here.
+
+    The v1 equivalent (`reconcile.detect_stale_dossiers`) walked disk and
+    only reported the count — it left no trace on the persisted node. This
+    v2 pass stamps a field so downstream consumers (graphui, dossier-rank,
+    `health`) can read it directly without re-walking dossier files.
+    """
+    stale: list[str] = []
+    for p in primitives:
+        rel = p.get("dossier")
+        if not rel:
+            continue
+        full = data_dir / rel
+        if not full.exists():
+            continue
+        try:
+            text = full.read_text()
+        except OSError:
+            continue
+        pinned: str | None = None
+        in_frontmatter = False
+        for line in text.splitlines():
+            s = line.strip()
+            if s == "---":
+                if not in_frontmatter:
+                    in_frontmatter = True
+                    continue
+                # Closing `---` — stop before scanning body so a code block
+                # quoting `last_reviewed_against_hash:` doesn't trip us.
+                break
+            if in_frontmatter and s.startswith("last_reviewed_against_hash:"):
+                pinned = s.split(":", 1)[1].strip().strip('"').strip("'")
+                break
+        current = p.get("structural_hash")
+        # Empty `pinned` (frontmatter present but value blank) and a missing
+        # field both count as "no pin recorded" — match v1's treat-as-stale
+        # behavior so a dossier hand-edited without a hash isn't silently
+        # considered fresh.
+        if pinned != current:
+            p["dossier_state"] = "stale"
+            nid = p.get("id")
+            if nid:
+                stale.append(nid)
+    return stale
+
+
 def _iter_live_node_files(nodes_dir: Path):
     """Yield every node JSON under nodes/, skipping `_archive/`, `_index/`,
     `_meta.json`, `_manifests/`, etc."""
@@ -775,6 +833,20 @@ def _run_v2_pipeline(
     )
     print(f"    stubbed: {stubbed}")
 
+    # --- Detect stale dossiers ---
+    # Runs after stubbing so freshly-stamped dossiers (whose pinned hash
+    # equals the just-computed `structural_hash`) are never flagged.
+    # Stamps `dossier_state: "stale"` on every primitive whose existing
+    # dossier file pins an outdated hash; `write_classified` below then
+    # persists the stamp into the on-disk node JSON. v1 reconcile only
+    # printed a count — v2 records it on the corpus so downstream
+    # consumers can read it without re-walking dossier files (#38 E).
+    print("--- detect stale dossiers")
+    stale_ids = _detect_stale_dossiers(
+        primitives=all_primitives, data_dir=data_dir,
+    )
+    print(f"    stale: {len(stale_ids)}")
+
     # --- Write to disk ---
     print("--- write")
     write_classified(all_primitives, decisions, data_dir=data_dir)
@@ -860,6 +932,7 @@ def _run_v2_pipeline(
         "orphan_edge_count": n_orphans,
         "slug_collision_count": n_collisions,
         "primitive_error_count": n_prim_errors,
+        "stale_dossier_count": len(stale_ids),
         "git_commit": _primary_git_commit(data_dir),
         "validation_report": report,
         "embedding_status": embedding_status,
