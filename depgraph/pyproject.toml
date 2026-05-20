@@ -27,3 +27,6 @@ testpaths = ["tests"]
 addopts = "-v --tb=short"
 pythonpath = [".."]
 norecursedirs = ["fixtures"]
+markers = [
+    "memory_budget: peak-RSS smoke test for the TS extractor (requires /usr/bin/time -v; opt-out via `-m 'not memory_budget'`).",
+]
