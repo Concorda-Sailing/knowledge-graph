@@ -2,8 +2,9 @@
 shape. The bare-name annotation cases that show up by the thousand in
 real Python services."""
 from sqlalchemy.orm import Session
+from sqlalchemy.engine import Connection
 from fastapi import APIRouter
-from typing import Annotated, Optional
+from typing import Annotated, Optional, Union
 
 
 def list_users(db: Session):
@@ -34,3 +35,19 @@ def reassigned():
 
 def _get_session():
     return None
+
+
+def constructed():
+    # Pattern 2: `db = Session()` — no annotation, but the constructor name
+    # is an external class. The Pattern-2 path should accept external-shaped
+    # class targets so downstream `db.query(...)` resolves like the
+    # annotated cases above.
+    db = Session()
+    db.query("Account")
+
+
+def union_recv(x: Union[Session, Connection]):
+    # `x.execute()` could route to Session.execute OR Connection.execute —
+    # both branches should be emitted so the reverse index records both
+    # external classes as consumers.
+    x.execute("SELECT 1")

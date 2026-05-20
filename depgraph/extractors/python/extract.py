@@ -14,7 +14,7 @@ from depgraph.lib.path_filters import included
 from .canonical import canonical_id, structural_hash
 
 
-EXTRACTOR_TAG = "depgraph/extractors/python/extract.py@2026-05-19"
+EXTRACTOR_TAG = "depgraph/extractors/python/extract.py@2026-05-20"
 SCHEMA_VERSION = 2
 
 
@@ -484,27 +484,60 @@ def _is_class_target(target_id: str | None, classes_by_id: dict) -> bool:
     return False
 
 
-def _annotation_root_name(ann: ast.expr) -> str | None:
-    """Extract the most-likely class name from a type annotation. Handles
-    bare names (`Session`), generic subscripts (`Optional[Session]`,
-    `Annotated[Session, Depends(get_db)]`), and dotted access
-    (`orm.Session`). Returns the inner type name when the outer wrapper is
-    one of the well-known transparent generics (Optional/Union/Annotated/
-    ClassVar/Final); otherwise returns the outer name (so `List[Item]`
-    returns `List`, since `.append()` is called on the List)."""
+def _annotation_class_ids(ann: ast.expr, local_names: dict, imports: dict,
+                           classes_by_id: dict) -> list[str]:
+    """Resolve a type annotation to the list of class-shaped target ids it
+    names. Wrapper around `_annotation_root_names` that does the
+    name -> id lookup and filters non-class-shaped targets.
+
+    Returns [] when nothing class-shaped resolves; otherwise one id per
+    Union branch (or a single id for non-Union annotations)."""
+    out: list[str] = []
+    for name in _annotation_root_names(ann):
+        cid = local_names.get(name) or imports.get(name)
+        if _is_class_target(cid, classes_by_id):
+            out.append(cid)
+    return out
+
+
+def _annotation_root_names(ann: ast.expr) -> list[str]:
+    """Recover candidate class names from a type annotation.
+
+    Returns a list because `Union[A, B]` legitimately resolves to two
+    candidate receiver types — callers can then emit one edge per branch.
+    Single-type annotations return a one-element list; annotations from
+    which no static name can be recovered return an empty list.
+
+    Unwraps the transparent generics (`Optional`/`Union`/`Annotated`/
+    `ClassVar`/`Final`) written bare or as `typing.X`. For non-transparent
+    generics like `List[Item]`, returns the container name (`["List"]`) —
+    method calls are on the container, not the element."""
     if isinstance(ann, ast.Name):
-        return ann.id
+        return [ann.id]
     if isinstance(ann, ast.Attribute):
-        return ann.attr
+        return [ann.attr]
     if isinstance(ann, ast.Subscript):
-        outer = _annotation_root_name(ann.value)
-        if outer in {"Optional", "Union", "Annotated", "ClassVar", "Final"}:
+        if isinstance(ann.value, ast.Name):
+            outer_name: str | None = ann.value.id
+        elif isinstance(ann.value, ast.Attribute):
+            outer_name = ann.value.attr  # `typing.Union` etc.
+        else:
+            outer_name = None
+        if outer_name in {"Union", "Optional", "Annotated", "ClassVar", "Final"}:
             slice_node = ann.slice
+            if outer_name == "Union" and isinstance(slice_node, ast.Tuple):
+                names: list[str] = []
+                for elt in slice_node.elts:
+                    names.extend(_annotation_root_names(elt))
+                return names
             if isinstance(slice_node, ast.Tuple) and slice_node.elts:
-                return _annotation_root_name(slice_node.elts[0])
-            return _annotation_root_name(slice_node)
-        return outer
-    return None
+                # Annotated[T, ...] / ClassVar[T, ...] — only the first matters
+                return _annotation_root_names(slice_node.elts[0])
+            return _annotation_root_names(slice_node)
+        if outer_name is not None:
+            return [outer_name]
+        return []
+    return []
 
 
 def _name_from_base(base: ast.expr) -> str | None:
@@ -837,34 +870,37 @@ def _attach_call_edges(primitives: list[dict],
                 continue
 
             # Seed type binding from parameter annotations. Annotation
-            # position implies the target is a class — accept both in-corpus
+            # position implies the target is class-shaped — accept in-corpus
             # classes and external symbol-shaped ids (e.g. SQLAlchemy
             # `Session`, FastAPI `APIRouter`). Module-shaped externals
             # (3-component ids) are rejected so a bare `import foo` doesn't
-            # masquerade as a type.
-            var_types: dict[str, str] = {}  # local_name -> class_id
+            # masquerade as a type. `Union[A, B]` seeds both branches so
+            # method calls on the bound name emit one edge per receiver.
+            var_types: dict[str, list[str]] = {}  # local_name -> [class_id, ...]
             for arg in fn_node.args.args + fn_node.args.kwonlyargs:
                 if arg.annotation is None:
                     continue
-                ann_text = _annotation_root_name(arg.annotation)
-                if ann_text is None:
-                    continue
-                target_id = local_names.get(ann_text) or imports.get(ann_text)
-                if _is_class_target(target_id, classes_by_id):
-                    var_types[arg.arg] = target_id
+                cids = _annotation_class_ids(arg.annotation, local_names,
+                                              imports, classes_by_id)
+                if cids:
+                    var_types[arg.arg] = cids
 
             # Walk body in source order; update var_types on assignments,
             # emit edges for each Call node
             for sub in ast.walk(fn_node):
                 # Pattern 1: x: SomeClass = ...
                 if isinstance(sub, ast.AnnAssign) and isinstance(sub.target, ast.Name):
-                    ann_text = _annotation_root_name(sub.annotation)
-                    if ann_text is not None:
-                        cid = local_names.get(ann_text) or imports.get(ann_text)
-                        if _is_class_target(cid, classes_by_id):
-                            var_types[sub.target.id] = cid
+                    cids = _annotation_class_ids(sub.annotation, local_names,
+                                                  imports, classes_by_id)
+                    if cids:
+                        var_types[sub.target.id] = cids
 
-                # Pattern 2: x = SomeClass(...)
+                # Pattern 2: x = SomeClass(...). Single-typed by definition —
+                # one constructor name — so always a one-element list.
+                # `_is_class_target` accepts external symbol-shaped ids so
+                # the SQLAlchemy `db = Session()` shape seeds too; downstream
+                # method calls on external receivers carry `unresolved`
+                # confidence to match the source import chain.
                 if (isinstance(sub, ast.Assign)
                         and len(sub.targets) == 1
                         and isinstance(sub.targets[0], ast.Name)
@@ -872,8 +908,8 @@ def _attach_call_edges(primitives: list[dict],
                         and isinstance(sub.value.func, ast.Name)):
                     cname = sub.value.func.id
                     cid = local_names.get(cname) or imports.get(cname)
-                    if cid and cid in classes_by_id:
-                        var_types[sub.targets[0].id] = cid
+                    if _is_class_target(cid, classes_by_id):
+                        var_types[sub.targets[0].id] = [cid]
 
                 # Emit edges for each Call node
                 if isinstance(sub, ast.Call):
@@ -922,31 +958,38 @@ def _resolve_call_edge(call: ast.Call, *, local_names: dict, imports: dict,
         if isinstance(call.func.value, ast.Name):
             recv = call.func.value.id
             method = call.func.attr
-            recv_class_id = var_types.get(recv)
-            if recv_class_id is None:
+            recv_class_ids = var_types.get(recv) or []
+            if not recv_class_ids:
                 return [{"target": f"external::unresolved::{recv}.{method}",
                           "kind": "calls", "via": "method_call",
                           "where": f"{path}:{call.lineno}",
                           "confidence": "unresolved"}]
-            if recv_class_id.startswith("external::"):
-                # External typed receiver (e.g. `db: Session` from sqlalchemy).
-                # Receiver class is known exactly; method existence on the
-                # external class isn't verified, but the edge is exact for
-                # graph-traversal purposes.
-                return [{"target": f"{recv_class_id}::{method}",
-                          "kind": "calls", "via": "method_call",
-                          "where": f"{path}:{call.lineno}",
-                          "confidence": "exact"}]
-            method_id = methods_by_class.get(recv_class_id, {}).get(method)
-            if method_id:
-                return [{"target": method_id, "kind": "calls",
-                          "via": "method_call",
-                          "where": f"{path}:{call.lineno}",
-                          "confidence": "exact"}]
-            return [{"target": f"external::unresolved::{recv_class_id}.{method}",
-                      "kind": "calls", "via": "method_call",
-                      "where": f"{path}:{call.lineno}",
-                      "confidence": "unresolved"}]
+            edges: list[dict] = []
+            for recv_class_id in recv_class_ids:
+                if recv_class_id.startswith("external::"):
+                    # External typed receiver: we know the binding name but
+                    # never parsed the package, so neither class shape nor
+                    # method existence is verified. Confidence matches the
+                    # source import chain — the upstream `from pkg import X`
+                    # edge is itself `unresolved`, so building an `exact`
+                    # downstream edge would overclaim.
+                    edges.append({"target": f"{recv_class_id}::{method}",
+                                   "kind": "calls", "via": "method_call",
+                                   "where": f"{path}:{call.lineno}",
+                                   "confidence": "unresolved"})
+                    continue
+                method_id = methods_by_class.get(recv_class_id, {}).get(method)
+                if method_id:
+                    edges.append({"target": method_id, "kind": "calls",
+                                   "via": "method_call",
+                                   "where": f"{path}:{call.lineno}",
+                                   "confidence": "exact"})
+                else:
+                    edges.append({"target": f"external::unresolved::{recv_class_id}.{method}",
+                                   "kind": "calls", "via": "method_call",
+                                   "where": f"{path}:{call.lineno}",
+                                   "confidence": "unresolved"})
+            return edges
         # Chained attribute (a.b.c()) — unresolved for v0
         return []
 
