@@ -54,7 +54,7 @@ Legend: `pending`, `dispatched`, `[x]` (done with sha), `[FAIL]`.
 | B.1 | 1 | #82 | TS scope shadowing in reads/assigns | [x] | 1c01ec0 (merged w/ 9a6a93f) |
 | B.2 | 2 | #47 | TS sf.forget streaming | dispatched | agent a475c8e5 (worktree) |
 | C.1 | 1 | #57 | Dossier-draft generate-then-classify split | [x] | 0887b89 + ea3c2c2 (signature fix) |
-| C.2 | 2 | #58 | Stale-dossier reverse-edge drift | dispatched | agent abc045c8 (worktree) |
+| C.2 | 2 | #58 | Stale-dossier reverse-edge drift | [x] | 1d011c4 (Option B: inbound-count drift) |
 | D.1 | 1 | #78 | Coverage caveat detector for typed_receiver_unresolved | [x] | 6b2c429 |
 | D.2 | 1 | #79 | Wild-corpus probe infrastructure | pending | NEEDS HUMAN: repo curation |
 | D.3 | 1 | #80 | Test convention gate | [x] | 677695b (rename + gate in one) |
