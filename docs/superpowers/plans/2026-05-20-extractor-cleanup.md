@@ -61,7 +61,7 @@ Legend: `pending`, `dispatched`, `[x]` (done with sha), `[FAIL]`.
 | D.4 | 1 | #81 | TS memory budget gate | [x] | 83f4c39 |
 | D.5 | 1 | #52 | Tests included with kind=test tag | pending | NEEDS HUMAN: pick Option A/B/C |
 | E.1 | 1 | #38-E | Stale-dossier corpus pass wired into regen | [x] | 0bf9be2 |
-| E.2 | 1 | #38-G | Legacy field stripping in regen | dispatched | agent a4ba4312 (worktree) |
+| E.2 | 1 | #38-G | Legacy field stripping in regen | [x] | 9e74e6b |
 | F.1 | 3 | #53 | Confidence taxonomy redesign | pending | run last; serializer |
 
 **Lanes**:
