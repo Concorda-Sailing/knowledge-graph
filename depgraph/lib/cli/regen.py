@@ -309,12 +309,25 @@ def _write_index(index_dir: Path, name: str, payload: dict) -> None:
     tmp.replace(target)
 
 
+# Inbound-drift thresholds (#58). A dossier flagged drifted when its
+# *consumer set* (inbound edges) has shifted enough since last review
+# that the prose about external consumers / dependencies is likely out
+# of date. EITHER an absolute change of N edges OR a relative shift of
+# >= R fires the signal — the absolute floor catches small modules
+# where a 3-edge swing matters, the relative threshold catches large
+# modules where ±3 is noise. Tuned to roughly match "≥ N=3 or ≥ 25%"
+# from the issue body.
+_INBOUND_DRIFT_ABSOLUTE_THRESHOLD = 3
+_INBOUND_DRIFT_RELATIVE_THRESHOLD = 0.25
+
+
 _STUB_TEMPLATE = """---
 node_id: {id}
 node_kind: {kind}
 feature: null
 last_reviewed: {date}
 last_reviewed_against_hash: {hash}
+last_reviewed_inbound_count: {inbound_count}
 status: unreviewed
 ---
 
@@ -349,7 +362,11 @@ _None recorded yet._
 
 
 def _stub_missing_dossiers(
-    *, primitives: list[dict], decisions: dict, data_dir: Path
+    *,
+    primitives: list[dict],
+    decisions: dict,
+    data_dir: Path,
+    inbound_counts: dict[str, int] | None = None,
 ) -> int:
     """For each non-skipped primitive, ensure a dossier file exists at its
     canonical path and the primitive carries a `dossier` field that points
@@ -359,11 +376,18 @@ def _stub_missing_dossiers(
     every stubbable primitive so a subsequent `write_classified` persists
     the field into the on-disk node JSON. Returns the count of newly
     written stubs.
+
+    `inbound_counts` (#58) pins the current consumer-set size into each
+    newly-stamped stub so the inbound-drift detector below has a baseline
+    to compare against on later regens. Optional only so older callers
+    (none in the live tree, but tests sometimes synthesize without it)
+    continue to work — a missing/empty map yields 0 in the stub.
     """
     import datetime as _dt
 
     today = _dt.date.today().isoformat()
     created = 0
+    inbound_counts = inbound_counts or {}
     for p in primitives:
         if not is_dossier_eligible(p):
             continue
@@ -382,10 +406,47 @@ def _stub_missing_dossiers(
             kind=kind,
             date=today,
             hash=p.get("structural_hash", "unknown"),
+            inbound_count=inbound_counts.get(p["id"], 0),
             title=title,
         ))
         created += 1
     return created
+
+
+def _read_dossier_pins(full: Path) -> tuple[str | None, int | None]:
+    """Parse a dossier file's YAML-ish frontmatter and return
+    ``(last_reviewed_against_hash, last_reviewed_inbound_count)``.
+
+    Either value is None when the corresponding field is absent or blank.
+    Stops scanning at the closing `---` so a code block that quotes one
+    of these field names in the body can't fool the parser.
+    """
+    try:
+        text = full.read_text()
+    except OSError:
+        return (None, None)
+    pinned_hash: str | None = None
+    pinned_inbound: int | None = None
+    in_frontmatter = False
+    for line in text.splitlines():
+        s = line.strip()
+        if s == "---":
+            if not in_frontmatter:
+                in_frontmatter = True
+                continue
+            break
+        if not in_frontmatter:
+            continue
+        if s.startswith("last_reviewed_against_hash:"):
+            val = s.split(":", 1)[1].strip().strip('"').strip("'")
+            pinned_hash = val or None
+        elif s.startswith("last_reviewed_inbound_count:"):
+            val = s.split(":", 1)[1].strip().strip('"').strip("'")
+            try:
+                pinned_inbound = int(val) if val else None
+            except ValueError:
+                pinned_inbound = None
+    return (pinned_hash, pinned_inbound)
 
 
 def _detect_stale_dossiers(
@@ -415,24 +476,7 @@ def _detect_stale_dossiers(
         full = data_dir / rel
         if not full.exists():
             continue
-        try:
-            text = full.read_text()
-        except OSError:
-            continue
-        pinned: str | None = None
-        in_frontmatter = False
-        for line in text.splitlines():
-            s = line.strip()
-            if s == "---":
-                if not in_frontmatter:
-                    in_frontmatter = True
-                    continue
-                # Closing `---` — stop before scanning body so a code block
-                # quoting `last_reviewed_against_hash:` doesn't trip us.
-                break
-            if in_frontmatter and s.startswith("last_reviewed_against_hash:"):
-                pinned = s.split(":", 1)[1].strip().strip('"').strip("'")
-                break
+        pinned, _ = _read_dossier_pins(full)
         current = p.get("structural_hash")
         # Empty `pinned` (frontmatter present but value blank) and a missing
         # field both count as "no pin recorded" — match v1's treat-as-stale
@@ -444,6 +488,81 @@ def _detect_stale_dossiers(
             if nid:
                 stale.append(nid)
     return stale
+
+
+def _detect_inbound_drift(
+    *,
+    primitives: list[dict],
+    data_dir: Path,
+    inbound_counts: dict[str, int],
+) -> list[str]:
+    """For each primitive whose dossier file exists and pins a
+    `last_reviewed_inbound_count`, compare the pinned count against the
+    just-built reverse-edge index. When the drift exceeds either the
+    absolute or relative threshold, stamp an `inbound_drift` block on the
+    primitive and add its id to the returned list.
+
+    The dossier's "External consumers" and (post-#56) "Dependencies"
+    sections are baked prose — they can rot silently when the consumer
+    set shifts without the node's own source changing. Hash-based
+    staleness (#57) doesn't catch that drift because `structural_hash`
+    is computed over the node's own definition, not its inbound edges.
+    This pass closes that gap; see #58 for the design.
+
+    Dossiers without a pinned `last_reviewed_inbound_count` (older stubs,
+    hand-authored frontmatter) are silently skipped — they'll start
+    participating once they're next finalized or bumped through the
+    lifecycle commands, which now write the field.
+
+    Stamped payload shape::
+
+        inbound_drift: {
+            pinned_count: int,
+            current_count: int,
+            delta: int,
+            pct: float  # |delta| / max(pinned, 1), as a fraction
+        }
+
+    Threshold semantics: trigger if abs(delta) >= ABSOLUTE_THRESHOLD OR
+    pct >= RELATIVE_THRESHOLD. Either condition fires the signal — the
+    absolute floor catches small-fanout nodes where a +3 swing is large
+    in narrative terms; the relative threshold catches large-fanout
+    nodes where ±3 is noise but ±25% is not.
+    """
+    drifted: list[str] = []
+    for p in primitives:
+        rel = p.get("dossier")
+        if not rel:
+            continue
+        full = data_dir / rel
+        if not full.exists():
+            continue
+        _, pinned_inbound = _read_dossier_pins(full)
+        if pinned_inbound is None:
+            # No baseline recorded — can't compute drift. Don't stamp.
+            continue
+        current = inbound_counts.get(p["id"], 0)
+        delta = current - pinned_inbound
+        if delta == 0:
+            continue
+        # max(1) avoids div-by-zero when the dossier was authored against
+        # an empty inbound set; in that case ANY new inbound = 100% drift,
+        # which is also the right narrative answer.
+        pct = abs(delta) / max(pinned_inbound, 1)
+        if (
+            abs(delta) >= _INBOUND_DRIFT_ABSOLUTE_THRESHOLD
+            or pct >= _INBOUND_DRIFT_RELATIVE_THRESHOLD
+        ):
+            p["inbound_drift"] = {
+                "pinned_count": pinned_inbound,
+                "current_count": current,
+                "delta": delta,
+                "pct": round(pct, 4),
+            }
+            nid = p.get("id")
+            if nid:
+                drifted.append(nid)
+    return drifted
 
 
 def _iter_live_node_files(nodes_dir: Path):
@@ -864,6 +983,29 @@ def _run_v2_pipeline(
     caveat_count = stamp_caveats(all_primitives)
     print(f"--- coverage caveats: {caveat_count} node(s) stamped")
 
+    # --- Pre-compute inbound counts from the in-memory primitives ---
+    # Needed by both `_stub_missing_dossiers` (to pin baseline counts in
+    # fresh stubs) and `_detect_inbound_drift` (to diff pinned vs current
+    # for existing dossiers). The full `by_target` index is built later
+    # for on-disk writing; here we only need per-id counts, so a one-pass
+    # tally is cheaper than calling `_build_by_target` twice.
+    #
+    # `defines` edges are excluded — they represent the module/class
+    # containment relationship (a function's parent module, a method's
+    # parent class), not "external" consumption. Including them would
+    # mean every node carries a baseline of 1 from its own container
+    # and a function that simply moves between modules would register as
+    # drift even though no real consumer changed. Mirrors the
+    # `defines`-filter in dossier-draft's outgoing-edges block (#56).
+    inbound_counts: dict[str, int] = {}
+    for p in all_primitives:
+        for e in p.get("edges_out", []) or []:
+            if e.get("kind") == "defines":
+                continue
+            tgt = e.get("target")
+            if tgt:
+                inbound_counts[tgt] = inbound_counts.get(tgt, 0) + 1
+
     # --- Stub missing dossiers ---
     # Run before write_classified so the dossier field is persisted into
     # each node JSON (dossier-finalize/bump/draft all read this field).
@@ -871,7 +1013,10 @@ def _run_v2_pipeline(
     # regens only stub newly-introduced nodes.
     print("--- stub missing dossiers")
     stubbed = _stub_missing_dossiers(
-        primitives=all_primitives, decisions=decisions, data_dir=data_dir,
+        primitives=all_primitives,
+        decisions=decisions,
+        data_dir=data_dir,
+        inbound_counts=inbound_counts,
     )
     print(f"    stubbed: {stubbed}")
 
@@ -888,6 +1033,24 @@ def _run_v2_pipeline(
         primitives=all_primitives, data_dir=data_dir,
     )
     print(f"    stale: {len(stale_ids)}")
+
+    # --- Detect inbound-edge drift ---
+    # Hash-based staleness above only fires when the node's OWN source
+    # changes. The dossier's "External consumers" / "Dependencies"
+    # sections are baked prose grounded in the inbound-edge set — when
+    # the consumer set shifts (extractor fix, new caller, schema
+    # redesign) without the node itself changing, the prose rots
+    # silently. This pass stamps `inbound_drift` on primitives whose
+    # pinned `last_reviewed_inbound_count` has moved beyond the
+    # configured thresholds. Fresh stubs are immune because the count
+    # we just pinned equals the count we just measured. See #58.
+    print("--- detect inbound-edge drift")
+    drift_ids = _detect_inbound_drift(
+        primitives=all_primitives,
+        data_dir=data_dir,
+        inbound_counts=inbound_counts,
+    )
+    print(f"    inbound-drift: {len(drift_ids)}")
 
     # --- Write to disk ---
     print("--- write")
@@ -984,6 +1147,7 @@ def _run_v2_pipeline(
         "slug_collision_count": n_collisions,
         "primitive_error_count": n_prim_errors,
         "stale_dossier_count": len(stale_ids),
+        "inbound_drift_count": len(drift_ids),
         "git_commit": _primary_git_commit(data_dir),
         "validation_report": report,
         "embedding_status": embedding_status,

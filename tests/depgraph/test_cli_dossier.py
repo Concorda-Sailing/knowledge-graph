@@ -192,6 +192,76 @@ def test_dossier_rank_subparser_only_unreviewed_default_is_false() -> None:
     assert parsed2.only_unreviewed is True
 
 
+def test_dossier_rank_only_drifted_surfaces_drifted_nodes(
+    data_dir: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """`--only-drifted` (#58) narrows to nodes whose `inbound_drift` was
+    stamped by regen — surfaces consumer-set drift that hash-based
+    staleness can't see. A `current` dossier with drift must show up;
+    a `current` dossier without drift must not."""
+    ctx = Context.from_data_dir(data_dir)
+
+    # Node A: dossier `current`, drift stamped. Should appear.
+    drifted_file = _make_node(
+        ctx, "test-api::models/hub.py::Hub",
+        dossier="dossiers/test-api/models/hub.py/Hub.md",
+    )
+    # Stamp inbound_drift directly on the node JSON (regen normally
+    # writes this; the handler reads it raw).
+    data = json.loads(drifted_file.read_text())
+    data["inbound_drift"] = {
+        "pinned_count": 2,
+        "current_count": 10,
+        "delta": 8,
+        "pct": 4.0,
+    }
+    drifted_file.write_text(json.dumps(data))
+    p1 = ctx.DEPGRAPH / "dossiers/test-api/models/hub.py/Hub.md"
+    p1.parent.mkdir(parents=True, exist_ok=True)
+    p1.write_text("---\nlast_reviewed_against_hash: aabbccdd11223344\n---\n\nbody\n")
+
+    # Node B: dossier `current`, NO drift. Should be filtered out.
+    _make_node(
+        ctx, "test-api::models/quiet.py::Quiet",
+        dossier="dossiers/test-api/models/quiet.py/Quiet.md",
+    )
+    p2 = ctx.DEPGRAPH / "dossiers/test-api/models/quiet.py/Quiet.md"
+    p2.parent.mkdir(parents=True, exist_ok=True)
+    p2.write_text("---\nlast_reviewed_against_hash: aabbccdd11223344\n---\n\nbody\n")
+
+    args = argparse.Namespace(
+        only_stale=False, only_unreviewed=False, only_drifted=True,
+        tier=None, limit=50, include_tests=False,
+    )
+    rc = cmd_dossier_rank(args, ctx)
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "test-api::models/hub.py::Hub" in out, (
+        f"--only-drifted should surface the drifted node; output was:\n{out}"
+    )
+    assert "test-api::models/quiet.py::Quiet" not in out, (
+        f"--only-drifted should hide non-drifted nodes; output was:\n{out}"
+    )
+    # The rendered drift cell carries the signed delta so the operator
+    # sees magnitude+direction at a glance.
+    assert "+8" in out, (
+        f"drift column should show the signed delta (+8 here); got:\n{out}"
+    )
+
+
+def test_dossier_rank_subparser_only_drifted_default_is_false() -> None:
+    """`--only-drifted` must default to False (action='store_true')."""
+    from depgraph.lib.cli.dossier import register
+
+    parser = argparse.ArgumentParser()
+    sub = parser.add_subparsers()
+    register(sub)
+    parsed = parser.parse_args(["dossier-rank"])
+    assert parsed.only_drifted is False
+    parsed2 = parser.parse_args(["dossier-rank", "--only-drifted"])
+    assert parsed2.only_drifted is True
+
+
 # ---------------------------------------------------------------------------
 # dossier-draft
 # ---------------------------------------------------------------------------

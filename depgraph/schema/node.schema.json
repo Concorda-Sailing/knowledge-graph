@@ -84,6 +84,30 @@
       "enum": ["current", "unreviewed", "stale", "missing"],
       "description": "Persisted dossier-state stamp written by `depgraph regen` (#38 sub-item E). Set only when the regen pass detected hash drift (`stale`) — otherwise computed live from the dossier file by `_shared.dossier_state`. Downstream consumers (graphui, dossier-rank) prefer this field when present."
     },
+    "inbound_drift": {
+      "type": "object",
+      "description": "Stamped by `depgraph regen` when the node's reverse-edge (consumer) count has shifted by ≥ 3 OR ≥ 25% since the dossier's `last_reviewed_inbound_count` was last pinned. The dossier's External consumers / Dependencies prose is baked at draft time; this signal surfaces silent drift on those sections, which hash-based staleness can't catch because `structural_hash` is computed over the node's own definition. See #58.",
+      "required": ["pinned_count", "current_count", "delta", "pct"],
+      "additionalProperties": false,
+      "properties": {
+        "pinned_count": {
+          "type": "integer",
+          "description": "Inbound-edge count recorded in the dossier frontmatter the last time it was reviewed."
+        },
+        "current_count": {
+          "type": "integer",
+          "description": "Inbound-edge count after the just-completed regen."
+        },
+        "delta": {
+          "type": "integer",
+          "description": "current_count - pinned_count. Positive = consumer set grew; negative = consumers were removed or refactored away."
+        },
+        "pct": {
+          "type": "number",
+          "description": "|delta| / max(pinned_count, 1), as a fraction. Rounded to 4 decimal places."
+        }
+      }
+    },
     "tests": {
       "type": "array",
       "description": "Test nodes that exercise this one.",

@@ -70,6 +70,7 @@ def cmd_health(args: argparse.Namespace, ctx: Context) -> int:
 
     # ---- stale dossiers (hash drift) ------------------------------------
     stale_n = 0
+    drift_n = 0
     for node_file in ctx.NODES.rglob("*.json"):
         if node_file.name.startswith("_") or any(p.startswith("_") for p in node_file.parts):
             continue
@@ -79,8 +80,17 @@ def cmd_health(args: argparse.Namespace, ctx: Context) -> int:
             continue
         if dossier_state(data, ctx.DEPGRAPH) == "stale":
             stale_n += 1
+        # #58: inbound-edge drift is an independent staleness signal —
+        # the node's own source may be unchanged, but its consumer set
+        # has shifted enough that the dossier's External consumers /
+        # Dependencies prose is likely out of date. Surface as a
+        # separate problem so the operator sees both axes.
+        if data.get("inbound_drift"):
+            drift_n += 1
     if stale_n:
         problems.append(f"{stale_n} stale dossier(s) (structural_hash drifted) — run `depgraph dossier-rank --only-stale`")
+    if drift_n:
+        problems.append(f"{drift_n} dossier(s) with consumer-set drift — run `depgraph dossier-rank --only-drifted`")
 
     # ---- tier-A coverage shortfall --------------------------------------
     a_total = 0

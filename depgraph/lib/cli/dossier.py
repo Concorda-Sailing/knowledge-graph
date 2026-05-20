@@ -70,7 +70,16 @@ def cmd_dossier_rank(args: argparse.Namespace, ctx: Context) -> int:
     """Rank unreviewed nodes by importance, so the next dossier batch is
     chosen by leverage rather than alphabetical accident. Default scoring:
     fan_out + 2 * commits_30d (recent activity weighted slightly higher
-    since recently-edited code is also more likely to be edited next)."""
+    since recently-edited code is also more likely to be edited next).
+
+    `--only-drifted` (#58) narrows the view to nodes whose consumer set
+    has shifted significantly since the dossier was last reviewed —
+    these dossiers may have correct prose about the node's own
+    behavior but stale prose under "External consumers" / "Dependencies."
+    Drift rows also render `+N` / `-N` annotations in the `drift` column
+    on every rank output so a routine `dossier-rank` surfaces them
+    without an extra flag.
+    """
     deps_idx = load_dependents_index(ctx)
 
     rows = []
@@ -85,8 +94,22 @@ def cmd_dossier_rank(args: argparse.Namespace, ctx: Context) -> int:
         if not nid:
             continue
         state = _dossier_state(data, ctx)
+        drift = data.get("inbound_drift") or None
+        # `getattr` default keeps test fixtures that synthesize argparse
+        # Namespaces by hand (pre-#58) working without needing to spell
+        # the new flag — they pass when the field is omitted just as if
+        # the CLI default fired.
+        only_drifted = getattr(args, "only_drifted", False)
         if args.only_stale:
             if state != "stale":
+                continue
+        elif only_drifted:
+            # Drift is independent of hash-staleness — a `current` dossier
+            # whose consumer set shifted is exactly the case #58 catches
+            # that #57 doesn't. So this filter intentionally doesn't
+            # require state == "current"; any state plus a recorded
+            # `inbound_drift` qualifies.
+            if not drift:
                 continue
         elif args.only_unreviewed and state != "unreviewed":
             # `regen` stubs every non-trivial node with `status: unreviewed`
@@ -117,6 +140,7 @@ def cmd_dossier_rank(args: argparse.Namespace, ctx: Context) -> int:
             "tier": tier,
             "kind": kind,
             "state": state,
+            "drift": drift,
             "id": nid,
             "src": f"{repo}/{rel}" if (repo and rel) else "—",
         })
@@ -125,12 +149,21 @@ def cmd_dossier_rank(args: argparse.Namespace, ctx: Context) -> int:
     if args.limit:
         rows = rows[: args.limit]
 
-    print(f"{'#':>4}  {'fan':>4}  {'30d':>4}  {'tier':<4}  {'kind':<10}  {'state':<10}  {'id'}")
-    print("-" * 100)
+    print(
+        f"{'#':>4}  {'fan':>4}  {'30d':>4}  {'tier':<4}  {'kind':<10}  "
+        f"{'state':<10}  {'drift':<8}  {'id'}"
+    )
+    print("-" * 110)
     for i, r in enumerate(rows, 1):
+        drift = r["drift"]
+        if drift:
+            d = drift.get("delta", 0)
+            drift_cell = f"{d:+d}" if isinstance(d, int) else "?"
+        else:
+            drift_cell = "—"
         print(
             f"{i:>4}  {r['fan_out']:>4}  {r['commits_30d']:>4}  {r['tier']:<4}  "
-            f"{r['kind']:<10}  {r['state']:<10}  {r['id']}"
+            f"{r['kind']:<10}  {r['state']:<10}  {drift_cell:<8}  {r['id']}"
         )
     print(f"\n  total: {len(rows)} nodes")
     return 0
@@ -863,6 +896,25 @@ Output ONLY the dossier markdown body (no frontmatter, no
 """
 
 
+def _current_inbound_count(node: dict, ctx: Context) -> int:
+    """Look up the node's current inbound-edge count from the persisted
+    reverse-edge index. Lifecycle commands call this to pin the count
+    into dossier frontmatter (`last_reviewed_inbound_count`) so the
+    inbound-drift detector (#58) has a baseline to compare against on
+    future regens.
+
+    `defines` edges are excluded — they represent the parent-container
+    relationship (module-defines-function, class-defines-method), not
+    "external" consumption. Including them would inflate every count
+    by ~1 and mean a function relocating between modules registers as
+    drift. Mirrors the same filter in `regen._detect_inbound_drift`.
+
+    Returns 0 if the node has no qualifying inbound edges or the index
+    hasn't been built yet."""
+    edges = load_dependents_index(ctx).get(node["id"]) or []
+    return sum(1 for e in edges if (e.get("kind") != "defines"))
+
+
 def _save_drafted_dossier(
     *,
     node: dict,
@@ -889,6 +941,7 @@ def _save_drafted_dossier(
         f"feature: {node.get('feature') or 'null'}",
         f"last_reviewed: {today}",
         f"last_reviewed_against_hash: {node.get('structural_hash')}",
+        f"last_reviewed_inbound_count: {_current_inbound_count(node, ctx)}",
         "status: llm_drafted",
     ]
     if authored_by:
@@ -938,6 +991,7 @@ def cmd_dossier_finalize(args: argparse.Namespace, ctx: Context) -> int:
         f"feature: {node.get('feature') or 'null'}",
         f"last_reviewed: {today}",
         f"last_reviewed_against_hash: {node.get('structural_hash')}",
+        f"last_reviewed_inbound_count: {_current_inbound_count(node, ctx)}",
         "status: llm_drafted",
     ]
     if args.authored_by:
@@ -988,10 +1042,12 @@ def cmd_dossier_bump(args: argparse.Namespace, ctx: Context) -> int:
     import datetime as _dt
     today = _dt.date.today().isoformat()
     new_hash = node.get("structural_hash")
+    new_inbound = _current_inbound_count(node, ctx)
     out_lines = []
     seen_status = False
     seen_reviewed = False
     seen_reviewed_hash = False
+    seen_reviewed_inbound = False
     for line in fm.splitlines():
         s = line.strip()
         if s.startswith("status:"):
@@ -1003,6 +1059,9 @@ def cmd_dossier_bump(args: argparse.Namespace, ctx: Context) -> int:
         elif s.startswith("last_reviewed_against_hash:"):
             out_lines.append(f"last_reviewed_against_hash: {new_hash}")
             seen_reviewed_hash = True
+        elif s.startswith("last_reviewed_inbound_count:"):
+            out_lines.append(f"last_reviewed_inbound_count: {new_inbound}")
+            seen_reviewed_inbound = True
         else:
             out_lines.append(line)
     if not seen_status:
@@ -1011,6 +1070,8 @@ def cmd_dossier_bump(args: argparse.Namespace, ctx: Context) -> int:
         out_lines.append(f"last_reviewed: {today}")
     if not seen_reviewed_hash:
         out_lines.append(f"last_reviewed_against_hash: {new_hash}")
+    if not seen_reviewed_inbound:
+        out_lines.append(f"last_reviewed_inbound_count: {new_inbound}")
     new_text = "---\n" + "\n".join(out_lines).strip("\n") + "\n---\n" + body
     dossier_path.write_text(new_text)
     print(f"bumped {dossier_path.relative_to(ctx.DEPGRAPH)} → status: {args.status}")
@@ -1068,6 +1129,14 @@ def register(sub: argparse._SubParsersAction) -> None:
              "(stub awaiting first-pass review). Omit to rank every node.",
     )
     p_dr.add_argument("--only-stale", action="store_true")
+    p_dr.add_argument(
+        "--only-drifted", action="store_true",
+        help="Filter to nodes whose consumer set (inbound edges) has "
+             "shifted ≥ 3 OR ≥ 25%% since the dossier was last "
+             "reviewed (#58). Surfaces dossiers whose External "
+             "consumers / Dependencies prose is likely stale even when "
+             "the node's own source hasn't changed.",
+    )
     p_dr.add_argument(
         "--include-tests",
         action="store_true",
