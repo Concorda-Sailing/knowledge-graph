@@ -681,6 +681,48 @@ def _archive_file_orphans(
     return count, archived_ids
 
 
+# Fields that lived on per-node JSON in the v1 reconcile.py era and have
+# since moved to corpus-level indexes (#38 sub-item G):
+#   - `dependents`   : moved to nodes/_index/by_target.json
+#   - `extracted_at` : moved to nodes/_meta.json
+#   - `git_commit`   : moved to nodes/_meta.json
+# Mirrors `reconcile.LEGACY_FIELDS`. Kept in sync by hand — both modules are
+# small and the canonical name is unlikely to drift, but if it does, the
+# v1-fallback path's strip and the v2 strip should track each other.
+_LEGACY_NODE_FIELDS = ("dependents", "extracted_at", "git_commit")
+
+
+def _strip_legacy_fields(data_dir: Path) -> int:
+    """Walk live node files and drop any v1-era fields still on disk.
+
+    `write_classified` overwrites every freshly-extracted primitive, so its
+    output never carries the legacy keys. They only persist on nodes that
+    weren't re-written this run — most commonly a partial regen
+    (`--repo-key X` over a corpus that also has repo Y nodes) or a corpus
+    migrated forward from the v1 reconcile.py era. Idempotent: once a node
+    is clean, subsequent passes leave it alone.
+
+    Walks `_iter_live_node_files` so archived nodes (under `_archive/`),
+    indexes, manifests, and `_meta.json` are skipped automatically.
+    """
+    nodes_dir = data_dir / "nodes"
+    if not nodes_dir.exists():
+        return 0
+    cleaned = 0
+    for node_file in _iter_live_node_files(nodes_dir):
+        try:
+            data = json.loads(node_file.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        if not any(f in data for f in _LEGACY_NODE_FIELDS):
+            continue
+        for f in _LEGACY_NODE_FIELDS:
+            data.pop(f, None)
+        node_file.write_text(json.dumps(data, indent=2, sort_keys=True))
+        cleaned += 1
+    return cleaned
+
+
 # ---------------------------------------------------------------------------
 # Core v2 pipeline
 # ---------------------------------------------------------------------------
@@ -878,6 +920,15 @@ def _run_v2_pipeline(
     if domain_ids:
         all_primitives = [p for p in all_primitives if p.get("id") not in domain_ids]
     print(f"    archived: {domain_count}")
+
+    # --- Strip v1-era legacy fields ---
+    # Defends against corpora migrated forward from the v1 reconcile.py era
+    # and from partial-regen runs that leave older repos' nodes untouched.
+    # `write_classified` already produces clean output for freshly-extracted
+    # primitives, so this is a no-op on a corpus born under v2 (#38 G).
+    print("--- strip legacy fields")
+    legacy_cleaned = _strip_legacy_fields(data_dir)
+    print(f"    cleaned: {legacy_cleaned}")
 
     # --- v2 validation report ---
     report = validate_corpus(all_primitives)
