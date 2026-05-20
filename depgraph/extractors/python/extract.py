@@ -6,6 +6,7 @@ variable primitives. No kind decisions; classification is a later step.
 from __future__ import annotations
 
 import ast
+import sys
 from pathlib import Path
 from typing import Iterator, Sequence
 
@@ -14,7 +15,7 @@ from depgraph.lib.path_filters import included
 from .canonical import canonical_id, structural_hash
 
 
-EXTRACTOR_TAG = "depgraph/extractors/python/extract.py@2026-05-20a"
+EXTRACTOR_TAG = "depgraph/extractors/python/extract.py@2026-05-20b"
 SCHEMA_VERSION = 2
 
 # Builtins commonly used as parameter / variable type annotations. When an
@@ -788,23 +789,30 @@ def _attach_imports_edges(primitives: list[dict],
                         "local_binding": local_binding,
                     })
 
-    _resolve_package_reexports(primitives)
+    _resolve_package_reexports(primitives, mod_id_to_path, sym_by_path)
 
 
-def _resolve_package_reexports(primitives: list[dict]) -> None:
+_REEXPORT_FIXPOINT_CAP = 10
+
+
+def _resolve_package_reexports(primitives: list[dict],
+                                mod_id_to_path: dict[str, str],
+                                sym_by_path: dict[str, dict[str, str]]) -> None:
     """Rewrite `import_from` edges that target a package `__init__.py` to
     point at the underlying defining symbol when the package re-exports the
     requested name.
 
     Why: `from pkg import Name` collapses to the `pkg/__init__.py` module
     when the per-file symbol index doesn't find `Name` directly defined
-    there — but `pkg/__init__.py` typically re-exports `Name` via
-    `from .sub import Name`. Without this pass, every consumer of a barrel-
-    exported symbol appears to import the package rather than the symbol,
-    silently under-counting the symbol's reverse dependencies.
+    there — but `pkg/__init__.py` typically re-exports `Name` via either
+    `from .sub import Name` (named) or `from .sub import *` (wildcard).
+    Without this pass, every consumer of a barrel-exported symbol appears
+    to import the package rather than the symbol, silently under-counting
+    the symbol's reverse dependencies.
 
     Iterates to a fixpoint (capped) so transitive re-exports through
-    multiple `__init__.py` layers also resolve.
+    multiple `__init__.py` layers — and through chained wildcard barrels
+    — also resolve.
     """
     # Identify package __init__.py modules and map their re-exports:
     #   pkg_module_id -> {exposed_name -> target_id}
@@ -818,7 +826,8 @@ def _resolve_package_reexports(primitives: list[dict]) -> None:
         if src.endswith("/__init__.py") or src == "__init__.py":
             pkg_ids.add(p["id"])
 
-    def build_reexports() -> dict[str, dict[str, str]]:
+    def build_reexports(prev: dict[str, dict[str, str]] | None
+                        ) -> dict[str, dict[str, str]]:
         out: dict[str, dict[str, str]] = {}
         for p in primitives:
             if p["id"] not in pkg_ids:
@@ -827,18 +836,51 @@ def _resolve_package_reexports(primitives: list[dict]) -> None:
             for e in p["edges_out"]:
                 if e.get("kind") != "imports":
                     continue
-                if e.get("via") not in ("import_from", "import"):
-                    continue
-                lb = e.get("local_binding")
+                via = e.get("via")
                 tgt = e.get("target")
-                if lb and tgt:
-                    m[lb] = tgt
+                if not tgt:
+                    continue
+                if via in ("import_from", "import"):
+                    lb = e.get("local_binding")
+                    if lb:
+                        m[lb] = tgt
+                elif via == "wildcard_import":
+                    # `from .sub import *`: re-export every public top-level
+                    # symbol of the target module. Python's default semantics
+                    # (when `__all__` isn't defined) is "everything not
+                    # starting with underscore"; honoring `__all__` would
+                    # require a separate AST pass — over-include is the
+                    # safer default since downstream consumers only see an
+                    # edge if they actually wrote the name.
+                    target_path = mod_id_to_path.get(tgt)
+                    if target_path:
+                        for sym_name, sym_id in sym_by_path.get(target_path, {}).items():
+                            if not sym_name.startswith("_"):
+                                m.setdefault(sym_name, sym_id)
+                    # Chain through the target's own re-export map (so
+                    # `pkg/__init__.py: from .subpkg import *` chains
+                    # transitively into subpkg's re-exports). Uses the
+                    # previous iteration's snapshot — the fixpoint loop
+                    # propagates over multiple iterations.
+                    if prev:
+                        for sym_name, sym_id in prev.get(tgt, {}).items():
+                            if not sym_name.startswith("_"):
+                                m.setdefault(sym_name, sym_id)
             out[p["id"]] = m
         return out
 
-    for _ in range(10):
-        reexports = build_reexports()
-        changed = False
+    # Two-condition fixpoint: keep iterating while EITHER (a) edges are
+    # still being rewritten OR (b) the re-export map is still settling.
+    # Both matter independently — chained wildcards
+    # (`pkg/__init__.py: from .inner import *` → `inner/__init__.py:
+    # from .leaf import *`) settle in the map across iterations even when
+    # no consumer edge is changing on that iteration. Stopping on
+    # edges-only would miss those.
+    prev_reexports: dict[str, dict[str, str]] = {}
+    converged = False
+    for _ in range(_REEXPORT_FIXPOINT_CAP):
+        reexports = build_reexports(prev=prev_reexports)
+        edges_changed = False
         for p in primitives:
             if p["primitive"] != "module":
                 continue
@@ -854,9 +896,23 @@ def _resolve_package_reexports(primitives: list[dict]) -> None:
                 real = reexports.get(tgt, {}).get(requested)
                 if real and real != tgt:
                     e["target"] = real
-                    changed = True
-        if not changed:
+                    edges_changed = True
+        reexports_changed = (reexports != prev_reexports)
+        if not edges_changed and not reexports_changed:
+            converged = True
             break
+        prev_reexports = reexports
+    if not converged:
+        print(
+            f"[depgraph/extractors/python] package re-export resolution did "
+            f"not converge within {_REEXPORT_FIXPOINT_CAP} iterations. Some "
+            f"`from pkg import X` edges may still target a package module "
+            f"rather than the underlying defining symbol. This usually "
+            f"means barrel re-exports are nested more than "
+            f"{_REEXPORT_FIXPOINT_CAP} levels deep — raise the cap or "
+            f"flatten the barrel layout.",
+            file=sys.stderr,
+        )
 
 
 # ---------------------------------------------------------------------------

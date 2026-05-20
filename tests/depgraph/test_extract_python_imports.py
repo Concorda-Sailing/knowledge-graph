@@ -142,3 +142,131 @@ def test_bare_package_import_unchanged(tmp_path: Path) -> None:
     edge = _edge_for(edges, "pkg")
     assert edge["target"] == "r::pkg/__init__.py"
     assert edge["via"] == "import"
+
+
+def test_wildcard_reexport_resolves_to_defining_symbol(tmp_path: Path) -> None:
+    """`pkg/__init__.py: from .sub import *` followed by consumer
+    `from pkg import Boat` should resolve to `pkg/sub.py::Boat`. Without
+    wildcard-expansion in the re-export map this is silent under-counting
+    (the consumer edge stays on the package module). Wildcards re-export
+    every public top-level symbol of the target."""
+    _write(tmp_path, "pkg/__init__.py", "from .sub import *\n")
+    _write(tmp_path, "pkg/sub.py", "class Boat:\n    pass\n")
+    _write(tmp_path, "consumer.py", "from pkg import Boat\n")
+
+    primitives = list(extract_repo(repo_key="r", repo_path=tmp_path))
+
+    edges = _import_edges(primitives, "consumer.py")
+    edge = _edge_for(edges, "Boat")
+    assert edge["target"] == "r::pkg/sub.py::Boat", (
+        f"expected r::pkg/sub.py::Boat, got {edge['target']!r}"
+    )
+
+
+def test_chained_wildcard_reexport_resolves_through_packages(tmp_path: Path) -> None:
+    """outer/__init__.py: from .inner import *; inner/__init__.py: from .leaf import *.
+    Consumer `from outer import Boat` should still resolve to leaf.py::Boat —
+    the fixpoint loop must propagate the inner re-exports back up to outer
+    even when the wildcard target's __init__.py has no direct symbols."""
+    _write(tmp_path, "outer/__init__.py", "from .inner import *\n")
+    _write(tmp_path, "outer/inner/__init__.py", "from .leaf import *\n")
+    _write(tmp_path, "outer/inner/leaf.py", "class Boat:\n    pass\n")
+    _write(tmp_path, "consumer.py", "from outer import Boat\n")
+
+    primitives = list(extract_repo(repo_key="r", repo_path=tmp_path))
+
+    edges = _import_edges(primitives, "consumer.py")
+    edge = _edge_for(edges, "Boat")
+    assert edge["target"] == "r::outer/inner/leaf.py::Boat", (
+        f"expected leaf, got {edge['target']!r}"
+    )
+
+
+def test_wildcard_reexport_skips_underscored_symbols(tmp_path: Path) -> None:
+    """Python's default `from X import *` (when __all__ is undefined)
+    skips underscored names; the re-export map must match that semantics.
+    Underscored symbols should NOT resolve through a wildcard barrel."""
+    _write(tmp_path, "pkg/__init__.py", "from .sub import *\n")
+    _write(tmp_path, "pkg/sub.py",
+           "class Boat:\n    pass\n\nclass _Internal:\n    pass\n")
+    _write(tmp_path, "consumer.py",
+           "from pkg import Boat\nfrom pkg import _Internal\n")
+
+    primitives = list(extract_repo(repo_key="r", repo_path=tmp_path))
+
+    edges = _import_edges(primitives, "consumer.py")
+    # Boat re-exports via wildcard.
+    boat_edge = _edge_for(edges, "Boat")
+    assert boat_edge["target"] == "r::pkg/sub.py::Boat"
+    # _Internal does not — falls back to the package module.
+    internal_edge = _edge_for(edges, "_Internal")
+    assert internal_edge["target"] == "r::pkg/__init__.py"
+
+
+def test_wildcard_reexport_named_takes_precedence(tmp_path: Path) -> None:
+    """When a package has both `from .sub import Boat` (named) and a
+    wildcard from a different module, the named edge wins. Wildcards use
+    `setdefault` so they don't overwrite explicit re-exports."""
+    _write(tmp_path, "pkg/__init__.py",
+           "from .named import Boat\nfrom .wild import *\n")
+    _write(tmp_path, "pkg/named.py", "class Boat:\n    pass\n")
+    _write(tmp_path, "pkg/wild.py", "class Boat:\n    pass\n")
+    _write(tmp_path, "consumer.py", "from pkg import Boat\n")
+
+    primitives = list(extract_repo(repo_key="r", repo_path=tmp_path))
+
+    edges = _import_edges(primitives, "consumer.py")
+    edge = _edge_for(edges, "Boat")
+    assert edge["target"] == "r::pkg/named.py::Boat", (
+        f"named re-export should win over wildcard, got {edge['target']!r}"
+    )
+
+
+def test_fixpoint_cap_warns_on_excessive_nesting(tmp_path: Path, capsys) -> None:
+    """When package barrel nesting exceeds the fixpoint cap, the resolver
+    emits a stderr warning rather than silently leaving edges partly
+    resolved. Pinning the eye on the user-visible behavior so future
+    refactors can't accidentally remove the message."""
+    # Build 15 layers of barrel nesting; default cap is 10, so this
+    # forces the loop to exit without converging. Each layer is a
+    # `__init__.py` that does `from .lN+1 import *`.
+    n_layers = 15
+    parts = ["root"]
+    _write(tmp_path, "root/__init__.py", f"from .l1 import *\n")
+    for i in range(1, n_layers):
+        parts.append(f"l{i}")
+        rel = "/".join(parts)
+        _write(tmp_path, f"{rel}/__init__.py", f"from .l{i+1} import *\n")
+    parts.append(f"l{n_layers}")
+    leaf_rel = "/".join(parts) + ".py"
+    _write(tmp_path, leaf_rel, "class Boat:\n    pass\n")
+    _write(tmp_path, "consumer.py", "from root import Boat\n")
+
+    list(extract_repo(repo_key="r", repo_path=tmp_path))
+
+    captured = capsys.readouterr()
+    assert "package re-export resolution did not converge" in captured.err, (
+        f"expected fixpoint-cap warning on >10-level nesting, got stderr: "
+        f"{captured.err!r}"
+    )
+
+
+def test_extends_via_barrel_reexport_resolves_to_leaf(tmp_path: Path) -> None:
+    """Pins the 03eb61f + 7cc056e interaction: when a class extends a base
+    imported through a package barrel (`from models import BaseModel`
+    where `models/__init__.py: from .base import BaseModel`), inheritance
+    should chase through the re-export rewrite and target the leaf
+    `models/base.py::BaseModel`, not the package module or unknown."""
+    _write(tmp_path, "models/__init__.py", "from .base import BaseModel\n")
+    _write(tmp_path, "models/base.py", "class BaseModel:\n    pass\n")
+    _write(tmp_path, "consumer.py",
+           "from models import BaseModel\n"
+           "class Item(BaseModel):\n    pass\n")
+
+    primitives = list(extract_repo(repo_key="r", repo_path=tmp_path))
+
+    item = next(p for p in primitives if p["name"] == "Item")
+    extends = [e for e in item["edges_out"] if e["kind"] == "extends"]
+    assert any(e["target"] == "r::models/base.py::BaseModel"
+               and e["confidence"] == "exact"
+               for e in extends), extends
