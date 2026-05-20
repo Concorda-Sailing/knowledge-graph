@@ -154,6 +154,108 @@ def test_plain_function_gets_no_fastapi_caveat():
 
 
 # ---------------------------------------------------------------------------
+# Typed-receiver-unresolved detector (#78)
+# ---------------------------------------------------------------------------
+
+def _function_with_edges(id_: str, *, edges: list[dict]) -> dict:
+    """Function primitive with caller-supplied outgoing edges — used to
+    exercise the unresolved-receiver detector without going through the
+    full extractor."""
+    return {
+        "id": id_,
+        "primitive": "function",
+        "name": id_.rsplit("::", 1)[-1],
+        "signature": {},
+        "edges_out": edges,
+    }
+
+
+def test_method_call_to_external_unresolved_gets_typed_receiver_caveat():
+    """Positive case: an outgoing `method_call` edge whose target lives
+    under `external::unresolved::` is exactly the shape the extractor
+    emits when it couldn't infer the receiver's type."""
+    fn = _function_with_edges(
+        "api::services/foo.py::do_work",
+        edges=[
+            {"target": "external::unresolved::db.query",
+             "kind": "calls", "via": "method_call",
+             "confidence": "unresolved", "where": "foo.py:5"},
+        ],
+    )
+    stamp_caveats([fn])
+    assert "typed_receiver_unresolved" in fn["coverage_caveats"]
+
+
+def test_resolved_method_call_does_not_stamp_typed_receiver_caveat():
+    """Negative case: a `method_call` edge that resolved to an in-corpus
+    target must not trigger the caveat — the gap the caveat names isn't
+    present."""
+    fn = _function_with_edges(
+        "api::services/foo.py::do_work",
+        edges=[
+            {"target": "api::models/user.py::User.save",
+             "kind": "calls", "via": "method_call",
+             "confidence": "exact", "where": "foo.py:5"},
+        ],
+    )
+    n = stamp_caveats([fn])
+    assert n == 0
+    assert "coverage_caveats" not in fn
+
+
+def test_non_method_call_external_unresolved_does_not_stamp():
+    """The detector is specific to `via=method_call` — an unresolved
+    import or other edge kind targeting `external::unresolved::` must
+    not stamp the receiver caveat (that's a different gap)."""
+    fn = _function_with_edges(
+        "api::services/foo.py::do_work",
+        edges=[
+            {"target": "external::unresolved::some_module",
+             "kind": "imports", "via": "import",
+             "confidence": "unresolved", "where": "foo.py:1"},
+        ],
+    )
+    n = stamp_caveats([fn])
+    assert n == 0
+
+
+def test_typed_receiver_caveat_is_idempotent():
+    """Re-stamping a primitive that already carries the caveat must not
+    produce a duplicate entry."""
+    fn = _function_with_edges(
+        "api::services/foo.py::do_work",
+        edges=[
+            {"target": "external::unresolved::db.query",
+             "kind": "calls", "via": "method_call",
+             "confidence": "unresolved", "where": "foo.py:5"},
+        ],
+    )
+    stamp_caveats([fn])
+    first = list(fn["coverage_caveats"])
+    stamp_caveats([fn])
+    assert fn["coverage_caveats"] == first
+    assert fn["coverage_caveats"].count("typed_receiver_unresolved") == 1
+
+
+def test_typed_receiver_caveat_coexists_with_fastapi_caveat():
+    """A FastAPI endpoint that also has unresolved method calls gets
+    both caveats — detectors are independent."""
+    ep = _function(
+        "api::routers/users.py::get_me",
+        route=("GET", "/api/users/me"),
+    )
+    ep["edges_out"] = [
+        {"target": "external::unresolved::session.commit",
+         "kind": "calls", "via": "method_call",
+         "confidence": "unresolved", "where": "users.py:7"},
+    ]
+    stamp_caveats([ep])
+    cs = ep["coverage_caveats"]
+    assert "fastapi_depends_chain_not_traced" in cs
+    assert "typed_receiver_unresolved" in cs
+
+
+# ---------------------------------------------------------------------------
 # Stamping is idempotent + sorted
 # ---------------------------------------------------------------------------
 

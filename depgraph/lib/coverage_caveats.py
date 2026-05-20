@@ -169,6 +169,24 @@ def _is_fastapi_endpoint(primitive: dict) -> bool:
     return bool(sig.get("method") and sig.get("path"))
 
 
+def detect_typed_receiver_unresolved(primitive: dict) -> bool:
+    """True when the primitive has at least one outgoing `method_call`
+    edge whose target lives under `external::unresolved::` — i.e. the
+    extractor saw a method call but couldn't infer the receiver's type,
+    so the actual callee is invisible in the graph.
+
+    Mechanical predicate over the edge list: no shape constraint on the
+    source primitive (functions, methods, even module-level nodes can
+    accumulate unresolved method calls)."""
+    for edge in primitive.get("edges_out") or []:
+        if edge.get("via") != "method_call":
+            continue
+        target = edge.get("target") or ""
+        if target.startswith("external::unresolved::"):
+            return True
+    return False
+
+
 def stamp_caveats(primitives: list[dict]) -> int:
     """Run all detector predicates over `primitives` and mutate each node
     by setting `coverage_caveats: list[str]` where any caveat applies.
@@ -195,6 +213,8 @@ def stamp_caveats(primitives: list[dict]) -> int:
             caveats.add("pydantic_refs_not_extracted")
         if _is_fastapi_endpoint(p):
             caveats.add("fastapi_depends_chain_not_traced")
+        if detect_typed_receiver_unresolved(p):
+            caveats.add("typed_receiver_unresolved")
         if caveats:
             p["coverage_caveats"] = sorted(caveats)
             stamped_count += 1
