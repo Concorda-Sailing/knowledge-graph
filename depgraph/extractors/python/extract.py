@@ -14,8 +14,32 @@ from depgraph.lib.path_filters import included
 from .canonical import canonical_id, structural_hash
 
 
-EXTRACTOR_TAG = "depgraph/extractors/python/extract.py@2026-05-20"
+EXTRACTOR_TAG = "depgraph/extractors/python/extract.py@2026-05-20a"
 SCHEMA_VERSION = 2
+
+# Builtins commonly used as parameter / variable type annotations. When an
+# annotation resolves to one of these, we emit a synthetic
+# `external::builtins::<name>` target so method calls on the typed receiver
+# attribute correctly (e.g. `xs: list; xs.append(...)` → `list::append`).
+# Receivers typed as `int`/`bool`/etc. rarely have downstream method calls
+# in practice but are included for completeness.
+_BUILTIN_CLASS_NAMES: frozenset[str] = frozenset({
+    "list", "dict", "set", "frozenset", "tuple",
+    "str", "bytes", "bytearray",
+    "int", "float", "complex", "bool",
+    "object", "type", "slice", "range",
+    "Exception", "BaseException",
+})
+
+# typing.* generic aliases that resolve to a builtin at runtime. PEP 585
+# deprecated these in favor of the lower-case builtins, but `typing.List`
+# still shows up in older code; mapping them keeps method-call attribution
+# on the right receiver (`xs.append()` goes to `list`, not `typing.List`).
+_TYPING_BUILTIN_ALIASES: dict[str, str] = {
+    "List": "list", "Dict": "dict", "Set": "set",
+    "FrozenSet": "frozenset", "Tuple": "tuple",
+    "Type": "type",
+}
 
 
 def _base_primitive(*, schema_id: str, primitive: str, name: str,
@@ -488,12 +512,24 @@ def _annotation_class_ids(ann: ast.expr, local_names: dict, imports: dict,
                            classes_by_id: dict) -> list[str]:
     """Resolve a type annotation to the list of class-shaped target ids it
     names. Wrapper around `_annotation_root_names` that does the
-    name -> id lookup and filters non-class-shaped targets.
+    name -> id lookup, rewrites `typing.X` aliases to their builtin
+    equivalents, and emits a synthetic `external::builtins::<name>`
+    target for builtin classes.
 
     Returns [] when nothing class-shaped resolves; otherwise one id per
     Union branch (or a single id for non-Union annotations)."""
     out: list[str] = []
     for name in _annotation_root_names(ann):
+        # typing.* alias rewrite — only when the source binding came from
+        # the typing module (`from typing import List`). Without that
+        # guard a local `class List` would also be rewritten.
+        if name in _TYPING_BUILTIN_ALIASES:
+            resolved = imports.get(name)
+            if resolved and "::typing::" in resolved:
+                name = _TYPING_BUILTIN_ALIASES[name]
+        if name in _BUILTIN_CLASS_NAMES:
+            out.append(f"external::builtins::{name}")
+            continue
         cid = local_names.get(name) or imports.get(name)
         if _is_class_target(cid, classes_by_id):
             out.append(cid)
@@ -512,6 +548,16 @@ def _annotation_root_names(ann: ast.expr) -> list[str]:
     `ClassVar`/`Final`) written bare or as `typing.X`. For non-transparent
     generics like `List[Item]`, returns the container name (`["List"]`) —
     method calls are on the container, not the element."""
+    if isinstance(ann, ast.Constant) and isinstance(ann.value, str):
+        # String forward ref: `db: 'Session'` or `xs: 'list[int]'`. Parse
+        # the string back into an expression and recurse so wrapper-unwrap
+        # logic (Optional/Union/etc.) applies the same way as for unquoted
+        # annotations. SyntaxError → unrecoverable, drop to [].
+        try:
+            parsed = ast.parse(ann.value.strip(), mode="eval").body
+        except SyntaxError:
+            return []
+        return _annotation_root_names(parsed)
     if isinstance(ann, ast.Name):
         return [ann.id]
     if isinstance(ann, ast.Attribute):
@@ -521,6 +567,15 @@ def _annotation_root_names(ann: ast.expr) -> list[str]:
             outer_name: str | None = ann.value.id
         elif isinstance(ann.value, ast.Attribute):
             outer_name = ann.value.attr  # `typing.Union` etc.
+            # `typing.List[...]` form: rewrite the alias here so attribute-
+            # access typing usage attributes to the builtin (`list`) the
+            # same way `from typing import List` does via the imports
+            # table in `_annotation_class_ids`. Without this branch only
+            # the import-form gets the rewrite.
+            if (isinstance(ann.value.value, ast.Name)
+                    and ann.value.value.id == "typing"
+                    and outer_name in _TYPING_BUILTIN_ALIASES):
+                outer_name = _TYPING_BUILTIN_ALIASES[outer_name]
         else:
             outer_name = None
         if outer_name in {"Union", "Optional", "Annotated", "ClassVar", "Final"}:

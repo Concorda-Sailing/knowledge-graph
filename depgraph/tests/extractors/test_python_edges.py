@@ -252,6 +252,82 @@ def test_method_call_union_receiver_emits_per_branch_py():
     assert "external::pypi::sqlalchemy::Connection::execute" in method_targets
 
 
+# Annotation walker missing-cases: string forward refs, builtin
+# receivers, and `typing.X` builtin aliases. All exercise the
+# `_annotation_root_names` / `_annotation_class_ids` resolution.
+
+def _annotation_walker_calls(fn_name: str) -> list[dict]:
+    prims = list(extract_repo(repo_key="fixture",
+                              repo_path=FIXTURE_DIR / "annotation_walker_cases"))
+    fn = next(p for p in prims if p["name"] == fn_name)
+    return [e for e in fn["edges_out"] if e["kind"] == "calls"]
+
+
+def test_method_call_string_forward_ref_py():
+    """`db: 'Session'` resolves like the unquoted form."""
+    calls = _annotation_walker_calls("string_forward_ref")
+    assert any(e["target"] == "external::pypi::sqlalchemy::Session::flush"
+               and e["confidence"] == "unresolved"
+               for e in calls), calls
+
+
+def test_method_call_string_forward_ref_wrapped_py():
+    """`db: 'Optional[Session]'` — walker parses the string and unwraps."""
+    calls = _annotation_walker_calls("string_forward_ref_wrapped")
+    assert any(e["target"] == "external::pypi::sqlalchemy::Session::commit"
+               and e["confidence"] == "unresolved"
+               for e in calls), calls
+
+
+def test_method_call_builtin_list_py():
+    """`xs: list; xs.append(...)` attributes to `external::builtins::list`."""
+    calls = _annotation_walker_calls("builtin_list")
+    assert any(e["target"] == "external::builtins::list::append"
+               and e["confidence"] == "unresolved"
+               and e["via"] == "method_call"
+               for e in calls), calls
+
+
+def test_method_call_builtin_dict_py():
+    """`m: dict; m.get(...)` attributes to `external::builtins::dict`."""
+    calls = _annotation_walker_calls("builtin_dict")
+    assert any(e["target"] == "external::builtins::dict::get"
+               for e in calls), calls
+
+
+def test_method_call_pep585_generic_py():
+    """`xs: list[int]` — non-transparent generic; container type is `list`."""
+    calls = _annotation_walker_calls("pep585_generic")
+    assert any(e["target"] == "external::builtins::list::append"
+               for e in calls), calls
+
+
+def test_method_call_typing_list_import_form_py():
+    """`from typing import List; xs: List[int]` — alias rewrites to `list`,
+    not `external::pypi::typing::List`."""
+    calls = _annotation_walker_calls("typing_list_from_import")
+    assert any(e["target"] == "external::builtins::list::append"
+               for e in calls), calls
+    assert not any(
+        "typing::List" in e["target"] for e in calls
+    ), f"typing.List leak: {calls}"
+
+
+def test_method_call_typing_dict_import_form_py():
+    """Same as List but for Dict."""
+    calls = _annotation_walker_calls("typing_dict_from_import")
+    assert any(e["target"] == "external::builtins::dict::get"
+               for e in calls), calls
+
+
+def test_method_call_typing_list_attribute_form_py():
+    """`import typing; xs: typing.List[int]` — attribute-access form of
+    the typing alias resolves to the builtin."""
+    calls = _annotation_walker_calls("typing_list_via_attribute")
+    assert any(e["target"] == "external::builtins::list::append"
+               for e in calls), calls
+
+
 def test_method_call_in_corpus_unknown_method_still_unresolved_py():
     """Regression guard: in-corpus class + method-not-on-class should
     keep emitting the unresolved sentinel — only the external-receiver
