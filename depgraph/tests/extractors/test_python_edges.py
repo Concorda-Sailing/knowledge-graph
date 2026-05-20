@@ -67,6 +67,48 @@ def test_extends_resolves_through_package_barrel_reexport_py():
                and e["confidence"] == "exact" for e in ex), ex
 
 
+def test_extends_attribute_base_in_corpus_module_py():
+    """`import base; class X(base.BaseModel)` — module is in-corpus,
+    attr resolves to the class via the module's symbol table."""
+    prims = list(extract_repo(repo_key="fixture",
+                              repo_path=FIXTURE_DIR / "inheritance_attribute_base"))
+    cls = next(p for p in prims if p["name"] == "FromInCorpusModule")
+    ex = [e for e in cls["edges_out"] if e["kind"] == "extends"]
+    assert any(e["target"] == "fixture::base.py::BaseModel"
+               and e["confidence"] == "exact"
+               for e in ex), ex
+
+
+def test_extends_attribute_base_external_module_py():
+    """`import sqlalchemy; class X(sqlalchemy.Base)` — external module +
+    attr → `external::pypi::sqlalchemy::Base` (synthesized) with
+    `unresolved` confidence matching the upstream import."""
+    prims = list(extract_repo(repo_key="fixture",
+                              repo_path=FIXTURE_DIR / "inheritance_attribute_base"))
+    cls = next(p for p in prims if p["name"] == "FromExternalModule")
+    ex = [e for e in cls["edges_out"] if e["kind"] == "extends"]
+    assert any(e["target"] == "external::pypi::sqlalchemy::Base"
+               and e["confidence"] == "unresolved"
+               for e in ex), ex
+
+
+def test_extends_attribute_base_unknown_attr_falls_back_py():
+    """In-corpus module + non-existent attr → falls through to the
+    unresolved sentinel rather than crashing or emitting a wrong-shape
+    edge."""
+    prims = list(extract_repo(repo_key="fixture",
+                              repo_path=FIXTURE_DIR / "inheritance_attribute_base"))
+    cls = next(p for p in prims if p["name"] == "FromInCorpusUnknownAttr")
+    ex = [e for e in cls["edges_out"] if e["kind"] == "extends"]
+    # The attr lookup misses (NotARealClass isn't defined in base.py),
+    # so resolution falls through to the leaf-name `_name_from_base`
+    # path, which returns "NotARealClass" and then hits the unknown
+    # sentinel since nothing named NotARealClass is in scope.
+    assert any(e["target"] == "external::pypi::unknown::NotARealClass"
+               and e["confidence"] == "unresolved"
+               for e in ex), ex
+
+
 def test_extends_external_keeps_pkg_attribution_py():
     prims = list(extract_repo(repo_key="fixture",
                               repo_path=FIXTURE_DIR / "inheritance_external"))

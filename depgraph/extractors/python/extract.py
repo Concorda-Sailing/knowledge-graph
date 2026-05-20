@@ -15,7 +15,7 @@ from depgraph.lib.path_filters import included
 from .canonical import canonical_id, structural_hash
 
 
-EXTRACTOR_TAG = "depgraph/extractors/python/extract.py@2026-05-20b"
+EXTRACTOR_TAG = "depgraph/extractors/python/extract.py@2026-05-20c"
 SCHEMA_VERSION = 2
 
 # Builtins commonly used as parameter / variable type annotations. When an
@@ -416,16 +416,19 @@ def _attach_inheritance_edges(primitives: list[dict],
     """Walk each class's bases AST, resolve base names to local class ids,
     append `extends` edges in-place.
 
-    Resolution order for each base name:
-      1. Top-level class in the same module.
-      2. The module's imports table (`from .base import BaseModel` etc.) — uses
+    Resolution order for each base expression:
+      1. Attribute-style (`module.Class`): resolve `module` via the imports
+         table to a target module id, then look up `Class` in that module's
+         symbol table. Handles `import base; class X(base.BaseModel)` and
+         `import sqlalchemy; class X(sqlalchemy.Base)` (external module +
+         attr → synthesized symbol id).
+      2. Top-level class in the same module.
+      3. The module's imports table (`from .base import BaseModel`) — uses
          the target the imports pass already resolved, so re-exports and
-         absolute/relative imports are handled uniformly. The target must look
-         like a class (in-corpus class id, or external symbol id of the form
-         `external::pypi::<pkg>::<symbol>`) to be accepted; module-shaped
-         targets fall through to the unresolved sentinel to keep `extends`
-         taxonomy-valid.
-      3. `external::pypi::unknown::<name>` with `unresolved` confidence.
+         absolute/relative imports are handled uniformly. Must look class-
+         shaped (in-corpus class id, or external symbol-shaped id) to be
+         accepted; module-shaped targets fall through.
+      4. `external::pypi::unknown::<name>` with `unresolved` confidence.
     """
     # top-level class name -> id, per file
     by_path: dict[str, dict[str, str]] = {}
@@ -434,6 +437,18 @@ def _attach_inheritance_edges(primitives: list[dict],
             by_path.setdefault(p["source"]["path"], {})[p["name"]] = p["id"]
 
     classes_by_id = {p["id"]: p for p in primitives if p["primitive"] == "class"}
+
+    # module id -> {symbol_name -> primitive_id}: needed to resolve
+    # attribute-style bases (`module.Class`) where `module` is bound by
+    # an `import module` and `Class` lives inside that module's file.
+    mod_id_to_path: dict[str, str] = {}
+    for p in primitives:
+        if p["primitive"] == "module":
+            mod_id_to_path[p["id"]] = p["source"]["path"]
+    sym_by_path: dict[str, dict[str, str]] = {}
+    for p in primitives:
+        if p["owner"] is None and p["primitive"] in {"class", "function", "variable"}:
+            sym_by_path.setdefault(p["source"]["path"], {})[p["name"]] = p["id"]
 
     for path, tree in trees_by_path.items():
         local_names = by_path.get(path, {})
@@ -446,6 +461,43 @@ def _attach_inheritance_edges(primitives: list[dict],
                 continue
             target_class = classes_by_id[class_id]
             for base in node.bases:
+                # Attribute-style: `module.Class` (incl. `Subscript` of an
+                # Attribute, e.g. `module.Generic[T]`). Resolve module via
+                # imports, then look up the attr inside the module.
+                attr_base = base.value if isinstance(base, ast.Subscript) else base
+                if (isinstance(attr_base, ast.Attribute)
+                        and isinstance(attr_base.value, ast.Name)):
+                    mod_local = attr_base.value.id
+                    attr_name = attr_base.attr
+                    mod_target = imports.get(mod_local)
+                    if mod_target:
+                        if mod_target.startswith("external::"):
+                            # `import sqlalchemy; class X(sqlalchemy.Base)`:
+                            # synthesize `external::pypi::sqlalchemy::Base`
+                            # so the seam is queryable. Confidence matches
+                            # the upstream `import` edge (unresolved).
+                            ext_target = f"{mod_target}::{attr_name}"
+                            target_class["edges_out"].append({
+                                "target": ext_target,
+                                "kind": "extends",
+                                "via": "class_decl",
+                                "where": f"{path}:{node.lineno}",
+                                "confidence": "unresolved",
+                            })
+                            continue
+                        # In-corpus module: look up the attr in its symbols.
+                        target_path = mod_id_to_path.get(mod_target)
+                        if target_path:
+                            sym_id = sym_by_path.get(target_path, {}).get(attr_name)
+                            if sym_id and sym_id in classes_by_id:
+                                target_class["edges_out"].append({
+                                    "target": sym_id,
+                                    "kind": "extends",
+                                    "via": "class_decl",
+                                    "where": f"{path}:{node.lineno}",
+                                    "confidence": "exact",
+                                })
+                                continue
                 base_name = _name_from_base(base)
                 if base_name is None:
                     continue
