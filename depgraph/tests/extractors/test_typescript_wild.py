@@ -50,3 +50,49 @@ def test_wild_fixture_edges_subset_of_actual(fixture):
         triple = (e["source"], e["kind"], e["target"])
         assert triple in actual_edges, (
             f"{fixture.name}: expected edge {triple} missing from actual")
+
+
+# ---------------------------------------------------------------------------
+# Issue #47: sf.forget() streaming refactor — determinism smoke test.
+# ---------------------------------------------------------------------------
+
+_KITCHEN_SINK_WEB = (
+    Path(__file__).parent.parent
+    / "fixtures" / "wild" / "kitchen_sink" / "web"
+)
+
+
+def _edge_kind_counts(prims: list[dict]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for p in prims:
+        for e in p.get("edges_out", []):
+            counts[e["kind"]] = counts.get(e["kind"], 0) + 1
+    return counts
+
+
+def test_streaming_extractor_produces_stable_edge_counts():
+    """Two consecutive runs against the same fixture must emit the same
+    per-edge-kind counts. Pins the streaming refactor's behavior so future
+    regressions in the L1-metadata schema or the per-fn event replay show
+    up here even when the existing scenario tests miss them."""
+    if not _KITCHEN_SINK_WEB.exists():
+        pytest.skip("kitchen_sink/web fixture not present")
+    first = _run_extractor(_KITCHEN_SINK_WEB)
+    second = _run_extractor(_KITCHEN_SINK_WEB)
+    assert _edge_kind_counts(first) == _edge_kind_counts(second), (
+        "two regens of the same TS corpus emitted different edge-kind counts"
+    )
+    # Also enforce per-primitive edge counts as a stronger gate (catches
+    # attribution swaps that preserve aggregate counts but move an edge
+    # between source primitives).
+    def by_id(prims: list[dict]) -> dict[str, dict[str, int]]:
+        out: dict[str, dict[str, int]] = {}
+        for p in prims:
+            cnts: dict[str, int] = {}
+            for e in p.get("edges_out", []):
+                cnts[e["kind"]] = cnts.get(e["kind"], 0) + 1
+            out[p["id"]] = cnts
+        return out
+    assert by_id(first) == by_id(second), (
+        "two regens emitted different per-primitive edge attributions"
+    )

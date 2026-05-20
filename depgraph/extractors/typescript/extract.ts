@@ -1,6 +1,30 @@
 /**
  * Layered-substrate TS extractor — emits primitives only.
  * Schema v2; see docs/superpowers/specs/2026-05-15-layered-substrate-design.md.
+ *
+ * ## Streaming architecture (issue #47)
+ *
+ * ts-morph's `Project` keeps every `SourceFile`'s AST resident from
+ * `addSourceFileAtPath` through the last consumer. On large corpora that
+ * resident set dominates RSS and produces the architectural OOM ceiling.
+ *
+ * The L1 pass now extracts both (a) primitives and (b) a compact
+ * `PerFileMetadata` record that captures everything L2 needs (imports,
+ * re-exports, default-export markers, class extends/implements names,
+ * per-function call/identifier/var-decl event streams, dynamic-import
+ * shims). After each file finishes L1, `sf.forget()` releases its AST.
+ *
+ * L2 passes (`attachInheritanceEdges`, `attachImportsEdges`,
+ * `attachCallAndVarAccessEdges`, `attachTestsEdges`) consume the
+ * primitive list and per-file metadata maps only — no AST access. The
+ * symbol-resolution maps they build (`symByPath`, `importsByPath`,
+ * `namedReexports`, `reexportMap`, `defaultExportMap`, `classesByPath`,
+ * `methodsByClass`) are all derived from the metadata.
+ *
+ * tsconfig path-alias resolution still rides on ts-morph's `Project` —
+ * we resolve `imp.getModuleSpecifierSourceFile()` during L1 and store
+ * the result as the metadata's `resolved_rel`, so L2 doesn't need the
+ * `Project` instance at all.
  */
 import { Project, SourceFile, SyntaxKind, Node } from "ts-morph";
 import { parseArgs } from "node:util";
@@ -25,6 +49,144 @@ interface Primitive {
   // set it directly — `classify_corpus` honors extractor-set kind.
   kind: string | null;
   extractor: string;
+}
+
+// ---------------------------------------------------------------------------
+// Per-file metadata (issue #47)
+//
+// Captures everything L2 reads from each source file's AST. Populated during
+// L1 (while the SourceFile is still loaded), then the SourceFile is forgotten
+// so its AST can be GC'd before the next L1 iteration.
+// ---------------------------------------------------------------------------
+
+interface NamedImportSpec {
+  name: string;          // exported name in the target module
+  local_binding: string; // local name (may equal `name` if no alias)
+}
+interface NamedExportSpec {
+  name: string;          // exported name in the target module (or the same module for `export { x }`)
+  consumer_name: string; // name the consumer sees (alias if `as`, else `name`)
+}
+interface ImportDeclMeta {
+  spec_text: string;         // raw module specifier text
+  resolved_rel: string | null; // resolved in-corpus rel path (null = external / unresolved / node_modules)
+  line: number;
+  default_import: string | null;   // local binding name of `import X from ...`
+  namespace_import: string | null; // local binding name of `import * as X from ...`
+  named: NamedImportSpec[];
+}
+interface ExportDeclMeta {
+  // `export ... from "..."` re-export declarations only (those without a
+  // module specifier never reach this list).
+  spec_text: string;
+  resolved_rel: string | null;
+  line: number;
+  named: NamedExportSpec[];
+  has_namespace_export: boolean; // `export * as ns from "..."`
+  is_wildcard: boolean;          // `export * from "..."` (no namespace alias, no named exports)
+}
+interface DynamicImportMeta {
+  spec_text: string | null; // null when first arg isn't a string literal
+  line: number;
+}
+interface ClassMeta {
+  name: string;
+  // `extends Foo<Bar>` → "Foo" (we drop generic args to match the old
+  // `getText().split("<")[0].trim()` resolver behavior).
+  extends_name: string | null;
+  extends_line: number | null;
+  implements: { name: string; line: number }[];
+}
+interface ParamMeta {
+  name: string;
+  // textual type annotation, generics stripped (split-by-`<`, then trim).
+  type_name: string | null;
+}
+// Per-function event stream. Mirrors the visitor-walk inside the old
+// attachCallAndVarAccessEdges + attachTestsEdges; recorded in document order
+// so semantic replays (e.g. is_inside_expect ancestor checks) preserve
+// behavior. Each event corresponds to a single AST node we'd previously
+// inspect; the L2 passes treat the list as the function body.
+type FnEvent =
+  | {
+      kind: "identifier";
+      name: string;
+      line: number;
+      is_assignment_lhs: boolean;
+      // The ancestor-chain check `isInsideExpect`. Captured at L1 because L2
+      // can't walk the AST. We only flag identifiers used as a call callee
+      // — the tests pass restricts to call expressions, so this only matters
+      // when this identifier is also a CallExpression event below. For
+      // module-scope reads/assigns we don't need this flag.
+      inside_expect: boolean;
+    }
+  | {
+      kind: "var_decl";
+      name: string;
+      type_name: string | null;          // `const x: Foo = ...` → "Foo"
+      new_expr_class_name: string | null; // `const x = new Foo()` → "Foo"
+    }
+  | {
+      kind: "new";
+      class_name: string;
+      line: number;
+    }
+  | {
+      kind: "call_bare";
+      callee_name: string;
+      line: number;
+      inside_expect: boolean;
+      // Argument summary for the dynamic-import-shim detector + tests pass.
+      // We capture the first arg's literal value if it's a string literal so
+      // L2 can recover `importESM('mod')` semantics without re-reading args.
+      first_arg_literal: string | null;
+    }
+  | {
+      kind: "call_method";
+      receiver_text: string;
+      method_name: string;
+      line: number;
+      inside_expect: boolean;
+    }
+  | {
+      kind: "call_dynamic_import";
+      // `await import("./rel")` or `await import("pkg")` — already resolved
+      // to a rel path during L1 if relative+in-corpus, else null.
+      spec_text: string | null;
+      resolved_rel: string | null;
+      line: number;
+    };
+interface FnMeta {
+  // `path:start_line` matches the key used by L2 to look up the function's
+  // primitive id (`fnByPathAndLine` in the old code).
+  start_line: number;
+  parameters: ParamMeta[];
+  events: FnEvent[];
+}
+interface ImportShimMeta {
+  // Module-scope const whose initializer is `new Function('p', 'return import(p)')`.
+  // Recorded so L2 can recognize `importESM('mod')` calls as dynamic imports
+  // attributed to the enclosing module.
+  binding_name: string;
+}
+interface PerFileMetadata {
+  rel_path: string;
+  // Class metadata used by attachInheritanceEdges + attachCallAndVarAccessEdges'
+  // class index. Stored in declaration order.
+  classes: ClassMeta[];
+  imports: ImportDeclMeta[];
+  exports: ExportDeclMeta[];     // `export ... from "..."` re-exports
+  dynamic_imports: DynamicImportMeta[]; // top-level dynamic imports (NOT inside fns; those ride on FnEvent.call_dynamic_import)
+  // `export default X` where X is an Identifier resolving in the local scope.
+  // L1 stores the local identifier text; L2 resolves it against symByPath.
+  default_export_identifier: string | null;
+  // Top-level `export default class X {}` / `export default function X(){}`:
+  // we record the bound name so L2 can look it up in symByPath.
+  default_export_class_or_fn_name: string | null;
+  // Function metadata. Indexed by `start_line`.
+  functions: FnMeta[];
+  // Dynamic-import-shim bindings (module-scope only).
+  import_shims: ImportShimMeta[];
 }
 
 const EXTRACTOR_TAG = "depgraph/extractors/typescript/extract.ts@2026-05-16";
@@ -408,10 +570,13 @@ function extractVariables(sf: SourceFile, repoKey: string, relPath: string): Pri
   return out;
 }
 
-function packagePrimitives(sourceFiles: SourceFile[], repoKey: string, repoPath: string): Primitive[] {
+// Pre-pass: walk every SourceFile once for directory layout. Kept separate
+// from L1 because L1 forgets SourceFiles in-line — and packagePrimitives
+// only needs `sf.getFilePath()`, which the wrapper still exposes even after
+// forget, but we want to drive the per-rel-path set off something stable.
+function packagePrimitivesFromRelPaths(relPaths: string[], repoKey: string): Primitive[] {
   const dirs = new Set<string>();
-  for (const sf of sourceFiles) {
-    let rel = relative(repoPath, sf.getFilePath());
+  for (const rel of relPaths) {
     let dir = rel.includes("/") ? rel.substring(0, rel.lastIndexOf("/")) : "";
     while (dir) {
       dirs.add(dir);
@@ -482,6 +647,528 @@ function extractObjectLiteralApiClients(sf: SourceFile, repoKey: string, relPath
     }
   }
   return out;
+}
+
+// ---------------------------------------------------------------------------
+// L1 metadata extraction (issue #47)
+//
+// Single per-file pass that produces a PerFileMetadata while the SourceFile
+// is still loaded. Called from main() once per file; the SourceFile is
+// forgotten after this returns so the AST can be GC'd before the next
+// iteration. All data L2 needs must be captured here.
+// ---------------------------------------------------------------------------
+
+// Strip generics + whitespace from a type-name text. Matches the old
+// `getText().split("<")[0].trim()` recipe used by the call/var-access pass.
+function stripGenerics(text: string): string {
+  return text.split("<")[0].trim();
+}
+
+// `await import("./rel")` shim-detection regex (the body of a Function-constructor
+// shim must match `return import(p);` exactly to be recognized).
+const SHIM_BODY_RE = /^\s*return\s+import\s*\(\s*([A-Za-z_$][\w$]*)\s*\)\s*;?\s*$/;
+
+// Pre-pass: resolve every import-decl and re-export-decl's module specifier
+// to its in-corpus rel-path. ts-morph's `getModuleSpecifierSourceFile()`
+// requires that the target SourceFile is still loaded in the Project — once
+// any file is forgotten, every consumer's resolution against that target
+// stops working. Run this for all files first, then forget files in the
+// heavy per-file loop afterwards.
+//
+// Returns:
+//   resolvedImports.get(rel)[importDeclIndex]  → resolved_rel | null
+//   resolvedExports.get(rel)[exportDeclIndex]  → resolved_rel | null
+//
+// Indices are positional — the L1 metadata extractor walks the same arrays
+// in the same order to align them.
+interface ResolvedSpecMap {
+  imports: (string | null)[];
+  exports: (string | null)[];
+}
+function buildResolvedSpecMap(
+  sourceFiles: SourceFile[],
+  repoPath: string,
+): Map<string, ResolvedSpecMap> {
+  const out = new Map<string, ResolvedSpecMap>();
+  for (const sf of sourceFiles) {
+    const rel = relative(repoPath, sf.getFilePath());
+    const importResolutions: (string | null)[] = [];
+    for (const imp of sf.getImportDeclarations()) {
+      const targetSf = imp.getModuleSpecifierSourceFile();
+      const resolvedRaw = targetSf ? relative(repoPath, targetSf.getFilePath()) : null;
+      importResolutions.push(inNodeModules(resolvedRaw) ? null : resolvedRaw);
+    }
+    const exportResolutions: (string | null)[] = [];
+    for (const exp of sf.getExportDeclarations()) {
+      if (!exp.hasModuleSpecifier()) {
+        // Keep array length aligned with getExportDeclarations() — we'll
+        // skip non-spec exports inside the metadata extractor too, but the
+        // positional alignment only matters for spec-bearing ones; we still
+        // record null here for safety.
+        exportResolutions.push(null);
+        continue;
+      }
+      const targetSf2 = exp.getModuleSpecifierSourceFile();
+      const resolvedRaw = targetSf2 ? relative(repoPath, targetSf2.getFilePath()) : null;
+      exportResolutions.push(inNodeModules(resolvedRaw) ? null : resolvedRaw);
+    }
+    out.set(rel, { imports: importResolutions, exports: exportResolutions });
+  }
+  return out;
+}
+
+function extractPerFileMetadata(
+  sf: SourceFile,
+  repoPath: string,
+  relPath: string,
+  resolvedSpecs: ResolvedSpecMap,
+): PerFileMetadata {
+  const meta: PerFileMetadata = {
+    rel_path: relPath,
+    classes: [],
+    imports: [],
+    exports: [],
+    dynamic_imports: [],
+    default_export_identifier: null,
+    default_export_class_or_fn_name: null,
+    functions: [],
+    import_shims: [],
+  };
+
+  // Class metadata (extends/implements). Type aliases / interfaces / enums
+  // don't have extends/implements clauses we care about.
+  for (const cls of sf.getClasses()) {
+    const cm: ClassMeta = {
+      name: cls.getName() ?? "<anonymous>",
+      extends_name: null,
+      extends_line: null,
+      implements: [],
+    };
+    const ex = cls.getExtends();
+    if (ex) {
+      cm.extends_name = ex.getExpression().getText();
+      cm.extends_line = ex.getStartLineNumber();
+    }
+    for (const impl of cls.getImplements()) {
+      cm.implements.push({
+        name: impl.getExpression().getText(),
+        line: impl.getStartLineNumber(),
+      });
+    }
+    meta.classes.push(cm);
+  }
+
+  // Imports. The cross-file resolved rel-paths come from `resolvedSpecs`,
+  // built in a pre-pass before any sf.forget() — ts-morph's resolution
+  // breaks for forgotten target files, so we cannot call
+  // `getModuleSpecifierSourceFile()` here. Positional index alignment with
+  // `sf.getImportDeclarations()` is required.
+  const importDecls = sf.getImportDeclarations();
+  for (let i = 0; i < importDecls.length; i++) {
+    const imp = importDecls[i];
+    const specText = imp.getModuleSpecifierValue();
+    const resolvedRel = resolvedSpecs.imports[i] ?? null;
+    const named: NamedImportSpec[] = [];
+    for (const spec of imp.getNamedImports()) {
+      const aliasNode = spec.getAliasNode();
+      named.push({
+        name: spec.getName(),
+        local_binding: aliasNode ? aliasNode.getText() : spec.getName(),
+      });
+    }
+    meta.imports.push({
+      spec_text: specText,
+      resolved_rel: resolvedRel,
+      line: imp.getStartLineNumber(),
+      default_import: imp.getDefaultImport()?.getText() ?? null,
+      namespace_import: imp.getNamespaceImport()?.getText() ?? null,
+      named,
+    });
+  }
+
+  // Re-exports: `export ... from "..."`. We skip export declarations with no
+  // module specifier — those don't participate in the import-edge resolver.
+  const exportDecls = sf.getExportDeclarations();
+  for (let i = 0; i < exportDecls.length; i++) {
+    const exp = exportDecls[i];
+    if (!exp.hasModuleSpecifier()) continue;
+    const specText = exp.getModuleSpecifierValue() ?? "";
+    const resolvedRel = resolvedSpecs.exports[i] ?? null;
+    const named = exp.getNamedExports();
+    const namedExports: NamedExportSpec[] = [];
+    for (const spec of named) {
+      const exportedName = spec.getName();
+      const aliasNode = spec.getAliasNode();
+      namedExports.push({
+        name: exportedName,
+        consumer_name: aliasNode ? aliasNode.getText() : exportedName,
+      });
+    }
+    const hasNamespace = !!exp.getNamespaceExport();
+    meta.exports.push({
+      spec_text: specText,
+      resolved_rel: resolvedRel,
+      line: exp.getStartLineNumber(),
+      named: namedExports,
+      has_namespace_export: hasNamespace,
+      is_wildcard: namedExports.length === 0 && !hasNamespace,
+    });
+  }
+
+  // Default-export identifier markers. Two shapes:
+  //   `export default someIdent;` → record `someIdent` (L2 resolves)
+  //   `export default class X {}`  → record `X` so L2 can chase via symByPath
+  for (const ea of sf.getExportAssignments()) {
+    if (ea.isExportEquals()) continue;
+    const expr = ea.getExpression();
+    if (Node.isIdentifier(expr)) {
+      meta.default_export_identifier = expr.getText();
+      break;
+    }
+  }
+  if (meta.default_export_identifier === null) {
+    for (const cls of sf.getClasses()) {
+      if (cls.hasDefaultKeyword()) {
+        const name = cls.getName();
+        if (name) { meta.default_export_class_or_fn_name = name; break; }
+      }
+    }
+  }
+  if (meta.default_export_identifier === null && meta.default_export_class_or_fn_name === null) {
+    for (const fn of sf.getFunctions()) {
+      if (fn.hasDefaultKeyword()) {
+        const name = fn.getName();
+        if (name) { meta.default_export_class_or_fn_name = name; break; }
+      }
+    }
+  }
+
+  // Module-scope dynamic-import-shim detection. Pattern:
+  //   const importESM = new Function('p', 'return import(p)') as ...
+  // We record the binding so L2 can treat `importESM('mod')` calls as
+  // dynamic imports of `'mod'`.
+  for (const vs of sf.getVariableStatements()) {
+    for (const decl of vs.getDeclarations()) {
+      let init: any = decl.getInitializer();
+      while (init && Node.isAsExpression(init)) init = init.getExpression();
+      if (!init || !Node.isNewExpression(init)) continue;
+      if (init.getExpression().getText() !== "Function") continue;
+      const args = init.getArguments();
+      if (args.length !== 2) continue;
+      const literalText = (n: any): string | null =>
+        Node.isStringLiteral(n) || Node.isNoSubstitutionTemplateLiteral(n)
+          ? n.getLiteralText() : null;
+      const paramName = literalText(args[0]);
+      const body = literalText(args[1]);
+      if (!paramName || body === null) continue;
+      const m = body.match(SHIM_BODY_RE);
+      if (!m || m[1] !== paramName) continue;
+      meta.import_shims.push({ binding_name: decl.getName() });
+    }
+  }
+
+  // Top-level dynamic imports (visitor walk; module-scope only). We use a
+  // single sweep — the per-function event streams below capture nested ones.
+  // The old code attributed *all* dynamic imports to the enclosing module,
+  // not the enclosing function, so we mirror that here.
+  sf.forEachDescendant((node) => {
+    if (!Node.isCallExpression(node)) return;
+    if (node.getExpression().getKind() !== SyntaxKind.ImportKeyword) return;
+    const args = node.getArguments();
+    if (args.length === 0) return;
+    const first = args[0];
+    if (!Node.isStringLiteral(first) && !Node.isNoSubstitutionTemplateLiteral(first)) {
+      // Non-literal spec — record null so L2 still ticks the unresolved
+      // bucket if it ever wants to (today's behavior: silently skip).
+      meta.dynamic_imports.push({
+        spec_text: null,
+        line: node.getStartLineNumber(),
+      });
+      return;
+    }
+    meta.dynamic_imports.push({
+      spec_text: (first as any).getLiteralText(),
+      line: node.getStartLineNumber(),
+    });
+  });
+
+  // Per-function event extraction. Mirrors the AST shape consumed by the
+  // old attachCallAndVarAccessEdges + attachTestsEdges visitor walks.
+  // The set of "functions" matches the function-primitive emitter (top-level
+  // fns + class methods + arrow/expr-bound variable decls), so the `start_line`
+  // index later matches `fnByPathAndLine` entries.
+  //
+  // We walk each fn's forEachDescendant once; the event stream contains
+  // every Identifier/VarDecl/NewExpression/CallExpression we care about,
+  // in document order.
+  const fnNodes: any[] = [
+    ...sf.getFunctions(),
+    ...sf.getClasses().flatMap((c) => c.getMethods()),
+    ...sf.getVariableStatements().flatMap((vs) =>
+      vs.getDeclarations().filter((d) => {
+        const init = d.getInitializer();
+        return init && (Node.isArrowFunction(init) || Node.isFunctionExpression(init));
+      })
+    ),
+  ];
+  for (const fnNode of fnNodes) {
+    const startLine: number = fnNode.getStartLineNumber();
+    const params: any[] = fnNode.getParameters?.() ?? [];
+    const fm: FnMeta = {
+      start_line: startLine,
+      parameters: params.map((p: any) => ({
+        name: p.getName(),
+        type_name: p.getTypeNode?.()
+          ? stripGenerics(p.getTypeNode().getText())
+          : null,
+      })),
+      events: [],
+    };
+    // Issue #82: per-fn scope-bindings map for identifier shadowing detection.
+    // Built lazily — cheap on small fns, irrelevant on fns with no identifiers.
+    const scopeBindings = collectScopeBindings(fnNode);
+    fnNode.forEachDescendant?.((node: Node) => {
+      // Identifiers (read/write detection). Skip identifiers that occupy
+      // a syntactic "name slot" (property keys, parameter binding sites,
+      // import/export specifiers, etc.), and skip those shadowed by a
+      // local binding in any enclosing scope.
+      if (Node.isIdentifier(node)) {
+        if (identifierIsNameSlot(node)) return;
+        const idName = node.getText();
+        // Shorthand property assignment `{x}` IS a real read; the
+        // name-slot filter intentionally lets it through. The
+        // scope-shadowing check still applies.
+        if (isLocallyBound(node, fnNode as Node, idName, scopeBindings)) return;
+        const parent = node.getParent();
+        let isWrite = false;
+        if (parent && Node.isBinaryExpression(parent)) {
+          const op = parent.getOperatorToken().getText();
+          if (op === "=" && parent.getLeft() === node) isWrite = true;
+        }
+        fm.events.push({
+          kind: "identifier",
+          name: idName,
+          line: node.getStartLineNumber(),
+          is_assignment_lhs: isWrite,
+          inside_expect: false, // not consulted for identifier events
+        });
+        return;
+      }
+      // VariableDeclaration (for var-type seeding in the call resolver).
+      if (Node.isVariableDeclaration(node)) {
+        const typeNode = node.getTypeNode?.();
+        const typeName = typeNode ? stripGenerics(typeNode.getText()) : null;
+        const init = node.getInitializer?.();
+        let newClassName: string | null = null;
+        if (init && Node.isNewExpression(init)) {
+          newClassName = stripGenerics(init.getExpression().getText());
+        }
+        fm.events.push({
+          kind: "var_decl",
+          name: node.getName(),
+          type_name: typeName,
+          new_expr_class_name: newClassName,
+        });
+        // Don't return — VariableDeclaration won't match the call/new kinds
+        // below, but we fall through to be safe.
+      }
+      // NewExpression → instantiates candidate
+      if (Node.isNewExpression(node)) {
+        fm.events.push({
+          kind: "new",
+          class_name: stripGenerics(node.getExpression().getText()),
+          line: node.getStartLineNumber(),
+        });
+      }
+      // CallExpression → calls / dynamic-import / tests
+      if (Node.isCallExpression(node)) {
+        const callExpr = node.getExpression();
+        const line = node.getStartLineNumber();
+        const insideExpect = isInsideExpectAst(node);
+        // Dynamic import: `import("...")` — the import keyword is the callee.
+        if (callExpr.getKind() === SyntaxKind.ImportKeyword) {
+          const args = node.getArguments();
+          let spec: string | null = null;
+          if (args.length > 0) {
+            const first = args[0];
+            if (Node.isStringLiteral(first) || Node.isNoSubstitutionTemplateLiteral(first)) {
+              spec = (first as any).getLiteralText();
+            }
+          }
+          fm.events.push({
+            kind: "call_dynamic_import",
+            spec_text: spec,
+            resolved_rel: null, // resolved by L2 against modByPath
+            line,
+          });
+          return;
+        }
+        if (Node.isIdentifier(callExpr)) {
+          // Bare-name call.
+          const args = node.getArguments();
+          let firstArgLit: string | null = null;
+          if (args.length > 0) {
+            const a0 = args[0];
+            if (Node.isStringLiteral(a0) || Node.isNoSubstitutionTemplateLiteral(a0)) {
+              firstArgLit = (a0 as any).getLiteralText();
+            }
+          }
+          fm.events.push({
+            kind: "call_bare",
+            callee_name: callExpr.getText(),
+            line,
+            inside_expect: insideExpect,
+            first_arg_literal: firstArgLit,
+          });
+        } else if (Node.isPropertyAccessExpression(callExpr)) {
+          fm.events.push({
+            kind: "call_method",
+            receiver_text: callExpr.getExpression().getText(),
+            method_name: callExpr.getName(),
+            line,
+            inside_expect: insideExpect,
+          });
+        }
+      }
+    });
+    meta.functions.push(fm);
+  }
+
+  return meta;
+}
+
+// Scope-tracking helpers (issue #82 — see baseline extract.ts). Used to
+// suppress reads/assigns edges when an identifier resolves to a local
+// binding (parameter, let/const/var, destructure, catch var) in any
+// enclosing scope of the function, rather than to the module-scope var of
+// the same name.
+function isScopeNode(n: Node): boolean {
+  return (
+    Node.isFunctionDeclaration(n) ||
+    Node.isFunctionExpression(n) ||
+    Node.isArrowFunction(n) ||
+    Node.isMethodDeclaration(n) ||
+    Node.isConstructorDeclaration(n) ||
+    Node.isGetAccessorDeclaration(n) ||
+    Node.isSetAccessorDeclaration(n) ||
+    Node.isBlock(n) ||
+    Node.isForStatement(n) ||
+    Node.isForInStatement(n) ||
+    Node.isForOfStatement(n) ||
+    Node.isCatchClause(n)
+  );
+}
+
+function collectScopeBindings(fnNode: Node): Map<Node, Set<string>> {
+  const scopeBindings = new Map<Node, Set<string>>();
+  const enclosingScope = (n: Node): Node | undefined => {
+    let cur: Node | undefined = n.getParent();
+    while (cur) {
+      if (cur === fnNode || isScopeNode(cur)) return cur;
+      cur = cur.getParent();
+    }
+    return undefined;
+  };
+  const addBinding = (scope: Node, name: string): void => {
+    let s = scopeBindings.get(scope);
+    if (!s) { s = new Set(); scopeBindings.set(scope, s); }
+    s.add(name);
+  };
+  scopeBindings.set(fnNode, new Set());
+  fnNode.forEachDescendant?.((node: Node) => {
+    if (Node.isParameterDeclaration(node)) {
+      const nameNode = node.getNameNode();
+      if (Node.isIdentifier(nameNode)) {
+        const scope = enclosingScope(node);
+        if (scope) addBinding(scope, nameNode.getText());
+      }
+      return;
+    }
+    if (Node.isVariableDeclaration(node)) {
+      const nameNode = node.getNameNode();
+      if (Node.isIdentifier(nameNode)) {
+        const scope = enclosingScope(node);
+        if (scope) addBinding(scope, nameNode.getText());
+      }
+      return;
+    }
+    if (Node.isBindingElement(node)) {
+      const nameNode = node.getNameNode();
+      if (Node.isIdentifier(nameNode)) {
+        const scope = enclosingScope(node);
+        if (scope) addBinding(scope, nameNode.getText());
+      }
+      return;
+    }
+    if (Node.isCatchClause(node)) {
+      const decl = node.getVariableDeclaration();
+      if (decl) {
+        const nameNode = decl.getNameNode();
+        if (Node.isIdentifier(nameNode)) {
+          addBinding(node, nameNode.getText());
+        }
+      }
+      return;
+    }
+  });
+  return scopeBindings;
+}
+
+function isLocallyBound(
+  idNode: Node,
+  fnNode: Node,
+  name: string,
+  scopeBindings: Map<Node, Set<string>>,
+): boolean {
+  let cur: Node | undefined = idNode.getParent();
+  while (cur) {
+    const names = scopeBindings.get(cur);
+    if (names?.has(name)) return true;
+    if (cur === fnNode) return false;
+    cur = cur.getParent();
+  }
+  return false;
+}
+
+// Filter: identifier nodes that occupy a syntactic "name slot" in their
+// parent (property keys, property access names, parameter binding sites,
+// import/export specifiers) are NOT reads of a binding. Skip them.
+function identifierIsNameSlot(node: Node): boolean {
+  const parent = node.getParent();
+  if (!parent) return false;
+  if (Node.isPropertyAccessExpression(parent) && parent.getNameNode() === node) return true;
+  if (Node.isPropertyAssignment(parent) && parent.getNameNode() === node) return true;
+  // Note: shorthand property `{x}` IS a real read; not in this filter.
+  if (Node.isPropertyDeclaration(parent) && parent.getNameNode() === node) return true;
+  if (Node.isPropertySignature(parent) && parent.getNameNode() === node) return true;
+  if (Node.isMethodDeclaration(parent) && parent.getNameNode() === node) return true;
+  if (Node.isMethodSignature(parent) && parent.getNameNode() === node) return true;
+  if (Node.isParameterDeclaration(parent) && parent.getNameNode() === node) return true;
+  if (Node.isBindingElement(parent) && parent.getNameNode() === node) return true;
+  if (Node.isImportSpecifier(parent)) return true;
+  if (Node.isExportSpecifier(parent)) return true;
+  return false;
+}
+
+// AST-side implementation of `isInsideExpect`. Used during L1 only;
+// L2 reads the precomputed `inside_expect` flag from FnEvent records.
+function isInsideExpectAst(node: Node): boolean {
+  let cur: Node | undefined = node.getParent();
+  while (cur !== undefined) {
+    if (Node.isCallExpression(cur)) {
+      const expr = cur.getExpression();
+      if (Node.isIdentifier(expr) && expr.getText() === "expect") return true;
+      if (Node.isPropertyAccessExpression(expr)) {
+        const obj = expr.getExpression();
+        if (Node.isCallExpression(obj)) {
+          const innerExpr = obj.getExpression();
+          if (Node.isIdentifier(innerExpr) && innerExpr.getText() === "expect") return true;
+        }
+      }
+    }
+    cur = cur.getParent();
+  }
+  return false;
 }
 
 // ---------------------------------------------------------------------------
@@ -563,43 +1250,35 @@ function buildLocalSymbolIndex(prims: Primitive[]): Map<string, string> {
 
 function attachInheritanceEdges(
   prims: Primitive[],
-  sourceFiles: SourceFile[],
+  metadata: Map<string, PerFileMetadata>,
   repoKey: string,
-  repoPath: string,
 ): void {
   const symbolIndex = buildLocalSymbolIndex(prims);
-  for (const sf of sourceFiles) {
-    const rel = relative(repoPath, sf.getFilePath());
-    for (const cls of sf.getClasses()) {
-      const clsName = cls.getName() ?? "<anonymous>";
-      const myId = canonicalId(repoKey, rel, clsName);
+  for (const [rel, meta] of metadata) {
+    for (const cm of meta.classes) {
+      const myId = canonicalId(repoKey, rel, cm.name);
       const myPrim = prims.find((p) => p.id === myId);
       if (!myPrim) continue;
-
-      const exClause = cls.getExtends();
-      if (exClause) {
-        const targetName = exClause.getExpression().getText();
-        const targetId = symbolIndex.get(targetName);
+      if (cm.extends_name) {
+        const targetId = symbolIndex.get(cm.extends_name);
         if (targetId) {
           myPrim.edges_out.push({
             target: targetId,
             kind: "extends",
             via: "class_decl",
-            where: `${rel}:${exClause.getStartLineNumber()}`,
+            where: `${rel}:${cm.extends_line}`,
             confidence: "exact",
           });
         }
       }
-
-      for (const impl of cls.getImplements()) {
-        const targetName = impl.getExpression().getText();
-        const targetId = symbolIndex.get(targetName);
+      for (const impl of cm.implements) {
+        const targetId = symbolIndex.get(impl.name);
         if (targetId) {
           myPrim.edges_out.push({
             target: targetId,
             kind: "implements",
             via: "class_decl",
-            where: `${rel}:${impl.getStartLineNumber()}`,
+            where: `${rel}:${impl.line}`,
             confidence: "exact",
           });
         }
@@ -646,12 +1325,11 @@ function resolveRelativeImportSpec(
 
 function attachImportsEdges(
   prims: Primitive[],
-  sourceFiles: SourceFile[],
+  metadata: Map<string, PerFileMetadata>,
   repoKey: string,
-  repoPath: string,
 ): void {
   // Build symbol index: symbol name -> id (top-level, owner-null)
-  const symbolIndex = buildLocalSymbolIndex(prims);
+  // (unused here directly but kept for parity with old build).
   // Build module map: rel-path -> primitive
   const modByPath = new Map<string, Primitive>();
   for (const p of prims) {
@@ -667,44 +1345,27 @@ function attachImportsEdges(
   }
 
   // Build re-export map: module rel-path -> {exportedName -> origin-symbol-id}.
-  // Two-phase build: first collect each file's named re-exports and the set
-  // of files it re-exports wholesale via `export * from './x'`. Then expand
-  // wildcards via DFS so a consumer's lookup against a barrel that only does
-  // `export *` still resolves to the underlying definer. A final closure
-  // pass collapses chains of synthetic placeholders left by named-only
+  // Two-phase build (matches the pre-streaming closure pass): direct named
+  // re-exports first, then wildcard expansion via DFS, then a closure pass
+  // that collapses chains of synthetic placeholders left by named-only
   // multi-hop chains.
   const namedReexports = new Map<string, Map<string, string>>();
   const wildcardFrom = new Map<string, Set<string>>();
-  for (const sf of sourceFiles) {
-    const rel = relative(repoPath, sf.getFilePath());
-    for (const exp of sf.getExportDeclarations()) {
-      if (!exp.hasModuleSpecifier()) continue;
-      const targetSf2 = exp.getModuleSpecifierSourceFile();
-      let targetRel2 = targetSf2 ? relative(repoPath, targetSf2.getFilePath()) : null;
-      // ts-morph resolves package imports into node_modules type stubs;
-      // those aren't in-corpus modules — don't track them as such (#29).
-      if (inNodeModules(targetRel2)) targetRel2 = null;
+  for (const [rel, meta] of metadata) {
+    for (const exp of meta.exports) {
+      const targetRel2 = exp.resolved_rel;
       if (!targetRel2) continue;
-      const named = exp.getNamedExports();
-      // `export * from './x'` (no named exports, no namespace alias) — record
-      // the wildcard relationship; symbol enumeration happens in the DFS.
-      if (named.length === 0 && !exp.getNamespaceExport()) {
+      if (exp.is_wildcard) {
         if (!wildcardFrom.has(rel)) wildcardFrom.set(rel, new Set());
         wildcardFrom.get(rel)!.add(targetRel2);
         continue;
       }
-      const targetSyms2 = symByPath.get(targetRel2) ?? new Map();
-      for (const spec of named) {
-        const exportedName = spec.getName();
-        const aliasNode = spec.getAliasNode();
-        // For `export { foo as bar } from './x'`, consumers see `bar` — that
-        // is the key in our map. `spec.getName()` returns the local name
-        // (`foo`), which is what we look up in the target file.
-        const consumerName = aliasNode ? aliasNode.getText() : exportedName;
-        const symId = targetSyms2.get(exportedName);
-        const originId = symId ?? `${repoKey}::${targetRel2}::${exportedName}`;
+      const targetSyms2 = symByPath.get(targetRel2) ?? new Map<string, string>();
+      for (const spec of exp.named) {
+        const symId = targetSyms2.get(spec.name);
+        const originId = symId ?? `${repoKey}::${targetRel2}::${spec.name}`;
         if (!namedReexports.has(rel)) namedReexports.set(rel, new Map());
-        namedReexports.get(rel)!.set(consumerName, originId);
+        namedReexports.get(rel)!.set(spec.consumer_name, originId);
       }
     }
   }
@@ -732,8 +1393,7 @@ function attachImportsEdges(
   }
 
   const reexportMap = new Map<string, Map<string, string>>();
-  for (const sf of sourceFiles) {
-    const rel = relative(repoPath, sf.getFilePath());
+  for (const [rel] of metadata) {
     const ne = namedReexports.get(rel);
     const wts = wildcardFrom.get(rel);
     if (!ne && !wts) continue;
@@ -748,16 +1408,12 @@ function attachImportsEdges(
     reexportMap.set(rel, map);
   }
 
-  // Closure pass: for each entry whose synthetic target points at a file
-  // that itself re-exports the same name, replace with the deeper origin.
-  // Bounded depth prevents infinite loops on cyclic barrels.
+  // Closure pass: collapse multi-hop chains of synthetic re-export ids.
   const MAX_REEXPORT_HOPS = 16;
   for (const exports of reexportMap.values()) {
     for (const [name, id] of exports) {
       let resolved = id;
       for (let hop = 0; hop < MAX_REEXPORT_HOPS; hop++) {
-        // Parse `<repo>::<file>::<name>` shape. Bail on anything else
-        // (e.g. external terminals, module-only ids).
         const idx = resolved.indexOf("::");
         if (idx < 0) break;
         const rest = resolved.slice(idx + 2);
@@ -765,7 +1421,6 @@ function attachImportsEdges(
         if (innerIdx < 0) break;
         const innerFile = rest.slice(0, innerIdx);
         const innerName = rest.slice(innerIdx + 2);
-        // If innerFile defines innerName as a real primitive, we're done.
         if (symByPath.get(innerFile)?.has(innerName)) break;
         const nextHop = reexportMap.get(innerFile)?.get(innerName);
         if (!nextHop || nextHop === resolved) break;
@@ -777,61 +1432,35 @@ function attachImportsEdges(
 
   // Default-export alias map: file -> primitive id named by `export default X`
   // (where X is an identifier resolving to a same-file symbol, or a top-level
-  // declaration with the `default` modifier). Lets `import X from './m'`
-  // resolve to the real symbol rather than the synthetic `default` id.
+  // declaration with the `default` modifier).
   const defaultExportMap = new Map<string, string>();
-  for (const sf of sourceFiles) {
-    const rel = relative(repoPath, sf.getFilePath());
+  for (const [rel, meta] of metadata) {
     const localSyms = symByPath.get(rel);
     if (!localSyms) continue;
-    for (const ea of sf.getExportAssignments()) {
-      if (ea.isExportEquals()) continue;
-      const expr = ea.getExpression();
-      if (Node.isIdentifier(expr)) {
-        const id = localSyms.get(expr.getText());
-        if (id) defaultExportMap.set(rel, id);
-      }
+    if (meta.default_export_identifier) {
+      const id = localSyms.get(meta.default_export_identifier);
+      if (id) defaultExportMap.set(rel, id);
     }
     if (defaultExportMap.has(rel)) continue;
-    for (const cls of sf.getClasses()) {
-      if (cls.hasDefaultKeyword()) {
-        const name = cls.getName();
-        const id = name ? localSyms.get(name) : undefined;
-        if (id) { defaultExportMap.set(rel, id); break; }
-      }
-    }
-    if (defaultExportMap.has(rel)) continue;
-    for (const fn of sf.getFunctions()) {
-      if (fn.hasDefaultKeyword()) {
-        const name = fn.getName();
-        const id = name ? localSyms.get(name) : undefined;
-        if (id) { defaultExportMap.set(rel, id); break; }
-      }
+    if (meta.default_export_class_or_fn_name) {
+      const id = localSyms.get(meta.default_export_class_or_fn_name);
+      if (id) defaultExportMap.set(rel, id);
     }
   }
 
-  for (const sf of sourceFiles) {
-    const rel = relative(repoPath, sf.getFilePath());
+  for (const [rel, meta] of metadata) {
     const modPrim = modByPath.get(rel);
     if (!modPrim) continue;
 
-    for (const imp of sf.getImportDeclarations()) {
-      // Try to resolve the module specifier file via ts-morph
-      const targetSf = imp.getModuleSpecifierSourceFile();
-      let targetRel = targetSf ? relative(repoPath, targetSf.getFilePath()) : null;
-      // If ts-morph traced the import into a node_modules type stub
-      // (`react-native` → `node_modules/react-native/types/index.d.ts`),
-      // treat as external — those files aren't in the corpus and we
-      // shouldn't emit in-corpus edges to them (#29).
-      if (inNodeModules(targetRel)) targetRel = null;
-      const targetSyms = targetRel ? (symByPath.get(targetRel) ?? new Map()) : new Map();
-      const targetReexports = targetRel ? (reexportMap.get(targetRel) ?? new Map()) : new Map();
+    for (const imp of meta.imports) {
+      const targetRel = imp.resolved_rel;
+      const targetSyms = targetRel ? (symByPath.get(targetRel) ?? new Map<string, string>()) : new Map<string, string>();
+      const targetReexports = targetRel ? (reexportMap.get(targetRel) ?? new Map<string, string>()) : new Map<string, string>();
 
-      const defaultImport = imp.getDefaultImport();
-      if (defaultImport) {
-        const localBinding = defaultImport.getText();
+      if (imp.default_import) {
+        const localBinding = imp.default_import;
         const defaultId = targetRel ? defaultExportMap.get(targetRel) : undefined;
-        const externalPkg = npmPkgFromSpec(imp.getModuleSpecifierValue());
+        const externalPkg = npmPkgFromSpec(imp.spec_text);
         const target = defaultId
           ? defaultId
           : targetRel
@@ -842,31 +1471,28 @@ function attachImportsEdges(
           : (targetRel ? "exact" : "unresolved");
         modPrim.edges_out.push({
           target, kind: "imports", via: "import_decl",
-          where: `${rel}:${imp.getStartLineNumber()}`,
+          where: `${rel}:${imp.line}`,
           confidence, local_binding: localBinding,
         });
       }
 
-      const nsImport = imp.getNamespaceImport();
-      if (nsImport) {
-        const localBinding = nsImport.getText();
-        const externalPkg = npmPkgFromSpec(imp.getModuleSpecifierValue());
+      if (imp.namespace_import) {
+        const localBinding = imp.namespace_import;
+        const externalPkg = npmPkgFromSpec(imp.spec_text);
         const target = targetRel
           ? `${repoKey}::${targetRel}`
           : `external::npm::${externalPkg}`;  // #29
         const confidence = targetRel ? "exact" : "unresolved";
         modPrim.edges_out.push({
           target, kind: "imports", via: "import_decl",
-          where: `${rel}:${imp.getStartLineNumber()}`,
+          where: `${rel}:${imp.line}`,
           confidence, local_binding: localBinding,
         });
       }
 
-      for (const spec of imp.getNamedImports()) {
-        const importedName = spec.getName();
-        const aliasNode = spec.getAliasNode();
-        const localBinding = aliasNode ? aliasNode.getText() : importedName;
-
+      for (const spec of imp.named) {
+        const importedName = spec.name;
+        const localBinding = spec.local_binding;
         let target: string;
         let confidence: string;
         if (targetRel) {
@@ -875,57 +1501,39 @@ function attachImportsEdges(
             target = symId;
             confidence = "exact";
           } else {
-            // One-hop re-export chase: symbol may be re-exported from another module
             const reexportId = targetReexports.get(importedName);
             if (reexportId) {
               target = reexportId;
               confidence = "fuzzy";
             } else {
-              // Couldn't resolve to the named symbol. Falling back to the
-              // module id is the best we can do, but the resolution is a
-              // guess — not "exact." Downgrade to "fuzzy" so consumers know
-              // the edge is module-level rather than symbol-level.
               target = `${repoKey}::${targetRel}`;
               confidence = "fuzzy";
             }
           }
         } else {
-          // Unresolved external (or resolved-into-node_modules, which we
-          // just demoted to `targetRel = null` above). Use the import
-          // specifier to derive the npm package name so scoped packages
-          // keep their scope: `@react-navigation/native::ScreenProps`
-          // rather than the lossy `react-navigation::ScreenProps` (#29).
-          const specText = imp.getModuleSpecifierValue();
-          const pkgName = npmPkgFromSpec(specText);
+          const pkgName = npmPkgFromSpec(imp.spec_text);
           target = `external::npm::${pkgName}::${importedName}`;
           confidence = "unresolved";
         }
         modPrim.edges_out.push({
           target, kind: "imports", via: "import_decl",
-          where: `${rel}:${imp.getStartLineNumber()}`,
+          where: `${rel}:${imp.line}`,
           confidence, local_binding: localBinding,
         });
       }
     }
 
     // Re-exports: export { foo } from "./impl.js"
-    for (const exp of sf.getExportDeclarations()) {
-      if (!exp.hasModuleSpecifier()) continue;
-      const targetSf2 = exp.getModuleSpecifierSourceFile();
-      let targetRel2 = targetSf2 ? relative(repoPath, targetSf2.getFilePath()) : null;
-      if (inNodeModules(targetRel2)) targetRel2 = null;  // #29
-      const targetSyms2 = targetRel2 ? (symByPath.get(targetRel2) ?? new Map()) : new Map();
-      const targetReexports2 = targetRel2 ? (reexportMap.get(targetRel2) ?? new Map()) : new Map();
+    for (const exp of meta.exports) {
+      const targetRel2 = exp.resolved_rel;
+      const targetSyms2 = targetRel2 ? (symByPath.get(targetRel2) ?? new Map<string, string>()) : new Map<string, string>();
+      const targetReexports2 = targetRel2 ? (reexportMap.get(targetRel2) ?? new Map<string, string>()) : new Map<string, string>();
 
-      const externalPkg = npmPkgFromSpec(exp.getModuleSpecifierValue() || "");
-      for (const spec of exp.getNamedExports()) {
-        const exportedName = spec.getName();
-        const aliasNode = spec.getAliasNode();
-        const localBinding = aliasNode ? aliasNode.getText() : exportedName;
+      const externalPkg = npmPkgFromSpec(exp.spec_text || "");
+      for (const spec of exp.named) {
+        const exportedName = spec.name;
+        const localBinding = spec.consumer_name;
         const symId = targetRel2 ? targetSyms2.get(exportedName) : undefined;
-        // Chase through the target file's own re-exports (the closure pass
-        // above has already collapsed multi-hop chains, so one lookup here
-        // suffices).
         const reexportId = targetRel2 ? targetReexports2.get(exportedName) : undefined;
         const target = symId
           ? symId
@@ -936,31 +1544,19 @@ function attachImportsEdges(
               : `external::npm::${externalPkg}::${exportedName}`;  // #29
         modPrim.edges_out.push({
           target, kind: "imports", via: "re_export",
-          where: `${rel}:${exp.getStartLineNumber()}`,
+          where: `${rel}:${exp.line}`,
           confidence: "fuzzy", local_binding: localBinding,
         });
       }
     }
 
-    // Plain dynamic imports: `await import('./rel')` or `await import('pkg')`.
-    // Attributed to the enclosing module (same as static imports), so impact
-    // analysis and `kg depgraph dependents` see them. The Function-constructor
-    // shim form is handled separately in attachCallEdges.
-    //
-    // Visitor walk rather than getDescendantsOfKind so the CallExpression
-    // descendant array is never materialized — #44 traced an RSS spike to that
-    // allocation.
-    sf.forEachDescendant((node) => {
-      if (!Node.isCallExpression(node)) return;
-      const call = node;
-      if (call.getExpression().getKind() !== SyntaxKind.ImportKeyword) return;
-      const args = call.getArguments();
-      if (args.length === 0) return;
-      const first = args[0];
-      // Non-literal spec (template w/ interpolation, identifier, etc.) — can't
-      // resolve statically. Skip rather than emit a wrong edge.
-      if (!Node.isStringLiteral(first) && !Node.isNoSubstitutionTemplateLiteral(first)) return;
-      const specText = (first as any).getLiteralText();
+    // Top-level dynamic imports (`import('./rel')` / `import('pkg')`). The
+    // Function-constructor shim form rides on the call_bare events emitted
+    // by attachCallAndVarAccessEdges (and was attributed to the enclosing
+    // module identically to static imports).
+    for (const di of meta.dynamic_imports) {
+      if (di.spec_text === null) continue; // non-literal — can't resolve
+      const specText = di.spec_text;
       let target: string;
       let confidence: "exact" | "fuzzy" | "unresolved";
       if (specText.startsWith(".")) {
@@ -978,168 +1574,22 @@ function attachImportsEdges(
       }
       modPrim.edges_out.push({
         target, kind: "imports", via: "dynamic_import",
-        where: `${rel}:${call.getStartLineNumber()}`, confidence,
+        where: `${rel}:${di.line}`, confidence,
       });
-    });
+    }
   }
-}
-
-// ---------------------------------------------------------------------------
-// Scope tracking for reads/assigns shadowing (#82).
-//
-// The reads/assigns pass matches every Identifier in a function body against
-// the file's module-scope var table. Without scope tracking, a parameter or
-// local binding that shadows a module-scope var causes the body's references
-// to the local to wrongly emit edges against the module var. We avoid that by
-// (a) collecting per-scope binding sets ahead of the descendant walk and
-// (b) at each candidate Identifier, walking its ancestors up to the fn root
-// and skipping if any enclosing scope binds the name.
-// ---------------------------------------------------------------------------
-
-function isScopeNode(n: Node): boolean {
-  return (
-    Node.isFunctionDeclaration(n) ||
-    Node.isFunctionExpression(n) ||
-    Node.isArrowFunction(n) ||
-    Node.isMethodDeclaration(n) ||
-    Node.isConstructorDeclaration(n) ||
-    Node.isGetAccessorDeclaration(n) ||
-    Node.isSetAccessorDeclaration(n) ||
-    Node.isBlock(n) ||
-    Node.isForStatement(n) ||
-    Node.isForInStatement(n) ||
-    Node.isForOfStatement(n) ||
-    Node.isCatchClause(n)
-  );
-}
-
-/**
- * Build a `scope-node -> Set<bound-name>` map for the given function. We treat
- * fnNode itself as a scope (so its parameters land there) and recognize blocks
- * / for-statements / catch clauses / nested functions as inner scopes. Both
- * plain identifier bindings (`const x =`, `function f(x)`) and destructure
- * bindings (`const {x} =`, `function f({x})`) contribute names; the
- * BindingElement visitor handles the latter recursively.
- *
- * `var` is technically hoisted to function scope, but treating it as
- * block-scoped here is conservative for our purpose (suppressing a read edge):
- * if the name is bound *anywhere* on the ancestor chain we skip, which is
- * still correct semantically.
- */
-function collectScopeBindings(fnNode: Node): Map<Node, Set<string>> {
-  const scopeBindings = new Map<Node, Set<string>>();
-
-  const enclosingScope = (n: Node): Node | undefined => {
-    let cur: Node | undefined = n.getParent();
-    while (cur) {
-      if (cur === fnNode || isScopeNode(cur)) return cur;
-      cur = cur.getParent();
-    }
-    return undefined;
-  };
-
-  const addBinding = (scope: Node, name: string): void => {
-    let s = scopeBindings.get(scope);
-    if (!s) {
-      s = new Set();
-      scopeBindings.set(scope, s);
-    }
-    s.add(name);
-  };
-
-  // Pre-seed fnNode so parameters always have a home even if no other
-  // bindings appear inside the body.
-  scopeBindings.set(fnNode, new Set());
-
-  fnNode.forEachDescendant?.((node: Node) => {
-    // Parameters of the outer fnNode and of any nested function-like:
-    // bound in the enclosing function scope.
-    if (Node.isParameterDeclaration(node)) {
-      const nameNode = node.getNameNode();
-      if (Node.isIdentifier(nameNode)) {
-        const scope = enclosingScope(node);
-        if (scope) addBinding(scope, nameNode.getText());
-      }
-      // Destructure patterns inside the parameter are walked separately as
-      // BindingElement descendants below.
-      return;
-    }
-
-    // `const x = ...`, `let x = ...`, `var x = ...`, and the bound identifier
-    // in a `for (let x of ...)` initializer. The VariableDeclaration's
-    // enclosing scope is the containing block / for-statement / catch /
-    // function — exactly where the binding becomes visible.
-    if (Node.isVariableDeclaration(node)) {
-      const nameNode = node.getNameNode();
-      if (Node.isIdentifier(nameNode)) {
-        const scope = enclosingScope(node);
-        if (scope) addBinding(scope, nameNode.getText());
-      }
-      return;
-    }
-
-    // Each destructure binding: `const { name } = obj`, `function f({ name })`,
-    // nested patterns, array patterns. BindingElement's `getNameNode()` can
-    // itself be a BindingPattern when nested; the outer descendant walk picks
-    // up the inner BindingElements separately.
-    if (Node.isBindingElement(node)) {
-      const nameNode = node.getNameNode();
-      if (Node.isIdentifier(nameNode)) {
-        const scope = enclosingScope(node);
-        if (scope) addBinding(scope, nameNode.getText());
-      }
-      return;
-    }
-
-    // `catch (e) { ... }` — bind e in the CatchClause's own scope.
-    if (Node.isCatchClause(node)) {
-      const decl = node.getVariableDeclaration();
-      if (decl) {
-        const nameNode = decl.getNameNode();
-        if (Node.isIdentifier(nameNode)) {
-          addBinding(node, nameNode.getText());
-        }
-      }
-      return;
-    }
-  });
-
-  return scopeBindings;
-}
-
-/**
- * True if `idNode` (an Identifier whose text matches a module-scope var name)
- * actually resolves to a local binding in some enclosing scope of fnNode,
- * rather than to the module-scope var.
- */
-function isLocallyBound(
-  idNode: Node,
-  fnNode: Node,
-  name: string,
-  scopeBindings: Map<Node, Set<string>>,
-): boolean {
-  let cur: Node | undefined = idNode.getParent();
-  while (cur) {
-    const names = scopeBindings.get(cur);
-    if (names?.has(name)) return true;
-    if (cur === fnNode) return false;
-    cur = cur.getParent();
-  }
-  return false;
 }
 
 // ---------------------------------------------------------------------------
 // L2 edge resolution — Task 3.4/3.5: calls + instantiates (intra-fn type
-// binding) + reads/assigns. Combined into a single per-function descendant
-// walk so the AST is traversed once per fn instead of twice (#44 — fewer
-// resident ts-morph wrapper nodes at any moment).
+// binding) + reads/assigns. Drives off the per-function event stream
+// captured in L1 — no AST access.
 // ---------------------------------------------------------------------------
 
 function attachCallAndVarAccessEdges(
   prims: Primitive[],
-  sourceFiles: SourceFile[],
+  metadata: Map<string, PerFileMetadata>,
   repoKey: string,
-  repoPath: string,
 ): void {
   const classesByPath = new Map<string, Map<string, Primitive>>();
   const methodsByClass = new Map<string, Map<string, string>>(); // classId -> {methodName -> fnId}
@@ -1153,7 +1603,6 @@ function attachCallAndVarAccessEdges(
       varsByPath.get(p.source.path)!.set(p.name, p.id);
     }
   }
-
   for (const p of prims) {
     if (p.primitive === "class" && p.owner === null) {
       if (!classesByPath.has(p.source.path))
@@ -1164,9 +1613,7 @@ function attachCallAndVarAccessEdges(
       fnByPathAndLine.set(`${p.source.path}:${p.source.line}`, p);
       if (p.owner !== null) {
         if (!methodsByClass.has(p.owner)) methodsByClass.set(p.owner, new Map());
-        // method name is last segment after dot
         const localName = p.name.split(".").pop()!;
-        // strip :static suffix for lookup
         const lookupName = localName.replace(/:static$/, "");
         methodsByClass.get(p.owner)!.set(lookupName, p.id);
       }
@@ -1175,10 +1622,7 @@ function attachCallAndVarAccessEdges(
 
   // Primitive-kind index for taxonomy-correct edge emission. `calls` targets
   // must be functions and `instantiates` targets must be classes (per
-  // depgraph/lib/edges.py::EDGE_KIND_RULES); a bare-id call site can resolve
-  // to a variable holding a callable, in which case no `calls` edge is
-  // emitted and the identifier-read pass picks up the relationship as a
-  // `reads function→variable` edge.
+  // depgraph/lib/edges.py::EDGE_KIND_RULES).
   const allClassIds = new Set(prims.filter((p) => p.primitive === "class").map((p) => p.id));
   const allFunctionIds = new Set(prims.filter((p) => p.primitive === "function").map((p) => p.id));
 
@@ -1191,7 +1635,9 @@ function attachCallAndVarAccessEdges(
     }
   }
 
-  // Import bindings per file: local_binding -> target_id
+  // Import bindings per file: local_binding -> target_id (lifted off the
+  // imports edges emitted by attachImportsEdges, so the resolver reflects
+  // every demotion/promotion that pass applied — node_modules→external, etc).
   const importsByPath = new Map<string, Map<string, string>>();
   for (const p of prims) {
     if (p.primitive !== "module") continue;
@@ -1205,41 +1651,16 @@ function attachCallAndVarAccessEdges(
     }
   }
 
-  // Dynamic-import-shim detection. The TS-ESM-in-CJS idiom looks like:
-  //   const importESM = new Function('p', 'return import(p)') as ...
-  // tsc would rewrite a real `import()` to `require()` in CJS mode, so authors
-  // hide it behind a Function constructor. The body is a string literal, so we
-  // can statically recognize the pattern and treat `importESM('mod')` calls as
-  // dynamic imports of `'mod'` on the enclosing module — see
-  // depgraph/tests/fixtures/wild/edges/dynamic_import_shim_ts.
-  const SHIM_BODY_RE = /^\s*return\s+import\s*\(\s*([A-Za-z_$][\w$]*)\s*\)\s*;?\s*$/;
+  // Dynamic-import-shim bindings per file (from L1 metadata).
   const importShimsByPath = new Map<string, Set<string>>();
-  for (const sf of sourceFiles) {
-    const rel = relative(repoPath, sf.getFilePath());
-    for (const vs of sf.getVariableStatements()) {
-      for (const decl of vs.getDeclarations()) {
-        let init: any = decl.getInitializer();
-        while (init && Node.isAsExpression(init)) init = init.getExpression();
-        if (!init || !Node.isNewExpression(init)) continue;
-        if (init.getExpression().getText() !== "Function") continue;
-        const args = init.getArguments();
-        if (args.length !== 2) continue;
-        const literalText = (n: any): string | null =>
-          Node.isStringLiteral(n) || Node.isNoSubstitutionTemplateLiteral(n)
-            ? n.getLiteralText() : null;
-        const paramName = literalText(args[0]);
-        const body = literalText(args[1]);
-        if (!paramName || body === null) continue;
-        const m = body.match(SHIM_BODY_RE);
-        if (!m || m[1] !== paramName) continue;
-        if (!importShimsByPath.has(rel)) importShimsByPath.set(rel, new Set());
-        importShimsByPath.get(rel)!.add(decl.getName());
-      }
-    }
+  for (const [rel, meta] of metadata) {
+    if (meta.import_shims.length === 0) continue;
+    const set = new Set<string>();
+    for (const s of meta.import_shims) set.add(s.binding_name);
+    importShimsByPath.set(rel, set);
   }
 
-  for (const sf of sourceFiles) {
-    const rel = relative(repoPath, sf.getFilePath());
+  for (const [rel, meta] of metadata) {
     const localNames = localByPath.get(rel) ?? new Map<string, string>();
     const imports = importsByPath.get(rel) ?? new Map<string, string>();
     const shims = importShimsByPath.get(rel);
@@ -1250,223 +1671,127 @@ function attachCallAndVarAccessEdges(
       return id && allClassIds.has(id) ? id : undefined;
     };
 
-    // Walk all function declarations (top-level + class methods)
-    const allFns = [
-      ...sf.getFunctions(),
-      ...sf.getClasses().flatMap((c) => c.getMethods()),
-      ...sf.getVariableStatements().flatMap((vs) =>
-        vs.getDeclarations().filter((d) => {
-          const init = d.getInitializer();
-          return init && (Node.isArrowFunction(init) || Node.isFunctionExpression(init));
-        })
-      ),
-    ];
-
-    for (const fnNode of allFns as any[]) {
-      const startLine = fnNode.getStartLineNumber();
-      const fnPrim = fnByPathAndLine.get(`${rel}:${startLine}`);
+    for (const fm of meta.functions) {
+      const fnPrim = fnByPathAndLine.get(`${rel}:${fm.start_line}`);
       if (!fnPrim) continue;
 
-      // var_types: local variable name -> class id
+      // var_types: local variable name -> class id (seeded from parameter
+      // type annotations, then refined by per-event var_decl entries).
       const varTypes = new Map<string, string>();
-
-      // Seed from parameter annotations via ts-morph Type API
-      const params: any[] = fnNode.getParameters?.() ?? [];
-      for (const param of params) {
-        const typeNode = param.getTypeNode?.();
-        if (!typeNode) continue;
-        const typeName = typeNode.getText().split("<")[0].trim();
-        const cid = resolveClass(typeName);
-        if (cid) varTypes.set(param.getName(), cid);
+      for (const param of fm.parameters) {
+        if (!param.type_name) continue;
+        const cid = resolveClass(param.type_name);
+        if (cid) varTypes.set(param.name, cid);
       }
 
-      // Scope-bindings map for shadowing detection (#82). Built once per fn so
-      // the identifier-read pass can skip names that resolve to a function-scope
-      // parameter / local rather than the module-scope var of the same name.
-      // Only computed when the file actually has module-scope vars — otherwise
-      // there's nothing to potentially shadow.
-      const scopeBindings = localVars
-        ? collectScopeBindings(fnNode as Node)
-        : undefined;
-
-      // Visitor walk: getDescendants() would materialize every wrapper Node in
-      // the function body up-front, holding all of them resident until the
-      // outer for-loop finished — on large codebases that was a primary OOM
-      // driver (#44). forEachDescendant streams nodes so each can be GC'd
-      // after the callback returns. Document order is preserved.
-      //
-      // This single walk handles three edge kinds: calls/instantiates
-      // (CallExpression, NewExpression), var-type seeding for method-call
-      // receivers (VariableDeclaration), and reads/assigns against
-      // module-scope variables (Identifier). They share the same fn-list
-      // iteration so combining keeps wrapper-node churn proportional to one
-      // pass, not three.
-      fnNode.forEachDescendant?.((node: Node) => {
-        // reads/assigns: module-scope variable access. Cheapest check first
-        // (Identifier matches a huge fraction of nodes; only emit when the
-        // file actually has module-scope vars).
-        if (localVars && Node.isIdentifier(node)) {
-          // Skip identifiers that occupy a "name slot" in their parent —
-          // they don't read a binding, they're a syntactic name. Most
-          // common false positive: `obj.x` where `x` matches a module-
-          // scope var name would emit a spurious `reads` edge. Same for
-          // property/method declarations, parameters, and destructuring
-          // binding sites.
-          const parent = node.getParent();
-          if (parent) {
-            if (Node.isPropertyAccessExpression(parent) && parent.getNameNode() === node) return;
-            if (Node.isPropertyAssignment(parent) && parent.getNameNode() === node) return;
-            if (Node.isShorthandPropertyAssignment(parent) && parent.getNameNode() === node) {
-              // `{x}` — shorthand is a real read of `x`; fall through to
-              // the emit path below.
-            } else if (Node.isPropertyDeclaration(parent) && parent.getNameNode() === node) {
-              return;
-            } else if (Node.isPropertySignature(parent) && parent.getNameNode() === node) {
-              return;
-            } else if (Node.isMethodDeclaration(parent) && parent.getNameNode() === node) {
-              return;
-            } else if (Node.isMethodSignature(parent) && parent.getNameNode() === node) {
-              return;
-            } else if (Node.isParameterDeclaration(parent) && parent.getNameNode() === node) {
-              return;
-            } else if (Node.isBindingElement(parent) && parent.getNameNode() === node) {
-              return;
-            } else if (Node.isImportSpecifier(parent)) {
-              return;
-            } else if (Node.isExportSpecifier(parent)) {
-              return;
-            }
-          }
-          const idName = node.getText();
-          const varId = localVars.get(idName);
-          if (varId) {
-            // Scope shadowing (#82): if this identifier resolves to a local
-            // binding (parameter, let/const/var, destructure, catch var) in
-            // any enclosing function/block scope, it is NOT a reference to
-            // the module-scope var of the same name. Skip without emitting.
-            if (scopeBindings && isLocallyBound(node, fnNode as Node, idName, scopeBindings)) {
-              return;
-            }
-            let isWrite = false;
-            if (parent && Node.isBinaryExpression(parent)) {
-              const op = parent.getOperatorToken().getText();
-              if (op === "=" && parent.getLeft() === node) isWrite = true;
-            }
-            fnPrim.edges_out.push({
-              target: varId,
-              kind: isWrite ? "assigns" : "reads",
-              via: isWrite ? "assignment_lhs" : "identifier_read",
-              where: `${rel}:${node.getStartLineNumber()}`,
-              confidence: "exact",
-            });
-          }
-          // Identifier nodes can't simultaneously be the other kinds handled
-          // below; fall through is harmless but skipping is cleaner.
-          return;
+      // Replay the event stream in document order — matches the old visitor
+      // walk's semantics (var_decl events feed varTypes before later call
+      // events consult it; identifier events stand alone).
+      for (const ev of fm.events) {
+        if (ev.kind === "identifier") {
+          if (!localVars) continue;
+          const varId = localVars.get(ev.name);
+          if (!varId) continue;
+          fnPrim.edges_out.push({
+            target: varId,
+            kind: ev.is_assignment_lhs ? "assigns" : "reads",
+            via: ev.is_assignment_lhs ? "assignment_lhs" : "identifier_read",
+            where: `${rel}:${ev.line}`,
+            confidence: "exact",
+          });
+          continue;
         }
-
-        // Pattern 1: const/let t: Service = new Service()
-        if (Node.isVariableDeclaration(node)) {
-          const typeNode = node.getTypeNode?.();
-          if (typeNode) {
-            const typeName = typeNode.getText().split("<")[0].trim();
-            const cid = resolveClass(typeName);
-            if (cid) varTypes.set(node.getName(), cid);
+        if (ev.kind === "var_decl") {
+          if (ev.type_name) {
+            const cid = resolveClass(ev.type_name);
+            if (cid) varTypes.set(ev.name, cid);
           }
-          // Pattern 2: infer from initializer new Service()
-          const init = node.getInitializer?.();
-          if (init && Node.isNewExpression(init)) {
-            const expr = init.getExpression().getText().split("<")[0].trim();
-            const cid = resolveClass(expr);
-            if (cid) varTypes.set(node.getName(), cid);
+          if (ev.new_expr_class_name) {
+            const cid = resolveClass(ev.new_expr_class_name);
+            if (cid) varTypes.set(ev.name, cid);
           }
+          continue;
         }
-
-        // new Expression(...) → instantiates
-        if (Node.isNewExpression(node)) {
-          const expr = node.getExpression().getText().split("<")[0].trim();
-          const targetId = localNames.get(expr) ?? imports.get(expr);
+        if (ev.kind === "new") {
+          const targetId = localNames.get(ev.class_name) ?? imports.get(ev.class_name);
           if (targetId && allClassIds.has(targetId)) {
             fnPrim.edges_out.push({
               target: targetId, kind: "instantiates", via: "new_expression",
-              where: `${rel}:${node.getStartLineNumber()}`, confidence: "exact",
+              where: `${rel}:${ev.line}`, confidence: "exact",
             });
           }
+          continue;
         }
-
-        // Call expression
-        if (Node.isCallExpression(node)) {
-          const callExpr = node.getExpression();
-
-          if (Node.isIdentifier(callExpr)) {
-            // bare name call: helper()
-            const name = callExpr.getText();
-            // Dynamic-import-shim: `importESM('mod')` is semantically `import('mod')`.
-            // Emit on the enclosing module to match how static imports are attributed
-            // (imports.source = module), and suppress the variable-targeted calls edge.
-            if (shims?.has(name)) {
-              const modPrim = modByPath.get(rel);
-              const callArgs = (node as any).getArguments?.() ?? [];
-              const first = callArgs[0];
-              const specText = first && (Node.isStringLiteral(first) || Node.isNoSubstitutionTemplateLiteral(first))
-                ? first.getLiteralText() : null;
-              if (modPrim && specText) {
-                // The shim idiom exists to import npm ESM packages from CJS; relative
-                // shim calls don't occur in practice (real import() works fine for those).
-                const target = specText.startsWith(".")
-                  ? `external::unresolved::${specText}`
-                  : `external::npm::${npmPkgFromSpec(specText)}`;  // #29
-                modPrim.edges_out.push({
-                  target, kind: "imports", via: "dynamic_import_shim",
-                  where: `${rel}:${node.getStartLineNumber()}`,
-                  confidence: specText.startsWith(".") ? "unresolved" : "fuzzy",
-                });
-              }
-              return;
-            }
-            const targetId = localNames.get(name) ?? imports.get(name);
-            // Emit `calls` when the target is a known function primitive OR an
-            // external terminal (those skip target-kind validation in reconcile
-            // and carry semantically-meaningful information — e.g. `useState()`
-            // resolves through the imports map to `external::npm::react::useState`).
-            // In-corpus non-function targets (variables holding callables, modules)
-            // are intentionally dropped here; the reads pass picks them up.
-            const isExternal = targetId?.startsWith("external::");
-            if (targetId && (allFunctionIds.has(targetId) || isExternal)) {
-              fnPrim.edges_out.push({
-                target: targetId, kind: "calls", via: "function_call",
-                where: `${rel}:${node.getStartLineNumber()}`, confidence: "exact",
+        if (ev.kind === "call_dynamic_import") {
+          const modPrim = modByPath.get(rel);
+          if (!modPrim) continue;
+          if (ev.spec_text === null) continue; // non-literal — silently skip
+          // The top-level dynamic-import sweep in extractPerFileMetadata
+          // already captured every `import(...)` callsite (visitor walked the
+          // whole file). To avoid double-emission, attach only the per-fn
+          // dynamic-import events that fall *outside* the meta.dynamic_imports
+          // line set. But it's cleaner to emit only from the file-level list
+          // and ignore per-fn call_dynamic_import events here.
+          continue;
+        }
+        if (ev.kind === "call_bare") {
+          const name = ev.callee_name;
+          // Dynamic-import-shim: `importESM('mod')` is semantically `import('mod')`.
+          if (shims?.has(name)) {
+            const modPrim = modByPath.get(rel);
+            const specText = ev.first_arg_literal;
+            if (modPrim && specText) {
+              const target = specText.startsWith(".")
+                ? `external::unresolved::${specText}`
+                : `external::npm::${npmPkgFromSpec(specText)}`;  // #29
+              modPrim.edges_out.push({
+                target, kind: "imports", via: "dynamic_import_shim",
+                where: `${rel}:${ev.line}`,
+                confidence: specText.startsWith(".") ? "unresolved" : "fuzzy",
               });
             }
-          } else if (Node.isPropertyAccessExpression(callExpr)) {
-            // receiver.method()
-            const objExpr = callExpr.getExpression();
-            const methodName = callExpr.getName();
-            const recvName = objExpr.getText();
-            const recvClassId = varTypes.get(recvName);
-            if (recvClassId) {
-              const methodId = methodsByClass.get(recvClassId)?.get(methodName);
-              if (methodId) {
-                fnPrim.edges_out.push({
-                  target: methodId, kind: "calls", via: "method_call",
-                  where: `${rel}:${node.getStartLineNumber()}`, confidence: "exact",
-                });
-              } else {
-                // Canonical external-terminal shape is `external::<ecosystem>::<symbol>`
-                // (3 segments). Use the bare class name as the symbol prefix —
-                // embedding the full primitive id (`<repo>::<path>::<cls>`) would
-                // produce a 5-segment string that fails the terminal format.
-                const className = recvClassId.split("::").pop() ?? recvClassId;
-                fnPrim.edges_out.push({
-                  target: `external::unresolved::${className}.${methodName}`,
-                  kind: "calls", via: "method_call",
-                  where: `${rel}:${node.getStartLineNumber()}`, confidence: "unresolved",
-                });
-              }
+            continue;
+          }
+          const targetId = localNames.get(name) ?? imports.get(name);
+          const isExternal = targetId?.startsWith("external::");
+          if (targetId && (allFunctionIds.has(targetId) || isExternal)) {
+            fnPrim.edges_out.push({
+              target: targetId, kind: "calls", via: "function_call",
+              where: `${rel}:${ev.line}`, confidence: "exact",
+            });
+          }
+          continue;
+        }
+        if (ev.kind === "call_method") {
+          const recvName = ev.receiver_text;
+          const methodName = ev.method_name;
+          const where = `${rel}:${ev.line}`;
+          const recvClassId = varTypes.get(recvName);
+          // Baseline behavior: emit a method-call edge only when we can
+          // bind the receiver to a class via var_types (parameter annotation
+          // or `new Cls()` initializer). Otherwise drop the call silently.
+          // The earlier #69 elaboration (imports-table fallback emitting
+          // external::unresolved terminals) was reverted in main and isn't
+          // restored here.
+          if (recvClassId) {
+            const methodId = methodsByClass.get(recvClassId)?.get(methodName);
+            if (methodId) {
+              fnPrim.edges_out.push({
+                target: methodId, kind: "calls", via: "method_call",
+                where, confidence: "exact",
+              });
+            } else {
+              const className = recvClassId.split("::").pop() ?? recvClassId;
+              fnPrim.edges_out.push({
+                target: `external::unresolved::${className}.${methodName}`,
+                kind: "calls", via: "method_call",
+                where, confidence: "unresolved",
+              });
             }
           }
+          continue;
         }
-      });
+      }
     }
   }
 }
@@ -1490,9 +1815,7 @@ function isTestPath(relPath: string): boolean {
 
 function attachTestsEdges(
   prims: Primitive[],
-  sourceFiles: SourceFile[],
-  repoKey: string,
-  repoPath: string,
+  metadata: Map<string, PerFileMetadata>,
 ): void {
   // Build local symbol index per file: name -> id (non-method, owner-null)
   const localByPath = new Map<string, Map<string, string>>();
@@ -1503,7 +1826,7 @@ function attachTestsEdges(
     }
   }
 
-  // Build import bindings per file: local_binding -> target_id
+  // Build import bindings per file (lifted off the imports edges, post-pass).
   const importsByPath = new Map<string, Map<string, string>>();
   for (const p of prims) {
     if (p.primitive !== "module") continue;
@@ -1525,85 +1848,46 @@ function attachTestsEdges(
     }
   }
 
-  for (const sf of sourceFiles) {
-    const rel = relative(repoPath, sf.getFilePath());
+  for (const [rel, meta] of metadata) {
     if (!isTestPath(rel)) continue;
-
     const localNames = localByPath.get(rel) ?? new Map<string, string>();
     const imports = importsByPath.get(rel) ?? new Map<string, string>();
 
-    const allFns = [
-      ...sf.getFunctions(),
-      ...sf.getClasses().flatMap((c) => c.getMethods()),
-    ];
-
-    for (const fnNode of allFns as any[]) {
-      const startLine = fnNode.getStartLineNumber();
-      const fnPrim = fnByPathAndLine.get(`${rel}:${startLine}`);
+    for (const fm of meta.functions) {
+      const fnPrim = fnByPathAndLine.get(`${rel}:${fm.start_line}`);
       if (!fnPrim) continue;
 
-      // Visitor walk over CallExpressions — see #44: getDescendants()
-      // materialized every Node wrapper in the function body.
-      fnNode.forEachDescendant?.((node: Node) => {
-        if (!Node.isCallExpression(node)) return;
-
-        // Check if this call is inside an expect(...) ancestor.
-        // expect(add(1, 2)).toBe(3):
-        //   - outer call: expect(...).toBe(3)  — PropertyAccessExpression callee
-        //   - add(1, 2) is an argument to expect(...)
-        // We want to emit tests edge for `add`, not for `expect` or `toBe`.
-        //
-        // Detection: walk up ancestors; if we reach a CallExpression whose
-        // callee (or callee's object) is Identifier "expect", this node is
-        // assertion-scoped.
-        if (!isInsideExpect(node)) return;
-
-        const callExpr = node.getExpression();
+      // Replay call events: bare + method calls whose `inside_expect` flag
+      // was set at L1. Mirrors the old visitor walk's semantics exactly.
+      for (const ev of fm.events) {
         let calleeName: string | null = null;
-        if (Node.isIdentifier(callExpr)) {
-          calleeName = callExpr.getText();
-        } else if (Node.isPropertyAccessExpression(callExpr)) {
-          calleeName = callExpr.getName();
+        let line: number;
+        if (ev.kind === "call_bare") {
+          if (!ev.inside_expect) continue;
+          calleeName = ev.callee_name;
+          line = ev.line;
+        } else if (ev.kind === "call_method") {
+          if (!ev.inside_expect) continue;
+          calleeName = ev.method_name;
+          line = ev.line;
+        } else {
+          continue;
         }
-        if (!calleeName || TS_TEST_FRAMEWORK_PRIMITIVES.has(calleeName)) return;
-
+        if (!calleeName || TS_TEST_FRAMEWORK_PRIMITIVES.has(calleeName)) continue;
         const targetId = localNames.get(calleeName) ?? imports.get(calleeName);
         if (targetId && !targetId.startsWith("external::")) {
           fnPrim.edges_out.push({
             target: targetId, kind: "tests", via: "asserted_call",
-            where: `${rel}:${node.getStartLineNumber()}`, confidence: "exact",
+            where: `${rel}:${line}`, confidence: "exact",
           });
-        }
-      });
-    }
-  }
-}
-
-function isInsideExpect(node: Node): boolean {
-  // Walk up the ancestor chain; return true if we encounter a CallExpression
-  // whose direct callee is Identifier "expect".
-  let cur: Node | undefined = node.getParent();
-  while (cur !== undefined) {
-    if (Node.isCallExpression(cur)) {
-      const expr = cur.getExpression();
-      // Direct call: expect(...)
-      if (Node.isIdentifier(expr) && expr.getText() === "expect") return true;
-      // Chained: expect(...).toBe(...) — callee is PropertyAccess on expect(...)
-      if (Node.isPropertyAccessExpression(expr)) {
-        const obj = expr.getExpression();
-        if (Node.isCallExpression(obj)) {
-          const innerExpr = obj.getExpression();
-          if (Node.isIdentifier(innerExpr) && innerExpr.getText() === "expect") return true;
         }
       }
     }
-    cur = cur.getParent();
   }
-  return false;
 }
 
-// reads/assigns (#44): folded into attachCallAndVarAccessEdges so the per-fn
-// descendant walk runs once for both edge categories instead of twice.
+// reads/assigns: folded into attachCallAndVarAccessEdges via the FnEvent stream
+// (see issue #47). Identifier events carry the assignment-lhs flag.
 
 function splitCsv(s: string | undefined): string[] {
   if (!s) return [];
@@ -1690,9 +1974,8 @@ function _routeCallPrimitive(
 }
 
 function extractRouteCalls(sf: SourceFile, repoKey: string, relPath: string): Primitive[] {
-  // Visitor-based walk: avoids materializing the full CallExpression descendant
-  // array (which on large Next.js codebases pushed RSS past available RAM per
-  // #44). Each visited Node is released to GC after the callback returns.
+  // Visitor-based walk; each visited Node is released to GC after the
+  // callback returns.
   const out: Primitive[] = [];
   sf.forEachDescendant((node) => {
     if (!Node.isCallExpression(node)) return;
@@ -1773,26 +2056,53 @@ function main() {
     return true;
   });
 
-  // Collect all primitives
+  // Build the rel-path list up front (used for package primitives + as the
+  // driver for deterministic L2 iteration order).
+  const relPaths: string[] = sourceFiles.map((sf) => relative(repoPath, sf.getFilePath()));
+
+  // ---- L1a: cross-file specifier resolution (BEFORE any sf.forget()) ----
+  //
+  // ts-morph's `imp.getModuleSpecifierSourceFile()` traverses the Project's
+  // file graph; forgetting any target file makes its consumers' resolution
+  // return null. So we resolve every import/export specifier up front while
+  // all source files are still loaded, then forget files in the heavy loop
+  // below. Captures tsconfig path-alias resolution along with plain
+  // relative/absolute resolution.
+  const resolvedSpecsByPath = buildResolvedSpecMap(sourceFiles, repoPath);
+
+  // ---- L1b: per-file primitives + metadata + sf.forget() ----
+  //
+  // The streaming refactor (issue #47). Each iteration:
+  //   1. Emit primitives (module/classes/functions/variables/object-literal
+  //      classes/route_call) for this file.
+  //   2. Capture PerFileMetadata so L2 doesn't need the AST.
+  //   3. Forget the SourceFile — releases the AST so its memory is reclaimed
+  //      before the next file is processed.
   const allPrims: Primitive[] = [];
-  for (const p of packagePrimitives(sourceFiles, repoKey, repoPath)) allPrims.push(p);
+  const metadata = new Map<string, PerFileMetadata>();
+  // Insertion order is the sourceFiles order; the Map preserves it for L2.
+  for (const p of packagePrimitivesFromRelPaths(relPaths, repoKey)) allPrims.push(p);
   for (const sf of sourceFiles) {
     const relPath = relative(repoPath, sf.getFilePath());
+    const resolvedSpecs = resolvedSpecsByPath.get(relPath) ?? { imports: [], exports: [] };
     allPrims.push(moduleFor(sf, repoKey, repoPath));
     for (const p of extractClasses(sf, repoKey, relPath)) allPrims.push(p);
     for (const p of extractFunctions(sf, repoKey, relPath)) allPrims.push(p);
     for (const p of extractVariables(sf, repoKey, relPath)) allPrims.push(p);
     for (const p of extractObjectLiteralApiClients(sf, repoKey, relPath)) allPrims.push(p);
     for (const p of extractRouteCalls(sf, repoKey, relPath)) allPrims.push(p);
+    metadata.set(relPath, extractPerFileMetadata(sf, repoPath, relPath, resolvedSpecs));
+    // Drop the AST. Subsequent L2 passes never touch sourceFiles again.
+    sf.forget();
   }
 
-  // L2 edge resolution passes
+  // ---- L2: AST-free edge resolution ----
   attachDefinesEdges(allPrims);
-  attachInheritanceEdges(allPrims, sourceFiles, repoKey, repoPath);
-  attachImportsEdges(allPrims, sourceFiles, repoKey, repoPath);
-  // calls + instantiates + reads/assigns share one per-fn descendant walk (#44).
-  attachCallAndVarAccessEdges(allPrims, sourceFiles, repoKey, repoPath);
-  attachTestsEdges(allPrims, sourceFiles, repoKey, repoPath);
+  attachInheritanceEdges(allPrims, metadata, repoKey);
+  attachImportsEdges(allPrims, metadata, repoKey);
+  // calls + instantiates + reads/assigns share one per-fn event-replay loop.
+  attachCallAndVarAccessEdges(allPrims, metadata, repoKey);
+  attachTestsEdges(allPrims, metadata);
 
   for (const p of allPrims) emit(p);
 }
