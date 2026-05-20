@@ -15,7 +15,7 @@ from depgraph.lib.path_filters import included
 from .canonical import canonical_id, structural_hash
 
 
-EXTRACTOR_TAG = "depgraph/extractors/python/extract.py@2026-05-20d"
+EXTRACTOR_TAG = "depgraph/extractors/python/extract.py@2026-05-20e"
 SCHEMA_VERSION = 2
 
 # Builtins commonly used as parameter / variable type annotations. When an
@@ -150,6 +150,13 @@ def extract_repo(
     _attach_decorator_edges(primitives, trees_by_path=trees_by_path,
                              imports_by_path=imports_by_path)
     _attach_tests_edges(primitives, trees_by_path=trees_by_path)
+    # SQLAlchemy ORM relationships + ForeignKey edges (#54). Runs AFTER
+    # imports / extends so the ORM model detector can chase the
+    # inheritance chain to a SQLAlchemy base and so `relationship(Cls)`
+    # / `relationship("Cls")` target lookups have the symbol indexes
+    # they need.
+    _attach_orm_edges(primitives, trees_by_path=trees_by_path,
+                       imports_by_path=imports_by_path)
 
     yield from primitives
 
@@ -1483,3 +1490,239 @@ def _callee_name_py(func: ast.expr) -> str | None:
         # e.g. obj.method — return just the method name for local lookup
         return func.attr
     return None
+
+
+# ---------------------------------------------------------------------------
+# L2 edge resolution — Task 3.8: SQLAlchemy ORM relationships + FK refs (#54)
+# ---------------------------------------------------------------------------
+
+def _attach_orm_edges(primitives: list[dict],
+                      *, trees_by_path: dict[str, ast.Module],
+                      imports_by_path: dict[str, dict[str, str]]) -> None:
+    """For every class that transitively extends a SQLAlchemy ORM base,
+    walk the class body and emit:
+
+      * `references_orm` edges (via=relationship_call) for every
+        `relationship(Target, ...)` or `relationship("Target", ...)` call
+        — the target is the related ORM class.
+      * `references_table` edges (via=foreign_key) for every
+        `ForeignKey("table.col")` argument — the target is the class
+        whose `__tablename__` matches the named table.
+
+    Resolution policy:
+      * Direct `relationship(Cls, ...)` — resolve via the file's
+        top-level symbol table and imports map (the same indexes the
+        inheritance / call passes use).
+      * String `relationship("Cls", ...)` — look up against the
+        corpus-wide `classname_to_id` index. On name collisions, prefer
+        a class in the same package directory; otherwise pick the first
+        deterministic match.
+      * `ForeignKey("table.col")` — look up against
+        `tablename_to_class_id` built once at pass start.
+
+    Targets that don't resolve are skipped silently (not even an
+    `external::unresolved::...` placeholder). Rationale: the ORM pass
+    is an enrichment — missing edges fall back to the existing
+    `extends` / `imports` story, and emitting a noisy placeholder for
+    every ambiguous string would dilute the signal the pass is supposed
+    to add.
+    """
+    # --- corpus-wide indexes -------------------------------------------------
+    classes_by_id: dict[str, dict] = {p["id"]: p for p in primitives
+                                       if p["primitive"] == "class"}
+    extends_targets_by_id: dict[str, list[str]] = {
+        p["id"]: [e["target"] for e in p.get("edges_out", [])
+                  if e.get("kind") == "extends"]
+        for p in primitives if p["primitive"] == "class"
+    }
+    # Top-level classes per file — used both for direct-name resolution
+    # within a file and to build the global classname_to_id index. Nested
+    # classes are intentionally excluded: SQLAlchemy models are always
+    # module-level in practice, and including nested classes would
+    # introduce false-positive collisions with project enum/helper names.
+    top_classes_by_path: dict[str, dict[str, str]] = {}
+    for p in primitives:
+        if p["primitive"] == "class" and p.get("owner") is None:
+            top_classes_by_path.setdefault(p["source"]["path"], {})[p["name"]] = p["id"]
+
+    # classname_to_id: collisions are kept as a list so the resolver can
+    # prefer same-package matches. Single-match names collapse to the
+    # one id.
+    classname_to_ids: dict[str, list[str]] = {}
+    for path, names in top_classes_by_path.items():
+        for name, cid in names.items():
+            classname_to_ids.setdefault(name, []).append(cid)
+
+    # tablename_to_class_id: read `__tablename__ = "..."` from each
+    # class's member variables. `_variable_primitives` already stores
+    # the RHS expression text on `signature.value_text`; we parse that
+    # string literal back out. Non-literal RHS (computed names) is
+    # skipped — the heuristic is "string literal or nothing".
+    tablename_to_class_id: dict[str, str] = {}
+    for p in primitives:
+        if p["primitive"] != "variable":
+            continue
+        if not p["name"].endswith(".__tablename__"):
+            continue
+        owner = p.get("owner")
+        if owner is None or owner not in classes_by_id:
+            continue
+        value_text = (p.get("signature") or {}).get("value_text")
+        if not value_text:
+            continue
+        try:
+            literal = ast.literal_eval(value_text)
+        except (ValueError, SyntaxError):
+            continue
+        if isinstance(literal, str):
+            # First definition wins — collisions are rare (two classes
+            # sharing `__tablename__` is a SQLAlchemy mapping error) and
+            # we don't want to emit ambiguous edges silently.
+            tablename_to_class_id.setdefault(literal, owner)
+
+    # --- iterate ORM model classes ------------------------------------------
+    # Lazy import to avoid circulars at module load (coverage_caveats has
+    # no upward deps but the convention in this file is local-import for
+    # cross-module helpers used in a single pass).
+    from depgraph.lib.coverage_caveats import is_sqlalchemy_model
+
+    for path, tree in trees_by_path.items():
+        file_top_classes = top_classes_by_path.get(path, {})
+        if not file_top_classes:
+            continue
+        file_imports = imports_by_path.get(path, {})
+
+        for node in tree.body:
+            if not isinstance(node, ast.ClassDef):
+                continue
+            class_id = file_top_classes.get(node.name)
+            if class_id is None:
+                continue
+            cls_prim = classes_by_id.get(class_id)
+            if cls_prim is None:
+                continue
+            if not is_sqlalchemy_model(cls_prim, extends_targets_by_id):
+                continue
+
+            # Walk every Call descendant of the class body. Class-level
+            # variable assignments and `mapped_column(..., ForeignKey(...))`
+            # nestings both surface here.
+            for sub in ast.walk(node):
+                if not isinstance(sub, ast.Call):
+                    continue
+                callee = _orm_callee_last_name(sub.func)
+                if callee == "relationship":
+                    edge = _resolve_orm_relationship(
+                        sub, path=path, source_class_id=class_id,
+                        file_top_classes=file_top_classes,
+                        file_imports=file_imports,
+                        classname_to_ids=classname_to_ids,
+                        classes_by_id=classes_by_id,
+                    )
+                    if edge is not None:
+                        cls_prim["edges_out"].append(edge)
+                elif callee == "ForeignKey":
+                    edge = _resolve_orm_foreign_key(
+                        sub, path=path,
+                        tablename_to_class_id=tablename_to_class_id,
+                    )
+                    if edge is not None:
+                        cls_prim["edges_out"].append(edge)
+
+
+def _orm_callee_last_name(func: ast.expr) -> str | None:
+    """Return the rightmost name of a Call's callee — covers
+    `relationship`, `orm.relationship`, `sqlalchemy.orm.relationship`,
+    and the same dotted-attribute shapes for `ForeignKey`. Returns None
+    for shapes that don't bottom out in a name (e.g. `f()()`)."""
+    if isinstance(func, ast.Name):
+        return func.id
+    if isinstance(func, ast.Attribute):
+        return func.attr
+    return None
+
+
+def _resolve_orm_relationship(call: ast.Call, *, path: str,
+                               source_class_id: str,
+                               file_top_classes: dict[str, str],
+                               file_imports: dict[str, str],
+                               classname_to_ids: dict[str, list[str]],
+                               classes_by_id: dict[str, dict]) -> dict | None:
+    """Resolve a `relationship(...)` call's first positional arg to a
+    target class id and return the edge dict — or None if nothing
+    class-shaped resolves."""
+    if not call.args:
+        return None
+    first = call.args[0]
+    target_id: str | None = None
+
+    if isinstance(first, ast.Name):
+        # `relationship(Boat, ...)` — Name in-scope.
+        candidate = file_top_classes.get(first.id) or file_imports.get(first.id)
+        if candidate and candidate in classes_by_id:
+            target_id = candidate
+    elif isinstance(first, ast.Constant) and isinstance(first.value, str):
+        # `relationship("Boat", ...)` — corpus-wide classname lookup.
+        target_id = _resolve_classname_string(
+            first.value,
+            source_path=path,
+            classname_to_ids=classname_to_ids,
+        )
+
+    if target_id is None or target_id == source_class_id:
+        return None
+    return {
+        "target": target_id, "kind": "references_orm",
+        "via": "relationship_call",
+        "where": f"{path}:{call.lineno}", "confidence": "exact",
+    }
+
+
+def _resolve_orm_foreign_key(call: ast.Call, *, path: str,
+                              tablename_to_class_id: dict[str, str]) -> dict | None:
+    """Resolve a `ForeignKey("table.col")` call's first arg to the
+    class id that owns `__tablename__ == "table"`. Returns None for
+    non-literal args, malformed strings, or unknown tables."""
+    if not call.args:
+        return None
+    first = call.args[0]
+    if not (isinstance(first, ast.Constant) and isinstance(first.value, str)):
+        return None
+    parts = first.value.split(".", 1)
+    if len(parts) < 1 or not parts[0]:
+        return None
+    table_name = parts[0]
+    target_id = tablename_to_class_id.get(table_name)
+    if target_id is None:
+        return None
+    return {
+        "target": target_id, "kind": "references_table",
+        "via": "foreign_key",
+        "where": f"{path}:{call.lineno}", "confidence": "exact",
+    }
+
+
+def _resolve_classname_string(name: str, *, source_path: str,
+                                classname_to_ids: dict[str, list[str]]) -> str | None:
+    """Resolve a string class name (`relationship("Boat", ...)`) to a
+    class id. On collisions prefer a class in the same package
+    directory as the source; fall back to the first id in the list
+    (deterministic — `classname_to_ids` is populated in primitive-
+    emission order, which is path-sorted)."""
+    ids = classname_to_ids.get(name) or []
+    if not ids:
+        return None
+    if len(ids) == 1:
+        return ids[0]
+    # Collision: prefer same-package directory.
+    src_dir = source_path.rsplit("/", 1)[0] if "/" in source_path else ""
+    for cid in ids:
+        # id shape: repo::path::Symbol — extract path segment.
+        parts = cid.split("::")
+        if len(parts) < 3:
+            continue
+        cand_path = parts[1]
+        cand_dir = cand_path.rsplit("/", 1)[0] if "/" in cand_path else ""
+        if cand_dir == src_dir:
+            return cid
+    return ids[0]

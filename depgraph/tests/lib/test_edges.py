@@ -6,7 +6,8 @@ from depgraph.lib.edges import (
 def test_edge_kinds_taxonomy_complete():
     expected = {
         "defines", "extends", "implements", "calls", "instantiates",
-        "references", "reads", "assigns", "decorates", "includes",
+        "references", "references_orm", "references_table",
+        "reads", "assigns", "decorates", "includes",
         "imports", "tests",
     }
     assert {k.value for k in EdgeKind} == expected

@@ -116,7 +116,7 @@ def _last_segment(target: str) -> str:
     return target.rsplit("::", 1)[-1] if target else ""
 
 
-def _is_sqlalchemy_model(primitive: dict, all_targets_by_id: dict[str, list[str]]) -> bool:
+def is_sqlalchemy_model(primitive: dict, all_targets_by_id: dict[str, list[str]]) -> bool:
     """A class is an ORM model if it `extends` a SQLAlchemy base directly
     or transitively. Walks the in-corpus inheritance chain by following
     `extends` edges through the primitives map; bottoms out either at a
@@ -206,9 +206,12 @@ def stamp_caveats(primitives: list[dict]) -> int:
     stamped_count = 0
     for p in primitives:
         caveats: set[str] = set(p.get("coverage_caveats") or [])
-        if _is_sqlalchemy_model(p, by_id):
-            caveats.add("orm_relationships_not_extracted")
-            caveats.add("fk_references_not_extracted")
+        # SQLAlchemy ORM relationships and ForeignKey references are now
+        # extracted by `_attach_orm_edges` in the Python extractor (#54),
+        # so we no longer auto-stamp `orm_relationships_not_extracted` /
+        # `fk_references_not_extracted` on every model. The registry
+        # entries remain for backwards compatibility with dossiers that
+        # already cite them.
         if _is_pydantic_model(p, by_id):
             caveats.add("pydantic_refs_not_extracted")
         if _is_fastapi_endpoint(p):

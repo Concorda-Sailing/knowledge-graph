@@ -16,6 +16,14 @@ class EdgeKind(str, Enum):
     CALLS = "calls"
     INSTANTIATES = "instantiates"
     REFERENCES = "references"
+    # SQLAlchemy ORM seams (#54). `references_orm` is the
+    # `relationship(...)` edge; `references_table` is the
+    # `ForeignKey("table.col")` edge whose target is the class that
+    # owns the named `__tablename__`. Both run class -> class because
+    # the relevant target in the corpus is the model class, not the
+    # raw table primitive (which doesn't exist in v2 yet).
+    REFERENCES_ORM = "references_orm"
+    REFERENCES_TABLE = "references_table"
     READS = "reads"
     ASSIGNS = "assigns"
     DECORATES = "decorates"
@@ -51,6 +59,8 @@ EDGE_KIND_RULES: dict[str, dict[str, list[str]]] = {
     "calls":        {"source": ["function"], "target": ["function"]},
     "instantiates": {"source": ["function"], "target": ["class"]},
     "references":   {"source": ["any"], "target": ["any"]},
+    "references_orm":   {"source": ["class"], "target": ["class"]},
+    "references_table": {"source": ["class"], "target": ["class"]},
     "reads":        {"source": ["function"], "target": ["variable", "class"]},
     "assigns":      {"source": ["function"], "target": ["variable"]},
     "decorates":    {"source": ["function", "class", "variable"],
