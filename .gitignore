@@ -16,3 +16,6 @@ logigraph/logigraph.egg-info/
 
 # pytest cache
 .pytest_cache/
+
+# harness-managed agent worktrees
+.claude/
