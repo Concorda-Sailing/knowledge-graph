@@ -162,6 +162,70 @@ def test_assigns_edge_ts():
     assert any(e["target"] == "fixture::src/file.ts::globalCount" for e in assigns)
 
 
+def test_property_key_not_treated_as_read_ts():
+    """`return { globalCount: 42 }` — the `globalCount` is a property
+    key, not a read of the module-scope var with that name."""
+    prims = run_extractor("references", which="edges")
+    fn = next(p for p in prims if p["name"] == "propertyKey")
+    reads = [e for e in fn["edges_out"] if e["kind"] == "reads"]
+    assert not any(e["target"] == "fixture::src/file.ts::globalCount"
+                   for e in reads), reads
+
+
+def test_property_access_not_treated_as_read_ts():
+    """`obj.globalCount` — the `.globalCount` is a property name, not
+    a read of the module-scope var."""
+    prims = run_extractor("references", which="edges")
+    fn = next(p for p in prims if p["name"] == "propertyAccess")
+    reads = [e for e in fn["edges_out"] if e["kind"] == "reads"]
+    assert not any(e["target"] == "fixture::src/file.ts::globalCount"
+                   for e in reads), reads
+
+
+def test_parameter_name_not_treated_as_read_ts():
+    """`function f(globalCount: number)` — the parameter declaration
+    site is a name slot, not a read.
+
+    The BODY `return globalCount` still emits a read because the
+    extractor doesn't do scope analysis (the parameter actually shadows
+    the module-scope var — pre-existing limitation). The fix here pins
+    only that the DECLARATION site itself doesn't emit a spurious read.
+    """
+    prims = run_extractor("references", which="edges")
+    fn = next(p for p in prims if p["name"] == "parameterShadow")
+    reads = [e for e in fn["edges_out"]
+             if e["kind"] == "reads"
+             and e["target"] == "fixture::src/file.ts::globalCount"]
+    # Without the fix: 2 reads (declaration line 25 + body line 26).
+    # With the fix: 1 read (body only).
+    assert len(reads) == 1, f"expected 1 read (body only), got {len(reads)}: {reads}"
+
+
+def test_destructuring_binding_not_treated_as_read_ts():
+    """`const { globalCount } = obj` — the binding-site Identifier is a
+    name slot, not a read of the module-scope var (it creates a new
+    local binding)."""
+    prims = run_extractor("references", which="edges")
+    fn = next(p for p in prims if p["name"] == "destructureBinding")
+    reads = [e for e in fn["edges_out"]
+             if e["kind"] == "reads"
+             and e["target"] == "fixture::src/file.ts::globalCount"]
+    # Without the fix: 2 reads (destructure line 32 + body line 33).
+    # With the fix: 1 read (body only — pre-existing scope-blind read).
+    assert len(reads) == 1, f"expected 1 read (body only), got {len(reads)}: {reads}"
+
+
+def test_shorthand_property_is_real_read_ts():
+    """`return { globalCount }` (shorthand) — the value comes from
+    scope, so this IS a real read of the module-scope var. Verifies
+    the guard doesn't over-skip."""
+    prims = run_extractor("references", which="edges")
+    fn = next(p for p in prims if p["name"] == "shorthandRead")
+    reads = [e for e in fn["edges_out"] if e["kind"] == "reads"]
+    assert any(e["target"] == "fixture::src/file.ts::globalCount"
+               for e in reads), reads
+
+
 # ---------------------------------------------------------------------------
 # Task 3.6: tests edges (assertion-scoped, TS)
 # ---------------------------------------------------------------------------

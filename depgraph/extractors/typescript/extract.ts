@@ -1153,10 +1153,40 @@ function attachCallAndVarAccessEdges(
         // (Identifier matches a huge fraction of nodes; only emit when the
         // file actually has module-scope vars).
         if (localVars && Node.isIdentifier(node)) {
+          // Skip identifiers that occupy a "name slot" in their parent —
+          // they don't read a binding, they're a syntactic name. Most
+          // common false positive: `obj.x` where `x` matches a module-
+          // scope var name would emit a spurious `reads` edge. Same for
+          // property/method declarations, parameters, and destructuring
+          // binding sites.
+          const parent = node.getParent();
+          if (parent) {
+            if (Node.isPropertyAccessExpression(parent) && parent.getNameNode() === node) return;
+            if (Node.isPropertyAssignment(parent) && parent.getNameNode() === node) return;
+            if (Node.isShorthandPropertyAssignment(parent) && parent.getNameNode() === node) {
+              // `{x}` — shorthand is a real read of `x`; fall through to
+              // the emit path below.
+            } else if (Node.isPropertyDeclaration(parent) && parent.getNameNode() === node) {
+              return;
+            } else if (Node.isPropertySignature(parent) && parent.getNameNode() === node) {
+              return;
+            } else if (Node.isMethodDeclaration(parent) && parent.getNameNode() === node) {
+              return;
+            } else if (Node.isMethodSignature(parent) && parent.getNameNode() === node) {
+              return;
+            } else if (Node.isParameterDeclaration(parent) && parent.getNameNode() === node) {
+              return;
+            } else if (Node.isBindingElement(parent) && parent.getNameNode() === node) {
+              return;
+            } else if (Node.isImportSpecifier(parent)) {
+              return;
+            } else if (Node.isExportSpecifier(parent)) {
+              return;
+            }
+          }
           const idName = node.getText();
           const varId = localVars.get(idName);
           if (varId) {
-            const parent = node.getParent();
             let isWrite = false;
             if (parent && Node.isBinaryExpression(parent)) {
               const op = parent.getOperatorToken().getText();
