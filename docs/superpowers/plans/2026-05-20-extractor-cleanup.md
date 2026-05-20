@@ -50,7 +50,7 @@ Legend: `pending`, `dispatched`, `[x]` (done with sha), `[FAIL]`.
 |---|---|---|---|---|---|
 | A.1 | 1 | #83 | py-extractor edge cases (walrus, vararg, multi-attr, builtin extends) | [x] | 0017cea |
 | A.2 | 2 | #54 | SQLAlchemy ORM extractor | [x] | c47e3b4 |
-| A.3 | 2 | #45 | non-deterministic structural_hash | dispatched | agent a3b722f5 (A.2 finished safely; canonical.py untouched) |
+| A.3 | 2 | #45 | non-deterministic structural_hash | [x] | 93b5b6c (no repro found; expanded determinism gate as catch-net) |
 | B.1 | 1 | #82 | TS scope shadowing in reads/assigns | [x] | 1c01ec0 (merged w/ 9a6a93f) |
 | B.2 | 2 | #47 | TS sf.forget streaming | dispatched | agent a475c8e5 (worktree) |
 | C.1 | 1 | #57 | Dossier-draft generate-then-classify split | [x] | 0887b89 + ea3c2c2 (signature fix) |
