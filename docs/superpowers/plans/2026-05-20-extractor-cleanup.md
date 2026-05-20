@@ -48,20 +48,20 @@ Legend: `pending`, `dispatched`, `[x]` (done with sha), `[FAIL]`.
 
 | Lane | Wave | Issue | Title | Status | Notes |
 |---|---|---|---|---|---|
-| A.1 | 1 | #83 | py-extractor edge cases (walrus, vararg, multi-attr, builtin extends) | dispatched | agent af5eeba6 (worktree) |
-| A.2 | 2 | #54 | SQLAlchemy ORM extractor | pending | depends on A.1 |
-| A.3 | 2 | #45 | non-deterministic structural_hash | pending | investigation; can parallel A.2 if it touches canonical.py only |
-| B.1 | 1 | #82 | TS scope shadowing in reads/assigns | dispatched | agent a9ce3f50 (worktree) |
-| B.2 | 2 | #47 | TS sf.forget streaming | pending | depends on B.1 |
-| C.1 | 1 | #57 | Dossier-draft generate-then-classify split | dispatched | agent a9c2e282 (worktree) |
-| C.2 | 2 | #58 | Stale-dossier reverse-edge drift | pending | likely tiny after #57 |
-| D.1 | 1 | #78 | Coverage caveat detector for typed_receiver_unresolved | dispatched | agent a37b95ea (worktree) |
+| A.1 | 1 | #83 | py-extractor edge cases (walrus, vararg, multi-attr, builtin extends) | [x] | 0017cea |
+| A.2 | 2 | #54 | SQLAlchemy ORM extractor | pending | A.1 done → eligible |
+| A.3 | 2 | #45 | non-deterministic structural_hash | pending | investigation; can parallel A.2 |
+| B.1 | 1 | #82 | TS scope shadowing in reads/assigns | [x] | 1c01ec0 (merged w/ 9a6a93f) |
+| B.2 | 2 | #47 | TS sf.forget streaming | pending | B.1 done → eligible |
+| C.1 | 1 | #57 | Dossier-draft generate-then-classify split | [x] | 0887b89 + ea3c2c2 (signature fix) |
+| C.2 | 2 | #58 | Stale-dossier reverse-edge drift | pending | C.1 done → eligible |
+| D.1 | 1 | #78 | Coverage caveat detector for typed_receiver_unresolved | [x] | 6b2c429 |
 | D.2 | 1 | #79 | Wild-corpus probe infrastructure | pending | NEEDS HUMAN: repo curation |
-| D.3 | 1 | #80 | Test convention gate | dispatched | agent aac30deb (worktree) |
-| D.4 | 1 | #81 | TS memory budget gate | dispatched | agent a7d76f3b (worktree) |
+| D.3 | 1 | #80 | Test convention gate | [x] | 677695b (rename + gate in one) |
+| D.4 | 1 | #81 | TS memory budget gate | [x] | 83f4c39 |
 | D.5 | 1 | #52 | Tests included with kind=test tag | pending | NEEDS HUMAN: pick Option A/B/C |
-| E.1 | 1 | #38-E | Stale-dossier corpus pass wired into regen | dispatched | agent ad5a3e39 (worktree) |
-| E.2 | 1 | #38-G | Legacy field stripping in regen | pending | serialize after E.1 (regen.py conflict) |
+| E.1 | 1 | #38-E | Stale-dossier corpus pass wired into regen | [x] | 0bf9be2 |
+| E.2 | 1 | #38-G | Legacy field stripping in regen | pending | E.1 done → eligible |
 | F.1 | 3 | #53 | Confidence taxonomy redesign | pending | run last; serializer |
 
 **Lanes**:
@@ -513,3 +513,9 @@ dispatched / completed.)
   - A.1 #83, B.1 #82, C.1 #57, D.1 #78, D.3 #80, D.4 #81, E.1 #38-E
   - Skipped: D.2 #79 (NEEDS HUMAN), D.5 #52 (NEEDS HUMAN), E.2 #38-G (E lane conflict)
   - Awaiting agent completion notifications
+- 2026-05-20 — Wave 1 complete: all 7 agents returned + cherry-picked + tests green
+  - D.3 came back uncommitted (real offender found); merged + 677695b
+  - B.1 conflicts with prior 9a6a93f tests; merged scope-tracking + name-slot guard
+  - C.1 needed test signature fix (agent base predated #55/#56 kwargs); ea3c2c2
+  - Full suite: 1114 passed, 4 skipped (was 1071 — +43 net new tests)
+  - Wave 2 unblocked: A.2 #54, A.3 #45, B.2 #47, C.2 #58. Plus E.2 #38-G (E.1 done).
