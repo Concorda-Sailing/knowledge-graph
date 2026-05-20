@@ -49,19 +49,19 @@ Legend: `pending`, `dispatched`, `[x]` (done with sha), `[FAIL]`.
 | Lane | Wave | Issue | Title | Status | Notes |
 |---|---|---|---|---|---|
 | A.1 | 1 | #83 | py-extractor edge cases (walrus, vararg, multi-attr, builtin extends) | [x] | 0017cea |
-| A.2 | 2 | #54 | SQLAlchemy ORM extractor | pending | A.1 done → eligible |
-| A.3 | 2 | #45 | non-deterministic structural_hash | pending | investigation; can parallel A.2 |
+| A.2 | 2 | #54 | SQLAlchemy ORM extractor | dispatched | agent a4a93c7f (worktree) |
+| A.3 | 2 | #45 | non-deterministic structural_hash | pending | deferred: may overlap A.2 on extract.py / canonical.py |
 | B.1 | 1 | #82 | TS scope shadowing in reads/assigns | [x] | 1c01ec0 (merged w/ 9a6a93f) |
-| B.2 | 2 | #47 | TS sf.forget streaming | pending | B.1 done → eligible |
+| B.2 | 2 | #47 | TS sf.forget streaming | dispatched | agent a475c8e5 (worktree) |
 | C.1 | 1 | #57 | Dossier-draft generate-then-classify split | [x] | 0887b89 + ea3c2c2 (signature fix) |
-| C.2 | 2 | #58 | Stale-dossier reverse-edge drift | pending | C.1 done → eligible |
+| C.2 | 2 | #58 | Stale-dossier reverse-edge drift | dispatched | agent abc045c8 (worktree) |
 | D.1 | 1 | #78 | Coverage caveat detector for typed_receiver_unresolved | [x] | 6b2c429 |
 | D.2 | 1 | #79 | Wild-corpus probe infrastructure | pending | NEEDS HUMAN: repo curation |
 | D.3 | 1 | #80 | Test convention gate | [x] | 677695b (rename + gate in one) |
 | D.4 | 1 | #81 | TS memory budget gate | [x] | 83f4c39 |
 | D.5 | 1 | #52 | Tests included with kind=test tag | pending | NEEDS HUMAN: pick Option A/B/C |
 | E.1 | 1 | #38-E | Stale-dossier corpus pass wired into regen | [x] | 0bf9be2 |
-| E.2 | 1 | #38-G | Legacy field stripping in regen | pending | E.1 done → eligible |
+| E.2 | 1 | #38-G | Legacy field stripping in regen | dispatched | agent a4ba4312 (worktree) |
 | F.1 | 3 | #53 | Confidence taxonomy redesign | pending | run last; serializer |
 
 **Lanes**:
@@ -519,3 +519,8 @@ dispatched / completed.)
   - C.1 needed test signature fix (agent base predated #55/#56 kwargs); ea3c2c2
   - Full suite: 1114 passed, 4 skipped (was 1071 — +43 net new tests)
   - Wave 2 unblocked: A.2 #54, A.3 #45, B.2 #47, C.2 #58. Plus E.2 #38-G (E.1 done).
+- 2026-05-20 — Wave 2 firing 1: dispatched 4 agents
+  - A.2 #54 SQLAlchemy ORM, B.2 #47 TS sf.forget, C.2 #58 stale-dossier, E.2 #38-G
+  - Deferred A.3 #45 (might overlap A.2 on canonical.py)
+  - Each agent prompt now starts with a `git reset --hard main` step
+    to avoid the "old base" issue that bit several Wave 1 agents
