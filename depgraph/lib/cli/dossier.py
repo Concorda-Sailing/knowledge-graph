@@ -190,6 +190,35 @@ def cmd_dossier_draft(args: argparse.Namespace, ctx: Context) -> int:
     read_start = max(1, line - 5)
     read_end = end_line + 5
 
+    # Pass A — structural classifier. Deterministic, no LLM. Runs before
+    # the prose pass (Pass B) and feeds its output in as grounded facts
+    # so the prose head only summarizes, never classifies. See #57.
+    from depgraph.lib.summarizer.classifier import (
+        format_classifier_block,
+        run_classifier,
+    )
+    # Build a `nodes_by_id` map only when we already have to scan the
+    # corpus (auto path) — otherwise classifier's test-coverage hint
+    # degrades to "unknown" without breaking the rest of Pass A.
+    classifier_nodes_by_id: dict[str, dict] = {}
+    if auto:
+        for nf in ctx.NODES.rglob("*.json"):
+            if nf.name.startswith("_") or any(p.startswith("_") for p in nf.parts):
+                continue
+            try:
+                d = json.loads(nf.read_text())
+            except (OSError, json.JSONDecodeError):
+                continue
+            if "id" in d:
+                classifier_nodes_by_id[d["id"]] = d
+    classifier_result = run_classifier(
+        node,
+        dependents_index=deps_idx,
+        nodes_by_id=classifier_nodes_by_id,
+        repo_root=(repo_info["path"] if repo_info else None),
+    )
+    classifier_block = format_classifier_block(classifier_result)
+
     src_excerpt = "(skipped: tools mode)" if tools_mode else "(unavailable)"
     deps_str = "(skipped: tools mode — call `dependents_of`)" if tools_mode else "  (none)"
     deps_more = ""
@@ -320,6 +349,7 @@ def cmd_dossier_draft(args: argparse.Namespace, ctx: Context) -> int:
             read_start=read_start, read_end=read_end, n_deps=n_deps,
             n_out=n_out, caveats_str=caveats_str,
             dossier_path=dossier_path, ctx=ctx,
+            classifier_block=classifier_block,
         )
     else:
         prompt = _build_full_prompt(
@@ -329,6 +359,7 @@ def cmd_dossier_draft(args: argparse.Namespace, ctx: Context) -> int:
             git_log=git_log, adj_str=adj_str, rules_str=rules_str,
             caveats_str=caveats_str,
             dossier_path=dossier_path, ctx=ctx,
+            classifier_block=classifier_block,
         )
 
     if not auto:
@@ -408,6 +439,21 @@ def cmd_dossier_draft(args: argparse.Namespace, ctx: Context) -> int:
         f"spec={model_cfg.spec} tools={'on' if tools_defs else 'off'}",
         file=sys.stderr,
     )
+    # Surface Pass A's structured output for observability. The whole
+    # point of the two-pass split (#57) is that this data is machine-
+    # checkable; printing it here makes that visible at run-time too,
+    # not just inside the prompt.
+    print(
+        f"--- dossier-draft --auto: Pass A "
+        f"node_kind={classifier_result.node_kind} "
+        f"inbound={len(classifier_result.salient_inbound_edges)} "
+        f"outbound={len(classifier_result.salient_outbound_edges)} "
+        f"test_hint={classifier_result.test_coverage_hint} "
+        f"git=fix:{classifier_result.git_log_signal.recent_fix},"
+        f"revert:{classifier_result.git_log_signal.recent_revert},"
+        f"churn:{classifier_result.git_log_signal.high_churn}",
+        file=sys.stderr,
+    )
     try:
         result = run_agent(
             client,
@@ -446,10 +492,16 @@ _GROUNDING_AND_SECTIONS = """## GROUNDING RULES (read before drafting)
 These rules override your priors. Violating them makes the dossier
 worse than empty.
 
+0. **The Pass A structural facts above are authoritative.** Your job
+   is to write prose grounded in those facts, not to second-guess them.
+   If your prose says "fan-out is high" but salient_inbound_edges has
+   3 entries, the prose is wrong. If your prose mentions test coverage
+   but test_coverage_hint is "unknown", say "unknown" — do not infer.
+
 1. **Only assert what your evidence supports.** Your evidence base is
-   either the pre-loaded sections in this prompt or the results of
-   tool calls you've made this turn. If a claim cannot be traced to
-   one of those, do not write it.
+   either the pre-loaded sections in this prompt (including the Pass A
+   structured facts) or the results of tool calls you've made this turn.
+   If a claim cannot be traced to one of those, do not write it.
 
 2. **No invented commit hashes.** If you cite a commit, it MUST appear
    verbatim in your evidence (the "Recent commits" section, or a
@@ -608,11 +660,18 @@ def _build_thin_prompt(
     caveats_str: str,
     dossier_path: Path,
     ctx: Context,
+    classifier_block: str = "",
 ) -> str:
     """Tool-driven prompt: deliberately omits source/deps/git so the
     agent loop has to fetch via tools before drafting. Without the
     explicit MUST-call list, the model is content to draft from
-    priors — see issue #48."""
+    priors — see issue #48.
+
+    `classifier_block` is the Pass A structural output (#57) embedded
+    as ground truth before the exploration instructions. It tells the
+    prose head what the structural facts are so it can summarize them
+    instead of re-deriving them — and contradict-the-facts is a more
+    obvious failure mode than fabricate-from-priors."""
     return f"""You are drafting a depgraph dossier for a code node. You
 have tools and you MUST use them. This prompt deliberately does not
 pre-load source, callers, or git history — fetching is the job.
@@ -627,6 +686,8 @@ pre-load source, callers, or git history — fetching is the job.
 
 # Coverage caveats (graph blind spots stamped for this node)
 {caveats_str}
+
+{classifier_block}
 
 # Required exploration (do this BEFORE writing prose)
 
@@ -739,11 +800,16 @@ def _build_full_prompt(
     caveats_str: str,
     dossier_path: Path,
     ctx: Context,
+    classifier_block: str = "",
 ) -> str:
     """Pre-loaded prompt: bakes source, deps, git log, adjacent
     dossiers into the prompt itself. Used when the model has no tool
     access (one-shot --auto, or the print-to-stdout mode where a
-    human will paste the prompt into another tool)."""
+    human will paste the prompt into another tool).
+
+    `classifier_block` is the Pass A structural output (#57). Its rank-
+    ordered salient_inbound_edges supplement the raw `deps_str` list:
+    the same data, but pre-classified for the prose head."""
     return f"""You are drafting a depgraph dossier for a code node. The
 dossier will be injected at edit time to give future LLM collaborators
 the *intent* and *gotchas* that source code alone doesn't carry.
@@ -753,6 +819,8 @@ the *intent* and *gotchas* that source code alone doesn't carry.
 - kind: {node.get("kind","?")}
 - source: {repo}/{rel}:{line}
 - structural_hash: {node.get("structural_hash","?")[:12]}
+
+{classifier_block}
 
 # Source excerpt (around line {line})
 ```

@@ -15,6 +15,13 @@ factory, and the built-in tool registry.
 """
 from depgraph.lib.summarizer.agent import AgentResult, run_agent
 from depgraph.lib.summarizer.base import BaseLLMClient
+from depgraph.lib.summarizer.classifier import (
+    ClassifierResult,
+    GitLogSignal,
+    SalientEdge,
+    format_classifier_block,
+    run_classifier,
+)
 from depgraph.lib.summarizer.config import ModelConfig, SummarizerConfig, load_models
 from depgraph.lib.summarizer.factory import build_client
 from depgraph.lib.summarizer.tools import (
@@ -33,9 +40,12 @@ from depgraph.lib.summarizer.types import (
 __all__ = [
     "AgentResult",
     "BaseLLMClient",
+    "ClassifierResult",
+    "GitLogSignal",
     "LLMMessage",
     "LLMResponse",
     "ModelConfig",
+    "SalientEdge",
     "SummarizerConfig",
     "ToolCall",
     "ToolDefinition",
@@ -44,6 +54,8 @@ __all__ = [
     "build_client",
     "builtin_tool_definitions",
     "builtin_tool_handlers",
+    "format_classifier_block",
     "load_models",
     "run_agent",
+    "run_classifier",
 ]
