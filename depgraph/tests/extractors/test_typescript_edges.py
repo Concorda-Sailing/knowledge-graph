@@ -184,35 +184,27 @@ def test_property_access_not_treated_as_read_ts():
 
 def test_parameter_name_not_treated_as_read_ts():
     """`function f(globalCount: number)` — the parameter declaration
-    site is a name slot, not a read.
-
-    The BODY `return globalCount` still emits a read because the
-    extractor doesn't do scope analysis (the parameter actually shadows
-    the module-scope var — pre-existing limitation). The fix here pins
-    only that the DECLARATION site itself doesn't emit a spurious read.
-    """
+    site is a name slot, not a read. The body's `return globalCount` is
+    also suppressed by the scope-tracking pass (#82) since the parameter
+    shadows the module-scope var."""
     prims = run_extractor("references", which="edges")
     fn = next(p for p in prims if p["name"] == "parameterShadow")
     reads = [e for e in fn["edges_out"]
              if e["kind"] == "reads"
              and e["target"] == "fixture::src/file.ts::globalCount"]
-    # Without the fix: 2 reads (declaration line 25 + body line 26).
-    # With the fix: 1 read (body only).
-    assert len(reads) == 1, f"expected 1 read (body only), got {len(reads)}: {reads}"
+    assert len(reads) == 0, f"expected 0 reads (shadowed), got {len(reads)}: {reads}"
 
 
 def test_destructuring_binding_not_treated_as_read_ts():
-    """`const { globalCount } = obj` — the binding-site Identifier is a
-    name slot, not a read of the module-scope var (it creates a new
-    local binding)."""
+    """`const { globalCount } = obj` — the binding site is a name slot;
+    the body read of the local binding is suppressed by scope tracking
+    (#82)."""
     prims = run_extractor("references", which="edges")
     fn = next(p for p in prims if p["name"] == "destructureBinding")
     reads = [e for e in fn["edges_out"]
              if e["kind"] == "reads"
              and e["target"] == "fixture::src/file.ts::globalCount"]
-    # Without the fix: 2 reads (destructure line 32 + body line 33).
-    # With the fix: 1 read (body only — pre-existing scope-blind read).
-    assert len(reads) == 1, f"expected 1 read (body only), got {len(reads)}: {reads}"
+    assert len(reads) == 0, f"expected 0 reads (shadowed), got {len(reads)}: {reads}"
 
 
 def test_shorthand_property_is_real_read_ts():
@@ -224,6 +216,38 @@ def test_shorthand_property_is_real_read_ts():
     reads = [e for e in fn["edges_out"] if e["kind"] == "reads"]
     assert any(e["target"] == "fixture::src/file.ts::globalCount"
                for e in reads), reads
+
+
+# ---------------------------------------------------------------------------
+# Issue #82: scope-shadowing in reads/assigns
+# ---------------------------------------------------------------------------
+
+def test_parameter_shadowing_suppresses_reads_edge_ts():
+    """A function parameter named the same as a module-scope var must NOT
+    cause the body's reference to the parameter to emit a reads edge
+    against the module-scope var."""
+    prims = run_extractor("references", which="edges")
+    fn = next(p for p in prims if p["name"] == "paramShadow")
+    reads = [e for e in fn["edges_out"] if e["kind"] == "reads"]
+    assert not any(e["target"] == "fixture::src/file.ts::value" for e in reads), (
+        f"parameter `value` shadows module var `value`; the body's read of "
+        f"the parameter must not emit a reads edge to the module var. "
+        f"Got: {reads}"
+    )
+
+
+def test_destructure_binding_shadowing_suppresses_reads_edge_ts():
+    """A destructured local binding (`const { label } = obj`) named the same
+    as a module-scope var must NOT cause the subsequent body reference to
+    emit a reads edge against the module-scope var."""
+    prims = run_extractor("references", which="edges")
+    fn = next(p for p in prims if p["name"] == "destructureShadow")
+    reads = [e for e in fn["edges_out"] if e["kind"] == "reads"]
+    assert not any(e["target"] == "fixture::src/file.ts::label" for e in reads), (
+        f"destructured local `label` shadows module var `label`; the body's "
+        f"read of the local must not emit a reads edge to the module var. "
+        f"Got: {reads}"
+    )
 
 
 # ---------------------------------------------------------------------------

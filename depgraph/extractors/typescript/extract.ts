@@ -985,6 +985,150 @@ function attachImportsEdges(
 }
 
 // ---------------------------------------------------------------------------
+// Scope tracking for reads/assigns shadowing (#82).
+//
+// The reads/assigns pass matches every Identifier in a function body against
+// the file's module-scope var table. Without scope tracking, a parameter or
+// local binding that shadows a module-scope var causes the body's references
+// to the local to wrongly emit edges against the module var. We avoid that by
+// (a) collecting per-scope binding sets ahead of the descendant walk and
+// (b) at each candidate Identifier, walking its ancestors up to the fn root
+// and skipping if any enclosing scope binds the name.
+// ---------------------------------------------------------------------------
+
+function isScopeNode(n: Node): boolean {
+  return (
+    Node.isFunctionDeclaration(n) ||
+    Node.isFunctionExpression(n) ||
+    Node.isArrowFunction(n) ||
+    Node.isMethodDeclaration(n) ||
+    Node.isConstructorDeclaration(n) ||
+    Node.isGetAccessorDeclaration(n) ||
+    Node.isSetAccessorDeclaration(n) ||
+    Node.isBlock(n) ||
+    Node.isForStatement(n) ||
+    Node.isForInStatement(n) ||
+    Node.isForOfStatement(n) ||
+    Node.isCatchClause(n)
+  );
+}
+
+/**
+ * Build a `scope-node -> Set<bound-name>` map for the given function. We treat
+ * fnNode itself as a scope (so its parameters land there) and recognize blocks
+ * / for-statements / catch clauses / nested functions as inner scopes. Both
+ * plain identifier bindings (`const x =`, `function f(x)`) and destructure
+ * bindings (`const {x} =`, `function f({x})`) contribute names; the
+ * BindingElement visitor handles the latter recursively.
+ *
+ * `var` is technically hoisted to function scope, but treating it as
+ * block-scoped here is conservative for our purpose (suppressing a read edge):
+ * if the name is bound *anywhere* on the ancestor chain we skip, which is
+ * still correct semantically.
+ */
+function collectScopeBindings(fnNode: Node): Map<Node, Set<string>> {
+  const scopeBindings = new Map<Node, Set<string>>();
+
+  const enclosingScope = (n: Node): Node | undefined => {
+    let cur: Node | undefined = n.getParent();
+    while (cur) {
+      if (cur === fnNode || isScopeNode(cur)) return cur;
+      cur = cur.getParent();
+    }
+    return undefined;
+  };
+
+  const addBinding = (scope: Node, name: string): void => {
+    let s = scopeBindings.get(scope);
+    if (!s) {
+      s = new Set();
+      scopeBindings.set(scope, s);
+    }
+    s.add(name);
+  };
+
+  // Pre-seed fnNode so parameters always have a home even if no other
+  // bindings appear inside the body.
+  scopeBindings.set(fnNode, new Set());
+
+  fnNode.forEachDescendant?.((node: Node) => {
+    // Parameters of the outer fnNode and of any nested function-like:
+    // bound in the enclosing function scope.
+    if (Node.isParameterDeclaration(node)) {
+      const nameNode = node.getNameNode();
+      if (Node.isIdentifier(nameNode)) {
+        const scope = enclosingScope(node);
+        if (scope) addBinding(scope, nameNode.getText());
+      }
+      // Destructure patterns inside the parameter are walked separately as
+      // BindingElement descendants below.
+      return;
+    }
+
+    // `const x = ...`, `let x = ...`, `var x = ...`, and the bound identifier
+    // in a `for (let x of ...)` initializer. The VariableDeclaration's
+    // enclosing scope is the containing block / for-statement / catch /
+    // function — exactly where the binding becomes visible.
+    if (Node.isVariableDeclaration(node)) {
+      const nameNode = node.getNameNode();
+      if (Node.isIdentifier(nameNode)) {
+        const scope = enclosingScope(node);
+        if (scope) addBinding(scope, nameNode.getText());
+      }
+      return;
+    }
+
+    // Each destructure binding: `const { name } = obj`, `function f({ name })`,
+    // nested patterns, array patterns. BindingElement's `getNameNode()` can
+    // itself be a BindingPattern when nested; the outer descendant walk picks
+    // up the inner BindingElements separately.
+    if (Node.isBindingElement(node)) {
+      const nameNode = node.getNameNode();
+      if (Node.isIdentifier(nameNode)) {
+        const scope = enclosingScope(node);
+        if (scope) addBinding(scope, nameNode.getText());
+      }
+      return;
+    }
+
+    // `catch (e) { ... }` — bind e in the CatchClause's own scope.
+    if (Node.isCatchClause(node)) {
+      const decl = node.getVariableDeclaration();
+      if (decl) {
+        const nameNode = decl.getNameNode();
+        if (Node.isIdentifier(nameNode)) {
+          addBinding(node, nameNode.getText());
+        }
+      }
+      return;
+    }
+  });
+
+  return scopeBindings;
+}
+
+/**
+ * True if `idNode` (an Identifier whose text matches a module-scope var name)
+ * actually resolves to a local binding in some enclosing scope of fnNode,
+ * rather than to the module-scope var.
+ */
+function isLocallyBound(
+  idNode: Node,
+  fnNode: Node,
+  name: string,
+  scopeBindings: Map<Node, Set<string>>,
+): boolean {
+  let cur: Node | undefined = idNode.getParent();
+  while (cur) {
+    const names = scopeBindings.get(cur);
+    if (names?.has(name)) return true;
+    if (cur === fnNode) return false;
+    cur = cur.getParent();
+  }
+  return false;
+}
+
+// ---------------------------------------------------------------------------
 // L2 edge resolution — Task 3.4/3.5: calls + instantiates (intra-fn type
 // binding) + reads/assigns. Combined into a single per-function descendant
 // walk so the AST is traversed once per fn instead of twice (#44 — fewer
@@ -1136,6 +1280,15 @@ function attachCallAndVarAccessEdges(
         if (cid) varTypes.set(param.getName(), cid);
       }
 
+      // Scope-bindings map for shadowing detection (#82). Built once per fn so
+      // the identifier-read pass can skip names that resolve to a function-scope
+      // parameter / local rather than the module-scope var of the same name.
+      // Only computed when the file actually has module-scope vars — otherwise
+      // there's nothing to potentially shadow.
+      const scopeBindings = localVars
+        ? collectScopeBindings(fnNode as Node)
+        : undefined;
+
       // Visitor walk: getDescendants() would materialize every wrapper Node in
       // the function body up-front, holding all of them resident until the
       // outer for-loop finished — on large codebases that was a primary OOM
@@ -1187,6 +1340,13 @@ function attachCallAndVarAccessEdges(
           const idName = node.getText();
           const varId = localVars.get(idName);
           if (varId) {
+            // Scope shadowing (#82): if this identifier resolves to a local
+            // binding (parameter, let/const/var, destructure, catch var) in
+            // any enclosing function/block scope, it is NOT a reference to
+            // the module-scope var of the same name. Skip without emitting.
+            if (scopeBindings && isLocallyBound(node, fnNode as Node, idName, scopeBindings)) {
+              return;
+            }
             let isWrite = false;
             if (parent && Node.isBinaryExpression(parent)) {
               const op = parent.getOperatorToken().getText();
