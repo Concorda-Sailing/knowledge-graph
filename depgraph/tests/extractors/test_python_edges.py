@@ -118,6 +118,46 @@ def test_extends_external_keeps_pkg_attribution_py():
                and e["confidence"] == "unresolved" for e in ex), ex
 
 
+def test_extends_attribute_base_multilevel_py():
+    """`import sqlalchemy.orm; class X(sqlalchemy.orm.DeclarativeBase)` —
+    base AST is `Attribute(Attribute(Name("sqlalchemy"), "orm"),
+    "DeclarativeBase")`. Walker chases the chain to the root Name and
+    uses `sqlalchemy` (the actual local binding) to look up the imports
+    table — same target shape as the single-level external case."""
+    prims = list(extract_repo(
+        repo_key="fixture",
+        repo_path=FIXTURE_DIR / "inheritance_multilevel_attribute_base",
+    ))
+    cls = next(p for p in prims if p["name"] == "Account")
+    ex = [e for e in cls["edges_out"] if e["kind"] == "extends"]
+    assert any(e["target"] == "external::pypi::sqlalchemy::DeclarativeBase"
+               and e["confidence"] == "unresolved"
+               for e in ex), ex
+
+
+def test_extends_builtin_base_py():
+    """`class Membership(list)` — `list` isn't in the imports table
+    (implicit at runtime), so the inheritance pass needs to recognize
+    it as a builtin and emit `external::builtins::list` rather than
+    `external::pypi::unknown::list`."""
+    prims = list(extract_repo(
+        repo_key="fixture", repo_path=FIXTURE_DIR / "inheritance_builtin_base"
+    ))
+    cls = next(p for p in prims if p["name"] == "Membership")
+    ex = [e for e in cls["edges_out"] if e["kind"] == "extends"]
+    assert any(e["target"] == "external::builtins::list"
+               and e["confidence"] == "unresolved"
+               for e in ex), ex
+    # Sanity: the same fixture's `MembershipError(Exception)` uses the
+    # same path — confirms the set covers both container and exception
+    # builtins.
+    err_cls = next(p for p in prims if p["name"] == "MembershipError")
+    err_ex = [e for e in err_cls["edges_out"] if e["kind"] == "extends"]
+    assert any(e["target"] == "external::builtins::Exception"
+               and e["confidence"] == "unresolved"
+               for e in err_ex), err_ex
+
+
 # ---------------------------------------------------------------------------
 # Task 3.3: imports edges
 # ---------------------------------------------------------------------------
@@ -388,6 +428,65 @@ def test_method_call_in_corpus_unknown_method_still_unresolved_py():
                 and e["target"] == "fixture::src.py::Service.do_work") or \
                (e["confidence"] == "unresolved"
                 and e["target"].startswith("external::unresolved::")), e
+
+
+def test_method_call_walrus_receiver_py():
+    """`if db := Session(): db.query(...)` — `ast.NamedExpr` now seeds
+    var_types the same way Pattern 2 (`x = SomeClass()`) does, so the
+    downstream `db.query` attributes to
+    `external::pypi::sqlalchemy::Session::query` instead of the
+    `external::unresolved::db.query` sentinel."""
+    prims = list(extract_repo(
+        repo_key="fixture",
+        repo_path=FIXTURE_DIR / "walrus_operator_receiver",
+    ))
+    fn = next(p for p in prims if p["name"] == "use_walrus")
+    calls = [e for e in fn["edges_out"] if e["kind"] == "calls"]
+    assert any(e["target"] == "external::pypi::sqlalchemy::Session::query"
+               and e["confidence"] == "unresolved"
+               and e["via"] == "method_call"
+               for e in calls), calls
+    # And the pre-fix unresolved-on-`db` shape must NOT be present.
+    assert not any(
+        e["target"].startswith("external::unresolved::db.")
+        and e["via"] == "method_call"
+        for e in calls
+    ), calls
+
+
+def test_method_call_vararg_kwarg_annotations_py():
+    """`def fan_out(*conns: Connection, **opts: Order)` — both `vararg`
+    and `kwarg` annotations now seed var_types. Receiver semantics are
+    a simplification (runtime is `tuple[Connection, ...]` /
+    `dict[str, Order]`) — see fixture docstring — but the bound name
+    type maps to the annotation target, which is the minimal correct
+    first step."""
+    prims = list(extract_repo(
+        repo_key="fixture",
+        repo_path=FIXTURE_DIR / "vararg_kwarg_annotations",
+    ))
+    fn = next(p for p in prims if p["name"] == "fan_out")
+    method_targets = {
+        e["target"] for e in fn["edges_out"]
+        if e["kind"] == "calls" and e["via"] == "method_call"
+    }
+    # `conns.append(...)` — vararg-annotated receiver
+    assert "external::pypi::sqlalchemy::Connection::append" in method_targets, (
+        method_targets
+    )
+    # `opts.commit()` — kwarg-annotated receiver
+    assert "external::pypi::app::Order::commit" in method_targets, (
+        method_targets
+    )
+    # Pre-fix sentinels must NOT appear for either name.
+    assert not any(
+        e["target"].startswith("external::unresolved::conns.")
+        for e in fn["edges_out"]
+    ), fn["edges_out"]
+    assert not any(
+        e["target"].startswith("external::unresolved::opts.")
+        for e in fn["edges_out"]
+    ), fn["edges_out"]
 
 
 # ---------------------------------------------------------------------------

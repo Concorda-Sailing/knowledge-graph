@@ -15,7 +15,7 @@ from depgraph.lib.path_filters import included
 from .canonical import canonical_id, structural_hash
 
 
-EXTRACTOR_TAG = "depgraph/extractors/python/extract.py@2026-05-20c"
+EXTRACTOR_TAG = "depgraph/extractors/python/extract.py@2026-05-20d"
 SCHEMA_VERSION = 2
 
 # Builtins commonly used as parameter / variable type annotations. When an
@@ -461,43 +461,61 @@ def _attach_inheritance_edges(primitives: list[dict],
                 continue
             target_class = classes_by_id[class_id]
             for base in node.bases:
-                # Attribute-style: `module.Class` (incl. `Subscript` of an
-                # Attribute, e.g. `module.Generic[T]`). Resolve module via
-                # imports, then look up the attr inside the module.
+                # Attribute-style: `module.Class` and `a.b.Class` (incl.
+                # `Subscript` of an Attribute, e.g. `module.Generic[T]`).
+                # For `a.b.Class` we try the longest-to-shortest dotted
+                # prefix of the attribute chain against the imports table:
+                # `import a.b` records `local_binding="a.b"`, while
+                # `import a` (then `a.b.Class`) records `"a"`. Trying the
+                # longest prefix first lands on the most specific match.
                 attr_base = base.value if isinstance(base, ast.Subscript) else base
-                if (isinstance(attr_base, ast.Attribute)
-                        and isinstance(attr_base.value, ast.Name)):
-                    mod_local = attr_base.value.id
+                if isinstance(attr_base, ast.Attribute):
+                    chain = _attribute_chain(attr_base.value)
                     attr_name = attr_base.attr
-                    mod_target = imports.get(mod_local)
-                    if mod_target:
-                        if mod_target.startswith("external::"):
-                            # `import sqlalchemy; class X(sqlalchemy.Base)`:
-                            # synthesize `external::pypi::sqlalchemy::Base`
-                            # so the seam is queryable. Confidence matches
-                            # the upstream `import` edge (unresolved).
-                            ext_target = f"{mod_target}::{attr_name}"
-                            target_class["edges_out"].append({
-                                "target": ext_target,
-                                "kind": "extends",
-                                "via": "class_decl",
-                                "where": f"{path}:{node.lineno}",
-                                "confidence": "unresolved",
-                            })
-                            continue
-                        # In-corpus module: look up the attr in its symbols.
-                        target_path = mod_id_to_path.get(mod_target)
-                        if target_path:
-                            sym_id = sym_by_path.get(target_path, {}).get(attr_name)
-                            if sym_id and sym_id in classes_by_id:
+                    mod_target = None
+                    if chain:
+                        # Try longest -> shortest: ['a.b.c', 'a.b', 'a'].
+                        for cut in range(len(chain), 0, -1):
+                            key = ".".join(chain[:cut])
+                            if key in imports:
+                                mod_target = imports[key]
+                                break
+                        if mod_target:
+                            if mod_target.startswith("external::"):
+                                # `import sqlalchemy; class X(sqlalchemy.Base)`
+                                # or `import a.b; class X(a.b.Class)`:
+                                # synthesize `<external_module_id>::<attr>`
+                                # so the seam is queryable. Confidence
+                                # matches the upstream `import` edge
+                                # (unresolved).
+                                ext_target = f"{mod_target}::{attr_name}"
                                 target_class["edges_out"].append({
-                                    "target": sym_id,
+                                    "target": ext_target,
                                     "kind": "extends",
                                     "via": "class_decl",
                                     "where": f"{path}:{node.lineno}",
-                                    "confidence": "exact",
+                                    "confidence": "unresolved",
                                 })
                                 continue
+                            # In-corpus module: look up the attr in its
+                            # symbols. For `import base; class X(base.Class)`
+                            # the imports table has `"base"` -> the module
+                            # id, and we look up `Class` inside that file's
+                            # symbol table. Multi-level dotted prefixes
+                            # (`a.b`) match the same way when the imports
+                            # pass has recorded them.
+                            target_path = mod_id_to_path.get(mod_target)
+                            if target_path:
+                                sym_id = sym_by_path.get(target_path, {}).get(attr_name)
+                                if sym_id and sym_id in classes_by_id:
+                                    target_class["edges_out"].append({
+                                        "target": sym_id,
+                                        "kind": "extends",
+                                        "via": "class_decl",
+                                        "where": f"{path}:{node.lineno}",
+                                        "confidence": "exact",
+                                    })
+                                    continue
                 base_name = _name_from_base(base)
                 if base_name is None:
                     continue
@@ -524,6 +542,24 @@ def _attach_inheritance_edges(primitives: list[dict],
                 if imported and _is_external_symbol_id(imported):
                     target_class["edges_out"].append({
                         "target": imported,
+                        "kind": "extends",
+                        "via": "class_decl",
+                        "where": f"{path}:{node.lineno}",
+                        "confidence": "unresolved",
+                    })
+                    continue
+                # Builtin class extension (`class X(list)`,
+                # `class CustomError(Exception)`). `list` / `Exception`
+                # aren't in the imports table (implicit at runtime), so
+                # without this branch they fall to
+                # `external::pypi::unknown::list`. Emit the synthetic
+                # `external::builtins::<name>` target — same pattern
+                # `_annotation_class_ids` uses for builtin-typed
+                # receivers — at `unresolved` confidence since the
+                # builtin class wasn't actually parsed.
+                if base_name in _BUILTIN_CLASS_NAMES:
+                    target_class["edges_out"].append({
+                        "target": f"external::builtins::{base_name}",
                         "kind": "extends",
                         "via": "class_decl",
                         "where": f"{path}:{node.lineno}",
@@ -658,6 +694,31 @@ def _name_from_base(base: ast.expr) -> str | None:
     if isinstance(base, ast.Subscript):
         return _name_from_base(base.value)
     return None
+
+
+def _attribute_chain(node: ast.expr) -> list[str]:
+    """Flatten an attribute access into its dotted-name parts, leftmost
+    first. Returns [] for shapes that don't bottom out in a Name (e.g.
+    `Call(...).foo`).
+
+    Examples:
+      Name("a")                                            -> ["a"]
+      Attribute(Name("a"), "b")                            -> ["a", "b"]
+      Attribute(Attribute(Name("a"), "b"), "c")            -> ["a", "b", "c"]
+
+    Callers join arbitrary prefixes to match against the imports table:
+    `import a.b` records `local_binding="a.b"` (the full dotted form);
+    `import a` records just `"a"`. Trying longest-prefix-first picks the
+    most specific binding.
+    """
+    if isinstance(node, ast.Name):
+        return [node.id]
+    if isinstance(node, ast.Attribute):
+        inner = _attribute_chain(node.value)
+        if not inner:
+            return []
+        return inner + [node.attr]
+    return []
 
 
 # ---------------------------------------------------------------------------
@@ -1039,8 +1100,22 @@ def _attach_call_edges(primitives: list[dict],
             # (3-component ids) are rejected so a bare `import foo` doesn't
             # masquerade as a type. `Union[A, B]` seeds both branches so
             # method calls on the bound name emit one edge per receiver.
+            #
+            # `vararg` (`*args: T`) and `kwarg` (`**kwargs: T`) are included
+            # alongside the positional/kwonly arg lists. The runtime type of
+            # `args` is `tuple[T, ...]` and `kwargs` is `dict[str, T]`, but
+            # seeding the bound name's type as `T` is the minimal-but-still-
+            # useful first step: the more accurate model would distinguish
+            # the container from its elements, but that's a separate
+            # iteration-target problem (issue #83 sub-item 2). See also
+            # follow-up: method calls on `args` as a tuple aren't modeled.
             var_types: dict[str, list[str]] = {}  # local_name -> [class_id, ...]
-            for arg in fn_node.args.args + fn_node.args.kwonlyargs:
+            seed_args = list(fn_node.args.args) + list(fn_node.args.kwonlyargs)
+            if fn_node.args.vararg is not None:
+                seed_args.append(fn_node.args.vararg)
+            if fn_node.args.kwarg is not None:
+                seed_args.append(fn_node.args.kwarg)
+            for arg in seed_args:
                 if arg.annotation is None:
                     continue
                 cids = _annotation_class_ids(arg.annotation, local_names,
@@ -1073,6 +1148,19 @@ def _attach_call_edges(primitives: list[dict],
                     cid = local_names.get(cname) or imports.get(cname)
                     if _is_class_target(cid, classes_by_id):
                         var_types[sub.targets[0].id] = [cid]
+
+                # Pattern 3: walrus operator (`if db := Session(): ...`).
+                # `ast.NamedExpr` isn't reached by the Assign / AnnAssign
+                # branches above — it's its own node type. Same shape as
+                # Pattern 2 (name = constructor-call) so reuse the rule.
+                if (isinstance(sub, ast.NamedExpr)
+                        and isinstance(sub.target, ast.Name)
+                        and isinstance(sub.value, ast.Call)
+                        and isinstance(sub.value.func, ast.Name)):
+                    cname = sub.value.func.id
+                    cid = local_names.get(cname) or imports.get(cname)
+                    if _is_class_target(cid, classes_by_id):
+                        var_types[sub.target.id] = [cid]
 
                 # Emit edges for each Call node
                 if isinstance(sub, ast.Call):
