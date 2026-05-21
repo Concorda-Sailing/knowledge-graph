@@ -1,0 +1,66 @@
+# Wild-corpus probe targets.
+#
+# Hand-curated real GitHub repos pinned by commit sha so the probe runs
+# deterministically. The goal is to surface extraction bugs that
+# synthetic fixtures designed-to-pass miss — see issue #79 and the
+# `[[feedback-wild-means-real-repos]]` note.
+#
+# Selection criteria:
+#  - Small-to-moderate (<200 source files; the probe runs in <2 min/repo)
+#  - MIT / Apache / BSD licensed
+#  - Patterns each fixture deliberately exercises one or more areas the
+#    recent extractor commits touched (ORM, deep barrels, forward refs,
+#    typing aliases, scope shadowing).
+#
+# When the probe regen fails a budget or surfaces a new error class on
+# any target, file a GH issue and add a synthetic pin fixture for it.
+# The wild probe is the DISCOVERY mechanism; pin fixtures are regression
+# prevention.
+
+[[target]]
+name = "encode-databases"
+url = "https://github.com/encode/databases.git"
+sha = "ae3fb16f40201d9ed0ed31bea31a289127169568"
+language = "python"
+patterns = ["async-sqlalchemy", "deep-barrel", "typing-aliases"]
+# 24 .py files. Async DB lib wrapping SQLAlchemy core (no ORM layer).
+# Exercises imports/calls/extends without #54; useful regression base.
+
+[[target]]
+name = "pallets-click"
+url = "https://github.com/pallets/click.git"
+sha = "dbf4d14c712750c31e15916b659925683150533b"
+language = "python"
+patterns = ["deep-barrel", "wildcard-reexports", "decorator-heavy"]
+# 63 .py files. __init__.py with 100+ explicit re-exports.
+# Heavy exercise of 03eb61f / ab827b8 barrel-resolution fixes.
+
+[[target]]
+name = "tiangolo-sqlmodel"
+url = "https://github.com/tiangolo/sqlmodel.git"
+sha = "c4a3bb9a1e8245d03c91e797ea793921f338a44e"
+language = "python"
+patterns = ["sqlalchemy-orm", "pydantic", "forward-refs", "type-checking"]
+# 314 .py files (incl. extensive examples). SQLModel = SQLAlchemy ORM
+# + Pydantic hybrid via a custom base. Stress-tests #54 ORM detection
+# AND `from __future__ import annotations` forward-ref shapes.
+
+[[target]]
+name = "pydantic-pydantic-settings"
+url = "https://github.com/pydantic/pydantic-settings.git"
+sha = "6b2f7a3aa335530de9122abc2cd3d33b5d3a9c67"
+language = "python"
+patterns = ["pydantic", "typing-aliases", "annotation-walker"]
+# 36 .py files. All annotations, all typing.* patterns. Direct
+# stress test of commit 0800653's annotation walker fixes.
+
+[[target]]
+name = "colinhacks-zod"
+url = "https://github.com/colinhacks/zod.git"
+sha = "bbc68f990c7e6a5e3f506c56fb04bd0279b9c9b5"
+language = "typescript"
+patterns = ["typescript", "generics", "deep-reexports", "v3-v4-coexistence"]
+# 408 module primitives (mixed .ts/.tsx). v3 + v4 in the same repo
+# under packages/ — exercises path aliases and cross-version
+# inheritance (extends across package boundaries). Tests #47 streaming
+# and #82 scope shadowing on a non-trivial TS corpus.

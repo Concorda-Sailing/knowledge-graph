@@ -1,0 +1,4 @@
+# Per-run probe output is local-only (timestamped). The probe itself
+# is the canonical artifact; results are diagnostic dumps for the
+# operator who ran it.
+results/
