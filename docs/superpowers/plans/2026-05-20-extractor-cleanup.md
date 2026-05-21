@@ -56,7 +56,7 @@ Legend: `pending`, `dispatched`, `[x]` (done with sha), `[FAIL]`.
 | C.1 | 1 | #57 | Dossier-draft generate-then-classify split | [x] | 0887b89 + ea3c2c2 (signature fix) |
 | C.2 | 2 | #58 | Stale-dossier reverse-edge drift | [x] | 1d011c4 (Option B: inbound-count drift) |
 | D.1 | 1 | #78 | Coverage caveat detector for typed_receiver_unresolved | [x] | 6b2c429 |
-| D.2 | 1 | #79 | Wild-corpus probe infrastructure | pending | NEEDS HUMAN: repo curation |
+| D.2 | 1 | #79 | Wild-corpus probe infrastructure | [x] | cf5bcc1 (5 targets curated; probe surfaced 4 new bugs → #84/85/86/87) |
 | D.3 | 1 | #80 | Test convention gate | [x] | 677695b (rename + gate in one) |
 | D.4 | 1 | #81 | TS memory budget gate | [x] | 83f4c39 |
 | D.5 | 1 | #52 | Tests included with kind=test tag | pending | NEEDS HUMAN: pick Option A/B/C |
@@ -531,3 +531,16 @@ dispatched / completed.)
   - All cherry-picks clean (no merge conflicts in Wave 2)
   - Wave 3 unblocked: F.1 #53 (confidence taxonomy redesign — needs human design)
   - Pending human: D.2 #79 (wild-probe repo curation), D.5 #52 (kind=test option)
+- 2026-05-21 — D.2 #79 wild-probe shipped (cf5bcc1)
+  - 5 curated targets: encode-databases, pallets-click, tiangolo-sqlmodel,
+    pydantic-pydantic-settings, colinhacks-zod
+  - Probe runs end-to-end in ~12s across all 5; surfaces anomalies
+    against real-corpus shapes the synthetic fixtures don't cover
+  - 4 NEW bugs filed from the first run:
+    - #84 SQLModel-style metaclass ORM bases not detected (gap in c47e3b4)
+    - #85 TS default-export expressions create orphan import edges (gap in #47)
+    - #86 TS `extends` to variable-kind target violates edge taxonomy
+    - #87 Slug helper collides on `/` vs `-` paths
+  - #53 confirmed empirically: 0 fuzzy edges across 4/5 targets
+    (the one exception, zod, has 290 fuzzy edges — TS's re-export
+    resolver uses fuzzy for barrel chains; Python never emits any)
