@@ -1,7 +1,18 @@
 # Verification log: anonymous_zoo
 
-**Last reviewed:** 2026-05-16 by Claude (sonnet subagent)
+**Last reviewed:** 2026-05-22 by Claude (opus, #85 follow-up)
 **Status:** ✓ verified
+
+## 2026-05-22 update (#85)
+
+The extractor now also emits a synthetic `variable` primitive at
+`<file>::default` for every default-exporting module so consumers'
+`import X from './mod'` edges never orphan. For this fixture's
+`export default (input) => ...`, that adds one extra primitive:
+
+- `fixture::src/anon.ts::default` (primitive=variable, owner=null)
+
+The existing `<default:anon>` function primitive is unchanged.
 
 ## Pre-read prediction
 *Written before looking at expected.json or running the extractor.*

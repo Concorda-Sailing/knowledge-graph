@@ -5,7 +5,8 @@
     {"id": "fixture::src/anon.ts::greet", "primitive": "function", "name": "greet", "owner": null},
     {"id": "fixture::src/anon.ts::handler", "primitive": "function", "name": "handler", "owner": null},
     {"id": "fixture::src/anon.ts::transform", "primitive": "function", "name": "transform", "owner": null},
-    {"id": "fixture::src/anon.ts::<default:anon>", "primitive": "function", "name": "<default:anon>", "owner": null}
+    {"id": "fixture::src/anon.ts::<default:anon>", "primitive": "function", "name": "<default:anon>", "owner": null},
+    {"id": "fixture::src/anon.ts::default", "primitive": "variable", "name": "default", "owner": null}
   ],
   "edges": []
 }

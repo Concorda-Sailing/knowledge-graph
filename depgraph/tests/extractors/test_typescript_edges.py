@@ -107,6 +107,39 @@ def test_aliased_import_records_local_binding_ts():
     assert edge["local_binding"] == "bar"
 
 
+def test_default_export_expression_resolves_no_orphan():
+    """#85: `export default <expr>` (config-file idiom) must produce a
+    synthetic primitive at `<file>::default` so the consumer's default-
+    import edge resolves to a real primitive (no orphan).
+    """
+    prims = run_extractor("imports_default_expr", which="edges")
+    by_id = {p["id"]: p for p in prims}
+
+    # Synthetic default primitive exists on the exporter side.
+    factory_default_id = "fixture::src/factory.ts::default"
+    assert factory_default_id in by_id, (
+        f"missing synthetic default primitive; ids: {sorted(by_id)}"
+    )
+    default_prim = by_id[factory_default_id]
+    assert default_prim["primitive"] == "variable"
+    assert default_prim["name"] == "default"
+    # Signature carries the (truncated) expression text.
+    assert default_prim["signature"]["value_text"]
+
+    # Consumer's default-import edge must target a real primitive — i.e.
+    # any default-import edge from src/consumer.ts must resolve in-corpus.
+    consumer_mod = next(p for p in prims if p["source"]["path"] == "src/consumer.ts"
+                        and p["primitive"] == "module")
+    default_imports = [e for e in consumer_mod["edges_out"]
+                       if e["kind"] == "imports" and e.get("local_binding") == "thing"]
+    assert default_imports, f"expected a default-import edge for `thing`: {consumer_mod['edges_out']}"
+    for edge in default_imports:
+        assert edge["target"] in by_id, (
+            f"orphan default-import edge: target={edge['target']!r} "
+            f"not in corpus; available ids include {factory_default_id!r}"
+        )
+
+
 # ---------------------------------------------------------------------------
 # Task 3.4: calls + instantiates edges (intra-function type binding)
 # ---------------------------------------------------------------------------

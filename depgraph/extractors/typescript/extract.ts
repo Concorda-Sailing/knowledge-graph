@@ -189,7 +189,7 @@ interface PerFileMetadata {
   import_shims: ImportShimMeta[];
 }
 
-const EXTRACTOR_TAG = "depgraph/extractors/typescript/extract.ts@2026-05-16";
+const EXTRACTOR_TAG = "depgraph/extractors/typescript/extract.ts@2026-05-22a";
 const EXTS = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"];
 
 /**
@@ -647,6 +647,80 @@ function extractObjectLiteralApiClients(sf: SourceFile, repoKey: string, relPath
     }
   }
   return out;
+}
+
+// Synthetic `<file>::default` primitive for every default-exporting module.
+//
+// Without this, `import X from './mod'` produces an import edge whose
+// target is `<mod>::default` — and if `<mod>` has `export default <expr>`
+// (e.g. `export default defineConfig(...)`), no primitive exists at that
+// id and the edge is orphaned (#85).
+//
+// We emit a synthetic `variable` primitive at `<file>::default` for ALL
+// default-export forms — both expressions (ExportAssignment) and
+// default-keyword declarations (`export default class X {}` /
+// `export default function f() {}`). This makes `<file>::default` always
+// a real primitive when the file has a default export, regardless of the
+// resolver's choice (defaultExportMap may rewrite the edge to the named
+// primitive, but the synthetic shadow at `<file>::default` is always
+// resolvable too).
+//
+// The value_text is the truncated source text of the default-export
+// statement, capped at SIGNATURE_VALUE_CAP to keep structural_hash and
+// node payloads bounded.
+const SIGNATURE_VALUE_CAP = 200;
+
+function truncatedSignature(text: string): string {
+  const collapsed = text.replace(/\s+/g, " ").trim();
+  if (collapsed.length <= SIGNATURE_VALUE_CAP) return collapsed;
+  return collapsed.slice(0, SIGNATURE_VALUE_CAP) + "…";
+}
+
+function extractDefaultExport(sf: SourceFile, repoKey: string, relPath: string): Primitive[] {
+  // Detect the default-export site, if any. Three shapes:
+  //   1. ExportAssignment (`export default <expr>`) — not export-equals.
+  //   2. ClassDeclaration with `default` modifier (`export default class X {}`).
+  //   3. FunctionDeclaration with `default` modifier
+  //      (`export default function f() {}` or `export default function () {}`).
+  let node: { getStartLineNumber(): number; getEndLineNumber(): number; getText(): string } | null = null;
+
+  for (const ea of sf.getExportAssignments()) {
+    if (ea.isExportEquals()) continue;
+    node = ea;
+    break;
+  }
+  if (!node) {
+    for (const cls of sf.getClasses()) {
+      if (cls.hasDefaultKeyword()) { node = cls; break; }
+    }
+  }
+  if (!node) {
+    for (const fn of sf.getFunctions()) {
+      if (fn.hasDefaultKeyword()) { node = fn; break; }
+    }
+  }
+  if (!node) return [];
+
+  const valueText = truncatedSignature(node.getText());
+  const id = canonicalId(repoKey, relPath, "default");
+  return [{
+    schema_version: 2, id,
+    primitive: "variable", name: "default", owner: null,
+    source: { repo: repoKey, path: relPath, language: "typescript",
+              line: node.getStartLineNumber(), end_line: node.getEndLineNumber() },
+    signature: { type_annotation: null, value_text: valueText },
+    attributes: { abstract: false, generated: false, external: false,
+                  template_parameters: [], macro: false, mutable: false,
+                  instantiable: false, inheritable: false },
+    edges_out: [],
+    structural_hash: structuralHash({
+      primitive: "variable", name: "default",
+      signature: { type_annotation: null, value_text: valueText },
+      body_text: valueText,
+    }),
+    kind: null,
+    extractor: EXTRACTOR_TAG,
+  }];
 }
 
 // ---------------------------------------------------------------------------
@@ -2089,6 +2163,7 @@ function main() {
     for (const p of extractClasses(sf, repoKey, relPath)) allPrims.push(p);
     for (const p of extractFunctions(sf, repoKey, relPath)) allPrims.push(p);
     for (const p of extractVariables(sf, repoKey, relPath)) allPrims.push(p);
+    for (const p of extractDefaultExport(sf, repoKey, relPath)) allPrims.push(p);
     for (const p of extractObjectLiteralApiClients(sf, repoKey, relPath)) allPrims.push(p);
     for (const p of extractRouteCalls(sf, repoKey, relPath)) allPrims.push(p);
     metadata.set(relPath, extractPerFileMetadata(sf, repoPath, relPath, resolvedSpecs));
