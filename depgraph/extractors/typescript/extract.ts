@@ -189,7 +189,7 @@ interface PerFileMetadata {
   import_shims: ImportShimMeta[];
 }
 
-const EXTRACTOR_TAG = "depgraph/extractors/typescript/extract.ts@2026-05-22a";
+const EXTRACTOR_TAG = "depgraph/extractors/typescript/extract.ts@2026-05-22b";
 const EXTS = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"];
 
 /**
@@ -1328,6 +1328,13 @@ function attachInheritanceEdges(
   repoKey: string,
 ): void {
   const symbolIndex = buildLocalSymbolIndex(prims);
+  // Side index: primitive id -> primitive kind. Used to gate `extends` /
+  // `implements` by the resolved target's actual kind — see #86. Real-world
+  // TS often binds a "class" as `const X = factory(...)` (a `variable`
+  // primitive); emitting `extends -> variable` with confidence=exact violates
+  // EDGE_KIND_RULES, so we soften to confidence=fuzzy in that case.
+  const kindById = new Map<string, string>();
+  for (const p of prims) kindById.set(p.id, p.primitive);
   for (const [rel, meta] of metadata) {
     for (const cm of meta.classes) {
       const myId = canonicalId(repoKey, rel, cm.name);
@@ -1336,24 +1343,38 @@ function attachInheritanceEdges(
       if (cm.extends_name) {
         const targetId = symbolIndex.get(cm.extends_name);
         if (targetId) {
+          const targetKind = kindById.get(targetId);
+          // class -> class: structural inheritance, exact.
+          // class -> variable: factory-binding base (e.g. zod's
+          // `const ZodType = createZodType(...)`); inheritance arrow is real
+          // but the static taxonomy can't prove it without dataflow, so we
+          // downgrade to fuzzy. EDGE_KIND_RULES permits this combination
+          // only under fuzzy confidence (#86).
+          // class -> function: same pattern but rarer; treat as fuzzy.
+          const confidence = targetKind === "class" ? "exact" : "fuzzy";
           myPrim.edges_out.push({
             target: targetId,
             kind: "extends",
             via: "class_decl",
             where: `${rel}:${cm.extends_line}`,
-            confidence: "exact",
+            confidence,
           });
         }
       }
       for (const impl of cm.implements) {
         const targetId = symbolIndex.get(impl.name);
         if (targetId) {
+          const targetKind = kindById.get(targetId);
+          // `implements` parallels `extends` (#86). A class can implement a
+          // type whose binding is a `const`-exported brand/shape; downgrade
+          // to fuzzy when the resolved target is not itself a class.
+          const confidence = targetKind === "class" ? "exact" : "fuzzy";
           myPrim.edges_out.push({
             target: targetId,
             kind: "implements",
             via: "class_decl",
             where: `${rel}:${impl.line}`,
-            confidence: "exact",
+            confidence,
           });
         }
       }

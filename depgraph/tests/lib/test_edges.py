@@ -64,3 +64,44 @@ def test_reads_allows_class_target():
             "kind": "reads", "via": "identifier_read",
             "where": "sidebar.tsx:10", "confidence": "exact"}
     assert validate_edge(edge) == []
+
+
+def test_extends_to_variable_requires_fuzzy_confidence():
+    """Const-factory base classes (e.g. `const Base = createBase(...)`) are
+    extracted as `variable` primitives. The inheritance arrow is real but
+    the static taxonomy can't prove it; the extractor must emit it at
+    confidence=fuzzy and the validator must require that gating (#86)."""
+    fuzzy = {"source_kind": "class", "target_kind": "variable",
+             "kind": "extends", "via": "class_decl",
+             "where": "child.ts:10", "confidence": "fuzzy"}
+    assert validate_edge(fuzzy) == []
+
+
+def test_extends_to_variable_at_exact_confidence_still_errors():
+    """Exact `extends -> variable` remains a taxonomy violation; the only
+    permitted form is fuzzy. Catches extractor regressions (#86)."""
+    exact = {"source_kind": "class", "target_kind": "variable",
+             "kind": "extends", "via": "class_decl",
+             "where": "child.ts:10", "confidence": "exact"}
+    errors = validate_edge(exact)
+    assert any("requires confidence" in e for e in errors), errors
+
+
+def test_extends_to_class_still_exact():
+    """The mainline `class Child extends Parent` case (both class
+    primitives) must continue to validate at exact confidence (#86)."""
+    edge = {"source_kind": "class", "target_kind": "class",
+            "kind": "extends", "via": "class_decl",
+            "where": "child.ts:10", "confidence": "exact"}
+    assert validate_edge(edge) == []
+
+
+def test_implements_to_variable_requires_fuzzy_confidence():
+    """Symmetric case for `implements`: a class implementing a const-bound
+    shape/brand resolves to a variable primitive and must be fuzzy (#86)."""
+    fuzzy = {"source_kind": "class", "target_kind": "variable",
+             "kind": "implements", "via": "class_decl",
+             "where": "child.ts:10", "confidence": "fuzzy"}
+    assert validate_edge(fuzzy) == []
+    exact = {**fuzzy, "confidence": "exact"}
+    assert any("requires confidence" in e for e in validate_edge(exact))

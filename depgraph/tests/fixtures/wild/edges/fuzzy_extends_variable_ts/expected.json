@@ -1,0 +1,7 @@
+{
+  "description": "A class that extends a const-factory binding must emit `extends` at confidence=fuzzy (target is a `variable` primitive). Exact `extends -> variable` violates EDGE_KIND_RULES; fuzzy is the gated relaxation (#86).",
+  "unresolved_edges_expected": false,
+  "edges": [
+    {"source": "fixture::src/consumer.ts::Child", "kind": "extends", "target": "fixture::src/consumer.ts::Factory", "confidence": "fuzzy"}
+  ]
+}
