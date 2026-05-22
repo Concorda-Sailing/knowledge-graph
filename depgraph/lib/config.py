@@ -115,6 +115,13 @@ def project_repos(data_dir: Path) -> dict[str, dict]:
       exclude_paths   — list of fnmatch globs against rel-path; files
                         matching any pattern are skipped. Applied after
                         include_paths.
+      test_paths      — list of fnmatch globs identifying TEST files for the
+                        Option-C coverage walker (#52). These files are NOT
+                        in the production graph (they remain excluded), but
+                        the coverage pass scans them to map test-file →
+                        production-node. Default when absent:
+                        ["**/test_*.py", "**/*_test.py", "**/tests/**",
+                         "**/__tests__/**"].
 
     Raises ValueError if [repos.*] is present but malformed.
     Returns {} if no [repos.*] tables are configured.
@@ -143,6 +150,11 @@ def project_repos(data_dir: Path) -> dict[str, dict]:
             "migrations_dirs": val.get("migrations_dirs", []),
             "include_paths": val.get("include_paths") or [],
             "exclude_paths": val.get("exclude_paths") or [],
+            # `None` (not []) signals "user didn't configure test_paths";
+            # the test-coverage walker substitutes its default glob set.
+            # A user who wants the coverage pass to scan nothing should
+            # set `test_paths = []` explicitly.
+            "test_paths": val.get("test_paths"),
         }
     return out
 

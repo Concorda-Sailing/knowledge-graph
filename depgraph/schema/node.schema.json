@@ -118,6 +118,11 @@
       "description": "Enum-keyed list of known blind spots for this node — graph edges the current extractors cannot capture given the node's shape (SQLAlchemy ORM relationships, FastAPI Depends chain, Pydantic field refs, etc.). The framework registry (depgraph/lib/coverage_caveats.py) owns the enum-to-description mapping; the dossier renderer surfaces them so readers know where the graph is known to be blind. See #55.",
       "items": { "type": "string" }
     },
+    "tested_by_count": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Number of test files that import or reference this node. Stamped by the Option-C test-coverage walker at end of regen. Absence of the field means 'no tests cover this node' (we don't write tested_by_count: 0 — the missing field is itself the signal). The full production-id → [test_file_paths] map lives in depgraph/test_coverage.json. See #52."
+    },
     "warnings": {
       "type": "array",
       "description": "Extractor-emitted warnings: ambiguous call sites, dynamic URLs, unresolved symbols.",

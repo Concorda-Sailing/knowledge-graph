@@ -49,16 +49,29 @@ def _normalize_meta_json(path: Path) -> None:
 
     The 'generated_at' field varies by execution time and has no bearing on
     the determinism of the actual extraction/classification/reconciliation.
+    Also normalizes `test_coverage.json` one level up (sibling of nodes/)
+    for the same reason — see depgraph.lib.test_coverage (#52).
     """
+    import json as _json
+
     meta_path = path / "_meta.json"
     if meta_path.exists():
-        import json
         with open(meta_path) as f:
-            data = json.load(f)
+            data = _json.load(f)
         # Remove the timestamp field
         data.pop("generated_at", None)
         with open(meta_path, "w") as f:
-            json.dump(data, f, indent=2)
+            _json.dump(data, f, indent=2)
+            f.write("\n")
+
+    # test_coverage.json lives in the depgraph data dir, one above nodes/.
+    coverage_path = path.parent / "test_coverage.json"
+    if coverage_path.exists():
+        with open(coverage_path) as f:
+            data = _json.load(f)
+        data.pop("generated_at", None)
+        with open(coverage_path, "w") as f:
+            _json.dump(data, f, indent=2, sort_keys=True)
             f.write("\n")
 
 

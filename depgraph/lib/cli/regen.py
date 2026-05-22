@@ -1052,9 +1052,38 @@ def _run_v2_pipeline(
     )
     print(f"    inbound-drift: {len(drift_ids)}")
 
+    # --- Build test-coverage index (Option C of #52) ---
+    # Tests stay excluded from the production graph by design — they'd
+    # inflate every function's reverse-dep count and corrupt the leverage
+    # signal. But that leaves no answer to "is this tested?" — exactly
+    # the signal we'd want for prioritization. The coverage walker reads
+    # the test trees the production extractor skipped, maps test files
+    # to production node ids, and stamps `tested_by_count` on every
+    # covered primitive. Runs BEFORE write_classified so the stamped
+    # field gets persisted into the on-disk node JSON.
+    print("--- test coverage (#52 option C)")
+    from depgraph.lib.test_coverage import (
+        build_test_coverage_index,
+        stamp_tested_by_count,
+        write_test_coverage,
+    )
+    coverage_payload = build_test_coverage_index(all_primitives, repos=repos)
+    stamped = stamp_tested_by_count(all_primitives, coverage_payload)
+    coverage_stats = coverage_payload["stats"]
+    print(
+        f"    files scanned: {coverage_stats['test_files_scanned']}, "
+        f"tested nodes: {coverage_stats['tested_nodes']}, "
+        f"ratio: {coverage_stats['tested_node_ratio']:.3f}, "
+        f"stamped: {stamped}"
+    )
+
     # --- Write to disk ---
     print("--- write")
     write_classified(all_primitives, decisions, data_dir=data_dir)
+    # Sibling index — persist coverage AFTER node writes so a downstream
+    # consumer that opens both never sees a coverage file referencing
+    # ids the corpus hasn't yet shipped.
+    write_test_coverage(data_dir, coverage_payload)
 
     # --- Archive file-orphan nodes ---
     # A node whose source file is gone from its repo is dead corpus state.
@@ -1148,6 +1177,7 @@ def _run_v2_pipeline(
         "primitive_error_count": n_prim_errors,
         "stale_dossier_count": len(stale_ids),
         "inbound_drift_count": len(drift_ids),
+        "test_coverage_stats": coverage_stats,
         "git_commit": _primary_git_commit(data_dir),
         "validation_report": report,
         "embedding_status": embedding_status,
@@ -1262,6 +1292,7 @@ def _mode_a(args: argparse.Namespace, ctx: Context) -> int:
             ],
             "include_paths": info.get("include_paths") or [],
             "exclude_paths": info.get("exclude_paths") or [],
+            "test_paths": info.get("test_paths"),
         })
 
     tool_root = ctx.tool_root
@@ -1368,6 +1399,7 @@ def _mode_a_single_repo(args: argparse.Namespace, ctx: Context) -> int:
         ],
         "include_paths": info.get("include_paths") or [],
         "exclude_paths": info.get("exclude_paths") or [],
+        "test_paths": info.get("test_paths"),
     }
 
     classification_options = project_classification_options(ctx.DEPGRAPH)
@@ -1411,6 +1443,9 @@ def _mode_b(args: argparse.Namespace, ctx: Context) -> int:
         "migrations_dirs": migrations_dirs,
         "include_paths": include_paths,
         "exclude_paths": exclude_paths,
+        # Mode B has no project.toml; let the coverage walker use its
+        # default test-path globs.
+        "test_paths": None,
     }]
 
     tool_root = ctx.tool_root

@@ -60,6 +60,10 @@ class ProbeResult:
     edges_by_kind: dict[str, int] = field(default_factory=dict)
     edges_by_confidence: dict[str, int] = field(default_factory=dict)
     validation_report: dict = field(default_factory=dict)
+    # Option-C test-coverage stats (issue #52). Populated from
+    # `test_coverage.json` when the regen pass wrote one (i.e. Python
+    # targets, today). Empty dict otherwise.
+    test_coverage_stats: dict = field(default_factory=dict)
     error: str = ""
     anomalies: list[str] = field(default_factory=list)
 
@@ -123,30 +127,51 @@ def _shallow_clone(target: Target, dest: Path) -> str:
 
 def _build_data_dir(data_dir: Path, target: Target, repo_path: Path) -> None:
     """Synthesize a minimal data dir with a one-repo project.toml so Mode B
-    has the project context it expects."""
+    has the project context it expects.
+
+    Python targets get the canonical Option-C exclude pattern so test
+    files are kept out of the production graph (matching real-world
+    project.toml shapes; see issue #52). The depgraph regen pipeline
+    then runs the test-coverage walker over those excluded files and
+    writes `test_coverage.json`. The probe reads that file back for
+    its coverage stats.
+    """
     (data_dir / "nodes" / "_index").mkdir(parents=True, exist_ok=True)
     (data_dir / "telemetry").mkdir(exist_ok=True)
     project_toml = data_dir / "project.toml"
-    project_toml.write_text(
-        f'[project]\n'
-        f'name = "{target.name}"\n'
-        f'primary_repo = "{target.name}"\n'
-        f'\n'
-        f'[repos.{target.name}]\n'
-        f'path = "{repo_path}"\n'
-        f'languages = ["{target.language}"]\n'
-    )
+    lines = [
+        f'[project]',
+        f'name = "{target.name}"',
+        f'primary_repo = "{target.name}"',
+        '',
+        f'[repos.{target.name}]',
+        f'path = "{repo_path}"',
+        f'languages = ["{target.language}"]',
+    ]
+    if target.language == "python":
+        # Mirror the canonical production-side exclusions the issue cites
+        # (#52) so the probe verifies the Option-C path end-to-end: tests
+        # stay out of the production graph, the coverage walker fills the
+        # gap.
+        lines.append(
+            'exclude_paths = ["**/tests/**", "**/test_*.py", "**/*_test.py"]'
+        )
+    project_toml.write_text("\n".join(lines) + "\n")
 
 
 def _run_regen(data_dir: Path, target: Target, repo_path: Path) -> tuple[bool, str]:
-    """Invoke `kg depgraph regen` against the cloned repo. Returns (ok, stderr_tail)."""
+    """Invoke `kg depgraph regen` against the cloned repo. Returns (ok, stderr_tail).
+
+    Uses `--repo-key` alone (no `--repo-path`) so regen looks the repo
+    up from the synthesized project.toml — that's the path that honors
+    `exclude_paths` and `test_paths`. Mode B (both flags) would bypass
+    project.toml and miss the Option-C exclude pattern.
+    """
     cmd = [
         str(KG),
         "depgraph", "--data-dir", str(data_dir),
         "regen",
         "--repo-key", target.name,
-        "--repo-path", str(repo_path),
-        "--languages", target.language,
         "--no-embeddings",
     ]
     proc = subprocess.run(
@@ -173,6 +198,17 @@ def _read_meta(data_dir: Path) -> dict:
     if not meta_path.exists():
         return {}
     return json.loads(meta_path.read_text())
+
+
+def _read_test_coverage(data_dir: Path) -> dict:
+    """Read the Option-C test-coverage stats block (#52). Returns an
+    empty dict if no coverage file was written (TS-only target, or a
+    Python target whose regen failed before the coverage pass)."""
+    path = _depgraph_dir(data_dir) / "test_coverage.json"
+    if not path.exists():
+        return {}
+    payload = json.loads(path.read_text())
+    return payload.get("stats") or {}
 
 
 def _walk_corpus_stats(data_dir: Path) -> tuple[dict[str, int], dict[str, int], dict[str, int], int, int]:
@@ -239,6 +275,21 @@ def _surface_anomalies(result: ProbeResult, target: Target) -> None:
                 result.anomalies.append(
                     "#54 expected: sqlalchemy-orm target has 0 references_orm edges"
                 )
+        # Option-C coverage sanity (#52). A Python target whose
+        # synthesized project.toml excludes `**/tests/**` should have
+        # SOME coverage if the repo ships any tests at all. Zero
+        # `test_files_scanned` on a multi-file repo points at a
+        # misconfiguration (the exclude pattern is wrong, the walker
+        # didn't run, etc.).
+        cs = result.test_coverage_stats or {}
+        if (
+            result.primitives_total > 50
+            and cs.get("test_files_scanned", 0) == 0
+        ):
+            result.anomalies.append(
+                "#52 sanity: 0 test files scanned on a non-trivial python "
+                "corpus — coverage walker may have misfired"
+            )
     if target.language == "typescript":
         if result.edges_by_kind.get("imports", 0) == 0:
             result.anomalies.append("typescript target with 0 imports edges")
@@ -313,6 +364,7 @@ def run_one(target: Target, *, keep_clone: bool = False) -> ProbeResult:
             result.primitives_total,
             result.edges_total,
         ) = _walk_corpus_stats(data_dir)
+        result.test_coverage_stats = _read_test_coverage(data_dir)
         result.success = True
 
         _surface_anomalies(result, target)
@@ -342,6 +394,14 @@ def _format_summary(result: ProbeResult) -> str:
         f"    confidence: "
         f"{', '.join(f'{k}={v}' for k,v in sorted(result.edges_by_confidence.items()))}",
     ])
+    if result.test_coverage_stats:
+        cs = result.test_coverage_stats
+        lines.append(
+            f"    coverage:   "
+            f"test_files_scanned={cs.get('test_files_scanned', 0)}, "
+            f"tested_nodes={cs.get('tested_nodes', 0)}, "
+            f"ratio={cs.get('tested_node_ratio', 0.0):.3f}"
+        )
     if result.anomalies:
         lines.append("    anomalies:")
         for a in result.anomalies:
