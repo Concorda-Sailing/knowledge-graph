@@ -15,7 +15,7 @@ from depgraph.lib.path_filters import included
 from .canonical import canonical_id, structural_hash
 
 
-EXTRACTOR_TAG = "depgraph/extractors/python/extract.py@2026-05-20e"
+EXTRACTOR_TAG = "depgraph/extractors/python/extract.py@2026-05-22a"
 SCHEMA_VERSION = 2
 
 # Builtins commonly used as parameter / variable type annotations. When an
@@ -1580,6 +1580,14 @@ def _attach_orm_edges(primitives: list[dict],
             # we don't want to emit ambiguous edges silently.
             tablename_to_class_id.setdefault(literal, owner)
 
+    # Class ids that declare `__tablename__` as a string literal. The
+    # ORM detector (#84) treats this body-level signal as a second
+    # branch beyond inheritance, so frameworks that wire declarative
+    # behavior through a custom metaclass (SQLModel etc.) still get
+    # walked even when the inheritance chain never reaches a known
+    # SQLAlchemy base name.
+    tablename_class_ids: set[str] = set(tablename_to_class_id.values())
+
     # --- iterate ORM model classes ------------------------------------------
     # Lazy import to avoid circulars at module load (coverage_caveats has
     # no upward deps but the convention in this file is local-import for
@@ -1601,17 +1609,50 @@ def _attach_orm_edges(primitives: list[dict],
             cls_prim = classes_by_id.get(class_id)
             if cls_prim is None:
                 continue
-            if not is_sqlalchemy_model(cls_prim, extends_targets_by_id):
+            if not is_sqlalchemy_model(cls_prim, extends_targets_by_id,
+                                        tablename_class_ids=tablename_class_ids):
                 continue
+
+            # First pass — class-body `AnnAssign` nodes where the
+            # value is a `Relationship(...)` / `relationship(...)` call
+            # WITHOUT a positional class argument. SQLModel (issue #84)
+            # uses the shape `team: Team | None = Relationship(back_populates=...)`,
+            # encoding the related class only in the annotation. The
+            # canonical `_resolve_orm_relationship` resolver expects a
+            # positional arg, so for these annotation-only calls we
+            # mine the target from the annotation expression instead.
+            for stmt in node.body:
+                if not isinstance(stmt, ast.AnnAssign):
+                    continue
+                if not (isinstance(stmt.value, ast.Call)
+                        and _orm_callee_last_name(stmt.value.func)
+                            in ("relationship", "Relationship")):
+                    continue
+                if stmt.value.args:
+                    # Positional arg present — handled by the generic
+                    # walk below; skip to avoid emitting duplicate edges.
+                    continue
+                edge = _resolve_orm_relationship_from_annotation(
+                    stmt.annotation, stmt.value,
+                    path=path, source_class_id=class_id,
+                    file_top_classes=file_top_classes,
+                    file_imports=file_imports,
+                    classname_to_ids=classname_to_ids,
+                    classes_by_id=classes_by_id,
+                )
+                if edge is not None:
+                    cls_prim["edges_out"].append(edge)
 
             # Walk every Call descendant of the class body. Class-level
             # variable assignments and `mapped_column(..., ForeignKey(...))`
-            # nestings both surface here.
+            # nestings both surface here. Both `relationship` (SQLAlchemy
+            # core) and `Relationship` (SQLModel re-exports it under the
+            # capital-R name, issue #84) name the same edge shape.
             for sub in ast.walk(node):
                 if not isinstance(sub, ast.Call):
                     continue
                 callee = _orm_callee_last_name(sub.func)
-                if callee == "relationship":
+                if callee in ("relationship", "Relationship"):
                     edge = _resolve_orm_relationship(
                         sub, path=path, source_class_id=class_id,
                         file_top_classes=file_top_classes,
@@ -1676,6 +1717,118 @@ def _resolve_orm_relationship(call: ast.Call, *, path: str,
         "via": "relationship_call",
         "where": f"{path}:{call.lineno}", "confidence": "exact",
     }
+
+
+def _resolve_orm_relationship_from_annotation(
+    annotation: ast.expr,
+    call: ast.Call,
+    *,
+    path: str,
+    source_class_id: str,
+    file_top_classes: dict[str, str],
+    file_imports: dict[str, str],
+    classname_to_ids: dict[str, list[str]],
+    classes_by_id: dict[str, dict],
+) -> dict | None:
+    """Resolve an annotation-encoded relationship target (#84).
+
+    SQLModel encodes the related class in the annotation rather than
+    in the call: `heroes: list["Hero"] = Relationship(back_populates=...)`.
+    The annotation can wrap the class name in `list[...]`, `Optional[...]`,
+    `T | None`, `Mapped[...]`, etc. We walk the annotation tree and
+    collect every name candidate, then resolve the first one that
+    matches an in-corpus class (via the file's top-level symbol table,
+    its imports map, or the corpus-wide classname index).
+
+    Returns a single edge dict for the first resolved candidate, or
+    None if nothing resolves — keeps the policy consistent with
+    `_resolve_orm_relationship` (one edge per call, no placeholders)."""
+    for candidate in _annotation_class_candidates(annotation):
+        target_id: str | None = None
+        if candidate.startswith('"') or candidate.startswith("'"):
+            # Forward-ref string literal: `"Hero"` after stripping quotes.
+            stripped = candidate.strip("\"'")
+            target_id = _resolve_classname_string(
+                stripped,
+                source_path=path,
+                classname_to_ids=classname_to_ids,
+            )
+        else:
+            in_file = file_top_classes.get(candidate)
+            imported = file_imports.get(candidate)
+            if in_file and in_file in classes_by_id:
+                target_id = in_file
+            elif imported and imported in classes_by_id:
+                target_id = imported
+            else:
+                target_id = _resolve_classname_string(
+                    candidate,
+                    source_path=path,
+                    classname_to_ids=classname_to_ids,
+                )
+        if target_id is None or target_id == source_class_id:
+            continue
+        return {
+            "target": target_id, "kind": "references_orm",
+            "via": "relationship_call",
+            "where": f"{path}:{call.lineno}", "confidence": "exact",
+        }
+    return None
+
+
+# Typing-helper / container names that the annotation walker must NOT
+# treat as candidate ORM classes. The list covers stdlib `typing`
+# helpers, builtin collection generics, SQLAlchemy 2.x `Mapped[...]`
+# wrappers, and `None` / `NoneType` (which surface inside `T | None`).
+_ANNOTATION_SKIP_NAMES = frozenset({
+    "list", "List", "tuple", "Tuple", "set", "Set", "dict", "Dict",
+    "frozenset", "FrozenSet", "type", "Type",
+    "Optional", "Union", "Annotated", "ClassVar", "Final", "Literal",
+    "Mapped", "MappedColumn",
+    "None", "NoneType",
+})
+
+
+def _annotation_class_candidates(node: ast.expr) -> list[str]:
+    """Yield class-name candidates extracted from a type annotation.
+
+    Walks into Subscripts (`list[Hero]`, `Mapped[Hero]`, `Optional[Hero]`),
+    BinOps (`Hero | None`), and Tuples (`Union[Hero, Team]`), and
+    surfaces:
+      * `ast.Name.id` (e.g. `Hero`)
+      * `ast.Constant` string values (e.g. `"Hero"`) — forward refs;
+        the caller distinguishes them by the surrounding quote chars.
+
+    Skips names in `_ANNOTATION_SKIP_NAMES` so we don't pick up
+    `list`, `Optional`, `Mapped`, etc. as candidate classes. Returns
+    candidates in lexical (left-to-right) order — the caller stops at
+    the first one that resolves to an in-corpus class id."""
+    out: list[str] = []
+
+    def visit(n: ast.expr) -> None:
+        if isinstance(n, ast.Name):
+            if n.id not in _ANNOTATION_SKIP_NAMES:
+                out.append(n.id)
+        elif isinstance(n, ast.Constant) and isinstance(n.value, str):
+            # Quote the literal so the caller can detect forward refs.
+            out.append(f'"{n.value}"')
+        elif isinstance(n, ast.Subscript):
+            visit(n.value)
+            visit(n.slice)
+        elif isinstance(n, ast.BinOp):
+            # `X | Y` — both sides may carry candidate names.
+            visit(n.left)
+            visit(n.right)
+        elif isinstance(n, ast.Tuple):
+            for elt in n.elts:
+                visit(elt)
+        elif isinstance(n, ast.Attribute):
+            # `module.Class` — use the rightmost attribute name.
+            if n.attr not in _ANNOTATION_SKIP_NAMES:
+                out.append(n.attr)
+
+    visit(node)
+    return out
 
 
 def _resolve_orm_foreign_key(call: ast.Call, *, path: str,

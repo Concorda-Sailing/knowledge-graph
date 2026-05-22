@@ -89,13 +89,18 @@ def caveat_title(name: str) -> str:
 
 # SQLAlchemy ORM base-class names that, when extended (directly or through
 # the imports table), mark a class as an ORM model. The list intentionally
-# covers both the canonical 2.x form (`DeclarativeBase` / `MappedAsDataclass`)
-# and the SQLAlchemy 1.x convention (`Base`, declared via `declarative_base()`).
+# covers both the canonical 2.x form (`DeclarativeBase` / `MappedAsDataclass`),
+# the SQLAlchemy 1.x convention (`Base`, declared via `declarative_base()`),
+# and the SQLModel hybrid base (issue #84) — SQLModel routes its declarative
+# wiring through a custom metaclass, so the inheritance chain never reaches
+# `DeclarativeBase`; spotting `SQLModel` by name is the cheap belt-and-
+# suspenders complement to the `__tablename__` heuristic below.
 _SQLA_BASE_NAMES = frozenset({
     "DeclarativeBase",
     "DeclarativeBaseNoMeta",
     "MappedAsDataclass",
     "Base",  # project-specific convention from `declarative_base()`
+    "SQLModel",  # tiangolo/sqlmodel: metaclass-based, no DeclarativeBase ancestor
 })
 
 # Pydantic base class names.
@@ -116,15 +121,36 @@ def _last_segment(target: str) -> str:
     return target.rsplit("::", 1)[-1] if target else ""
 
 
-def is_sqlalchemy_model(primitive: dict, all_targets_by_id: dict[str, list[str]]) -> bool:
-    """A class is an ORM model if it `extends` a SQLAlchemy base directly
-    or transitively. Walks the in-corpus inheritance chain by following
-    `extends` edges through the primitives map; bottoms out either at a
-    SQLAlchemy base name or at a chain step the resolver couldn't follow
-    (in which case we say no — false-positives are worse than misses
-    when a caveat would mislead the reader)."""
+def is_sqlalchemy_model(
+    primitive: dict,
+    all_targets_by_id: dict[str, list[str]],
+    tablename_class_ids: set[str] | None = None,
+) -> bool:
+    """A class is an ORM model if either:
+
+      * its body assigns `__tablename__ = "..."` — the canonical
+        declarative-table marker; SQLAlchemy and any framework layered
+        on it (SQLModel, etc.) treat this assignment as the signal that
+        a class participates in the mapper. Frameworks that route their
+        declarative wiring through a custom metaclass (issue #84) never
+        reach `DeclarativeBase` via inheritance, so this body-level
+        signal is the only inheritance-agnostic check we have.
+      * OR it `extends` a SQLAlchemy base directly or transitively.
+        Walks the in-corpus inheritance chain by following `extends`
+        edges through the primitives map; bottoms out either at a
+        SQLAlchemy base name or at a chain step the resolver couldn't
+        follow (in which case we say no — false-positives are worse
+        than misses when a caveat would mislead the reader).
+
+    `tablename_class_ids` — set of class ids known to declare
+    `__tablename__` as a string literal. Optional; when omitted only
+    the inheritance check runs (keeps the detector usable from
+    `stamp_caveats`, which doesn't build the tablename index itself).
+    """
     if primitive.get("primitive") != "class":
         return False
+    if tablename_class_ids and primitive.get("id") in tablename_class_ids:
+        return True
     visited: set[str] = set()
     frontier = list(_extends_targets(primitive))
     while frontier:

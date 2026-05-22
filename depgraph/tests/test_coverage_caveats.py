@@ -101,6 +101,43 @@ def test_sqla_model_detector_chases_in_corpus_base():
     assert is_sqlalchemy_model(base, by_id) is True
 
 
+def test_sqla_model_detector_recognizes_sqlmodel_base():
+    """`SQLModel` is the metaclass-driven hybrid base (#84). Adding it
+    to the base-name set is the belt-and-suspenders complement to the
+    `__tablename__` heuristic — a direct extension still resolves even
+    when the class body lacks an explicit tablename."""
+    from depgraph.lib.coverage_caveats import is_sqlalchemy_model
+    hero = _class("api::models/hero.py::Hero",
+                  extends=["external::pypi::sqlmodel::SQLModel"])
+    by_id = {hero["id"]: [e["target"] for e in hero["edges_out"]
+                          if e["kind"] == "extends"]}
+    assert is_sqlalchemy_model(hero, by_id) is True
+
+
+def test_sqla_model_detector_recognizes_tablename_only():
+    """A class whose body assigns `__tablename__` is treated as an ORM
+    model regardless of its inheritance chain (#84). Covers the
+    metaclass-based pattern where the inheritance arrow never reaches
+    any known SQLAlchemy base name."""
+    from depgraph.lib.coverage_caveats import is_sqlalchemy_model
+    account = _class("api::models/account.py::Account",
+                     extends=["api::models/base.py::HybridBase"])
+    # HybridBase itself has no SQLAlchemy ancestor.
+    base = _class("api::models/base.py::HybridBase", extends=[])
+    by_id = {
+        account["id"]: [e["target"] for e in account["edges_out"]
+                        if e["kind"] == "extends"],
+        base["id"]: [],
+    }
+    # Without the tablename signal: returns False (no known base name).
+    assert is_sqlalchemy_model(account, by_id) is False
+    # With the tablename signal: returns True.
+    assert is_sqlalchemy_model(
+        account, by_id,
+        tablename_class_ids={account["id"]},
+    ) is True
+
+
 def test_sqla_caveats_no_longer_auto_stamped():
     """Now that #54 emits `references_orm` / `references_table` edges,
     the SQLAlchemy caveats are no longer auto-stamped on every model.
