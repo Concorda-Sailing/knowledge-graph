@@ -63,10 +63,10 @@ Legend: `pending`, `dispatched`, `[x]` (done with sha), `[FAIL]`.
 | E.1 | 1 | #38-E | Stale-dossier corpus pass wired into regen | [x] | 0bf9be2 |
 | E.2 | 1 | #38-G | Legacy field stripping in regen | [x] | 9e74e6b |
 | F.1 | 3 | #53 | Confidence taxonomy redesign | pending | run last; serializer |
-| A.4 | 3 | #84 | SQLModel-style ORM detection (gap in c47e3b4) | pending | wild-probe target: tiangolo-sqlmodel |
-| B.3 | 3 | #85 | TS default-export expressions create orphan imports | pending | wild-probe target: colinhacks-zod |
-| B.4 | 3 | #86 | TS `extends` to variable-kind violates taxonomy | pending | serialize after B.3; wild-probe target: colinhacks-zod |
-| D.6 | 3 | #87 | Slug helper collisions on `/` vs `-` (and `::$` suffix) | pending | wild-probe target: colinhacks-zod |
+| A.4 | 3 | #84 | SQLModel-style ORM detection (gap in c47e3b4) | [x] | cf12aa7 (references_orm 0 → 44 on sqlmodel) |
+| B.3 | 3 | #85 | TS default-export expressions create orphan imports | [x] | b725fa8 (zod `::default` orphans 81 → 0) |
+| B.4 | 3 | #86 | TS `extends` to variable-kind violates taxonomy | [x] | a03479d (zod `extends->var` errors 107 → 0; gate generalized) |
+| D.6 | 3 | #87 | Slug helper collisions on `/` vs `-` (and `::$` suffix) | [x] | 7df4b9a (zod slug_collisions 10 → 0) |
 
 **Lanes**:
 - **A** (py extractor): `depgraph/extractors/python/extract.py`
@@ -548,9 +548,15 @@ dispatched / completed.)
   - #53 confirmed empirically: 0 fuzzy edges across 4/5 targets
     (the one exception, zod, has 290 fuzzy edges — TS's re-export
     resolver uses fuzzy for barrel chains; Python never emits any)
-- 2026-05-22 — Wave 3 dispatched: A.4 #84, B.3 #85, B.4 #86 (serial after B.3), D.6 #87
-  - All four fixes verify against the wild-probe target that surfaced them
-  - Synthetic pin fixtures added alongside the corpus verification
+- 2026-05-22 — Wave 3 complete: 4/4 issues landed in one session
+  - A.4 #84 (cf12aa7), B.3 #85 (b725fa8), B.4 #86 (a03479d), D.6 #87 (7df4b9a)
+  - Suite went 1134 → 1157 passed (+23 new tests)
+  - Wild-probe verification on all 5 targets: each fix's target anomaly cleared
+  - 2 new bug shapes surfaced and filed:
+    - #88 `instantiates -> variable` edge_errors (71 in zod; symmetric to #86)
+    - #89 namespace re-export orphans (`::infer`, `::regexes`, `::util` — 7 in zod)
+  - `#86 agent also generalized the taxonomy gate via _TARGET_KIND_CONFIDENCE_GATES
+    in depgraph/lib/edges.py — the right mechanism for #88's fix to extend.
 
 ---
 
