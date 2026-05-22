@@ -63,6 +63,10 @@ Legend: `pending`, `dispatched`, `[x]` (done with sha), `[FAIL]`.
 | E.1 | 1 | #38-E | Stale-dossier corpus pass wired into regen | [x] | 0bf9be2 |
 | E.2 | 1 | #38-G | Legacy field stripping in regen | [x] | 9e74e6b |
 | F.1 | 3 | #53 | Confidence taxonomy redesign | pending | run last; serializer |
+| A.4 | 3 | #84 | SQLModel-style ORM detection (gap in c47e3b4) | pending | wild-probe target: tiangolo-sqlmodel |
+| B.3 | 3 | #85 | TS default-export expressions create orphan imports | pending | wild-probe target: colinhacks-zod |
+| B.4 | 3 | #86 | TS `extends` to variable-kind violates taxonomy | pending | serialize after B.3; wild-probe target: colinhacks-zod |
+| D.6 | 3 | #87 | Slug helper collisions on `/` vs `-` (and `::$` suffix) | pending | wild-probe target: colinhacks-zod |
 
 **Lanes**:
 - **A** (py extractor): `depgraph/extractors/python/extract.py`
@@ -544,3 +548,177 @@ dispatched / completed.)
   - #53 confirmed empirically: 0 fuzzy edges across 4/5 targets
     (the one exception, zod, has 290 fuzzy edges — TS's re-export
     resolver uses fuzzy for barrel chains; Python never emits any)
+- 2026-05-22 — Wave 3 dispatched: A.4 #84, B.3 #85, B.4 #86 (serial after B.3), D.6 #87
+  - All four fixes verify against the wild-probe target that surfaced them
+  - Synthetic pin fixtures added alongside the corpus verification
+
+---
+
+## Wave 3 task blocks
+
+### A.4 — #84: SQLModel-style ORM base detection
+
+**Files**: `depgraph/lib/coverage_caveats.py` (or wherever `is_sqlalchemy_model` lives), `depgraph/extractors/python/extract.py` (the `_attach_orm_edges` pass from c47e3b4), tests + fixtures.
+
+**Scope**: `is_sqlalchemy_model` only matches a fixed `_SQLA_BASE_NAMES` set; SQLModel routes inheritance through a metaclass (`SQLModelMetaclass(ModelMetaclass, DeclarativeMeta)`) and never extends a name in that set, so the ORM extractor no-ops on SQLModel codebases. Land Option (2) from the issue body: also treat any class whose body assigns `__tablename__ = "..."` as an ORM model — a class-body signal, independent of base hierarchy. Add `SQLModel` to `_SQLA_BASE_NAMES` as belt-and-suspenders.
+
+**Acceptance**:
+- Synthetic pin fixture under `depgraph/tests/fixtures/wild/` (or extractor test fixtures) covering: a metaclass-only base (no `_SQLA_BASE_NAMES` match) that declares `__tablename__` and `relationship()` calls → `references_orm` edges emit.
+- Wild-probe verification: `python tools/wild-probe/probe.py tiangolo-sqlmodel` no longer reports `#54 expected: sqlalchemy-orm target has 0 references_orm edges`; `references_orm` edge count > 0 on that target.
+- Full suite green.
+- Commit message ends with `Refs #84` (NOT `Closes/Fixes/Resolves` — see [[feedback-no-auto-close-issues]]).
+- Generic placeholders in fixtures — Account/Membership/Order shapes, no consumer-project names ([[feedback-no-source-names-in-fixes]]).
+
+**Agent prompt**:
+```
+You are working on the knowledge-graph repo at ~/knowledge-graph.
+Task: fix issue #84 (SQLModel-style ORM bases not detected). Read
+the issue body with `gh issue view 84` for full context.
+
+Start: `git reset --hard origin/main` then `git pull --ff-only` is
+NOT needed — your base is the local main (38 commits ahead of origin).
+DO NOT reset to origin/main; you'll lose all the unpushed work.
+Instead, `git status` should already be clean.
+
+Constraints:
+- Land Option 2 from the issue: detect `__tablename__` in class body
+  as the ORM signal, in addition to the base-name check. Add
+  `SQLModel` to `_SQLA_BASE_NAMES` belt-and-suspenders.
+- Add a synthetic pin fixture (metaclass-only base, no _SQLA_BASE_NAMES
+  hit, declares __tablename__) under the extractor tests.
+- Verify against the wild corpus: run
+  `.venv/bin/python tools/wild-probe/probe.py tiangolo-sqlmodel`
+  and confirm references_orm count goes from 0 to > 0. Save the new
+  results JSON; it lives under tools/wild-probe/results/.
+- Bump EXTRACTOR_TAG in extract.py (current @2026-05-20e → @2026-05-22a).
+- Generic Account/Membership/Order shapes in fixtures (no real project
+  names).
+- Commit message ends with `Refs #84` only — NO Closes/Fixes/Resolves.
+- Run `.venv/bin/pytest -q` and confirm green before committing.
+- ONE commit covering all changes.
+
+If you hit a design decision not in the issue body, document the call
+in the commit body and continue.
+```
+
+### B.3 — #85: TS default-export orphan imports
+
+**Files**: `depgraph/extractors/typescript/extract.ts` (primitive emission, L1), tests + fixtures.
+
+**Scope**: When the extractor sees `export default <expression>` (not `export default class X` or `export default function f`), emit a synthetic `variable` primitive with id `<file>::default`, name `"default"`, and signature = expression text (truncated). For `export default class X {}` and `export default function f() {}`, the existing primitive stays but ALSO needs `<file>::default` resolvable — emit an alias primitive that points at the class/function id, or have the consumer's import edge target the named id directly via `defaultExportMap`.
+
+**Acceptance**:
+- Synthetic pin fixture: file with `export default defineConfig({...})` style + a consumer that imports it. Pin test asserts no orphan edge.
+- Wild-probe verification: `python tools/wild-probe/probe.py colinhacks-zod` shows `orphan_edges` with `::default` suffix dropping to 0 (was 81).
+- Full suite green; existing default-export tests unaffected.
+- Commit ends with `Refs #85`.
+
+**Agent prompt**:
+```
+You are working on the knowledge-graph repo at ~/knowledge-graph.
+Task: fix issue #85 (TS default-export expressions create orphan imports).
+Read the issue body with `gh issue view 85`.
+
+DO NOT git reset — you're on local main, 38 commits ahead of origin.
+git status should already be clean.
+
+Constraints:
+- Modify ONLY depgraph/extractors/typescript/extract.ts and files
+  under depgraph/tests/extractors/. Coordinate with B.4 (#86) by
+  not touching the L2 attachInheritanceEdges code path — that's
+  the next lane's territory.
+- Emit a synthetic `variable` primitive at `<file>::default` whenever
+  a module has `export default <expression>`. For `export default
+  class X` / `export default function f` patterns, keep the named
+  primitive and ALSO make `<file>::default` resolve (alias or
+  duplicate primitive — your call, document in the commit body).
+- Add a synthetic pin fixture: defineConfig-style default export +
+  consumer importing it. Test asserts the import edge resolves.
+- Verify against the wild corpus: run
+  `.venv/bin/python tools/wild-probe/probe.py colinhacks-zod`
+  and confirm orphan_edges with ::default drops from 81 → 0.
+- Bump EXTRACTOR_TAG in extract.ts.
+- Commit ends with `Refs #85` only — no Closes/Fixes.
+- Run `.venv/bin/pytest -q` before committing.
+- ONE commit.
+```
+
+### B.4 — #86: TS extends-to-variable taxonomy
+
+**Files**: `depgraph/extractors/typescript/extract.ts` (L2 inheritance edge emission), `depgraph/lib/edges.py` (taxonomy rules possibly), tests + fixtures.
+
+**Dependency**: Serialize AFTER B.3 lands (both touch extract.ts; running both at once risks merge conflict).
+
+**Scope**: TS extractor emits `extends` edges without checking target kind. In zod's v4 layout, `ZodType` is a const (variable primitive), and v3's `class ZodString extends ZodType` triggers a taxonomy violation (107 in zod). Land "fuzzy extends": when the target primitive is a variable, emit `extends` with `confidence: "fuzzy"`, and update the reconcile validator to permit `confidence=fuzzy` `extends` against variable targets.
+
+**Acceptance**:
+- Synthetic pin fixture: `const Factory = makeBase(); class Child extends Factory {}` — pin asserts edge is `extends` confidence `fuzzy`.
+- Wild-probe verification: `python tools/wild-probe/probe.py colinhacks-zod` shows `edge_errors` dropping from 107 → 0 (or close).
+- Schema updated if needed; reconcile validator updated.
+- Full suite green.
+- Commit ends with `Refs #86`.
+
+**Agent prompt**:
+```
+You are working on the knowledge-graph repo at ~/knowledge-graph.
+Task: fix issue #86 (TS extends emits variable-kind targets that
+violate edge taxonomy). Read `gh issue view 86`.
+
+DO NOT git reset — you're on local main, ahead of origin.
+
+Constraints:
+- Modify depgraph/extractors/typescript/extract.ts L2 inheritance
+  edge emission to look up the resolved target id in the primitives
+  index. If it's a `class`: emit extends as today. If it's a
+  `variable`: emit extends with confidence="fuzzy".
+- Update depgraph/lib/edges.py / reconcile validator to permit
+  `extends` with `confidence=fuzzy` when target.kind == "variable".
+- If the schema (node.schema.json) constrains confidence per edge
+  kind, update it.
+- Add synthetic pin fixture: const-factory class pattern.
+- Verify against the wild corpus: `tools/wild-probe/probe.py
+  colinhacks-zod`; edge_errors should drop from 107 → 0.
+- Bump EXTRACTOR_TAG in extract.ts.
+- Commit ends with `Refs #86` only.
+- Run `.venv/bin/pytest -q` before committing.
+- ONE commit.
+
+External targets are already permitted at `confidence=unresolved` per
+the issue body. This is the symmetric in-corpus case.
+```
+
+### D.6 — #87: Slug helper collisions
+
+**Files**: wherever the slug helper lives (likely `depgraph/lib/slugs.py` or `depgraph/lib/io.py` — look it up), tests.
+
+**Scope**: Slug helper collapses `/` and `-` both to `_`, and strips trailing non-alphanumeric (`module` vs `module::$` collide). Land Option 1 from the issue body: detect collision and append a short hash of the original id. Stable across regens, unique by construction. Also investigate Pattern 2 — what does the `::$` suffix mean upstream? If it's an extractor-generated sentinel that's safe to elide, the collision goes away naturally; if it's load-bearing, the slug helper must preserve it.
+
+**Acceptance**:
+- Synthetic pin fixture / test that constructs two distinct ids whose default slugs collide and asserts disambiguation produces distinct on-disk names.
+- Wild-probe verification: `tools/wild-probe/probe.py colinhacks-zod`; slug_collisions drops from 10 → 0.
+- Commit ends with `Refs #87`.
+
+**Agent prompt**:
+```
+You are working on the knowledge-graph repo at ~/knowledge-graph.
+Task: fix issue #87 (slug helper collisions). Read `gh issue view 87`.
+
+DO NOT git reset — you're on local main, ahead of origin.
+
+Constraints:
+- Find the slug helper (grep for slug, slugify, _slug — likely in
+  depgraph/lib/). Land Option 1 from the issue: detect collision at
+  slug time, append a short stable hash of the original id when a
+  slug already exists. Stable across regens, unique by construction.
+- Investigate Pattern 2 (::$ suffix): grep the codebase for where
+  ids with `::$` get generated. If it's a sentinel safe to elide
+  before slugging, do so; if not, ensure the slug preserves it.
+  Document your finding in the commit body.
+- Add a synthetic test that constructs colliding ids (v4-mini vs
+  v4/mini) and asserts the slug helper disambiguates.
+- Verify against the wild corpus: `tools/wild-probe/probe.py
+  colinhacks-zod`; slug_collisions drops from 10 → 0.
+- Commit ends with `Refs #87` only.
+- Run `.venv/bin/pytest -q` before committing.
+- ONE commit.
+```
