@@ -59,7 +59,7 @@ Legend: `pending`, `dispatched`, `[x]` (done with sha), `[FAIL]`.
 | D.2 | 1 | #79 | Wild-corpus probe infrastructure | [x] | cf5bcc1 (5 targets curated; probe surfaced 4 new bugs → #84/85/86/87) |
 | D.3 | 1 | #80 | Test convention gate | [x] | 677695b (rename + gate in one) |
 | D.4 | 1 | #81 | TS memory budget gate | [x] | 83f4c39 |
-| D.5 | 1 | #52 | Tests included with kind=test tag | pending | NEEDS HUMAN: pick Option A/B/C |
+| D.5 | 1 | #52 | Tests included with kind=test tag | [x] | 5eea826 (Option C: test_coverage.json + per-node tested_by_count) |
 | E.1 | 1 | #38-E | Stale-dossier corpus pass wired into regen | [x] | 0bf9be2 |
 | E.2 | 1 | #38-G | Legacy field stripping in regen | [x] | 9e74e6b |
 | F.1 | 3 | #53 | Confidence taxonomy redesign | pending | run last; serializer |
@@ -67,6 +67,8 @@ Legend: `pending`, `dispatched`, `[x]` (done with sha), `[FAIL]`.
 | B.3 | 3 | #85 | TS default-export expressions create orphan imports | [x] | b725fa8 (zod `::default` orphans 81 → 0) |
 | B.4 | 3 | #86 | TS `extends` to variable-kind violates taxonomy | [x] | a03479d (zod `extends->var` errors 107 → 0; gate generalized) |
 | D.6 | 3 | #87 | Slug helper collisions on `/` vs `-` (and `::$` suffix) | [x] | 7df4b9a (zod slug_collisions 10 → 0) |
+| B.5 | 4 | #88 | TS `instantiates` to variable-kind violates taxonomy | [x] | cd15d2e (zod errors 71 → 0; extends gate mechanism to instantiates+function) |
+| B.6 | 4 | #89 | TS namespace re-exports produce orphan imports | [x] | 3bbef29 (zod orphans 7 → 0; covers `export * as N` + local renames) |
 
 **Lanes**:
 - **A** (py extractor): `depgraph/extractors/python/extract.py`
@@ -557,6 +559,22 @@ dispatched / completed.)
     - #89 namespace re-export orphans (`::infer`, `::regexes`, `::util` — 7 in zod)
   - `#86 agent also generalized the taxonomy gate via _TARGET_KIND_CONFIDENCE_GATES
     in depgraph/lib/edges.py — the right mechanism for #88's fix to extend.
+- 2026-05-22 — Wave 4 (same session): #52, #88, #89 all landed
+  - D.5 #52 (5eea826): Option C test-coverage index. End-of-regen pass that emits
+    `test_coverage.json` + stamps `tested_by_count` on covered primitives.
+    pallets-click: 75.4% public-API coverage.
+  - B.5 #88 (cd15d2e): extended the _TARGET_KIND_CONFIDENCE_GATES gate to
+    `instantiates -> variable` (and `-> function`). zod errors 71 → 0.
+  - B.6 #89 (3bbef29): synthesizes primitives at `<file>::<name>` for
+    `export * as N from '...'` and local renames. zod orphans 7 → 0.
+  - **All 5 wild-probe targets now report 0 edge_errors, 0 orphan_edges,
+    0 slug_collisions, 0 primitive_errors.** Only remaining anomaly across
+    the corpus is the "taxonomy collapse" warning (#53 — needs human design).
+  - Suite at 1180 passed, 4 skipped (+46 from session start).
+  - Follow-up surfaced (not blocking, not filed): tiangolo-sqlmodel test-coverage
+    ratio is 0.7% (13/1787) — walker's package-alias heuristic doesn't match
+    SQLModel's `from sqlmodel import ...` import shape. Investigate before
+    declaring #52 verification done.
 
 ---
 
