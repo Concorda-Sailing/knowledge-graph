@@ -61,12 +61,18 @@ ALL_EDGE_KINDS = {k.value for k in EdgeKind}
 # binding, the extractor downgrades the edge to `confidence: "fuzzy"`. We
 # permit `variable` / `function` targets ONLY at fuzzy confidence; exact
 # `extends -> variable` is still a taxonomy error (#86).
+#
+# instantiates.target: same posture as extends/implements. `new ZodObject()`
+# where `ZodObject` is `export const ZodObject = $constructor(...)` resolves
+# to a `variable` primitive; some codebases also declare a function and
+# `new` it. The extractor downgrades these to fuzzy; exact `instantiates ->
+# variable` is still a taxonomy error (#88).
 EDGE_KIND_RULES: dict[str, dict[str, list[str]]] = {
     "defines":      {"source": ["module", "class", "package"], "target": ["any"]},
     "extends":      {"source": ["class"], "target": ["class", "variable", "function"]},
     "implements":   {"source": ["class"], "target": ["class", "variable", "function"]},
     "calls":        {"source": ["function"], "target": ["function"]},
-    "instantiates": {"source": ["function"], "target": ["class"]},
+    "instantiates": {"source": ["function"], "target": ["class", "variable", "function"]},
     "references":   {"source": ["any"], "target": ["any"]},
     "references_orm":   {"source": ["class"], "target": ["class"]},
     "references_table": {"source": ["class"], "target": ["class"]},
@@ -88,11 +94,17 @@ EDGE_KIND_RULES: dict[str, dict[str, list[str]]] = {
 # const-factory base-class pattern (#86). The arrow is real but the
 # extractor can't structurally prove it without dataflow, so we require the
 # extractor to emit it as fuzzy. Exact `extends -> variable` is still a bug.
+#
+# `instantiates` to a `variable` / `function` is the symmetric case (#88) —
+# `new SomeConst(...)` where SomeConst is a `$constructor`-style factory
+# binding. Same posture: real arrow, fuzzy confidence, exact still a bug.
 _TARGET_KIND_CONFIDENCE_GATES: dict[tuple[str, str], set[str]] = {
     ("extends", "variable"): {"fuzzy"},
     ("extends", "function"): {"fuzzy"},
     ("implements", "variable"): {"fuzzy"},
     ("implements", "function"): {"fuzzy"},
+    ("instantiates", "variable"): {"fuzzy"},
+    ("instantiates", "function"): {"fuzzy"},
 }
 
 

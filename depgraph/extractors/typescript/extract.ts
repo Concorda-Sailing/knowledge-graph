@@ -189,7 +189,7 @@ interface PerFileMetadata {
   import_shims: ImportShimMeta[];
 }
 
-const EXTRACTOR_TAG = "depgraph/extractors/typescript/extract.ts@2026-05-22b";
+const EXTRACTOR_TAG = "depgraph/extractors/typescript/extract.ts@2026-05-22c";
 const EXTS = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"];
 
 /**
@@ -1720,6 +1720,17 @@ function attachCallAndVarAccessEdges(
   // depgraph/lib/edges.py::EDGE_KIND_RULES).
   const allClassIds = new Set(prims.filter((p) => p.primitive === "class").map((p) => p.id));
   const allFunctionIds = new Set(prims.filter((p) => p.primitive === "function").map((p) => p.id));
+  // Side index: primitive id -> primitive kind. Used to gate `instantiates`
+  // confidence by the resolved target's actual kind — symmetric to the
+  // `extends`/`implements` treatment in attachInheritanceEdges (#86). Real
+  // TS factory patterns bind a class as `const X = $constructor(...)` (a
+  // `variable` primitive); when the source file also declares an interface
+  // of the same name the two primitives collide on id and reconcile picks
+  // the variable. `new X(...)` then emits `instantiates -> variable` at
+  // confidence=exact, which the validator rejects. We downgrade to fuzzy
+  // when the resolved target is not itself a class (#88).
+  const kindById = new Map<string, string>();
+  for (const p of prims) kindById.set(p.id, p.primitive);
 
   // Local top-level symbol index per file: name -> id (non-method, owner-null)
   const localByPath = new Map<string, Map<string, string>>();
@@ -1809,11 +1820,29 @@ function attachCallAndVarAccessEdges(
         }
         if (ev.kind === "new") {
           const targetId = localNames.get(ev.class_name) ?? imports.get(ev.class_name);
-          if (targetId && allClassIds.has(targetId)) {
-            fnPrim.edges_out.push({
-              target: targetId, kind: "instantiates", via: "new_expression",
-              where: `${rel}:${ev.line}`, confidence: "exact",
-            });
+          if (targetId) {
+            const targetKind = kindById.get(targetId);
+            // class -> class instantiation, exact.
+            // class -> variable: factory-binding pattern (e.g. zod's
+            //   `export const ZodObject = core.$constructor(...)`); the
+            //   `new ZodObject(...)` arrow is real but the static taxonomy
+            //   can't prove it without dataflow. EDGE_KIND_RULES permits
+            //   `instantiates -> variable` ONLY at fuzzy (#88).
+            // class -> function: same posture as variable; rare in practice
+            //   but treat identically (e.g. `new factory()` where factory
+            //   is itself a declared function).
+            // Any other / unresolved target: drop (today's behavior).
+            if (targetKind === "class") {
+              fnPrim.edges_out.push({
+                target: targetId, kind: "instantiates", via: "new_expression",
+                where: `${rel}:${ev.line}`, confidence: "exact",
+              });
+            } else if (targetKind === "variable" || targetKind === "function") {
+              fnPrim.edges_out.push({
+                target: targetId, kind: "instantiates", via: "new_expression",
+                where: `${rel}:${ev.line}`, confidence: "fuzzy",
+              });
+            }
           }
           continue;
         }

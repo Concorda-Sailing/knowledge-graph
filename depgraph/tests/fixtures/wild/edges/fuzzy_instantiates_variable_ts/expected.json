@@ -1,0 +1,7 @@
+{
+  "description": "A function that does `new Factory()` where `Factory` is a const-factory binding (a `variable` primitive) must emit `instantiates` at confidence=fuzzy. Exact `instantiates -> variable` violates EDGE_KIND_RULES; fuzzy is the gated relaxation (#88).",
+  "unresolved_edges_expected": false,
+  "edges": [
+    {"source": "fixture::src/consumer.ts::makeOne", "kind": "instantiates", "target": "fixture::src/consumer.ts::Factory", "confidence": "fuzzy"}
+  ]
+}

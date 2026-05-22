@@ -105,3 +105,44 @@ def test_implements_to_variable_requires_fuzzy_confidence():
     assert validate_edge(fuzzy) == []
     exact = {**fuzzy, "confidence": "exact"}
     assert any("requires confidence" in e for e in validate_edge(exact))
+
+
+def test_instantiates_to_variable_requires_fuzzy_confidence():
+    """`$constructor`-style factory bindings (e.g. `export const Foo =
+    $constructor(...)`) extract as `variable` primitives. `new Foo(...)`
+    must emit `instantiates` at confidence=fuzzy and the validator must
+    permit that combination only at fuzzy (#88)."""
+    fuzzy = {"source_kind": "function", "target_kind": "variable",
+             "kind": "instantiates", "via": "new_expression",
+             "where": "factory.ts:10", "confidence": "fuzzy"}
+    assert validate_edge(fuzzy) == []
+
+
+def test_instantiates_to_variable_at_exact_confidence_still_errors():
+    """Exact `instantiates -> variable` remains a taxonomy violation;
+    catches extractor regressions in the const-factory `new` gate (#88)."""
+    exact = {"source_kind": "function", "target_kind": "variable",
+             "kind": "instantiates", "via": "new_expression",
+             "where": "factory.ts:10", "confidence": "exact"}
+    errors = validate_edge(exact)
+    assert any("requires confidence" in e for e in errors), errors
+
+
+def test_instantiates_to_class_still_exact():
+    """The mainline `new Cls()` case (target is a real class primitive)
+    must continue to validate at exact confidence (#88)."""
+    edge = {"source_kind": "function", "target_kind": "class",
+            "kind": "instantiates", "via": "new_expression",
+            "where": "factory.ts:10", "confidence": "exact"}
+    assert validate_edge(edge) == []
+
+
+def test_instantiates_to_function_requires_fuzzy_confidence():
+    """Symmetric: `new f()` where `f` is a declared function (callable
+    constructor pattern) must be fuzzy. Exact still errors (#88)."""
+    fuzzy = {"source_kind": "function", "target_kind": "function",
+             "kind": "instantiates", "via": "new_expression",
+             "where": "factory.ts:10", "confidence": "fuzzy"}
+    assert validate_edge(fuzzy) == []
+    exact = {**fuzzy, "confidence": "exact"}
+    assert any("requires confidence" in e for e in validate_edge(exact))
