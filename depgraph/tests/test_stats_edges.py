@@ -1,10 +1,18 @@
-"""Tests for `depgraph stats --edges` — confidence histogram + categorized
-unresolved-edge breakdown (issue #53 Option C).
+"""Tests for `depgraph stats --edges` — confidence histogram + per-bucket
+worklist (issue #53 Option A).
 
-The category boundaries are the contract; if the bucket logic shifts, the
-"chase which unresolved class first?" question stops being answerable from
-the report, so the categorization is what we lock down here rather than the
-exact formatting."""
+After Option A, the previously-collapsed `unresolved` bucket is split into
+four specific values stamped at emit time:
+
+  * `external`              — deliberate external library terminal
+  * `unresolved_internal`   — resolver-gap (bug signal)
+  * `unresolved_receiver`   — typed-receiver method call (gap)
+  * `dynamic`               — reserved for getattr / computed dispatch
+
+The `stats --edges` report reads the confidence field directly rather than
+re-deriving from the target prefix, so the contract this suite locks down
+is the printed sections and the `_group_key_for_target` collapse helper.
+"""
 from __future__ import annotations
 
 import argparse
@@ -14,30 +22,28 @@ from pathlib import Path
 import pytest
 
 from depgraph.lib.cli.context import Context
-from depgraph.lib.cli.stats import cmd_stats, _categorize_unresolved
+from depgraph.lib.cli.stats import cmd_stats, _group_key_for_target
 
 
-@pytest.mark.parametrize("target, expected_category, expected_group", [
+@pytest.mark.parametrize("target, expected_group", [
     # external libraries — collapsed to pkg
-    ("external::npm::react::useState", "external_library", "external::npm::react"),
-    ("external::pypi::sqlalchemy::Session", "external_library", "external::pypi::sqlalchemy"),
-    # missed in-corpus — the resolver-bug bucket
-    ("external::pypi::unknown::BaseModel", "missed_internal", "external::pypi::unknown"),
-    ("external::npm::unknown::default", "missed_internal", "external::npm::unknown"),
-    # typed-receiver method calls — receiver name + dotted method
-    ("external::unresolved::db.query", "typed_receiver", "external::unresolved::db.query"),
-    ("external::unresolved::Receiver.method", "typed_receiver",
+    ("external::npm::react::useState", "external::npm::react"),
+    ("external::pypi::sqlalchemy::Session", "external::pypi::sqlalchemy"),
+    # missed in-corpus — `unknown` slot, collapsed the same way
+    ("external::pypi::unknown::BaseModel", "external::pypi::unknown"),
+    ("external::npm::unknown::default", "external::npm::unknown"),
+    # typed-receiver — receiver name + dotted method, kept verbatim
+    ("external::unresolved::db.query", "external::unresolved::db.query"),
+    ("external::unresolved::Receiver.method",
      "external::unresolved::Receiver.method"),
-    # dynamic / computed callee — no dotted method
-    ("external::unresolved::computed_callee", "dynamic_or_other",
+    # dynamic / computed callee — also kept verbatim
+    ("external::unresolved::computed_callee",
      "external::unresolved::computed_callee"),
-    # in-corpus or unrecognized shape
-    ("repo::pkg/mod.py::cls", "other", "repo::pkg/mod.py::cls"),
+    # in-corpus or unrecognized shape — passed through unchanged
+    ("repo::pkg/mod.py::cls", "repo::pkg/mod.py::cls"),
 ])
-def test_categorize_unresolved(target, expected_category, expected_group):
-    cat, group = _categorize_unresolved(target)
-    assert cat == expected_category
-    assert group == expected_group
+def test_group_key_for_target(target, expected_group):
+    assert _group_key_for_target(target) == expected_group
 
 
 def _make_ctx(depgraph: Path) -> Context:
@@ -57,27 +63,28 @@ def _write_node(node_path: Path, *, node_id: str, edges: list[dict]) -> None:
     }))
 
 
-def test_stats_edges_reports_confidence_and_categorized_unresolved(tmp_path, capsys):
-    """End-to-end: a synthetic corpus with a mix of edge confidences and
-    target shapes prints the categorization that lets a reader prioritize
-    resolver work."""
+def test_stats_edges_reports_confidence_and_per_bucket_worklist(tmp_path, capsys):
+    """End-to-end: a synthetic corpus with one edge per new confidence
+    value prints the per-bucket counts and the gap-target prefixes worklist."""
     depgraph = tmp_path / "depgraph"
     ctx = _make_ctx(depgraph)
 
-    # 1 exact, 1 fuzzy, then 4 unresolved spanning all four interesting categories
     _write_node(depgraph / "nodes" / "f1.json", node_id="r::a.py::f1", edges=[
         {"target": "r::a.py::g", "kind": "calls", "confidence": "exact",
          "via": "call", "where": "a.py:1"},
         {"target": "r::a.py::h", "kind": "imports", "confidence": "fuzzy",
          "via": "re_export", "where": "a.py:2"},
         {"target": "external::npm::react::useState", "kind": "calls",
-         "confidence": "unresolved", "via": "call", "where": "a.py:3"},
+         "confidence": "external", "via": "call", "where": "a.py:3"},
         {"target": "external::pypi::unknown::BaseModel", "kind": "extends",
-         "confidence": "unresolved", "via": "class_decl", "where": "a.py:4"},
+         "confidence": "unresolved_internal", "via": "class_decl",
+         "where": "a.py:4"},
         {"target": "external::unresolved::db.query", "kind": "calls",
-         "confidence": "unresolved", "via": "method_call", "where": "a.py:5"},
+         "confidence": "unresolved_receiver", "via": "method_call",
+         "where": "a.py:5"},
         {"target": "external::unresolved::computed_callee", "kind": "calls",
-         "confidence": "unresolved", "via": "computed_callee", "where": "a.py:6"},
+         "confidence": "unresolved_receiver", "via": "computed_callee",
+         "where": "a.py:6"},
     ])
 
     args = argparse.Namespace(telemetry=False, edges=True, unresolved_top=15)
@@ -98,21 +105,25 @@ def test_stats_edges_reports_confidence_and_categorized_unresolved(tmp_path, cap
     assert "## Edges by confidence" in out
     assert _has_row("exact", 1)
     assert _has_row("fuzzy", 1)
-    assert _has_row("unresolved", 4)
+    assert _has_row("external", 1)
+    assert _has_row("unresolved_internal", 1)
+    assert _has_row("unresolved_receiver", 2)
+    assert _has_row("dynamic", 0)
     assert _has_row("total", 6)
 
-    # categorized unresolved — count + label
-    assert "## Unresolved edges by category" in out
+    # per-category breakdown — count + label
+    assert "## Edges by confidence category" in out
     assert "1  external library" in out
     assert "1  missed in-corpus" in out
-    assert "1  typed-receiver" in out
-    assert "1  dynamic / other" in out
+    assert "2  typed-receiver" in out
 
-    # top prefixes — the worklist
-    assert "## Top unresolved prefixes" in out
-    assert "external::npm::react" in out
+    # worklist of gap-target prefixes — must NOT include the `external`
+    # bucket (that's the expected case, not a worklist item)
+    assert "## Top gap-target prefixes" in out
     assert "external::pypi::unknown" in out
     assert "external::unresolved::db.query" in out
+    # react is `external` confidence — excluded from the worklist
+    assert "external::npm::react" not in out.split("Top gap-target prefixes")[-1]
 
 
 def test_stats_edges_omitted_by_default(tmp_path, capsys):
@@ -122,19 +133,20 @@ def test_stats_edges_omitted_by_default(tmp_path, capsys):
     ctx = _make_ctx(depgraph)
     _write_node(depgraph / "nodes" / "f1.json", node_id="r::a.py::f1", edges=[
         {"target": "external::npm::react::useState", "kind": "calls",
-         "confidence": "unresolved", "via": "call", "where": "a.py:1"},
+         "confidence": "external", "via": "call", "where": "a.py:1"},
     ])
 
     args = argparse.Namespace(telemetry=False, edges=False, unresolved_top=15)
     assert cmd_stats(args, ctx) == 0
     out = capsys.readouterr().out
     assert "## Edges by confidence" not in out
-    assert "## Unresolved edges by category" not in out
+    assert "## Edges by confidence category" not in out
 
 
-def test_stats_edges_empty_unresolved_skips_category_section(tmp_path, capsys):
-    """When the histogram is non-empty but no unresolved exist, the category
-    breakdown section is skipped rather than rendered empty."""
+def test_stats_edges_only_exact_skips_category_section(tmp_path, capsys):
+    """When the histogram is non-empty but only `exact` / `fuzzy` edges
+    exist, the category breakdown section is skipped rather than rendered
+    empty."""
     depgraph = tmp_path / "depgraph"
     ctx = _make_ctx(depgraph)
     _write_node(depgraph / "nodes" / "f1.json", node_id="r::a.py::f1", edges=[
@@ -146,17 +158,26 @@ def test_stats_edges_empty_unresolved_skips_category_section(tmp_path, capsys):
     assert cmd_stats(args, ctx) == 0
     out = capsys.readouterr().out
     assert "## Edges by confidence" in out
-    assert "## Unresolved edges by category" not in out
-    assert "## Top unresolved prefixes" not in out
+    assert "## Edges by confidence category" not in out
+    assert "## Top gap-target prefixes" not in out
 
 
 def test_stats_edges_respects_unresolved_top(tmp_path, capsys):
-    """--unresolved-top N caps the worklist size."""
+    """--unresolved-top N caps the gap-target worklist size. `external`
+    targets are NOT counted toward the worklist (they're the expected
+    bucket, not a gap)."""
     depgraph = tmp_path / "depgraph"
     ctx = _make_ctx(depgraph)
     edges = [
-        {"target": f"external::npm::pkg{i}::sym", "kind": "calls",
-         "confidence": "unresolved", "via": "call", "where": "a.py:1"}
+        {"target": f"external::pypi::unknown::sym{i}", "kind": "calls",
+         "confidence": "unresolved_internal", "via": "call", "where": "a.py:1"}
+        for i in range(10)
+    ]
+    # Stagger the targets so they land in 10 distinct group prefixes.
+    edges = [
+        {"target": f"external::unresolved::recv{i}.method", "kind": "calls",
+         "confidence": "unresolved_receiver", "via": "method_call",
+         "where": "a.py:1"}
         for i in range(10)
     ]
     _write_node(depgraph / "nodes" / "f1.json", node_id="r::a.py::f1", edges=edges)
@@ -164,6 +185,7 @@ def test_stats_edges_respects_unresolved_top(tmp_path, capsys):
     args = argparse.Namespace(telemetry=False, edges=True, unresolved_top=3)
     assert cmd_stats(args, ctx) == 0
     out = capsys.readouterr().out
-    assert "## Top unresolved prefixes (top 3)" in out
-    prefix_lines = [ln for ln in out.splitlines() if "external::npm::pkg" in ln]
+    assert "## Top gap-target prefixes (top 3)" in out
+    prefix_lines = [ln for ln in out.splitlines()
+                    if "external::unresolved::recv" in ln]
     assert len(prefix_lines) == 3

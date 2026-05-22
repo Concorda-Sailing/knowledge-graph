@@ -11,10 +11,11 @@ The v0 extractor only handles single-hop `recv.method()` where `recv` is a Name 
 Chained calls (where the receiver is itself a Call or multi-hop Attribute) return `[]`.
 
 ## v0 behavior
-- `run` emits zero calls edges for the chain (dropped, not unresolved).
+- `run` emits zero calls edges for the chain (dropped, no edge at all).
 - `Client.__init__` emits `instantiates -> UserSet` (bare Name call, resolves).
 - `UserSet.get` emits `instantiates -> UserQuery` (bare Name call in return).
 
 ## Pinned behavior
-Chained calls silently drop. Future work: emit `confidence: "unresolved"` for
-chained calls to preserve the information that a call site exists.
+Chained calls silently drop. Future work: emit `confidence: "unresolved_receiver"`
+(per #53 Option A) for chained calls to preserve the information that a call
+site exists.

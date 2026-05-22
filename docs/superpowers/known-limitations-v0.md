@@ -100,12 +100,12 @@ This document is the canonical index of every v0-acceptable gap surfaced during 
 
 ---
 
-### EDGE-2: Chained method calls `a.b.c()` dropped silently (no unresolved edge)
+### EDGE-2: Chained method calls `a.b.c()` dropped silently (no `unresolved_receiver` edge)
 
 **Layer:** Edges (Python)
 **Where pinned:** `depgraph/tests/fixtures/wild/edges/method_call_chains/`
-**Current behavior:** `client.users.get().filter().first()` — when `call.func` is an `ast.Attribute` whose `value` is itself an `ast.Attribute` (not a bare `ast.Name`), `_resolve_call_edge` returns `[]`. No edge — not even an unresolved one — is emitted. The chain is silently dropped.
-**Ideal behavior:** At minimum, an unresolved edge would be emitted for each chained call so the graph acknowledges that a call occurred. A more complete implementation would attempt to chase the chain by tracking intermediate attribute types.
+**Current behavior:** `client.users.get().filter().first()` — when `call.func` is an `ast.Attribute` whose `value` is itself an `ast.Attribute` (not a bare `ast.Name`), `_resolve_call_edge` returns `[]`. No edge is emitted. The chain is silently dropped.
+**Ideal behavior:** At minimum, an `unresolved_receiver` edge would be emitted for each chained call so the graph acknowledges that a call occurred. A more complete implementation would attempt to chase the chain by tracking intermediate attribute types.
 **Trigger for fixing:** When graph queries produce "dangling call sites" diagnostics and chained calls are a significant source of noise. The silent drop currently prevents over-claiming but loses signal.
 
 ---
@@ -134,8 +134,8 @@ This document is the canonical index of every v0-acceptable gap surfaced during 
 
 **Layer:** Edges (Python)
 **Where pinned:** `depgraph/tests/fixtures/wild/edges/dynamic_dispatch/`
-**Current behavior:** When `call.func` is itself a `Call` expression (computed callee, e.g. `getattr(obj, name)()`), `_resolve_call_edge` emits an unresolved edge to `external::unresolved::computed_callee`. When the callee is a bare `Name` not in `local_names` (e.g. a builtin like `getattr` called standalone), `[]` is returned. In both cases the true dispatch target is unknown.
-**Ideal behavior:** At minimum, a consistent unresolved edge with a meaningful `via` field. A more complete implementation would recognize `getattr(obj, name)` as a dynamic dispatch pattern and emit a `db_access`-style fuzzy annotation.
+**Current behavior:** When `call.func` is itself a `Call` expression (computed callee, e.g. `getattr(obj, name)()`), `_resolve_call_edge` emits an `unresolved_receiver` edge to `external::unresolved::computed_callee`. When the callee is a bare `Name` not in `local_names` (e.g. a builtin like `getattr` called standalone), `[]` is returned. In both cases the true dispatch target is unknown — and the `unresolved_receiver` label is a placeholder: per #53 Option A, the `dynamic` confidence value exists for exactly this case but no extractor pass populates it yet.
+**Ideal behavior:** A dedicated detector would recognize `getattr(obj, name)` as a dynamic-dispatch pattern and emit `confidence=dynamic` with a `external::dynamic::*` target prefix (or similar sentinel).
 **Trigger for fixing:** When dynamic dispatch patterns become frequent enough to distort the graph (e.g. in plugin registries, ORMs, or middleware chains).
 
 ---
@@ -178,7 +178,7 @@ This document is the canonical index of every v0-acceptable gap surfaced during 
 
 **Layer:** SQL / System stub (db_access)
 **Where pinned:** Plan spec Task 4.6; `depgraph/lib/system_stub/db_access.py`
-**Current behavior:** When the `db_access` recognizer sees `session.query(X)` or `db.add(x)` but cannot resolve `X` to a Python class primitive with a `references → schema` edge (either because `X` is not in the local symbol table, or because no schema primitive exists for the referenced table), it emits a `db_access` edge with `target = "external::unresolved::db_target"` and `confidence = "unresolved"`. The true schema table is unknown.
+**Current behavior:** When the `db_access` recognizer sees `session.query(X)` or `db.add(x)` but cannot resolve `X` to a Python class primitive with a `references → schema` edge (either because `X` is not in the local symbol table, or because no schema primitive exists for the referenced table), it emits a `db_access` edge with `target = "external::unresolved::db_target"` and `confidence = "unresolved_receiver"`. The true schema table is unknown.
 **Ideal behavior:** A more complete resolver would follow import chains, check transitive `references` edges, and attempt fuzzy matching by class name against schema primitives before falling back to the unresolved sentinel.
 **Trigger for fixing:** When graph queries produce too many `external::unresolved::db_target` entries to be useful, or when a specific corpus has a well-known ORM pattern that could be resolved with a targeted heuristic.
 

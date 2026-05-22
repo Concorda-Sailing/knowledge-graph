@@ -93,7 +93,10 @@ class Edge:
     kind: str
     via: str
     where: str
-    confidence: str   # "exact" | "fuzzy" | "unresolved"
+    # See depgraph.lib.edges.VALID_CONFIDENCES for the full enum. Issue
+    # #53 Option A subdivided the previously-ternary value into
+    # `exact / fuzzy / external / unresolved_internal / unresolved_receiver / dynamic`.
+    confidence: str
 
 
 # NOTE on dataclasses vs dicts:
@@ -269,7 +272,7 @@ _REQUIRED_FIELDS = {
     "structural_hash", "kind", "extractor",
 }
 _VALID_PRIMITIVES = {k.value for k in PrimitiveKind}
-_VALID_CONFIDENCES = {"exact", "fuzzy", "unresolved"}
+from .edges import VALID_CONFIDENCES as _VALID_CONFIDENCES  # noqa: E402
 
 
 def validate_primitive(d: dict[str, Any]) -> list[str]:

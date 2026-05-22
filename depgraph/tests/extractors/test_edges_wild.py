@@ -74,17 +74,23 @@ def test_wild_edges_match_expected(fixture):
 
 @pytest.mark.parametrize("fixture", _fixtures(), ids=lambda f: f.name)
 def test_wild_unresolved_edges_present_where_expected(fixture):
-    """Some fixtures (dynamic_dispatch) MUST emit unresolved edges.
-    This test fires only when expected.json has unresolved_edges_expected: true."""
+    """Some fixtures (dynamic_dispatch) MUST emit at least one
+    gap-bucket edge (any of the four post-#53 non-`exact`/`fuzzy` values:
+    external, unresolved_internal, unresolved_receiver, dynamic). This
+    test fires only when expected.json has unresolved_edges_expected: true."""
     expected = json.loads((fixture / "expected.json").read_text())
     if not expected.get("unresolved_edges_expected"):
         return  # nothing to assert for this fixture
     actual = _run(fixture)
-    unresolved = [
+    gap_confidences = {
+        "external", "unresolved_internal", "unresolved_receiver", "dynamic",
+    }
+    gaps = [
         e for p in actual
         for e in p.get("edges_out", [])
-        if e.get("confidence") == "unresolved"
+        if e.get("confidence") in gap_confidences
     ]
-    assert unresolved, (
-        f"{fixture.name}: expected at least one unresolved edge but got none"
+    assert gaps, (
+        f"{fixture.name}: expected at least one gap-bucket edge "
+        f"(confidence in {sorted(gap_confidences)}) but got none"
     )

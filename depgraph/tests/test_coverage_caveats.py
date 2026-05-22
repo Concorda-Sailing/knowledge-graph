@@ -189,7 +189,7 @@ def test_class_can_carry_pydantic_and_unresolved_caveats_independently():
         edges=[
             {"target": "external::unresolved::db.query",
              "kind": "calls", "via": "method_call",
-             "confidence": "unresolved", "where": "foo.py:5"},
+             "confidence": "unresolved_receiver", "where": "foo.py:5"},
         ],
     )
     stamp_caveats([user, fn])
@@ -240,7 +240,7 @@ def test_method_call_to_external_unresolved_gets_typed_receiver_caveat():
         edges=[
             {"target": "external::unresolved::db.query",
              "kind": "calls", "via": "method_call",
-             "confidence": "unresolved", "where": "foo.py:5"},
+             "confidence": "unresolved_receiver", "where": "foo.py:5"},
         ],
     )
     stamp_caveats([fn])
@@ -273,7 +273,7 @@ def test_non_method_call_external_unresolved_does_not_stamp():
         edges=[
             {"target": "external::unresolved::some_module",
              "kind": "imports", "via": "import",
-             "confidence": "unresolved", "where": "foo.py:1"},
+             "confidence": "unresolved_receiver", "where": "foo.py:1"},
         ],
     )
     n = stamp_caveats([fn])
@@ -288,7 +288,7 @@ def test_typed_receiver_caveat_is_idempotent():
         edges=[
             {"target": "external::unresolved::db.query",
              "kind": "calls", "via": "method_call",
-             "confidence": "unresolved", "where": "foo.py:5"},
+             "confidence": "unresolved_receiver", "where": "foo.py:5"},
         ],
     )
     stamp_caveats([fn])
@@ -308,7 +308,7 @@ def test_typed_receiver_caveat_coexists_with_fastapi_caveat():
     ep["edges_out"] = [
         {"target": "external::unresolved::session.commit",
          "kind": "calls", "via": "method_call",
-         "confidence": "unresolved", "where": "users.py:7"},
+         "confidence": "unresolved_receiver", "where": "users.py:7"},
     ]
     stamp_caveats([ep])
     cs = ep["coverage_caveats"]

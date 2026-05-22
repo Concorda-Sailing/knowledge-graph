@@ -30,13 +30,16 @@ This is a REAL extractor bug surfaced by this fixture. FIX: emit an unresolved e
 for computed callees instead of returning `[]`.
 
 ### Fix plan
-In `_resolve_call_edge`, change the final `return []` to emit an unresolved edge:
+In `_resolve_call_edge`, change the final `return []` to emit an unresolved-receiver edge:
 ```python
 return [{"target": "external::unresolved::computed_callee",
           "kind": "calls", "via": "computed_callee",
           "where": f"{path}:{call.lineno}",
-          "confidence": "unresolved"}]
+          "confidence": "unresolved_receiver"}]
 ```
+(Per #53 Option A, `dynamic` is the more accurate label but no detector
+populates it yet; the typed-receiver bucket is the closest fit until a
+dedicated dynamic-callee pass lands.)
 
 This matches the plan's intent and makes the unresolved_edges_expected gate work.
 

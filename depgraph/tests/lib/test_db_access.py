@@ -35,19 +35,20 @@ def test_session_query_targets_schema_primitive():
 def test_session_add_targets_schema_primitive_via_inferred_type():
     """`session.add(user)` -- `user` is a function parameter typed `User`.
     Resolve via the parameter annotation if present; otherwise emit
-    unresolved with the function name as `via`."""
+    `unresolved_receiver` (typed-receiver bucket) with the function name
+    as `via`."""
     prims = _setup_corpus()
     attach_db_access_edges(prims, repo_path=FIXTURE)
     fn = next(p for p in prims if p["name"] == "save_user")
     dba = [e for e in fn["edges_out"] if e["kind"] == "db_access"]
     # save_user's `user` param has no type annotation in the fixture, so
-    # session.add(user) resolves as unresolved.
+    # session.add(user) falls back to the unresolved-receiver sentinel.
     add_edges = [e for e in dba if "add" in e["via"]]
-    assert any(e["confidence"] == "unresolved" for e in add_edges)
+    assert any(e["confidence"] == "unresolved_receiver" for e in add_edges)
 
 
 def test_orphan_query_target_emits_unresolved(tmp_path):
-    """session.query(NotInCorpus) -- emit edge with confidence=unresolved.
+    """session.query(NotInCorpus) -- emit edge with confidence=unresolved_receiver.
 
     Uses pytest's tmp_path so the test doesn't mutate the committed fixture
     dir and can run concurrently with sibling tests."""
@@ -75,4 +76,4 @@ def test_orphan_query_target_emits_unresolved(tmp_path):
 
     fn = next(p for p in all_prims if p["name"] == "strange_query")
     dba = [e for e in fn["edges_out"] if e["kind"] == "db_access"]
-    assert any(e["confidence"] == "unresolved" for e in dba)
+    assert any(e["confidence"] == "unresolved_receiver" for e in dba)

@@ -82,20 +82,21 @@ def test_extends_attribute_base_in_corpus_module_py():
 def test_extends_attribute_base_external_module_py():
     """`import sqlalchemy; class X(sqlalchemy.Base)` — external module +
     attr → `external::pypi::sqlalchemy::Base` (synthesized) with
-    `unresolved` confidence matching the upstream import."""
+    `external` confidence (a known external library terminal)."""
     prims = list(extract_repo(repo_key="fixture",
                               repo_path=FIXTURE_DIR / "inheritance_attribute_base"))
     cls = next(p for p in prims if p["name"] == "FromExternalModule")
     ex = [e for e in cls["edges_out"] if e["kind"] == "extends"]
     assert any(e["target"] == "external::pypi::sqlalchemy::Base"
-               and e["confidence"] == "unresolved"
+               and e["confidence"] == "external"
                for e in ex), ex
 
 
 def test_extends_attribute_base_unknown_attr_falls_back_py():
     """In-corpus module + non-existent attr → falls through to the
-    unresolved sentinel rather than crashing or emitting a wrong-shape
-    edge."""
+    `unresolved_internal` sentinel (the resolver-gap bucket, since the
+    attribute *should* be in-corpus) rather than crashing or emitting a
+    wrong-shape edge."""
     prims = list(extract_repo(repo_key="fixture",
                               repo_path=FIXTURE_DIR / "inheritance_attribute_base"))
     cls = next(p for p in prims if p["name"] == "FromInCorpusUnknownAttr")
@@ -105,7 +106,7 @@ def test_extends_attribute_base_unknown_attr_falls_back_py():
     # path, which returns "NotARealClass" and then hits the unknown
     # sentinel since nothing named NotARealClass is in scope.
     assert any(e["target"] == "external::pypi::unknown::NotARealClass"
-               and e["confidence"] == "unresolved"
+               and e["confidence"] == "unresolved_internal"
                for e in ex), ex
 
 
@@ -115,7 +116,7 @@ def test_extends_external_keeps_pkg_attribution_py():
     item = next(p for p in prims if p["name"] == "Item")
     ex = [e for e in item["edges_out"] if e["kind"] == "extends"]
     assert any(e["target"] == "external::pypi::pydantic::BaseModel"
-               and e["confidence"] == "unresolved" for e in ex), ex
+               and e["confidence"] == "external" for e in ex), ex
 
 
 def test_extends_attribute_base_multilevel_py():
@@ -131,7 +132,7 @@ def test_extends_attribute_base_multilevel_py():
     cls = next(p for p in prims if p["name"] == "Account")
     ex = [e for e in cls["edges_out"] if e["kind"] == "extends"]
     assert any(e["target"] == "external::pypi::sqlalchemy::DeclarativeBase"
-               and e["confidence"] == "unresolved"
+               and e["confidence"] == "external"
                for e in ex), ex
 
 
@@ -139,14 +140,15 @@ def test_extends_builtin_base_py():
     """`class Membership(list)` — `list` isn't in the imports table
     (implicit at runtime), so the inheritance pass needs to recognize
     it as a builtin and emit `external::builtins::list` rather than
-    `external::pypi::unknown::list`."""
+    `external::pypi::unknown::list`. Confidence is `external` (the
+    builtins ecosystem is a deliberately-unindexed terminal)."""
     prims = list(extract_repo(
         repo_key="fixture", repo_path=FIXTURE_DIR / "inheritance_builtin_base"
     ))
     cls = next(p for p in prims if p["name"] == "Membership")
     ex = [e for e in cls["edges_out"] if e["kind"] == "extends"]
     assert any(e["target"] == "external::builtins::list"
-               and e["confidence"] == "unresolved"
+               and e["confidence"] == "external"
                for e in ex), ex
     # Sanity: the same fixture's `MembershipError(Exception)` uses the
     # same path — confirms the set covers both container and exception
@@ -154,7 +156,7 @@ def test_extends_builtin_base_py():
     err_cls = next(p for p in prims if p["name"] == "MembershipError")
     err_ex = [e for e in err_cls["edges_out"] if e["kind"] == "extends"]
     assert any(e["target"] == "external::builtins::Exception"
-               and e["confidence"] == "unresolved"
+               and e["confidence"] == "external"
                for e in err_ex), err_ex
 
 
@@ -214,24 +216,23 @@ def test_method_call_on_parameter_annotation_py():
 
 # Method calls on receivers typed by external classes route through the
 # imports table to an `external::pypi::<pkg>::<class>::<method>` target.
-# Confidence is `unresolved` to match the source import chain — the
-# upstream `from pkg import X` edge is itself unresolved (we never parsed
-# the package), so building an `exact` downstream edge would overclaim.
+# Confidence is `external` (matches the upstream `from pkg import X`
+# edge — known external library terminal).
 
 def test_method_call_external_param_annotation_py():
     """`db: Session` from sqlalchemy.orm — `db.query()` targets
-    `external::pypi::sqlalchemy::Session::query` with `unresolved`."""
+    `external::pypi::sqlalchemy::Session::query` with `external`."""
     prims = list(extract_repo(repo_key="fixture",
                               repo_path=FIXTURE_DIR / "method_call_external_recv"))
     fn = next(p for p in prims if p["name"] == "list_users")
     calls = [e for e in fn["edges_out"] if e["kind"] == "calls"]
     assert any(
         e["target"] == "external::pypi::sqlalchemy::Session::query"
-        and e["confidence"] == "unresolved"
+        and e["confidence"] == "external"
         and e["via"] == "method_call"
         for e in calls
     ), calls
-    # Should NOT contain the pre-fix unresolved shape on `db`.
+    # Should NOT contain the pre-fix unresolved-receiver shape on `db`.
     assert not any(
         e["target"].startswith("external::unresolved::db.") for e in calls
     ), calls
@@ -260,7 +261,7 @@ def test_method_call_annotated_param_py():
     fn = next(p for p in prims if p["name"] == "annotated_param")
     calls = [e for e in fn["edges_out"] if e["kind"] == "calls"]
     assert any(e["target"] == "external::pypi::sqlalchemy::Session::refresh"
-               and e["confidence"] == "unresolved"
+               and e["confidence"] == "external"
                for e in calls), calls
 
 
@@ -271,7 +272,7 @@ def test_method_call_optional_param_py():
     fn = next(p for p in prims if p["name"] == "optional_param")
     calls = [e for e in fn["edges_out"] if e["kind"] == "calls"]
     assert any(e["target"] == "external::pypi::sqlalchemy::Session::flush"
-               and e["confidence"] == "unresolved"
+               and e["confidence"] == "external"
                for e in calls), calls
 
 
@@ -283,7 +284,7 @@ def test_method_call_external_param_different_pkg_py():
     fn = next(p for p in prims if p["name"] == "register")
     calls = [e for e in fn["edges_out"] if e["kind"] == "calls"]
     assert any(e["target"] == "external::pypi::fastapi::APIRouter::get"
-               and e["confidence"] == "unresolved"
+               and e["confidence"] == "external"
                for e in calls), calls
 
 
@@ -295,7 +296,7 @@ def test_method_call_annassign_external_class_py():
     fn = next(p for p in prims if p["name"] == "reassigned")
     calls = [e for e in fn["edges_out"] if e["kind"] == "calls"]
     assert any(e["target"] == "external::pypi::sqlalchemy::Session::rollback"
-               and e["confidence"] == "unresolved"
+               and e["confidence"] == "external"
                for e in calls), calls
 
 
@@ -308,10 +309,10 @@ def test_method_call_pattern2_external_constructor_py():
     fn = next(p for p in prims if p["name"] == "constructed")
     calls = [e for e in fn["edges_out"] if e["kind"] == "calls"]
     assert any(e["target"] == "external::pypi::sqlalchemy::Session::query"
-               and e["confidence"] == "unresolved"
+               and e["confidence"] == "external"
                and e["via"] == "method_call"
                for e in calls), calls
-    # Should NOT contain the pre-fix unresolved-on-`db` shape.
+    # Should NOT contain the pre-fix unresolved-receiver shape on `db`.
     assert not any(
         e["target"].startswith("external::unresolved::db.")
         and e["via"] == "method_call"
@@ -321,8 +322,9 @@ def test_method_call_pattern2_external_constructor_py():
 
 def test_method_call_union_receiver_emits_per_branch_py():
     """`x: Union[Session, Connection]; x.execute(...)` emits one edge per
-    Union branch — each at `unresolved` since external method existence
-    isn't verified, but the reverse index sees both classes as consumers."""
+    Union branch — each at `external` since the receiver type is a known
+    external library symbol, and the reverse index sees both classes as
+    consumers."""
     prims = list(extract_repo(repo_key="fixture",
                               repo_path=FIXTURE_DIR / "method_call_external_recv"))
     fn = next(p for p in prims if p["name"] == "union_recv")
@@ -349,7 +351,7 @@ def test_method_call_string_forward_ref_py():
     """`db: 'Session'` resolves like the unquoted form."""
     calls = _annotation_walker_calls("string_forward_ref")
     assert any(e["target"] == "external::pypi::sqlalchemy::Session::flush"
-               and e["confidence"] == "unresolved"
+               and e["confidence"] == "external"
                for e in calls), calls
 
 
@@ -357,7 +359,7 @@ def test_method_call_string_forward_ref_wrapped_py():
     """`db: 'Optional[Session]'` — walker parses the string and unwraps."""
     calls = _annotation_walker_calls("string_forward_ref_wrapped")
     assert any(e["target"] == "external::pypi::sqlalchemy::Session::commit"
-               and e["confidence"] == "unresolved"
+               and e["confidence"] == "external"
                for e in calls), calls
 
 
@@ -365,7 +367,7 @@ def test_method_call_builtin_list_py():
     """`xs: list; xs.append(...)` attributes to `external::builtins::list`."""
     calls = _annotation_walker_calls("builtin_list")
     assert any(e["target"] == "external::builtins::list::append"
-               and e["confidence"] == "unresolved"
+               and e["confidence"] == "external"
                and e["via"] == "method_call"
                for e in calls), calls
 
@@ -412,21 +414,21 @@ def test_method_call_typing_list_attribute_form_py():
 
 def test_method_call_in_corpus_unknown_method_still_unresolved_py():
     """Regression guard: in-corpus class + method-not-on-class should
-    keep emitting the unresolved sentinel — only the external-receiver
-    path changes."""
+    keep emitting the unresolved-receiver sentinel — only the external-
+    receiver path changes."""
     prims = list(extract_repo(repo_key="fixture",
                               repo_path=FIXTURE_DIR / "calls"))
     handler = next(p for p in prims if p["name"] == "handler")
     calls = [e for e in handler["edges_out"] if e["kind"] == "calls"]
     # `Service.do_work` resolves exact (it exists). Sanity-check that the
     # taxonomy invariant holds: every method_call edge from `handler` is
-    # either an in-corpus method id or an unresolved sentinel.
+    # either an in-corpus method id or an unresolved-receiver sentinel.
     for e in calls:
         if e["via"] != "method_call":
             continue
         assert (e["confidence"] == "exact"
                 and e["target"] == "fixture::src.py::Service.do_work") or \
-               (e["confidence"] == "unresolved"
+               (e["confidence"] == "unresolved_receiver"
                 and e["target"].startswith("external::unresolved::")), e
 
 
@@ -443,10 +445,10 @@ def test_method_call_walrus_receiver_py():
     fn = next(p for p in prims if p["name"] == "use_walrus")
     calls = [e for e in fn["edges_out"] if e["kind"] == "calls"]
     assert any(e["target"] == "external::pypi::sqlalchemy::Session::query"
-               and e["confidence"] == "unresolved"
+               and e["confidence"] == "external"
                and e["via"] == "method_call"
                for e in calls), calls
-    # And the pre-fix unresolved-on-`db` shape must NOT be present.
+    # And the pre-fix unresolved-receiver-on-`db` shape must NOT be present.
     assert not any(
         e["target"].startswith("external::unresolved::db.")
         and e["via"] == "method_call"

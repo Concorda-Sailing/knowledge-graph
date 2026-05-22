@@ -1,7 +1,7 @@
 {
-  "description": "Computed callees (getattr(obj,name)()) emit unresolved calls edges; does not crash",
+  "description": "Computed callees (getattr(obj,name)()) emit unresolved-receiver calls edges; does not crash. (Once a dedicated dynamic-callee detector lands, these will move to confidence=dynamic.)",
   "unresolved_edges_expected": true,
   "edges": [
-    {"source": "fixture::src.py::dispatch_inline", "kind": "calls", "target": "external::unresolved::computed_callee", "confidence": "unresolved"}
+    {"source": "fixture::src.py::dispatch_inline", "kind": "calls", "target": "external::unresolved::computed_callee", "confidence": "unresolved_receiver"}
   ]
 }

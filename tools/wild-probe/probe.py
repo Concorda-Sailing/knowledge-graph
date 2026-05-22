@@ -250,20 +250,47 @@ def _surface_anomalies(result: ProbeResult, target: Target) -> None:
         result.anomalies.append("empty edge set — extractor produced no edges")
         return
 
-    # Per-confidence breakdown — flag when 'fuzzy' is unused (taxonomy collapse, #53).
-    n_fuzzy = result.edges_by_confidence.get("fuzzy", 0)
-    if n_fuzzy == 0 and result.edges_total > 100:
-        result.anomalies.append(
-            f"taxonomy collapse: 0 fuzzy edges out of {result.edges_total} "
-            f"(per #53, the bucket is unused in practice)"
-        )
+    # Per-confidence sanity — issue #53 Option A subdivided the previously-
+    # collapsed `unresolved` bucket into four (`external`,
+    # `unresolved_internal`, `unresolved_receiver`, `dynamic`). The probe
+    # warns if the taxonomy is degenerate on a non-trivial corpus: the
+    # pre-#53 "0 fuzzy" warning is dropped (fuzzy is genuinely rare on
+    # python corpora) and replaced with two new checks.
+    if result.edges_total > 100:
+        # `unresolved` is gone — its presence here is a regression that
+        # would mean an extractor still hard-codes the old enum.
+        if result.edges_by_confidence.get("unresolved", 0):
+            result.anomalies.append(
+                f"legacy `unresolved` confidence still present: "
+                f"{result.edges_by_confidence['unresolved']} edges "
+                f"(should be 0 after #53 Option A)"
+            )
+        # All non-`exact` edges should now bucket into one of the four
+        # specific values. If `external` is the only non-`exact` bucket
+        # populated, the corpus is healthier than expected — fine. But if
+        # both `unresolved_internal` and `unresolved_receiver` are zero,
+        # the maintainer can't distinguish resolver-bug gaps from
+        # missing-typed-receiver gaps; surface the imbalance.
+        n_internal = result.edges_by_confidence.get("unresolved_internal", 0)
+        n_receiver = result.edges_by_confidence.get("unresolved_receiver", 0)
+        if n_internal == 0 and n_receiver == 0 and result.edges_total > 500:
+            result.anomalies.append(
+                "no unresolved_internal/unresolved_receiver edges on a "
+                f"{result.edges_total}-edge corpus — taxonomy may be under-populated"
+            )
 
-    # Unresolved rate.
-    n_unresolved = result.edges_by_confidence.get("unresolved", 0)
-    rate = n_unresolved / result.edges_total
-    if rate > 0.50:
+    # Gap-rate — sum of all non-`exact`/`fuzzy`/`external` confidences.
+    # `external` is expected (deliberate library terminals) so we don't
+    # count it as a gap; the new ratio is a tighter signal than the old
+    # combined `unresolved` rate.
+    n_gap = sum(
+        result.edges_by_confidence.get(c, 0)
+        for c in ("unresolved_internal", "unresolved_receiver", "dynamic")
+    )
+    gap_rate = n_gap / result.edges_total
+    if gap_rate > 0.30:
         result.anomalies.append(
-            f"high unresolved rate: {rate:.0%} ({n_unresolved}/{result.edges_total})"
+            f"high gap-edge rate: {gap_rate:.0%} ({n_gap}/{result.edges_total})"
         )
 
     # Language-specific expectations.

@@ -13,7 +13,7 @@ site exists.
 
 ## v0 behavior
 `dispatch_inline`: `getattr(obj, name)()` — the outer call has a computed callee.
-Emits `calls -> external::unresolved::computed_callee` with `confidence: "unresolved"`.
+Emits `calls -> external::unresolved::computed_callee` with `confidence: "unresolved_receiver"` (the typed-receiver bucket; the `dynamic` confidence value is reserved for a future dedicated detector — see issue #53).
 
 `dispatch`: `method()` — `method` is a local variable (not module-scope), so it's
 not in `local_names`; returns `[]` from the bare-Name branch.

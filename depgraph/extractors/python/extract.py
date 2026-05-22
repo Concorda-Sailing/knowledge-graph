@@ -13,9 +13,10 @@ from typing import Iterator, Sequence
 from depgraph.lib.path_filters import included
 
 from .canonical import canonical_id, structural_hash
+from depgraph.lib.edges import confidence_for_external_target
 
 
-EXTRACTOR_TAG = "depgraph/extractors/python/extract.py@2026-05-22a"
+EXTRACTOR_TAG = "depgraph/extractors/python/extract.py@2026-05-22e"
 SCHEMA_VERSION = 2
 
 # Builtins commonly used as parameter / variable type annotations. When an
@@ -493,15 +494,15 @@ def _attach_inheritance_edges(primitives: list[dict],
                                 # or `import a.b; class X(a.b.Class)`:
                                 # synthesize `<external_module_id>::<attr>`
                                 # so the seam is queryable. Confidence
-                                # matches the upstream `import` edge
-                                # (unresolved).
+                                # is `external` (known external library;
+                                # see edges.confidence_for_external_target).
                                 ext_target = f"{mod_target}::{attr_name}"
                                 target_class["edges_out"].append({
                                     "target": ext_target,
                                     "kind": "extends",
                                     "via": "class_decl",
                                     "where": f"{path}:{node.lineno}",
-                                    "confidence": "unresolved",
+                                    "confidence": confidence_for_external_target(ext_target),
                                 })
                                 continue
                             # In-corpus module: look up the attr in its
@@ -552,7 +553,7 @@ def _attach_inheritance_edges(primitives: list[dict],
                         "kind": "extends",
                         "via": "class_decl",
                         "where": f"{path}:{node.lineno}",
-                        "confidence": "unresolved",
+                        "confidence": confidence_for_external_target(imported),
                     })
                     continue
                 # Builtin class extension (`class X(list)`,
@@ -562,23 +563,25 @@ def _attach_inheritance_edges(primitives: list[dict],
                 # `external::pypi::unknown::list`. Emit the synthetic
                 # `external::builtins::<name>` target — same pattern
                 # `_annotation_class_ids` uses for builtin-typed
-                # receivers — at `unresolved` confidence since the
-                # builtin class wasn't actually parsed.
+                # receivers. Confidence is `external` (the builtin
+                # ecosystem is a deliberately-unindexed terminal).
                 if base_name in _BUILTIN_CLASS_NAMES:
+                    builtin_target = f"external::builtins::{base_name}"
                     target_class["edges_out"].append({
-                        "target": f"external::builtins::{base_name}",
+                        "target": builtin_target,
                         "kind": "extends",
                         "via": "class_decl",
                         "where": f"{path}:{node.lineno}",
-                        "confidence": "unresolved",
+                        "confidence": confidence_for_external_target(builtin_target),
                     })
                     continue
+                fallback_target = f"external::pypi::unknown::{base_name}"
                 target_class["edges_out"].append({
-                    "target": f"external::pypi::unknown::{base_name}",
+                    "target": fallback_target,
                     "kind": "extends",
                     "via": "class_decl",
                     "where": f"{path}:{node.lineno}",
-                    "confidence": "unresolved",
+                    "confidence": confidence_for_external_target(fallback_target),
                 })
 
 
@@ -827,7 +830,7 @@ def _attach_imports_edges(primitives: list[dict],
                             # Can't resolve — external or unindexed
                             root_pkg = module_name.split(".")[0] if module_name else "unknown"
                             target = f"external::pypi::{root_pkg}::{alias.name}"
-                            confidence = "unresolved"
+                            confidence = confidence_for_external_target(target)
                         mod_prim["edges_out"].append({
                             "target": target,
                             "kind": "imports",
@@ -855,11 +858,12 @@ def _attach_imports_edges(primitives: list[dict],
                                 })
                             elif module_name:
                                 root_pkg = module_name.split(".")[0]
+                                wildcard_target = f"external::pypi::{root_pkg}"
                                 mod_prim["edges_out"].append({
-                                    "target": f"external::pypi::{root_pkg}",
+                                    "target": wildcard_target,
                                     "kind": "imports", "via": "wildcard_import",
                                     "where": f"{path}:{node.lineno}",
-                                    "confidence": "unresolved",
+                                    "confidence": confidence_for_external_target(wildcard_target),
                                 })
                             continue
                         local_binding = alias.asname or alias.name
@@ -877,7 +881,7 @@ def _attach_imports_edges(primitives: list[dict],
                             # Module not in corpus — external package
                             root_pkg = module_name.split(".")[0] if module_name else "unknown"
                             target = f"external::pypi::{root_pkg}::{alias.name}"
-                            confidence = "unresolved"
+                            confidence = confidence_for_external_target(target)
                         mod_prim["edges_out"].append({
                             "target": target,
                             "kind": "imports",
@@ -899,7 +903,7 @@ def _attach_imports_edges(primitives: list[dict],
                     else:
                         root_pkg = alias.name.split(".")[0]
                         target = f"external::pypi::{root_pkg}"
-                        confidence = "unresolved"
+                        confidence = confidence_for_external_target(target)
                     mod_prim["edges_out"].append({
                         "target": target,
                         "kind": "imports",
@@ -1218,23 +1222,23 @@ def _resolve_call_edge(call: ast.Call, *, local_names: dict, imports: dict,
             method = call.func.attr
             recv_class_ids = var_types.get(recv) or []
             if not recv_class_ids:
-                return [{"target": f"external::unresolved::{recv}.{method}",
+                unr_target = f"external::unresolved::{recv}.{method}"
+                return [{"target": unr_target,
                           "kind": "calls", "via": "method_call",
                           "where": f"{path}:{call.lineno}",
-                          "confidence": "unresolved"}]
+                          "confidence": confidence_for_external_target(unr_target)}]
             edges: list[dict] = []
             for recv_class_id in recv_class_ids:
                 if recv_class_id.startswith("external::"):
                     # External typed receiver: we know the binding name but
                     # never parsed the package, so neither class shape nor
-                    # method existence is verified. Confidence matches the
-                    # source import chain — the upstream `from pkg import X`
-                    # edge is itself `unresolved`, so building an `exact`
-                    # downstream edge would overclaim.
-                    edges.append({"target": f"{recv_class_id}::{method}",
+                    # method existence is verified. Confidence is `external`
+                    # to mirror the upstream `from pkg import X` edge.
+                    ext_target = f"{recv_class_id}::{method}"
+                    edges.append({"target": ext_target,
                                    "kind": "calls", "via": "method_call",
                                    "where": f"{path}:{call.lineno}",
-                                   "confidence": "unresolved"})
+                                   "confidence": confidence_for_external_target(ext_target)})
                     continue
                 method_id = methods_by_class.get(recv_class_id, {}).get(method)
                 if method_id:
@@ -1243,20 +1247,25 @@ def _resolve_call_edge(call: ast.Call, *, local_names: dict, imports: dict,
                                    "where": f"{path}:{call.lineno}",
                                    "confidence": "exact"})
                 else:
-                    edges.append({"target": f"external::unresolved::{recv_class_id}.{method}",
+                    sentinel = f"external::unresolved::{recv_class_id}.{method}"
+                    edges.append({"target": sentinel,
                                    "kind": "calls", "via": "method_call",
                                    "where": f"{path}:{call.lineno}",
-                                   "confidence": "unresolved"})
+                                   "confidence": confidence_for_external_target(sentinel)})
             return edges
-        # Chained attribute (a.b.c()) — unresolved for v0
+        # Chained attribute (a.b.c()) — dropped for v0 (see EDGE-2).
         return []
 
-    # Computed callee (getattr, call[0](), etc.) — emit unresolved rather than
-    # silently dropping, so the call site is preserved in the corpus.
-    return [{"target": "external::unresolved::computed_callee",
+    # Computed callee (getattr, call[0](), etc.) — emit an
+    # `unresolved_receiver` edge rather than silently dropping, so the call
+    # site is preserved in the corpus. NB: per issue #53, this *is* the
+    # dynamic-callee shape; once a dedicated detector lands, it'll move to
+    # confidence=dynamic with its own target prefix.
+    callee_target = "external::unresolved::computed_callee"
+    return [{"target": callee_target,
               "kind": "calls", "via": "computed_callee",
               "where": f"{path}:{call.lineno}",
-              "confidence": "unresolved"}]
+              "confidence": confidence_for_external_target(callee_target)}]
 
 
 # ---------------------------------------------------------------------------

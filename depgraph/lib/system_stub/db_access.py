@@ -34,6 +34,11 @@ _SESSION_METHODS = {"query", "add", "commit", "execute", "scalars",
                     "scalar", "delete", "merge", "flush", "rollback"}
 _CURSOR_METHODS = {"execute", "executemany", "fetchone", "fetchall", "fetchmany"}
 
+# All db_access fallback edges target `external::unresolved::db_target` /
+# `external::unresolved::table::<name>`, so the prefix-based mapping pins
+# them to the typed-receiver bucket. Issue #53 Option A.
+_UNRESOLVED_DB_TARGET_CONFIDENCE = "unresolved_receiver"
+
 
 def attach_db_access_edges(primitives: list[dict], *, repo_path: Path) -> list[dict]:
     schema_by_name = {
@@ -125,7 +130,11 @@ def _emit_session_edge(fn_prim, call, method, receiver, path,
                        local_names, py_class_to_schema, param_types):
     """Resolve session.<method>(<arg>) target and emit edge."""
     arg = call.args[0] if call.args else None
-    target_id, confidence = None, "unresolved"
+    # Sentinel target used when the resolver can't pin a schema primitive;
+    # confidence falls into the `unresolved_receiver` bucket (the typed-
+    # receiver gap, since `session`/`db` here is itself a method-receiver
+    # whose target table couldn't be inferred). See edges.confidence_for_external_target.
+    target_id, confidence = None, _UNRESOLVED_DB_TARGET_CONFIDENCE
 
     if isinstance(arg, ast.Name):
         # session.query(User) -- resolve `User` via local names
@@ -163,7 +172,7 @@ def _emit_cursor_edge(fn_prim, call, method, receiver, path, schema_by_name):
         fn_prim["edges_out"].append({
             "target": "external::unresolved::db_target", "kind": "db_access",
             "via": f"{receiver}.{method}", "where": f"{path}:{call.lineno}",
-            "confidence": "unresolved",
+            "confidence": _UNRESOLVED_DB_TARGET_CONFIDENCE,
         })
         return
 
@@ -172,7 +181,7 @@ def _emit_cursor_edge(fn_prim, call, method, receiver, path, schema_by_name):
         fn_prim["edges_out"].append({
             "target": "external::unresolved::db_target", "kind": "db_access",
             "via": f"{receiver}.{method}", "where": f"{path}:{call.lineno}",
-            "confidence": "unresolved",
+            "confidence": _UNRESOLVED_DB_TARGET_CONFIDENCE,
         })
         return
 
@@ -189,7 +198,8 @@ def _emit_cursor_edge(fn_prim, call, method, receiver, path, schema_by_name):
             fn_prim["edges_out"].append({
                 "target": f"external::unresolved::table::{table_name}",
                 "kind": "db_access", "via": f"{receiver}.{method}(SQL)",
-                "where": f"{path}:{call.lineno}", "confidence": "unresolved",
+                "where": f"{path}:{call.lineno}",
+                "confidence": _UNRESOLVED_DB_TARGET_CONFIDENCE,
             })
 
 

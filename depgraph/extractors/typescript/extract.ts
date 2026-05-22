@@ -189,7 +189,7 @@ interface PerFileMetadata {
   import_shims: ImportShimMeta[];
 }
 
-const EXTRACTOR_TAG = "depgraph/extractors/typescript/extract.ts@2026-05-22d";
+const EXTRACTOR_TAG = "depgraph/extractors/typescript/extract.ts@2026-05-22e";
 const EXTS = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"];
 
 /**
@@ -269,6 +269,28 @@ export function npmPkgFromSpec(specText: string): string {
     return `${parts[0]}/${parts[1]}`;
   }
   return parts[0];
+}
+
+/**
+ * Return the non-exact/fuzzy confidence value for an `external::*`-shaped
+ * target id. Mirrors `depgraph.lib.edges.confidence_for_external_target`
+ * — keep the two in sync (issue #53 Option A).
+ *
+ *   external::npm::unknown::*  / external::pypi::unknown::*  → unresolved_internal
+ *   external::unresolved::*                                  → unresolved_receiver
+ *   anything else under external::                            → external
+ */
+export function confidenceForExternalTarget(targetId: string): string {
+  if (
+    targetId.startsWith("external::pypi::unknown") ||
+    targetId.startsWith("external::npm::unknown")
+  ) {
+    return "unresolved_internal";
+  }
+  if (targetId.startsWith("external::unresolved::")) {
+    return "unresolved_receiver";
+  }
+  return "external";
 }
 
 /**
@@ -1673,7 +1695,7 @@ function attachImportsEdges(
             : `external::npm::${externalPkg}::default`;  // #29
         const confidence = defaultId
           ? "fuzzy"
-          : (targetRel ? "exact" : "unresolved");
+          : (targetRel ? "exact" : confidenceForExternalTarget(target));
         modPrim.edges_out.push({
           target, kind: "imports", via: "import_decl",
           where: `${rel}:${imp.line}`,
@@ -1687,7 +1709,7 @@ function attachImportsEdges(
         const target = targetRel
           ? `${repoKey}::${targetRel}`
           : `external::npm::${externalPkg}`;  // #29
-        const confidence = targetRel ? "exact" : "unresolved";
+        const confidence = targetRel ? "exact" : confidenceForExternalTarget(target);
         modPrim.edges_out.push({
           target, kind: "imports", via: "import_decl",
           where: `${rel}:${imp.line}`,
@@ -1718,7 +1740,7 @@ function attachImportsEdges(
         } else {
           const pkgName = npmPkgFromSpec(imp.spec_text);
           target = `external::npm::${pkgName}::${importedName}`;
-          confidence = "unresolved";
+          confidence = confidenceForExternalTarget(target);
         }
         modPrim.edges_out.push({
           target, kind: "imports", via: "import_decl",
@@ -1763,7 +1785,7 @@ function attachImportsEdges(
       if (di.spec_text === null) continue; // non-literal — can't resolve
       const specText = di.spec_text;
       let target: string;
-      let confidence: "exact" | "fuzzy" | "unresolved";
+      let confidence: string;
       if (specText.startsWith(".")) {
         const resolved = resolveRelativeImportSpec(rel, specText, modByPath);
         if (resolved) {
@@ -1771,7 +1793,7 @@ function attachImportsEdges(
           confidence = "exact";
         } else {
           target = `external::unresolved::${specText}`;
-          confidence = "unresolved";
+          confidence = confidenceForExternalTarget(target);
         }
       } else {
         target = `external::npm::${npmPkgFromSpec(specText)}`;  // #29
@@ -1981,7 +2003,9 @@ function attachCallAndVarAccessEdges(
               modPrim.edges_out.push({
                 target, kind: "imports", via: "dynamic_import_shim",
                 where: `${rel}:${ev.line}`,
-                confidence: specText.startsWith(".") ? "unresolved" : "fuzzy",
+                confidence: specText.startsWith(".")
+                  ? confidenceForExternalTarget(target)
+                  : "fuzzy",
               });
             }
             continue;
@@ -2016,10 +2040,11 @@ function attachCallAndVarAccessEdges(
               });
             } else {
               const className = recvClassId.split("::").pop() ?? recvClassId;
+              const sentinel = `external::unresolved::${className}.${methodName}`;
               fnPrim.edges_out.push({
-                target: `external::unresolved::${className}.${methodName}`,
+                target: sentinel,
                 kind: "calls", via: "method_call",
-                where, confidence: "unresolved",
+                where, confidence: confidenceForExternalTarget(sentinel),
               });
             }
           }

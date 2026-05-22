@@ -9,6 +9,60 @@ from enum import Enum
 from typing import Any
 
 
+# Valid confidence values (issue #53 Option A). The old ternary
+# `exact / fuzzy / unresolved` collapsed four very different situations
+# into one bucket; the taxonomy below subdivides the previously-unresolved
+# bucket by *cause* so a maintainer asking "which class of gap should I
+# chase first?" can answer from the data alone. `dynamic` is enumerated
+# but not yet populated by any extractor pass — see the follow-up issue.
+VALID_CONFIDENCES = frozenset({
+    "exact",
+    "fuzzy",
+    "external",
+    "unresolved_internal",
+    "unresolved_receiver",
+    "dynamic",
+})
+
+
+def confidence_for_external_target(target_id: str) -> str:
+    """Return the appropriate non-exact/fuzzy confidence value for an
+    external-shaped target id.
+
+    This is the deterministic mapping that issue #53 Option A locks down.
+    Every place where an extractor used to stamp `confidence="unresolved"`
+    routes through this helper so the bucket assignment is uniform across
+    Python, TypeScript, and the SQL/db_access side passes.
+
+    Mapping:
+      - `external::npm::unknown::*` / `external::pypi::unknown::*` (3- or
+        4-segment, `unknown` package slot) — target should be in-corpus
+        but the resolver couldn't reach it. Bug-signal bucket. Returns
+        `"unresolved_internal"`.
+      - `external::unresolved::*` — method-call shape where the receiver
+        type couldn't be inferred (e.g. `db.query`, `conn.execute`).
+        Returns `"unresolved_receiver"`. This also covers the synthetic
+        `external::unresolved::computed_callee` target emitted for dynamic
+        callees today; once a dedicated detector lands, those will move
+        to `dynamic` (see follow-up).
+      - Everything else under `external::*` (`external::npm::<pkg>::*`,
+        `external::pypi::<pkg>::*`, `external::builtins::*`, the
+        synthetic `external::python-dbapi::*`, etc.) — known external
+        terminal; deliberately not indexed. Returns `"external"`.
+
+    Pass a string that does NOT start with `external::` and this helper
+    returns `"external"` defensively — that input is malformed and the
+    caller should never reach this branch.
+    """
+    if target_id.startswith("external::pypi::unknown") or target_id.startswith(
+        "external::npm::unknown"
+    ):
+        return "unresolved_internal"
+    if target_id.startswith("external::unresolved::"):
+        return "unresolved_receiver"
+    return "external"
+
+
 class EdgeKind(str, Enum):
     DEFINES = "defines"
     EXTENDS = "extends"
@@ -126,8 +180,11 @@ def validate_edge(edge: dict[str, Any]) -> list[str]:
     if tk and "any" not in rules["target"] and tk not in rules["target"]:
         errors.append(f"edge {kind!r} disallows target kind {tk!r}; allowed: {rules['target']}")
     confidence = edge.get("confidence")
-    if confidence not in {"exact", "fuzzy", "unresolved"}:
-        errors.append(f"confidence must be exact|fuzzy|unresolved, got {confidence!r}")
+    if confidence not in VALID_CONFIDENCES:
+        errors.append(
+            f"confidence must be one of {sorted(VALID_CONFIDENCES)}, "
+            f"got {confidence!r}"
+        )
     # Confidence gate for kind/target combos that are only allowed under
     # weaker confidence — e.g. `extends -> variable` MUST be fuzzy (#86).
     if tk and isinstance(kind, str):

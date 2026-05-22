@@ -13,35 +13,34 @@ from .context import Context
 from ._shared import load_dependents_index, load_telemetry_events
 
 
-_UNRESOLVED_CATEGORIES = (
-    ("external_library", "external library (deliberately not indexed)"),
-    ("missed_internal", "missed in-corpus (resolver gap — bug indicator)"),
-    ("typed_receiver", "typed-receiver method call (see #51)"),
-    ("dynamic_or_other", "dynamic / other"),
-    ("other", "other"),
+# Map confidence value -> (category-key, display-label). Issue #53 Option A
+# replaced the previous-collapsed `unresolved` bucket with these specific
+# values; the category breakdown now reads directly off the edge's
+# confidence field instead of re-deriving from the target prefix.
+_CONFIDENCE_CATEGORIES: tuple[tuple[str, str], ...] = (
+    ("external", "external library (deliberately not indexed)"),
+    ("unresolved_internal", "missed in-corpus (resolver gap — bug indicator)"),
+    ("unresolved_receiver", "typed-receiver method call (see #51)"),
+    ("dynamic", "dynamic (getattr / computed callee)"),
+)
+# Confidence values that count as "unresolved" for the purposes of the
+# category breakdown / unresolved-prefixes worklist. `external` is
+# expected and shown; the rest are the gap-shaped buckets.
+_NON_EXACT_CONFIDENCES: frozenset[str] = frozenset(
+    name for name, _ in _CONFIDENCE_CATEGORIES
 )
 
 
-def _categorize_unresolved(target: str) -> tuple[str, str]:
-    """Bucket an unresolved edge target for resolver-priority triage.
+def _group_key_for_target(target: str) -> str:
+    """Collapse similar targets to a shared prefix for the worklist view.
 
-    Returns ``(category, group_key)`` where ``category`` is one of the keys in
-    ``_UNRESOLVED_CATEGORIES`` and ``group_key`` is the prefix used to collapse
-    similar targets (e.g. all ``external::npm::react::*`` symbols share the
-    ``external::npm::react`` group).
-    """
+    `external::npm::<pkg>::Foo`, `external::npm::<pkg>::Bar` → both share
+    the `external::npm::<pkg>` group. `external::unresolved::db.query` stays
+    as-is (it's already the natural group)."""
     parts = target.split("::")
-    if (target.startswith("external::npm::unknown")
-            or target.startswith("external::pypi::unknown")):
-        return ("missed_internal", "::".join(parts[:3]))
     if target.startswith("external::npm::") or target.startswith("external::pypi::"):
-        return ("external_library", "::".join(parts[:3]))
-    if target.startswith("external::unresolved::"):
-        rest = "::".join(parts[2:])
-        if "." in rest:
-            return ("typed_receiver", target)
-        return ("dynamic_or_other", target)
-    return ("other", target)
+        return "::".join(parts[:3])
+    return target
 
 
 def cmd_stats(args: argparse.Namespace, ctx: Context) -> int:
@@ -50,8 +49,8 @@ def cmd_stats(args: argparse.Namespace, ctx: Context) -> int:
     by_kind_tier_state: dict[str, dict[str, dict[str, int]]] = {}
     total = 0
     confidence_counts: dict[str, int] = {}
-    # category -> group_key -> count
-    unresolved_by_category: dict[str, dict[str, int]] = {}
+    # confidence -> group_key -> count
+    by_confidence_buckets: dict[str, dict[str, int]] = {}
     dependents = load_dependents_index(ctx)
     for nf in ctx.NODES.rglob("*.json"):
         if nf.name.startswith("_"):
@@ -71,9 +70,9 @@ def cmd_stats(args: argparse.Namespace, ctx: Context) -> int:
         for edge in d.get("edges_out") or []:
             conf = edge.get("confidence") or "?"
             confidence_counts[conf] = confidence_counts.get(conf, 0) + 1
-            if conf == "unresolved":
-                cat, group = _categorize_unresolved(edge.get("target") or "")
-                buckets = unresolved_by_category.setdefault(cat, {})
+            if conf in _NON_EXACT_CONFIDENCES:
+                group = _group_key_for_target(edge.get("target") or "")
+                buckets = by_confidence_buckets.setdefault(conf, {})
                 buckets[group] = buckets.get(group, 0) + 1
         # Compute dossier state inline (avoid importing the FastAPI loader).
         rel = d.get("dossier")
@@ -125,33 +124,48 @@ def cmd_stats(args: argparse.Namespace, ctx: Context) -> int:
         total_edges = sum(confidence_counts.values())
         print()
         print("## Edges by confidence")
-        for conf in ("exact", "fuzzy", "unresolved"):
+        # Canonical print order: exact, fuzzy, then the four
+        # previously-unresolved sub-buckets.
+        canonical_order = ("exact", "fuzzy") + tuple(c for c, _ in _CONFIDENCE_CATEGORIES)
+        for conf in canonical_order:
             n = confidence_counts.get(conf, 0)
-            print(f"  {conf:<11} {n:>7}")
+            print(f"  {conf:<22} {n:>7}")
         # surface any unexpected confidence values rather than silently dropping them
-        for conf in sorted(c for c in confidence_counts if c not in ("exact", "fuzzy", "unresolved")):
-            print(f"  {conf:<11} {confidence_counts[conf]:>7}")
-        print(f"  {'total':<11} {total_edges:>7}")
+        for conf in sorted(c for c in confidence_counts if c not in canonical_order):
+            print(f"  {conf:<22} {confidence_counts[conf]:>7}")
+        print(f"  {'total':<22} {total_edges:>7}")
 
-        unresolved_total = confidence_counts.get("unresolved", 0)
-        if unresolved_total:
+        unresolved_total = sum(
+            confidence_counts.get(c, 0)
+            for c, _ in _CONFIDENCE_CATEGORIES
+            if c != "external"
+        )
+        # Show the category breakdown whenever any non-`exact`/`fuzzy`
+        # bucket is populated — the breakdown is what makes the histogram
+        # actionable.
+        if any(confidence_counts.get(c, 0) for c, _ in _CONFIDENCE_CATEGORIES):
             print()
-            print("## Unresolved edges by category")
-            for cat, label in _UNRESOLVED_CATEGORIES:
-                buckets = unresolved_by_category.get(cat)
+            print("## Edges by confidence category")
+            for cat, label in _CONFIDENCE_CATEGORIES:
+                buckets = by_confidence_buckets.get(cat)
                 if not buckets:
                     continue
                 n = sum(buckets.values())
                 print(f"  {n:>6}  {label}")
 
-            # head of unresolved targets so the report doubles as a worklist
-            all_groups = [(g, n) for buckets in unresolved_by_category.values()
-                          for g, n in buckets.items()]
-            all_groups.sort(key=lambda kv: -kv[1])
-            head = all_groups[: args.unresolved_top]
+            # Head of "gap-shaped" target groups (everything except
+            # `external`, which is expected and not a worklist item).
+            gap_groups = [
+                (g, n)
+                for cat, buckets in by_confidence_buckets.items()
+                if cat != "external"
+                for g, n in buckets.items()
+            ]
+            gap_groups.sort(key=lambda kv: -kv[1])
+            head = gap_groups[: args.unresolved_top]
             if head:
                 print()
-                print(f"## Top unresolved prefixes (top {len(head)})")
+                print(f"## Top gap-target prefixes (top {len(head)})")
                 for group, n in head:
                     print(f"  {n:>6}  {group}")
 
@@ -217,14 +231,16 @@ def register(sub: argparse._SubParsersAction) -> None:
     p.add_argument(
         "--edges",
         action="store_true",
-        help="Include edge confidence histogram + unresolved-edge categorization "
-             "(external library vs missed in-corpus vs typed-receiver vs dynamic)",
+        help="Include edge confidence histogram + per-bucket worklist "
+             "(external library vs unresolved_internal vs unresolved_receiver vs dynamic). "
+             "Replaces the pre-#53 unresolved-by-category breakdown.",
     )
     p.add_argument(
         "--unresolved-top",
         type=int,
         default=15,
         metavar="N",
-        help="When --edges is set, show the top N unresolved prefixes (default: 15)",
+        help="When --edges is set, show the top N gap-target prefixes "
+             "(non-`external` buckets) (default: 15)",
     )
     p.set_defaults(func=cmd_stats)

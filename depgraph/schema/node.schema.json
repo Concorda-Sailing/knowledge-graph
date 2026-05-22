@@ -149,9 +149,9 @@
         "via": { "type": ["string", "null"], "description": "How the dependency is realized (function_call, import, render, hook_call, db_query, websocket, test_fixture, string_url)." },
         "where": { "type": ["string", "null"], "description": "File:line of the call site." },
         "confidence": {
-          "enum": ["exact", "fuzzy", "unresolved"],
+          "enum": ["exact", "fuzzy", "external", "unresolved_internal", "unresolved_receiver", "dynamic"],
           "default": "exact",
-          "description": "Static-import edges are 'exact'. Concatenated/template URLs are 'fuzzy'. Edges added by hand or by an LLM are 'unresolved'."
+          "description": "Static-import edges that resolve to an in-corpus primitive at the expected kind are 'exact'. Edges that resolve to a corpus primitive at an unexpected-but-allowed kind (const-factory base classes, wildcard re-exports) are 'fuzzy'. Edges whose target is a known external package (`external::npm::<pkg>::*`, `external::pypi::<pkg>::*`, `external::builtins::*`) are 'external'. Edges whose target should be in-corpus but the resolver couldn't reach it (`external::pypi::unknown::*`, `external::npm::unknown::*`) are 'unresolved_internal' — a bug-signal bucket. Method-call edges whose receiver type couldn't be inferred (`external::unresolved::*`) are 'unresolved_receiver'. 'dynamic' is reserved for genuinely dynamic callees (getattr / computed dispatch); no extractor pass populates it today."
         }
       }
     }
