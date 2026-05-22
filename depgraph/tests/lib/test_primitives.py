@@ -118,3 +118,67 @@ def test_slug_collision_ignores_duplicate_ids():
         {"id": "r::a.py::Foo"},  # duplicate
     ]
     assert check_slug_collisions(primitives) == []
+
+
+def test_slugify_pattern_1_dash_vs_slash_disambiguated():
+    """#87 Pattern 1: `r::v4-mini` and `r::v4/mini` are distinct directory
+    layouts that both used to slugify to `r__v4_mini` (the bare slug rewrites
+    `-` and `/` identically). With the per-id hash suffix on lossy ids the
+    two get distinct on-disk filenames."""
+    from depgraph.lib.primitives import slugify_id_for_filename
+    a = slugify_id_for_filename("r::pkg/v4-mini")
+    b = slugify_id_for_filename("r::pkg/v4/mini")
+    assert a != b, f"expected distinct slugs, both got {a!r}"
+
+
+def test_slugify_pattern_2_trailing_dollar_disambiguated():
+    """#87 Pattern 2: `r::pkg/index.ts` and `r::pkg/index.ts::$` both stripped
+    trailing non-alphanumeric chars and collapsed to the same slug. The `$`
+    here is a real symbol in TS code (e.g. zod's `const $ = execa(...)`), so
+    it's load-bearing — the slug helper has to disambiguate, not the upstream
+    extractor."""
+    from depgraph.lib.primitives import slugify_id_for_filename
+    a = slugify_id_for_filename("r::pkg/index.ts")
+    b = slugify_id_for_filename("r::pkg/index.ts::$")
+    assert a != b, f"expected distinct slugs, both got {a!r}"
+
+
+def test_slugify_stable_across_calls():
+    """The hash is deterministic in the id alone — a given id always maps to
+    the same filename. Required so the writer and the reader (pre-edit hook)
+    converge on the same on-disk path without sharing corpus state."""
+    from depgraph.lib.primitives import slugify_id_for_filename
+    a1 = slugify_id_for_filename("acme-api::pkg/foo.ts::Bar")
+    a2 = slugify_id_for_filename("acme-api::pkg/foo.ts::Bar")
+    assert a1 == a2
+
+
+def test_slugify_bare_for_canonical_safe_ids():
+    """The common case — a canonical `<repo>::<path>::<symbol>` whose only
+    non-alphanumeric chars are `::`, `/`, and `.` — keeps a bare slug.
+    Existing filenames don't shift for the typical Python module."""
+    from depgraph.lib.primitives import slugify_id_for_filename
+    assert slugify_id_for_filename("acmeapi::routers/events.py::create_event") == \
+        "acmeapi__routers_events_py__create_event"
+
+
+def test_slugify_appends_hash_for_lossy_ids():
+    """Ids containing characters outside the safe set (`-`, `$`, space, …) get
+    an 8-char sha1 suffix so the slug stays injective."""
+    from depgraph.lib.primitives import slugify_id_for_filename
+    slug = slugify_id_for_filename("acme-api::routers/events.py::create_event")
+    assert slug.startswith("acme_api__routers_events_py__create_event_")
+    suffix = slug.rsplit("_", 1)[-1]
+    assert len(suffix) == 8
+    assert all(c in "0123456789abcdef" for c in suffix)
+
+
+def test_slugify_handles_id_that_is_only_lossy_chars():
+    """Edge: an id like `$` (entirely non-alphanumeric) strips to empty and
+    would otherwise produce a zero-length filename. The hash suffix becomes
+    the whole slug in that case."""
+    from depgraph.lib.primitives import slugify_id_for_filename
+    slug = slugify_id_for_filename("$")
+    # No leading underscore on the bare-empty form.
+    assert slug and not slug.startswith("_")
+    assert len(slug) == 8

@@ -5,6 +5,7 @@ metadata. Kind decisions happen elsewhere (lib/classification/).
 """
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass, field, asdict
 from enum import Enum
 from typing import Any
@@ -157,10 +158,52 @@ def is_external_terminal(node_id: str) -> bool:
 
 def slugify_id_for_filename(node_id: str) -> str:
     """Filename-safe slug. Mirrors the per-language slugify so reconcile
-    can detect cross-language collisions without coupling to extractor code."""
+    can detect cross-language collisions without coupling to extractor code.
+
+    The bare slug normalizes `::` to `__` and rewrites any other
+    non-`[a-zA-Z0-9_]` char to `_`. That's lossy: distinct ids like
+    `r::v4-mini` vs `r::v4/mini`, or `pkg/m.ts` vs `pkg/m.ts::$`, all
+    collapse to the same on-disk filename (#87).
+
+    The fix: when the id contains characters outside the
+    structurally-safe set `[a-zA-Z0-9_/.]` (where `::` is treated as the
+    canonical id separator and pre-normalized to `__`), append a short
+    stable hash of the original id. The hash is deterministic in the id
+    alone (so the same id always maps to the same on-disk filename across
+    regens and across writer/reader call sites), and it makes the slug
+    injective by construction for any id containing `-`, `$`, space, or
+    other "lossy" characters. Ids whose only special characters are `/`,
+    `.`, and `::` (the overwhelming majority — a canonical
+    `<repo>::<path>::<symbol>` for a Python module is `r::a/b.py::Foo`)
+    keep their bare slug, so existing filenames remain unchanged for the
+    common case."""
     out = node_id.replace("::", "__")
     out = "".join(c if c.isalnum() or c == "_" else "_" for c in out)
-    return out.strip("_")
+    bare = out.strip("_")
+    if _slug_is_lossy(node_id):
+        h = hashlib.sha1(node_id.encode("utf-8")).hexdigest()[:8]
+        return f"{bare}_{h}" if bare else h
+    return bare
+
+
+# Chars that survive slugification without ambiguity:
+#   - `a-zA-Z0-9_` pass through as themselves
+#   - `:` only appears as the `::` separator (canonical id grammar);
+#      pre-normalized to `__` before any other replacement
+#   - `/` and `.` are structural path separators; rewriting them to `_`
+#      is lossy only when *another* id reaches the same shape, which in
+#      practice only happens when a sibling id uses `-` / `$` / etc. (those
+#      already get a hash suffix below, so no collision can occur)
+_SAFE_SLUG_CHARS = frozenset(
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_/.:"
+)
+
+
+def _slug_is_lossy(node_id: str) -> bool:
+    """True if `node_id` contains any char that would force a non-trivial
+    rewrite (anything outside the safe set). Such ids get a hash suffix in
+    their slug to keep the slug injective."""
+    return any(c not in _SAFE_SLUG_CHARS for c in node_id)
 
 
 def check_slug_collisions(primitives: list[dict]) -> list[str]:

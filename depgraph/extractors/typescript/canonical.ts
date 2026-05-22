@@ -4,11 +4,25 @@ export function canonicalId(repo: string, path: string, symbol: string): string 
   return `${repo}::${path}::${symbol}`;
 }
 
+// Per-id slug. Must stay bit-identical with
+// depgraph/lib/primitives.py::slugify_id_for_filename (the Python writer/reader
+// both use the lib function; this mirror exists for extractor-language
+// consistency). Appends an 8-char sha1 suffix when the id contains characters
+// outside the structurally-safe set `[a-zA-Z0-9_/.:]` so that ids like
+// `r::v4-mini` and `r::v4/mini`, or `m.ts` and `m.ts::$`, get distinct on-disk
+// filenames (#87).
+const SAFE_SLUG_CHAR_RE = /^[a-zA-Z0-9_/.:]*$/;
+
 export function slugifyId(nodeId: string): string {
-  return nodeId
+  const bare = nodeId
     .replace(/::/g, "__")
     .replace(/[^a-zA-Z0-9_]/g, "_")
     .replace(/^_+|_+$/g, "");
+  if (!SAFE_SLUG_CHAR_RE.test(nodeId)) {
+    const h = createHash("sha1").update(nodeId).digest("hex").slice(0, 8);
+    return bare ? `${bare}_${h}` : h;
+  }
+  return bare;
 }
 
 /** sha256 of canonical-JSON (keys sorted recursively) of the payload. */
