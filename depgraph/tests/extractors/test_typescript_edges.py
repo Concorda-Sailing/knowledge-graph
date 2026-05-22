@@ -140,6 +140,46 @@ def test_default_export_expression_resolves_no_orphan():
         )
 
 
+def test_namespace_reexport_resolves_no_orphan():
+    """#89: `export * as <name> from '<src>'` must produce a synthetic
+    primitive at `<file>::<name>` so a consumer's `import { <name> }
+    from '<file>'` edge resolves to a real primitive (no orphan).
+
+    Same family as #85's `<file>::default` synthesis — a different
+    export form that introduces a new bound name without producing a
+    real class/function/variable primitive.
+    """
+    prims = run_extractor("imports_namespace_reexport", which="edges")
+    by_id = {p["id"]: p for p in prims}
+
+    # Synthetic namespace primitive exists on the barrel side.
+    barrel_ns_id = "fixture::src/barrel.ts::helpers"
+    assert barrel_ns_id in by_id, (
+        f"missing synthetic namespace primitive; ids: {sorted(by_id)}"
+    )
+    ns_prim = by_id[barrel_ns_id]
+    assert ns_prim["primitive"] == "variable"
+    assert ns_prim["name"] == "helpers"
+    # Signature carries a textual description of the re-export source.
+    assert ns_prim["signature"]["value_text"]
+    assert "helpers" in ns_prim["signature"]["value_text"]
+
+    # Consumer's named-import edge for `helpers` must target a real
+    # primitive — i.e. no orphan.
+    consumer_mod = next(p for p in prims if p["source"]["path"] == "src/consumer.ts"
+                        and p["primitive"] == "module")
+    helper_imports = [e for e in consumer_mod["edges_out"]
+                      if e["kind"] == "imports" and e.get("local_binding") == "helpers"]
+    assert helper_imports, (
+        f"expected a named-import edge for `helpers`: {consumer_mod['edges_out']}"
+    )
+    for edge in helper_imports:
+        assert edge["target"] in by_id, (
+            f"orphan namespace-import edge: target={edge['target']!r} "
+            f"not in corpus; available ids include {barrel_ns_id!r}"
+        )
+
+
 # ---------------------------------------------------------------------------
 # Task 3.4: calls + instantiates edges (intra-function type binding)
 # ---------------------------------------------------------------------------

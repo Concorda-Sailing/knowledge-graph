@@ -189,7 +189,7 @@ interface PerFileMetadata {
   import_shims: ImportShimMeta[];
 }
 
-const EXTRACTOR_TAG = "depgraph/extractors/typescript/extract.ts@2026-05-22c";
+const EXTRACTOR_TAG = "depgraph/extractors/typescript/extract.ts@2026-05-22d";
 const EXTS = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"];
 
 /**
@@ -721,6 +721,116 @@ function extractDefaultExport(sf: SourceFile, repoKey: string, relPath: string):
     kind: null,
     extractor: EXTRACTOR_TAG,
   }];
+}
+
+// Synthetic `<file>::<name>` primitives for export forms that introduce a
+// new bound name without producing a real class/function/variable primitive.
+// Without these the consumer's `import { name } from './mod'` (and the
+// `export { name } from './mod'` re-export form, which the L2 resolver
+// also routes through `<mod>::name`) yields an orphan import edge (#89).
+//
+// Forms handled — confirmed against colinhacks/zod (the wild-probe target
+// that surfaced this; see commit body):
+//
+//   (a) `export * as <name> from '<src>'`
+//         — namespace re-export. Synthesizes `<file>::<name>`.
+//           Covers zod's `export * as util from './util.js'` (and the
+//           `regexes`, `JSONSchema`, `locales` siblings in core/index.ts).
+//
+//   (b) `export type? { <orig> as <alias> }` with NO module specifier
+//         — local rename of a same-file declaration (type, value, or
+//           type-only). Synthesizes `<file>::<alias>`.
+//           Covers zod core.ts's `export type { output as infer };` —
+//           the rename binds a new name (`infer`) onto an existing
+//           same-file type alias (`output`), and a downstream barrel's
+//           `export * from "./core.js"` propagates `infer` into the
+//           barrel's effective exports via the L2 wildcard expansion.
+//           Type-only renames are valid TS surface (the original `output`
+//           is itself a type alias, not extracted as a primitive), so the
+//           synthetic carries no value_text body — its only role is to
+//           make the id resolve.
+//
+// Forms deferred (would need broader extractor changes):
+//
+//   * `export type * as <name> from '<src>'` (TS type-only namespace
+//     re-export). ts-morph still surfaces the namespace export node, so
+//     (a) handles this incidentally — but the synthetic is a `variable`
+//     primitive, which slightly overclaims the kind. Acceptable today.
+//   * Non-renamed `export { X };` / `export type { X };` (no `as`,
+//     no module specifier) — here the name X is already either a real
+//     primitive (class/function/variable) or a TS type. The orphans
+//     surfaced by the wild probe don't include this shape.
+//
+// The synthetic is a `variable` primitive (same call as #85 for
+// `<file>::default`): no new schema kind, the existing edge-validation
+// path treats it as a valid `imports` target without changes. `name`
+// matches the suffix so the id-suffix vs primitive-name invariant holds.
+function extractReexportSynthetics(sf: SourceFile, repoKey: string, relPath: string): Primitive[] {
+  const out: Primitive[] = [];
+  const seenNames = new Set<string>();
+
+  for (const exp of sf.getExportDeclarations()) {
+    // Form (a): `export * as <name> from '<src>'`.
+    const nsExport = exp.getNamespaceExport();
+    if (nsExport) {
+      const name = nsExport.getName();
+      if (!name || seenNames.has(name)) continue;
+      const specText = exp.getModuleSpecifierValue() ?? "";
+      const valueText = truncatedSignature(`* as ${name} from '${specText}'`);
+      seenNames.add(name);
+      out.push(buildSyntheticReexportPrim(
+        repoKey, relPath, name, valueText,
+        exp.getStartLineNumber(), exp.getEndLineNumber(),
+      ));
+      continue;
+    }
+    // Form (b): `export [type] { <orig> as <alias> };` with NO module
+    // specifier — local rename. Skip if a module specifier is present
+    // (that's already covered by the re-export path in L2).
+    if (exp.hasModuleSpecifier()) continue;
+    for (const spec of exp.getNamedExports()) {
+      const aliasNode = spec.getAliasNode();
+      if (!aliasNode) continue; // no rename — no new bound name to synthesize
+      const aliasName = aliasNode.getText();
+      if (!aliasName || seenNames.has(aliasName)) continue;
+      const origName = spec.getName();
+      // No-op rename (`export { X as X }`) introduces no new bound name —
+      // the existing primitive at <file>::X already satisfies any consumer.
+      if (aliasName === origName) continue;
+      const valueText = truncatedSignature(`{ ${origName} as ${aliasName} }`);
+      seenNames.add(aliasName);
+      out.push(buildSyntheticReexportPrim(
+        repoKey, relPath, aliasName, valueText,
+        spec.getStartLineNumber(), spec.getEndLineNumber(),
+      ));
+    }
+  }
+  return out;
+}
+
+function buildSyntheticReexportPrim(
+  repoKey: string, relPath: string, name: string, valueText: string,
+  startLine: number, endLine: number,
+): Primitive {
+  const id = canonicalId(repoKey, relPath, name);
+  return {
+    schema_version: 2, id,
+    primitive: "variable", name, owner: null,
+    source: { repo: repoKey, path: relPath, language: "typescript",
+              line: startLine, end_line: endLine },
+    signature: { type_annotation: null, value_text: valueText },
+    attributes: { abstract: false, generated: false, external: false,
+                  template_parameters: [], macro: false, mutable: false,
+                  instantiable: false, inheritable: false },
+    edges_out: [],
+    structural_hash: structuralHash({
+      primitive: "variable", name,
+      signature: { type_annotation: null, value_text: valueText },
+      body_text: valueText,
+    }),
+    kind: null,
+    extractor: EXTRACTOR_TAG,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -2214,6 +2324,7 @@ function main() {
     for (const p of extractFunctions(sf, repoKey, relPath)) allPrims.push(p);
     for (const p of extractVariables(sf, repoKey, relPath)) allPrims.push(p);
     for (const p of extractDefaultExport(sf, repoKey, relPath)) allPrims.push(p);
+    for (const p of extractReexportSynthetics(sf, repoKey, relPath)) allPrims.push(p);
     for (const p of extractObjectLiteralApiClients(sf, repoKey, relPath)) allPrims.push(p);
     for (const p of extractRouteCalls(sf, repoKey, relPath)) allPrims.push(p);
     metadata.set(relPath, extractPerFileMetadata(sf, repoPath, relPath, resolvedSpecs));
