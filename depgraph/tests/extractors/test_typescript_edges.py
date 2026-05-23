@@ -218,6 +218,71 @@ def test_method_call_on_annotated_local_resolves():
 
 
 # ---------------------------------------------------------------------------
+# Issue #90: dynamic-callee detector (TS). Element-access / Reflect / eval
+# shapes route to confidence=dynamic with an `external::dynamic::<shape>::
+# <callsite>` sentinel target — distinct from `unresolved_receiver` (the
+# typed-receiver gap the extractor could close).
+# ---------------------------------------------------------------------------
+
+def test_dynamic_subscript_call_ts():
+    """`obj[name]()` and `(obj as any)[name]()` — element-access callee
+    with a non-literal key. Both stamp dynamic_subscript."""
+    prims = run_extractor("dynamic_subscript_call", which="edges")
+    dispatch = next(p for p in prims if p["name"] == "dispatch")
+    dyn = [e for e in dispatch["edges_out"]
+           if e["kind"] == "calls" and e["confidence"] == "dynamic"]
+    assert len(dyn) == 1, dispatch["edges_out"]
+    assert dyn[0]["target"].startswith("external::dynamic::subscript::")
+    assert dyn[0]["via"] == "dynamic_subscript"
+
+    on_any = next(p for p in prims if p["name"] == "dispatchOnAny")
+    dyn2 = [e for e in on_any["edges_out"]
+            if e["kind"] == "calls" and e["confidence"] == "dynamic"]
+    assert len(dyn2) == 1, on_any["edges_out"]
+    assert dyn2[0]["target"].startswith("external::dynamic::subscript::")
+
+
+def test_dynamic_reflect_call_ts():
+    """`Reflect.get(obj, name)(...)` and `Reflect.apply(fn, ...)` —
+    structural method-call shape, semantic dynamic dispatch."""
+    prims = run_extractor("dynamic_reflect_call", which="edges")
+    g = next(p for p in prims if p["name"] == "dispatchGet")
+    g_dyn = [e for e in g["edges_out"]
+             if e["kind"] == "calls" and e["confidence"] == "dynamic"]
+    assert any(e["target"].startswith("external::dynamic::reflect_get::")
+               for e in g_dyn), g["edges_out"]
+
+    a = next(p for p in prims if p["name"] == "dispatchApply")
+    a_dyn = [e for e in a["edges_out"]
+             if e["kind"] == "calls" and e["confidence"] == "dynamic"]
+    assert any(e["target"].startswith("external::dynamic::reflect_apply::")
+               for e in a_dyn), a["edges_out"]
+
+
+def test_dynamic_eval_call_ts():
+    """`eval(...)` — structurally a bare-name call, semantically pure
+    runtime dispatch. Routed to dynamic instead of the bare-name path."""
+    prims = run_extractor("dynamic_eval_call", which="edges")
+    fn = next(p for p in prims if p["name"] == "runDynamic")
+    dyn = [e for e in fn["edges_out"]
+           if e["kind"] == "calls" and e["confidence"] == "dynamic"]
+    assert len(dyn) == 1, fn["edges_out"]
+    assert dyn[0]["target"].startswith("external::dynamic::eval::")
+    assert dyn[0]["via"] == "dynamic_eval"
+
+
+def test_dynamic_literal_subscript_not_dynamic_ts():
+    """Negative: `obj["literal"]()` with a string-literal key is
+    structurally resolvable in principle — do NOT classify as dynamic."""
+    prims = run_extractor("dynamic_literal_subscript_not_dynamic",
+                          which="edges")
+    fn = next(p for p in prims if p["name"] == "callLiteral")
+    dyn = [e for e in fn["edges_out"]
+           if e["kind"] == "calls" and e["confidence"] == "dynamic"]
+    assert dyn == [], fn["edges_out"]
+
+
+# ---------------------------------------------------------------------------
 # Task 3.5: reads / assigns edges (TS)
 # ---------------------------------------------------------------------------
 

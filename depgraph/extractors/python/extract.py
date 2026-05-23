@@ -16,7 +16,7 @@ from .canonical import canonical_id, structural_hash
 from depgraph.lib.edges import confidence_for_external_target
 
 
-EXTRACTOR_TAG = "depgraph/extractors/python/extract.py@2026-05-23a"
+EXTRACTOR_TAG = "depgraph/extractors/python/extract.py@2026-05-23b"
 SCHEMA_VERSION = 2
 
 # Builtins commonly used as parameter / variable type annotations. When an
@@ -1478,16 +1478,87 @@ def _resolve_call_edge(call: ast.Call, *, local_names: dict, imports: dict,
         # Chained attribute (a.b.c()) — dropped for v0 (see EDGE-2).
         return []
 
-    # Computed callee (getattr, call[0](), etc.) — emit an
-    # `unresolved_receiver` edge rather than silently dropping, so the call
-    # site is preserved in the corpus. NB: per issue #53, this *is* the
-    # dynamic-callee shape; once a dedicated detector lands, it'll move to
-    # confidence=dynamic with its own target prefix.
+    # Computed callee — recognize known dynamic-dispatch AST shapes (#90)
+    # and stamp them with `confidence=dynamic` + a distinct sentinel
+    # target. The dynamic bucket is the *irreducible* gap (runtime-only,
+    # no static pass can close it), so it stays separate from
+    # `unresolved_receiver` (typed-receiver gaps the extractor could
+    # close). Anything we can't structurally classify falls through to
+    # the legacy `external::unresolved::computed_callee` sentinel so the
+    # call site is still preserved.
+    dyn_shape = _dynamic_callee_shape_py(call.func)
+    if dyn_shape is not None:
+        dyn_target = f"external::dynamic::{dyn_shape}::{path}:{call.lineno}"
+        return [{"target": dyn_target,
+                  "kind": "calls", "via": f"dynamic_{dyn_shape}",
+                  "where": f"{path}:{call.lineno}",
+                  "confidence": confidence_for_external_target(dyn_target)}]
+
     callee_target = "external::unresolved::computed_callee"
     return [{"target": callee_target,
               "kind": "calls", "via": "computed_callee",
               "where": f"{path}:{call.lineno}",
               "confidence": confidence_for_external_target(callee_target)}]
+
+
+def _dynamic_callee_shape_py(callee: ast.AST) -> str | None:
+    """Return a shape token if `callee` is a known dynamic-dispatch AST
+    pattern (#90), else None.
+
+    Detected shapes (token in target id):
+      - `getattr`         — `getattr(obj, name)(...)`,
+                            `getattr(obj, name, default)(...)`
+      - `dunder_import`   — `__import__(name)(...)` (rare, but real)
+      - `import_module`   — `importlib.import_module(name)(...)`
+      - `globals_lookup`  — `globals()[name](...)`
+      - `locals_lookup`   — `locals()[name](...)`
+      - `vars_lookup`     — `vars()[name](...)`
+      - `subscript`       — `obj[key](...)` where `key` is NOT a
+                            constant string (constant-string subscript
+                            is in principle resolvable — leave it on
+                            the legacy `computed_callee` path).
+    """
+    # `getattr(...)(...)`, `__import__(...)(...)`,
+    # `importlib.import_module(...)(...)`
+    if isinstance(callee, ast.Call):
+        inner = callee.func
+        if isinstance(inner, ast.Name):
+            if inner.id == "getattr":
+                return "getattr"
+            if inner.id == "__import__":
+                return "dunder_import"
+        elif isinstance(inner, ast.Attribute):
+            if (isinstance(inner.value, ast.Name)
+                    and inner.value.id == "importlib"
+                    and inner.attr == "import_module"):
+                return "import_module"
+        return None
+
+    # `obj[key](...)` — subscript callee.
+    if isinstance(callee, ast.Subscript):
+        value = callee.value
+        # `globals()[name]` / `locals()[name]` / `vars()[name]` /
+        # `vars(obj)[name]`. globals/locals take no args; vars may take
+        # zero or one. Match the call shape without enforcing arity —
+        # the structural pattern is the dynamic-dispatch signal.
+        if (isinstance(value, ast.Call)
+                and isinstance(value.func, ast.Name)
+                and value.func.id in {"globals", "locals", "vars"}):
+            return f"{value.func.id}_lookup"
+        # `obj["literal"](...)` — constant string key is structurally
+        # resolvable in principle; leave it on the legacy path so the
+        # behavior change is scoped to genuinely-dynamic keys.
+        key = callee.slice
+        # Python 3.9+: slice is the key node directly; pre-3.9 it was an
+        # ast.Index wrapper. We support 3.10+ so the unwrap is just for
+        # safety against any compat shim.
+        if isinstance(key, ast.Index):  # pragma: no cover — 3.10+ has no Index
+            key = key.value  # type: ignore[attr-defined]
+        if isinstance(key, ast.Constant) and isinstance(key.value, str):
+            return None
+        return "subscript"
+
+    return None
 
 
 # ---------------------------------------------------------------------------

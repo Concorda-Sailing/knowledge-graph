@@ -36,9 +36,17 @@ from depgraph.lib.cli.stats import cmd_stats, _group_key_for_target
     ("external::unresolved::db.query", "external::unresolved::db.query"),
     ("external::unresolved::Receiver.method",
      "external::unresolved::Receiver.method"),
-    # dynamic / computed callee — also kept verbatim
+    # legacy computed-callee sentinel (anything #90 didn't recognize) —
+    # kept verbatim
     ("external::unresolved::computed_callee",
      "external::unresolved::computed_callee"),
+    # #90 dynamic targets carry a per-callsite trailer; collapse to the
+    # shape prefix so the worklist shows the per-shape count, not 1
+    # entry per callsite.
+    ("external::dynamic::getattr::src.py:42",
+     "external::dynamic::getattr"),
+    ("external::dynamic::subscript::src/file.ts:7",
+     "external::dynamic::subscript"),
     # in-corpus or unrecognized shape — passed through unchanged
     ("repo::pkg/mod.py::cls", "repo::pkg/mod.py::cls"),
 ])

@@ -36,9 +36,14 @@ def _group_key_for_target(target: str) -> str:
 
     `external::npm::<pkg>::Foo`, `external::npm::<pkg>::Bar` → both share
     the `external::npm::<pkg>` group. `external::unresolved::db.query` stays
-    as-is (it's already the natural group)."""
+    as-is (it's already the natural group). `external::dynamic::<shape>::
+    <callsite>` collapses to `external::dynamic::<shape>` so the per-shape
+    count is the legible signal (each callsite is unique by construction —
+    #90)."""
     parts = target.split("::")
     if target.startswith("external::npm::") or target.startswith("external::pypi::"):
+        return "::".join(parts[:3])
+    if target.startswith("external::dynamic::"):
         return "::".join(parts[:3])
     return target
 

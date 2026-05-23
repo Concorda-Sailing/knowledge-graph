@@ -50,10 +50,13 @@ def confidence_for_external_target(target_id: str) -> str:
       - `external::unresolved::<recv>.<method>` (no `::` in the body) —
         bare method-call shape where the receiver type couldn't be
         inferred (e.g. `db.query`, `conn.execute`). Returns
-        `"unresolved_receiver"`. This also covers the synthetic
-        `external::unresolved::computed_callee` target emitted for dynamic
-        callees today; once a dedicated detector lands, those will move
-        to `dynamic` (see follow-up).
+        `"unresolved_receiver"`.
+      - `external::dynamic::<shape>::<callsite>` — runtime-only callee
+        shapes (`getattr(obj, name)(...)`, `obj[key](...)`,
+        `Reflect.get(...)(...)`, etc.) detected at the AST/CST level.
+        Distinct from `unresolved_receiver` because the gap is
+        irreducible: no static pass can close it (#90). Returns
+        `"dynamic"`.
       - Everything else under `external::*` (`external::npm::<pkg>::*`,
         `external::pypi::<pkg>::*`, `external::builtins::*`, the
         synthetic `external::python-dbapi::*`, etc.) — known external
@@ -67,6 +70,8 @@ def confidence_for_external_target(target_id: str) -> str:
         "external::npm::unknown"
     ):
         return "unresolved_internal"
+    if target_id.startswith("external::dynamic::"):
+        return "dynamic"
     if target_id.startswith("external::unresolved::"):
         # #91 cheap reclassification: when the body after the prefix
         # contains `::`, the receiver was already located to an in-corpus

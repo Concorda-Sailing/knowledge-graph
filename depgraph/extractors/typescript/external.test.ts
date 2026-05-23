@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  confidenceForExternalTarget,
   inNodeModules,
   npmPkgFromNodeModulesRel,
   npmPkgFromSpec,
@@ -67,5 +68,37 @@ describe("npmPkgFromNodeModulesRel", () => {
 
   it("returns null when not under node_modules", () => {
     expect(npmPkgFromNodeModulesRel("src/foo.ts")).toBeNull();
+  });
+});
+
+describe("confidenceForExternalTarget", () => {
+  it("classifies known external packages as `external`", () => {
+    expect(confidenceForExternalTarget("external::npm::react::useState"))
+      .toBe("external");
+    expect(confidenceForExternalTarget("external::pypi::sqlalchemy::Session"))
+      .toBe("external");
+  });
+
+  it("routes the `unknown` package slot to `unresolved_internal`", () => {
+    expect(confidenceForExternalTarget("external::npm::unknown::default"))
+      .toBe("unresolved_internal");
+    expect(confidenceForExternalTarget("external::pypi::unknown::list"))
+      .toBe("unresolved_internal");
+  });
+
+  it("routes `external::unresolved::*` to `unresolved_receiver`", () => {
+    expect(confidenceForExternalTarget("external::unresolved::db.query"))
+      .toBe("unresolved_receiver");
+  });
+
+  it("routes `external::dynamic::*` (issue #90) to `dynamic`", () => {
+    expect(confidenceForExternalTarget(
+      "external::dynamic::subscript::src/file.ts:42",
+    )).toBe("dynamic");
+    expect(confidenceForExternalTarget(
+      "external::dynamic::reflect_get::src/file.ts:7",
+    )).toBe("dynamic");
+    expect(confidenceForExternalTarget("external::dynamic::eval::a.ts:3"))
+      .toBe("dynamic");
   });
 });

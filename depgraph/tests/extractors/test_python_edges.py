@@ -627,11 +627,21 @@ def test_confidence_for_external_target_reclassifies_corpus_id_shapes():
     assert confidence_for_external_target(
         "external::unresolved::db.query"
     ) == "unresolved_receiver"
-    # computed_callee sentinel still routes to unresolved_receiver until
-    # the dynamic detector lands.
+    # Legacy computed_callee sentinel (anything the #90 detector didn't
+    # recognize) still routes to unresolved_receiver — the dynamic
+    # detector is opt-in by shape, not a global recategorization.
     assert confidence_for_external_target(
         "external::unresolved::computed_callee"
     ) == "unresolved_receiver"
+    # Issue #90: `external::dynamic::*` sentinels route to the dynamic
+    # bucket. Distinct from `unresolved_receiver` because the gap is
+    # irreducible — no static pass can close it.
+    assert confidence_for_external_target(
+        "external::dynamic::getattr::src.py:12"
+    ) == "dynamic"
+    assert confidence_for_external_target(
+        "external::dynamic::subscript::src/file.ts:42"
+    ) == "dynamic"
     # Known external terminals stay external.
     assert confidence_for_external_target(
         "external::pypi::sqlalchemy::Session"
@@ -641,6 +651,114 @@ def test_confidence_for_external_target_reclassifies_corpus_id_shapes():
     assert confidence_for_external_target(
         "external::pypi::unknown::list"
     ) == "unresolved_internal"
+
+
+# ---------------------------------------------------------------------------
+# Issue #90: dynamic-callee detector — getattr / subscript / globals lookup
+# / importlib.import_module / __import__. These shapes are *irreducible*
+# runtime dispatch (no static pass can resolve them without dataflow we
+# don't have), so they get their own confidence bucket separate from
+# `unresolved_receiver` (the typed-receiver gap the extractor could close).
+# ---------------------------------------------------------------------------
+
+def test_dynamic_getattr_call_py():
+    """`getattr(obj, name)()` and `getattr(obj, name, default)()` —
+    both forms emit a `calls` edge with confidence=dynamic and an
+    `external::dynamic::getattr::<callsite>` sentinel target."""
+    prims = list(extract_repo(repo_key="fixture",
+                              repo_path=FIXTURE_DIR / "dynamic_getattr_call"))
+    dispatch = next(p for p in prims if p["name"] == "dispatch")
+    dyn = [e for e in dispatch["edges_out"]
+           if e["kind"] == "calls" and e["confidence"] == "dynamic"]
+    assert len(dyn) == 1, dispatch["edges_out"]
+    assert dyn[0]["target"].startswith("external::dynamic::getattr::"), dyn[0]
+    assert dyn[0]["via"] == "dynamic_getattr", dyn[0]
+
+    # 3-arg form is structurally identical from the AST.
+    with_default = next(p for p in prims if p["name"] == "dispatch_with_default")
+    dyn2 = [e for e in with_default["edges_out"]
+            if e["kind"] == "calls" and e["confidence"] == "dynamic"]
+    assert len(dyn2) == 1, with_default["edges_out"]
+    assert dyn2[0]["target"].startswith("external::dynamic::getattr::")
+
+
+def test_dynamic_subscript_call_py():
+    """`registry[name]()` where `name` is a variable — pure runtime
+    dispatch. Confidence=dynamic, target prefix `external::dynamic::
+    subscript::`."""
+    prims = list(extract_repo(repo_key="fixture",
+                              repo_path=FIXTURE_DIR / "dynamic_subscript_call"))
+    dispatch = next(p for p in prims if p["name"] == "dispatch")
+    dyn = [e for e in dispatch["edges_out"]
+           if e["kind"] == "calls" and e["confidence"] == "dynamic"]
+    assert len(dyn) == 1, dispatch["edges_out"]
+    assert dyn[0]["target"].startswith("external::dynamic::subscript::")
+    assert dyn[0]["via"] == "dynamic_subscript"
+    # And `self.handlers[name]()` — the value is itself an attribute,
+    # not a Name; still a dynamic subscript.
+    table = next(p for p in prims if p["name"] == "dispatch_method_table")
+    dyn2 = [e for e in table["edges_out"]
+            if e["kind"] == "calls" and e["confidence"] == "dynamic"]
+    assert len(dyn2) == 1, table["edges_out"]
+
+
+def test_dynamic_globals_lookup_py():
+    """`globals()[name]()` / `locals()[name]()` / `vars(obj)[name]()` —
+    each shape stamps a distinct token in the sentinel target."""
+    prims = list(extract_repo(repo_key="fixture",
+                              repo_path=FIXTURE_DIR / "dynamic_globals_lookup"))
+    g = next(p for p in prims if p["name"] == "call_global")
+    g_dyn = [e for e in g["edges_out"]
+             if e["kind"] == "calls" and e["confidence"] == "dynamic"]
+    assert any(e["target"].startswith("external::dynamic::globals_lookup::")
+               for e in g_dyn), g["edges_out"]
+
+    loc = next(p for p in prims if p["name"] == "call_local")
+    l_dyn = [e for e in loc["edges_out"]
+             if e["kind"] == "calls" and e["confidence"] == "dynamic"]
+    assert any(e["target"].startswith("external::dynamic::locals_lookup::")
+               for e in l_dyn), loc["edges_out"]
+
+    v = next(p for p in prims if p["name"] == "call_via_vars")
+    v_dyn = [e for e in v["edges_out"]
+             if e["kind"] == "calls" and e["confidence"] == "dynamic"]
+    assert any(e["target"].startswith("external::dynamic::vars_lookup::")
+               for e in v_dyn), v["edges_out"]
+
+
+def test_dynamic_import_module_call_py():
+    """`importlib.import_module(name)()` and `__import__(name)()` —
+    rarer but real dynamic dispatch shapes."""
+    prims = list(extract_repo(repo_key="fixture",
+                              repo_path=FIXTURE_DIR / "dynamic_import_module_call"))
+    il = next(p for p in prims if p["name"] == "via_importlib")
+    il_dyn = [e for e in il["edges_out"]
+              if e["kind"] == "calls" and e["confidence"] == "dynamic"]
+    assert any(e["target"].startswith("external::dynamic::import_module::")
+               for e in il_dyn), il["edges_out"]
+
+    dd = next(p for p in prims if p["name"] == "via_dunder")
+    dd_dyn = [e for e in dd["edges_out"]
+              if e["kind"] == "calls" and e["confidence"] == "dynamic"]
+    assert any(e["target"].startswith("external::dynamic::dunder_import::")
+               for e in dd_dyn), dd["edges_out"]
+
+
+def test_dynamic_literal_subscript_not_dynamic_py():
+    """Negative: `registry["literal_key"]()` is structurally resolvable
+    in principle (constant string key) — do NOT classify as dynamic.
+    Leave the call on the legacy `computed_callee` path so the behavior
+    change is scoped to genuinely-dynamic keys."""
+    prims = list(extract_repo(
+        repo_key="fixture",
+        repo_path=FIXTURE_DIR / "dynamic_literal_subscript_not_dynamic"))
+    fn = next(p for p in prims if p["name"] == "call_literal")
+    dyn = [e for e in fn["edges_out"]
+           if e["kind"] == "calls" and e["confidence"] == "dynamic"]
+    assert dyn == [], fn["edges_out"]
+    # The legacy sentinel is still emitted so the call site is preserved.
+    assert any(e["target"] == "external::unresolved::computed_callee"
+               for e in fn["edges_out"]), fn["edges_out"]
 
 
 # ---------------------------------------------------------------------------

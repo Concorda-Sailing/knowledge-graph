@@ -155,6 +155,19 @@ type FnEvent =
       spec_text: string | null;
       resolved_rel: string | null;
       line: number;
+    }
+  | {
+      // Issue #90: dynamically-dispatched callee detected at the CST.
+      // The shape token names the structural pattern (`subscript`,
+      // `reflect_get`, `reflect_apply`, `eval`) so the L2 pass can stamp
+      // a distinct `external::dynamic::<shape>::<callsite>` target and
+      // route confidence through `dynamic`. The L1 event is emitted by
+      // the CallExpression visitor when the callee isn't an Identifier
+      // or PropertyAccessExpression (i.e. the call_bare/call_method
+      // branches don't apply) — irreducible runtime gap.
+      kind: "call_dynamic";
+      shape: string;
+      line: number;
     };
 interface FnMeta {
   // `path:start_line` matches the key used by L2 to look up the function's
@@ -189,7 +202,7 @@ interface PerFileMetadata {
   import_shims: ImportShimMeta[];
 }
 
-const EXTRACTOR_TAG = "depgraph/extractors/typescript/extract.ts@2026-05-22e";
+const EXTRACTOR_TAG = "depgraph/extractors/typescript/extract.ts@2026-05-23a";
 const EXTS = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"];
 
 /**
@@ -286,6 +299,9 @@ export function confidenceForExternalTarget(targetId: string): string {
     targetId.startsWith("external::npm::unknown")
   ) {
     return "unresolved_internal";
+  }
+  if (targetId.startsWith("external::dynamic::")) {
+    return "dynamic";
   }
   if (targetId.startsWith("external::unresolved::")) {
     return "unresolved_receiver";
@@ -1219,21 +1235,111 @@ function extractPerFileMetadata(
               firstArgLit = (a0 as any).getLiteralText();
             }
           }
-          fm.events.push({
-            kind: "call_bare",
-            callee_name: callExpr.getText(),
-            line,
-            inside_expect: insideExpect,
-            first_arg_literal: firstArgLit,
-          });
+          // `eval(...)` is an Identifier callee; the structural shape is
+          // bare-name, but the *semantics* are pure dynamic dispatch. Stamp
+          // it as dynamic so the wild-probe view shows it in the dynamic
+          // bucket and the legacy bare-name path doesn't try to resolve it.
+          if (callExpr.getText() === "eval") {
+            fm.events.push({
+              kind: "call_dynamic",
+              shape: "eval",
+              line,
+            });
+          } else {
+            fm.events.push({
+              kind: "call_bare",
+              callee_name: callExpr.getText(),
+              line,
+              inside_expect: insideExpect,
+              first_arg_literal: firstArgLit,
+            });
+          }
         } else if (Node.isPropertyAccessExpression(callExpr)) {
+          // `Reflect.get(obj, name)(...)` / `Reflect.apply(fn, ...)` —
+          // the callee structurally IS a PropertyAccess (Reflect.get /
+          // Reflect.apply), but semantically the *real* callee is the
+          // value pulled off `obj`. Treat as dynamic.
+          const recvName = callExpr.getExpression().getText();
+          const methodName = callExpr.getName();
+          if (recvName === "Reflect"
+              && (methodName === "get" || methodName === "apply")) {
+            fm.events.push({
+              kind: "call_dynamic",
+              shape: methodName === "apply" ? "reflect_apply" : "reflect_get",
+              line,
+            });
+          } else {
+            fm.events.push({
+              kind: "call_method",
+              receiver_text: recvName,
+              method_name: methodName,
+              line,
+              inside_expect: insideExpect,
+            });
+          }
+        } else if (Node.isElementAccessExpression(callExpr)) {
+          // `obj[key](...)` — element-access callee. When `key` is a
+          // constant string literal (e.g. `obj["doWork"]()`), the call
+          // is structurally resolvable in principle, so leave it on the
+          // legacy path (drops silently today). When `key` is anything
+          // else (variable, expression, computed), it's a genuinely
+          // dynamic dispatch — stamp it as such.
+          const arg = callExpr.getArgumentExpression();
+          const literalKey =
+            arg && (Node.isStringLiteral(arg)
+                    || Node.isNoSubstitutionTemplateLiteral(arg));
+          if (!literalKey) {
+            fm.events.push({
+              kind: "call_dynamic",
+              shape: "subscript",
+              line,
+            });
+          }
+        } else if (Node.isCallExpression(callExpr)) {
+          // Outer call of `foo(...)(...)` — the inner Call returns the
+          // real callee. We can't statically follow the value, so it's
+          // a dynamic dispatch.
           fm.events.push({
-            kind: "call_method",
-            receiver_text: callExpr.getExpression().getText(),
-            method_name: callExpr.getName(),
+            kind: "call_dynamic",
+            shape: "call_returned",
             line,
-            inside_expect: insideExpect,
           });
+        } else if (Node.isParenthesizedExpression(callExpr)
+                   || Node.isAsExpression(callExpr)
+                   || Node.isTypeAssertion?.(callExpr)
+                   || Node.isNonNullExpression(callExpr)) {
+          // `(obj as any)[key](...)` lives under the ElementAccess
+          // branch above (the parenthesized/as expression is the
+          // ElementAccess's object, not the call's expression). But
+          // patterns like `(getThing())(...)` or `(x as Fn)(...)` reach
+          // here — peek inside to see if the unwrapped form is itself a
+          // dynamic shape; otherwise leave it alone.
+          let inner: Node = callExpr;
+          // ts-morph: Node.isParenthesizedExpression narrows; use any to
+          // call .getExpression() generically.
+          while (
+            Node.isParenthesizedExpression(inner)
+            || Node.isAsExpression(inner)
+            || Node.isTypeAssertion?.(inner)
+            || Node.isNonNullExpression(inner)
+          ) {
+            inner = (inner as any).getExpression();
+          }
+          if (Node.isElementAccessExpression(inner)) {
+            const arg = inner.getArgumentExpression();
+            const literalKey =
+              arg && (Node.isStringLiteral(arg)
+                      || Node.isNoSubstitutionTemplateLiteral(arg));
+            if (!literalKey) {
+              fm.events.push({
+                kind: "call_dynamic",
+                shape: "subscript",
+                line,
+              });
+            }
+          }
+          // Other unwrapped shapes (Identifier, PropertyAccess, Call)
+          // are silently dropped today; preserve that behavior.
         }
       }
     });
@@ -2018,6 +2124,21 @@ function attachCallAndVarAccessEdges(
               where: `${rel}:${ev.line}`, confidence: "exact",
             });
           }
+          continue;
+        }
+        if (ev.kind === "call_dynamic") {
+          // Issue #90: runtime-only callee shapes (subscript / Reflect /
+          // eval). Stamp a sentinel target so the call site is preserved
+          // in the corpus and the dynamic bucket grows in lockstep with
+          // the unresolved_receiver shrink.
+          const dynTarget = `external::dynamic::${ev.shape}::${rel}:${ev.line}`;
+          fnPrim.edges_out.push({
+            target: dynTarget,
+            kind: "calls",
+            via: `dynamic_${ev.shape}`,
+            where: `${rel}:${ev.line}`,
+            confidence: confidenceForExternalTarget(dynTarget),
+          });
           continue;
         }
         if (ev.kind === "call_method") {

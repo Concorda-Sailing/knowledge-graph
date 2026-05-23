@@ -11,14 +11,17 @@ Computed callees — where `call.func` is itself a `Call` node — cannot be sta
 resolved. The extractor must not crash, and should preserve information that a call
 site exists.
 
-## v0 behavior
-`dispatch_inline`: `getattr(obj, name)()` — the outer call has a computed callee.
-Emits `calls -> external::unresolved::computed_callee` with `confidence: "unresolved_receiver"` (the typed-receiver bucket; the `dynamic` confidence value is reserved for a future dedicated detector — see issue #53).
+## Behavior (post-#90)
+`dispatch_inline`: `getattr(obj, name)()` — recognized by the dynamic-callee
+detector. Emits `calls -> external::dynamic::getattr::<callsite>` with
+`confidence: "dynamic"`. The dynamic bucket is the *irreducible* gap (no
+static pass can close it), distinct from `unresolved_receiver` (typed-receiver
+gaps the extractor could close).
 
-`dispatch`: `method()` — `method` is a local variable (not module-scope), so it's
-not in `local_names`; returns `[]` from the bare-Name branch.
+`dispatch`: `method()` — `method` is a local variable (not module-scope), so
+it's not in `local_names`; returns `[]` from the bare-Name branch.
 
-## Fix applied during Phase 3.8
-Original implementation silently returned `[]` for computed callees. The plan
-requires `unresolved_edges_expected: true`. Fixed by emitting an unresolved edge
-instead of dropping the call site.
+## History
+Pre-#90: emitted `external::unresolved::computed_callee` with
+`unresolved_receiver` confidence. That collapsed runtime-only dispatch into
+the typed-receiver bucket — wrong destination for maintainer triage.
