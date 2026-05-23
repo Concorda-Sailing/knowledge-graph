@@ -39,9 +39,18 @@ def confidence_for_external_target(target_id: str) -> str:
         4-segment, `unknown` package slot) — target should be in-corpus
         but the resolver couldn't reach it. Bug-signal bucket. Returns
         `"unresolved_internal"`.
-      - `external::unresolved::*` — method-call shape where the receiver
-        type couldn't be inferred (e.g. `db.query`, `conn.execute`).
-        Returns `"unresolved_receiver"`. This also covers the synthetic
+      - `external::unresolved::<corpus-id>::...` — method-call shape
+        where the extractor located the receiver class in-corpus but the
+        method lookup missed (e.g. inherited method whose base class
+        lives outside the corpus; resolver bug; MRO walk not yet
+        implemented — see #91 (b4)). The `::` in the body after the
+        `external::unresolved::` prefix is the corpus-prefix delimiter,
+        so its presence is the structural signal that the receiver was
+        already classified. Returns `"unresolved_internal"`.
+      - `external::unresolved::<recv>.<method>` (no `::` in the body) —
+        bare method-call shape where the receiver type couldn't be
+        inferred (e.g. `db.query`, `conn.execute`). Returns
+        `"unresolved_receiver"`. This also covers the synthetic
         `external::unresolved::computed_callee` target emitted for dynamic
         callees today; once a dedicated detector lands, those will move
         to `dynamic` (see follow-up).
@@ -59,6 +68,16 @@ def confidence_for_external_target(target_id: str) -> str:
     ):
         return "unresolved_internal"
     if target_id.startswith("external::unresolved::"):
+        # #91 cheap reclassification: when the body after the prefix
+        # contains `::`, the receiver was already located to an in-corpus
+        # primitive id (`<repo>::<path>::<Class>.<method>` shape). Only
+        # the method lookup missed — that's a resolver gap, not an
+        # ambiguous-receiver gap. Route to unresolved_internal so the
+        # maintainer sees the bug signal instead of it hiding in the
+        # typed-receiver bucket.
+        body = target_id[len("external::unresolved::"):]
+        if "::" in body:
+            return "unresolved_internal"
         return "unresolved_receiver"
     return "external"
 

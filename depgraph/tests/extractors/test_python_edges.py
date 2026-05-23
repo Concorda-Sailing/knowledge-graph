@@ -492,6 +492,158 @@ def test_method_call_vararg_kwarg_annotations_py():
 
 
 # ---------------------------------------------------------------------------
+# #91 — confidence-taxonomy leak fixes
+# ---------------------------------------------------------------------------
+
+def test_self_method_call_resolves_to_enclosing_class_py():
+    """#91 (b1): inside a method body, `self.X(...)` should resolve to
+    the sibling method on the enclosing class, NOT
+    `external::unresolved::self.X`. The fix seeds `var_types[<first-arg>]
+    = [enclosing_class_id]` for any function whose primitive `owner` is a
+    class, before walking the body."""
+    prims = list(extract_repo(
+        repo_key="fixture",
+        repo_path=FIXTURE_DIR / "self_method_call",
+    ))
+    do_work = next(p for p in prims if p["name"] == "Service.do_work")
+    calls = [e for e in do_work["edges_out"] if e["kind"] == "calls"]
+    assert any(
+        e["target"] == "fixture::src.py::Service.helper"
+        and e["confidence"] == "exact"
+        and e["via"] == "method_call"
+        for e in calls
+    ), calls
+    # And the pre-fix `external::unresolved::self.helper` sentinel must
+    # NOT be emitted.
+    assert not any(
+        e["target"].startswith("external::unresolved::self.")
+        for e in do_work["edges_out"]
+    ), do_work["edges_out"]
+
+
+def test_with_constructor_bind_receiver_py():
+    """#91 (b3): `with Cls(...) as r:` should seed `var_types[r] =
+    [<Cls-id>]` so `r.method(...)` inside the with-block resolves
+    against Cls's methods. Before the fix, the body walker only handled
+    Assign/AnnAssign/NamedExpr — `ast.With.items[*]` was unreachable."""
+    prims = list(extract_repo(
+        repo_key="fixture",
+        repo_path=FIXTURE_DIR / "with_constructor_bind",
+    ))
+    fn = next(p for p in prims if p["name"] == "use_with")
+    calls = [e for e in fn["edges_out"] if e["kind"] == "calls"]
+    assert any(
+        e["target"] == "fixture::src.py::Resource.use"
+        and e["confidence"] == "exact"
+        and e["via"] == "method_call"
+        for e in calls
+    ), calls
+    assert not any(
+        e["target"].startswith("external::unresolved::r.")
+        for e in fn["edges_out"]
+    ), fn["edges_out"]
+
+
+def test_import_as_receiver_resolves_via_module_symbols_py():
+    """#91 (b2): `import pkg; pkg.X(...)` where `pkg` is an in-corpus
+    module should resolve `X` to the top-level symbol of that module —
+    including names that the package barrels in via `from .utils import
+    X as X` (the load-bearing real-world case from the click corpus).
+    Before the fix, `pkg` was in `imports` but NOT in `var_types`, so
+    `_resolve_call_edge` immediately fell through to the unresolved
+    sentinel."""
+    prims = list(extract_repo(
+        repo_key="fixture",
+        repo_path=FIXTURE_DIR / "import_as_receiver",
+    ))
+    caller = next(p for p in prims if p["name"] == "caller")
+    targets = {
+        e["target"] for e in caller["edges_out"]
+        if e["kind"] == "calls" and e["via"] == "method_call"
+    }
+    # Directly-defined symbol
+    assert "fixture::pkg/__init__.py::do_thing" in targets, targets
+    # Re-exported symbol (the imports fallback indexes both)
+    assert "fixture::pkg/utils.py::echo" in targets, targets
+    # Pre-fix sentinels for both attributes must NOT appear.
+    assert not any(
+        e["target"].startswith("external::unresolved::pkg.")
+        for e in caller["edges_out"]
+    ), caller["edges_out"]
+
+
+def test_registered_name_alias_cross_binding_py():
+    """`import widget` from a sibling subtree (examples/) should resolve
+    to the in-corpus `src/widget/__init__.py` module — NOT
+    `external::pypi::widget`. The cross-binding pass in
+    `_attach_imports_edges` reads pyproject.toml's `[project].name` and
+    aliases the registered name into `module_index`. Without this, every
+    monorepo / src-layout package's sibling consumers leak their import
+    edges into the external bucket."""
+    prims = list(extract_repo(
+        repo_key="fixture",
+        repo_path=FIXTURE_DIR / "registered_name_alias",
+    ))
+    demo_mod = next(
+        p for p in prims
+        if p["primitive"] == "module" and p["name"] == "examples/demo.py"
+    )
+    import_edges = [
+        e for e in demo_mod["edges_out"]
+        if e["kind"] == "imports" and e.get("local_binding") == "widget"
+    ]
+    assert import_edges, demo_mod["edges_out"]
+    assert all(
+        e["target"] == "fixture::src/widget/__init__.py"
+        and e["confidence"] == "exact"
+        for e in import_edges
+    ), import_edges
+    # And the downstream `widget.render()` call should pick up the b2
+    # imports-fallback and resolve to the in-corpus function.
+    demo_fn = next(p for p in prims if p["name"] == "demo")
+    call_targets = {
+        e["target"] for e in demo_fn["edges_out"]
+        if e["kind"] == "calls" and e["via"] == "method_call"
+    }
+    assert "fixture::src/widget/__init__.py::render" in call_targets, call_targets
+
+
+def test_confidence_for_external_target_reclassifies_corpus_id_shapes():
+    """`external::unresolved::<repo>::<path>::<Class>.<method>` shapes
+    carry a corpus-prefix segment after the unresolved prefix — the
+    receiver was located in-corpus and only the method lookup missed.
+    Reclassify these to `unresolved_internal` (the bug-signal bucket
+    where #50 / MRO-walk work lives) instead of `unresolved_receiver`
+    (the typed-receiver gap from #51)."""
+    from depgraph.lib.edges import confidence_for_external_target
+
+    # b4-shape: corpus prefix present → unresolved_internal
+    assert confidence_for_external_target(
+        "external::unresolved::myrepo::path/to/file.py::Cls.method"
+    ) == "unresolved_internal"
+
+    # bare receiver-shape: no `::` in body → unresolved_receiver (the
+    # genuine ambiguous-receiver case, #51 territory)
+    assert confidence_for_external_target(
+        "external::unresolved::db.query"
+    ) == "unresolved_receiver"
+    # computed_callee sentinel still routes to unresolved_receiver until
+    # the dynamic detector lands.
+    assert confidence_for_external_target(
+        "external::unresolved::computed_callee"
+    ) == "unresolved_receiver"
+    # Known external terminals stay external.
+    assert confidence_for_external_target(
+        "external::pypi::sqlalchemy::Session"
+    ) == "external"
+    # The `unknown`-package shape stays unresolved_internal (existing
+    # behavior, preserved by the fix).
+    assert confidence_for_external_target(
+        "external::pypi::unknown::list"
+    ) == "unresolved_internal"
+
+
+# ---------------------------------------------------------------------------
 # Task 3.5: reads / assigns / decorates edges
 # ---------------------------------------------------------------------------
 

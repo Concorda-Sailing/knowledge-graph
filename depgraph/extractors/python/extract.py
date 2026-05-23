@@ -16,7 +16,7 @@ from .canonical import canonical_id, structural_hash
 from depgraph.lib.edges import confidence_for_external_target
 
 
-EXTRACTOR_TAG = "depgraph/extractors/python/extract.py@2026-05-22e"
+EXTRACTOR_TAG = "depgraph/extractors/python/extract.py@2026-05-23a"
 SCHEMA_VERSION = 2
 
 # Builtins commonly used as parameter / variable type annotations. When an
@@ -735,6 +735,99 @@ def _attribute_chain(node: ast.expr) -> list[str]:
 # L2 edge resolution — Task 3.3: imports
 # ---------------------------------------------------------------------------
 
+def _registered_name_aliases(
+    repo_path: Path, module_index: dict[str, str]
+) -> dict[str, str]:
+    """Return {registered_name -> module_id} for any package names declared
+    in `pyproject.toml` (PEP 621 `[project].name` or `[tool.poetry].name`)
+    or `setup.cfg` (`[metadata].name`) at the repo root, when the in-corpus
+    layout contains a module whose dotted name ends with that registered
+    name.
+
+    The lookup prefers a module whose path ends with `<name>/__init__.py`
+    (the package case) over a flat `<name>.py` module, but accepts either.
+    A `src/`-layout (`src/<name>/__init__.py`, dotted `src.<name>`) is the
+    canonical case this is intended to repair: `import <name>` from
+    `examples/...` or `tests/...` would otherwise miss the in-corpus
+    package and fall back to `external::pypi::<name>`.
+
+    Returns an empty dict if no manifest is present, no package name is
+    declared, or no module's dotted name ends with the registered name.
+    """
+    import tomllib
+    import configparser
+
+    names: list[str] = []
+    pyproject = repo_path / "pyproject.toml"
+    if pyproject.exists():
+        try:
+            data = tomllib.loads(pyproject.read_text())
+        except (OSError, ValueError, tomllib.TOMLDecodeError):
+            data = {}
+        project = data.get("project") or {}
+        if isinstance(project, dict):
+            n = project.get("name")
+            if isinstance(n, str) and n:
+                names.append(n)
+        poetry = (data.get("tool") or {}).get("poetry") or {}
+        if isinstance(poetry, dict):
+            n = poetry.get("name")
+            if isinstance(n, str) and n and n not in names:
+                names.append(n)
+        # Poetry / hatch / setuptools `packages = [{include = "..."}]` and
+        # `[tool.setuptools.packages.find]` are intentionally not parsed
+        # here — those configure WHICH dirs ship as the package, not the
+        # registered import name. The PyPI/registered name is what we
+        # need for import resolution and lives at the simpler keys above.
+    setup_cfg = repo_path / "setup.cfg"
+    if setup_cfg.exists():
+        try:
+            cp = configparser.ConfigParser()
+            cp.read(setup_cfg)
+            if cp.has_option("metadata", "name"):
+                n = cp.get("metadata", "name").strip()
+                if n and n not in names:
+                    names.append(n)
+        except (OSError, configparser.Error):
+            pass
+
+    if not names:
+        return {}
+
+    # Python package names allow `-` but the import-name form requires `_`
+    # (PyPI normalizes underscores/hyphens; the importable identifier is
+    # underscore-only). Try both shapes for each declared name.
+    candidates: list[str] = []
+    for n in names:
+        candidates.append(n)
+        norm = n.replace("-", "_")
+        if norm != n:
+            candidates.append(norm)
+
+    out: dict[str, str] = {}
+    for name in candidates:
+        if name in module_index:
+            # Already resolvable by its own dotted name — no aliasing needed.
+            continue
+        # Search the module index for any module whose dotted name ends
+        # with `.<name>` AND originates from a package `__init__.py`.
+        # Prefer the shortest matching dotted name (closest-to-root) so a
+        # nested submodule named `<name>` doesn't shadow the top-level
+        # registered package.
+        best: tuple[int, str] | None = None
+        for dotted, mod_id in module_index.items():
+            if dotted == name:
+                best = (0, mod_id)
+                break
+            if dotted.endswith("." + name) and mod_id.endswith("/__init__.py"):
+                segments = dotted.count(".") + 1
+                if best is None or segments < best[0]:
+                    best = (segments, mod_id)
+        if best is not None:
+            out[name] = best[1]
+    return out
+
+
 def _attach_imports_edges(primitives: list[dict],
                            *, trees_by_path: dict[str, ast.Module],
                            repo_key: str, repo_path: Path) -> None:
@@ -759,6 +852,21 @@ def _attach_imports_edges(primitives: list[dict],
             if dotted.endswith(".__init__"):
                 dotted = dotted[: -len(".__init__")]
             module_index[dotted] = p["id"]
+
+    # Cross-binding: when the repo declares a package name in pyproject.toml
+    # (or setup.cfg) and the in-corpus layout puts that package under a
+    # prefix like `src/<name>/__init__.py`, `import <name>` from a sibling
+    # subtree (e.g. `examples/foo.py` doing `import click`) would otherwise
+    # miss the in-corpus module and fall back to `external::pypi::<name>`.
+    # Add the registered name as an alias so the import resolves to the
+    # in-corpus module id. This is the load-bearing fix for the
+    # "registered-name from sibling directory" pattern that monorepos and
+    # `src/`-layout single-package repos share.
+    for alias_name, alias_target_id in _registered_name_aliases(
+        repo_path, module_index
+    ).items():
+        # Don't shadow an existing exact-path mapping — only fill the gap.
+        module_index.setdefault(alias_name, alias_target_id)
 
     # symbol index: module_id -> {symbol_name -> primitive_id}
     symbol_index: dict[str, dict[str, str]] = {}
@@ -1075,6 +1183,40 @@ def _attach_call_edges(primitives: list[dict],
             method_local = p["name"].split(".")[-1]
             methods_by_class.setdefault(p["owner"], {})[method_local] = p["id"]
 
+    # Module-id -> {name -> primitive_id} for the b2 imports fallback. A
+    # name resolves first to a top-level symbol DEFINED in that module
+    # (class/function/variable at module scope), then to a name re-exported
+    # via `from .X import Y as Y` (the imports pass has already chased
+    # those to their defining symbol IDs in `_resolve_package_reexports`).
+    # The second source covers the canonical barrel-package case: `click`
+    # is a registered name aliasing `src/click/__init__.py`, but `echo` is
+    # not defined in `__init__.py` directly — it's `from .utils import
+    # echo as echo`, so it lives in the imports table.
+    symbols_by_module: dict[str, dict[str, str]] = {}
+    mod_id_by_path: dict[str, str] = {}
+    for p in primitives:
+        if p["primitive"] == "module":
+            mod_id_by_path[p["source"]["path"]] = p["id"]
+    for p in primitives:
+        if p.get("owner") is None and p["primitive"] in {"class", "function", "variable"}:
+            mod_id = mod_id_by_path.get(p["source"]["path"])
+            if mod_id is not None:
+                symbols_by_module.setdefault(mod_id, {})[p["name"]] = p["id"]
+    # Layer in the re-exported names from the imports pass. Only include
+    # in-corpus targets — external `local_binding`s here would re-leak.
+    for p in primitives:
+        if p["primitive"] != "module":
+            continue
+        for e in p["edges_out"]:
+            if e.get("kind") != "imports":
+                continue
+            lb = e.get("local_binding")
+            tgt = e.get("target")
+            if not lb or not tgt or tgt.startswith("external::"):
+                continue
+            bucket = symbols_by_module.setdefault(p["id"], {})
+            bucket.setdefault(lb, tgt)
+
     # Imports local_binding -> target_id, per file (built from edges already attached)
     imports_by_path: dict[str, dict[str, str]] = {}
     for p in primitives:
@@ -1134,6 +1276,30 @@ def _attach_call_edges(primitives: list[dict],
                 if cids:
                     var_types[arg.arg] = cids
 
+            # #91 (b1): seed `self` to the enclosing class id when the
+            # function is a method. The function primitive's `owner` is
+            # exactly the class id for methods (set in `_emit_class`), so
+            # there's no need to re-discover the enclosing scope from the
+            # AST. Before this fix, every `self.method(...)` call inside
+            # a class body emitted `external::unresolved::self.method` —
+            # 21.5% of pallets-click's unresolved_receiver leak.
+            owner = fn_prim.get("owner")
+            if owner is not None and owner in classes_by_id:
+                # Only seed if the function actually has a `self`-shaped
+                # first param. `@staticmethod` / `@classmethod` don't have
+                # an instance receiver. We accept any first-arg name
+                # (some codebases use `this`/`_`) so the seeding is
+                # robust to convention.
+                pos_args = fn_node.args.args
+                if pos_args:
+                    decorators = {_decorator_name(d) for d in fn_node.decorator_list}
+                    if "staticmethod" not in decorators:
+                        # classmethod's first arg is the class itself, not
+                        # an instance — but binding `cls` to the class id
+                        # is still correct (calls like `cls.helper(...)`
+                        # resolve the same way method calls do).
+                        var_types[pos_args[0].arg] = [owner]
+
             # Walk body in source order; update var_types on assignments,
             # emit edges for each Call node
             for sub in ast.walk(fn_node):
@@ -1173,6 +1339,23 @@ def _attach_call_edges(primitives: list[dict],
                     if _is_class_target(cid, classes_by_id):
                         var_types[sub.target.id] = [cid]
 
+                # #91 (b3) Pattern 4: `with Cls(...) as x:` — the binding
+                # lives in an `ast.withitem.optional_vars`, not in an
+                # Assign/AnnAssign/NamedExpr node, so the patterns above
+                # never see it. SQLAlchemy's `with Session(engine) as
+                # session:` is the canonical case; every `session.X(...)`
+                # call inside the block leaks to unresolved_receiver
+                # without this seeding.
+                if isinstance(sub, (ast.With, ast.AsyncWith)):
+                    for item in sub.items:
+                        if (isinstance(item.optional_vars, ast.Name)
+                                and isinstance(item.context_expr, ast.Call)
+                                and isinstance(item.context_expr.func, ast.Name)):
+                            cname = item.context_expr.func.id
+                            cid = local_names.get(cname) or imports.get(cname)
+                            if _is_class_target(cid, classes_by_id):
+                                var_types[item.optional_vars.id] = [cid]
+
                 # Emit edges for each Call node
                 if isinstance(sub, ast.Call):
                     edges = _resolve_call_edge(
@@ -1183,6 +1366,7 @@ def _attach_call_edges(primitives: list[dict],
                         functions_by_id=functions_by_id,
                         methods_by_class=methods_by_class,
                         var_types=var_types,
+                        symbols_by_module=symbols_by_module,
                         path=path,
                     )
                     fn_prim["edges_out"].extend(edges)
@@ -1191,7 +1375,9 @@ def _attach_call_edges(primitives: list[dict],
 def _resolve_call_edge(call: ast.Call, *, local_names: dict, imports: dict,
                         classes_by_id: dict, functions_by_id: set,
                         methods_by_class: dict,
-                        var_types: dict, path: str) -> list[dict]:
+                        var_types: dict,
+                        symbols_by_module: dict | None = None,
+                        path: str) -> list[dict]:
     """Return a list of edge dicts for a single Call node."""
     if isinstance(call.func, ast.Name):
         # Bare name: helper() or Service()
@@ -1222,6 +1408,42 @@ def _resolve_call_edge(call: ast.Call, *, local_names: dict, imports: dict,
             method = call.func.attr
             recv_class_ids = var_types.get(recv) or []
             if not recv_class_ids:
+                # #91 (b2): imports fallback. When the receiver isn't
+                # type-bound but IS an imported name pointing at an
+                # in-corpus module (e.g. `import click; click.echo(...)`
+                # from an examples/ subtree, after the cross-binding pass
+                # aliased the registered name to the in-corpus module
+                # id), resolve `method` as a top-level symbol of that
+                # module. `symbols_by_module` includes both directly-
+                # defined names and re-exported ones so a barrel package
+                # like `click` (where `echo` is `from .utils import echo
+                # as echo`) still resolves.
+                if symbols_by_module is not None:
+                    import_target = imports.get(recv)
+                    if (import_target is not None
+                            and not import_target.startswith("external::")):
+                        sym_id = symbols_by_module.get(import_target, {}).get(method)
+                        if sym_id:
+                            # Mirror the bare-name branch's target-kind
+                            # gate: class → instantiates, function (or
+                            # external terminal — can happen when the
+                            # symbol re-export chased through to a
+                            # third-party id) → calls, anything else
+                            # (e.g. a variable holding a callable) is
+                            # dropped here; the reads pass keeps the
+                            # identifier reachable.
+                            if sym_id in classes_by_id:
+                                sym_kind = "instantiates"
+                            elif (sym_id in functions_by_id
+                                    or sym_id.startswith("external::")):
+                                sym_kind = "calls"
+                            else:
+                                sym_kind = None
+                            if sym_kind is not None:
+                                return [{"target": sym_id,
+                                          "kind": sym_kind, "via": "method_call",
+                                          "where": f"{path}:{call.lineno}",
+                                          "confidence": "exact"}]
                 unr_target = f"external::unresolved::{recv}.{method}"
                 return [{"target": unr_target,
                           "kind": "calls", "via": "method_call",
