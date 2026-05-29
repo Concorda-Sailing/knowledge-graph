@@ -5,6 +5,7 @@ the reverse index (`by_target.json`).
 """
 from __future__ import annotations
 
+from collections.abc import Iterable
 from enum import Enum
 from typing import Any
 
@@ -240,3 +241,56 @@ def validate_edge(edge: dict[str, Any]) -> list[str]:
                 f"confidence in {sorted(allowed_confs)}, got {confidence!r}"
             )
     return errors
+
+
+def build_reverse_index(
+    nodes: Iterable[dict],
+) -> tuple[dict[str, list[dict]], int]:
+    """Build the reverse-dependency index from `edges_out`.
+
+    Walks every node's outgoing edges once and groups them by target into
+    ``{target_id: [{source, kind, via, where, confidence}, ...]}``. Each list
+    is sorted deterministically so the on-disk index is stable across runs
+    that produce the same edge set.
+
+    `nodes` is any iterable of node-data dicts; each must carry ``id`` and
+    (optionally) ``edges_out``. Returns ``(by_target, edge_count)``. Pure —
+    does not mutate its inputs.
+
+    Single source of truth for the reverse index. Both the fresh-extraction
+    path (`lib.cli.regen`) and the reindex-existing-corpus path
+    (`extractors.reconcile`, run by the post-edit hook) call this, so the two
+    cannot drift on which edge field they read. They previously did: reconcile
+    read the obsolete v1 ``depends_on`` field against a v2 ``edges_out`` corpus
+    and produced an empty index, clobbering `by_target.json` every turn.
+    """
+    by_target: dict[str, list[dict]] = {}
+    count = 0
+    for data in nodes:
+        src_id = data.get("id")
+        for edge in data.get("edges_out", []) or []:
+            target_id = edge.get("target")
+            if not target_id:
+                continue
+            by_target.setdefault(target_id, []).append(
+                {
+                    "source": src_id,
+                    "kind": edge.get("kind"),
+                    "via": edge.get("via"),
+                    "where": edge.get("where"),
+                    "confidence": edge.get("confidence", "exact"),
+                }
+            )
+            count += 1
+
+    for target_id in by_target:
+        by_target[target_id].sort(
+            key=lambda e: (
+                e.get("source") or "",
+                e.get("kind") or "",
+                e.get("via") or "",
+                e.get("where") or "",
+            )
+        )
+
+    return by_target, count

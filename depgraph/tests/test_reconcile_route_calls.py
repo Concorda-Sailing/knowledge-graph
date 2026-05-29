@@ -63,8 +63,9 @@ def test_reconcile_emits_route_call_dependent(tmp_path):
     # Regression for #43: reconcile.py used to write to the pre-rename
     # `dependents.json` filename. Make sure the legacy name isn't produced.
     assert not (work / "nodes" / "_index" / "dependents.json").exists()
-    idx = json.loads(dependents_path.read_text())
-    by_target = idx.get("by_target") or {}
+    # Flat v2 schema: by_target.json is the bare {target_id: [...]} map (the
+    # shape regen writes and pre_edit_inject / rollup read — no wrapper).
+    by_target = json.loads(dependents_path.read_text())
 
     endpoint_id = "rc-api::routers/events.py::import_events_endpoint"
     assert endpoint_id in by_target, (
@@ -89,10 +90,10 @@ def test_reconcile_skips_route_call_with_mismatched_method(tmp_path):
         f"reconcile failed:\nstdout={result.stdout}\nstderr={result.stderr}"
     )
 
-    idx = json.loads(
+    # Flat v2 schema: by_target.json is the bare {target_id: [...]} map.
+    by_target = json.loads(
         (work / "nodes" / "_index" / "by_target.json").read_text()
     )
-    by_target = idx.get("by_target") or {}
     endpoint_id = "rc-api::routers/events.py::import_events_endpoint"
     dependers = by_target.get(endpoint_id, [])
     dep_ids = [d["source"] for d in dependers]

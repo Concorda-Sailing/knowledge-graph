@@ -395,7 +395,11 @@ def _depgraph() -> Path:
 from depgraph.lib.primitives import (  # noqa: E402
     validate_primitive, check_slug_collisions, is_external_terminal,
 )
-from depgraph.lib.edges import REVERSE_INDEX_FILENAME, validate_edge  # noqa: E402
+from depgraph.lib.edges import (  # noqa: E402
+    REVERSE_INDEX_FILENAME,
+    build_reverse_index as _build_reverse_index,
+    validate_edge,
+)
 
 
 def validate_corpus(primitives: list[dict]) -> dict:
@@ -451,7 +455,6 @@ def validate_corpus(primitives: list[dict]) -> dict:
 
 # These are initialized by main() on first run rather than at import time.
 # validate_corpus and other pure functions don't touch them.
-INDEX_SCHEMA_VERSION = 1
 DEPGRAPH: Path = None  # type: ignore[assignment]
 NODES: Path = None  # type: ignore[assignment]
 INDEX_DIR: Path = None  # type: ignore[assignment]
@@ -489,60 +492,36 @@ def load_all_nodes() -> dict[str, tuple[Path, dict]]:
 
 
 def build_reverse_index(nodes: dict[str, tuple[Path, dict]]) -> tuple[dict[str, list[dict]], int]:
-    """Walk every depends_on edge once and build target_id → [incoming edges].
-    Returns (by_target, edge_count). Pure function — does NOT mutate nodes."""
-    by_target: dict[str, list[dict]] = {}
-    count = 0
-    for src_id, (_, data) in nodes.items():
-        for edge in data.get("depends_on", []) or []:
-            target_id = edge.get("target")
-            if not target_id:
-                continue
-            by_target.setdefault(target_id, []).append(
-                {
-                    "source": src_id,
-                    "via": edge.get("via"),
-                    "where": edge.get("where"),
-                    "confidence": edge.get("confidence", "exact"),
-                }
-            )
-            count += 1
+    """Build target_id → [incoming edges] for an on-disk corpus.
 
-    # Sort each list deterministically so the index file is bit-stable across
-    # regens that produce the same edge set.
-    for k in by_target:
-        by_target[k].sort(key=lambda e: (e.get("source", ""), e.get("via", ""), e.get("where") or ""))
-
-    return by_target, count
+    Thin adapter over the single-source builder in ``depgraph.lib.edges``:
+    unwraps the ``{id: (path, data)}`` map this module loads into the bare
+    node-data dicts the shared builder reads. Reads the live ``edges_out``
+    field (NOT the obsolete v1 ``depends_on``) so the post-edit reindex
+    matches what fresh extraction produces. Returns (by_target, edge_count)."""
+    return _build_reverse_index(data for _, data in nodes.values())
 
 
-def write_dependents_index(by_target: dict[str, list[dict]], node_count: int, edge_count: int) -> tuple[bool, Path]:
-    """Atomic write to nodes/_index/by_target.json. Returns (changed, path)."""
-    from datetime import datetime, timezone
+def write_dependents_index(by_target: dict[str, list[dict]]) -> tuple[bool, Path]:
+    """Atomic write to nodes/_index/by_target.json in the flat v2 schema.
 
+    On-disk shape is the bare ``{target_id: [edge, ...]}`` map — the same
+    schema `lib.cli.regen` writes and what `pre_edit_inject` / `rollup` /
+    `dossier-rank` read (they expect no wrapper). Corpus-level counts and the
+    git commit live in ``nodes/_meta.json`` (see ``write_corpus_meta``), not
+    here. Keys are sorted so the file is byte-stable across runs that produce
+    the same edge set; the write is skipped when content is unchanged.
+
+    Returns (changed, path)."""
     INDEX_DIR.mkdir(parents=True, exist_ok=True)
-    payload = {
-        "schema_version": INDEX_SCHEMA_VERSION,
-        "generated_at": datetime.now(timezone.utc).isoformat(),
-        "git_commit": _git_head_primary(),
-        "node_count": node_count,
-        "edge_count": edge_count,
-        # Keys sorted so by_target itself serializes deterministically.
-        "by_target": {k: by_target[k] for k in sorted(by_target.keys())},
-    }
-    new_text = json.dumps(payload, indent=2, sort_keys=False) + "\n"
+    payload = {k: by_target[k] for k in sorted(by_target.keys())}
+    new_text = json.dumps(payload, indent=2, sort_keys=True) + "\n"
 
-    # Bit-stability: if the existing index has the same content modulo the
-    # generated_at timestamp, don't rewrite. This keeps the index file from
-    # producing diffs on no-op regens.
     if DEPENDENTS_INDEX.exists():
         try:
-            existing = json.loads(DEPENDENTS_INDEX.read_text())
-            existing_stable = {k: v for k, v in existing.items() if k != "generated_at"}
-            new_stable = {k: v for k, v in payload.items() if k != "generated_at"}
-            if existing_stable == new_stable:
+            if DEPENDENTS_INDEX.read_text() == new_text:
                 return False, DEPENDENTS_INDEX
-        except (OSError, json.JSONDecodeError):
+        except OSError:
             pass
 
     tmp = DEPENDENTS_INDEX.with_suffix(".json.tmp")
@@ -938,7 +917,7 @@ def main() -> int:
         cleaned = strip_legacy_fields(nodes)
         if cleaned:
             print(f"legacy cleanup:  {cleaned} nodes had legacy fields stripped (dependents/extracted_at/git_commit)")
-        changed, idx_path = write_dependents_index(by_target, len(nodes), edge_count)
+        changed, idx_path = write_dependents_index(by_target)
         print(f"index:           {'updated' if changed else 'unchanged'} ({idx_path.relative_to(DEPGRAPH)})")
         meta_changed, meta_path = write_corpus_meta(len(nodes), edge_count)
         print(f"meta:            {'updated' if meta_changed else 'unchanged'} ({meta_path.relative_to(DEPGRAPH)})")

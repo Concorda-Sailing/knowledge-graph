@@ -219,3 +219,101 @@ def test_regen_end_to_end(tiny_project, tmp_path):
     # _meta.json should record regen_status: complete
     meta = json.loads((depgraph_dir / "nodes" / "_meta.json").read_text())
     assert meta.get("regen_status") == "complete", f"meta: {meta}"
+
+
+# ---------------------------------------------------------------------------
+# Regression: the reverse index is built from the live `edges_out` field and
+# written in the flat v2 schema.
+#
+# Before the v1/v2 unification, `reconcile.build_reverse_index` read the dead
+# `depends_on` field (regen had already moved to `edges_out`) and wrote a
+# wrapped `{"schema_version": 1, "by_target": {...}}` file. The post-edit Stop
+# hook runs reconcile every turn, so on a v2 corpus it computed ZERO edges and
+# clobbered `by_target.json` to empty — starving both `dossier-rank` (fan-out)
+# and the pre-edit dependents injection (which expects the flat, unwrapped
+# schema). The builder now lives once in `depgraph.lib.edges`, reads
+# `edges_out`, and reconcile writes the same flat schema regen does.
+# ---------------------------------------------------------------------------
+
+def test_build_reverse_index_reads_edges_out():
+    from depgraph.lib.edges import build_reverse_index
+
+    caller = _make_function_primitive(
+        node_id="r::a.py::caller",
+        name="caller",
+        edges_out=[{
+            "target": "r::a.py::callee", "kind": "calls",
+            "via": "callee", "where": "a.py:2", "confidence": "exact",
+        }],
+    )
+    callee = _make_function_primitive(node_id="r::a.py::callee", name="callee")
+
+    by_target, count = build_reverse_index([caller, callee])
+    assert count == 1
+    assert "r::a.py::callee" in by_target
+    rec = by_target["r::a.py::callee"][0]
+    assert rec["source"] == "r::a.py::caller"
+    assert rec["kind"] == "calls"
+
+
+def test_build_reverse_index_ignores_dead_depends_on_field():
+    """A node carrying only the obsolete v1 `depends_on` edge (and empty
+    edges_out) must yield an EMPTY index — proving the builder reads the live
+    field, not the dead one."""
+    from depgraph.lib.edges import build_reverse_index
+
+    legacy = _make_function_primitive(node_id="r::a.py::caller", name="caller")
+    legacy["depends_on"] = [{"target": "r::a.py::callee", "via": "callee"}]
+
+    by_target, count = build_reverse_index([legacy])
+    assert count == 0
+    assert by_target == {}
+
+
+def test_reconcile_builder_populated_for_v2_corpus():
+    """reconcile.build_reverse_index over a v2 {id: (path, data)} map produces a
+    populated index — the direct regression for the empty-clobber bug."""
+    from depgraph.extractors.reconcile import build_reverse_index as recon_build
+
+    caller = _make_function_primitive(
+        node_id="r::a.py::caller",
+        name="caller",
+        edges_out=[{
+            "target": "r::a.py::callee", "kind": "calls",
+            "via": "callee", "where": "a.py:2", "confidence": "exact",
+        }],
+    )
+    callee = _make_function_primitive(node_id="r::a.py::callee", name="callee")
+    nodes = {
+        "r::a.py::caller": (Path("ignored"), caller),
+        "r::a.py::callee": (Path("ignored"), callee),
+    }
+    by_target, count = recon_build(nodes)
+    assert count == 1
+    assert "r::a.py::callee" in by_target
+
+
+def test_reconcile_writes_flat_reverse_index_schema(tmp_path, monkeypatch):
+    """reconcile must persist by_target.json in the flat v2 schema
+    ({target_id: [...]}, no wrapper) — the shape pre_edit_inject and rollup
+    read. Regression against the legacy wrapped {"schema_version":1,...} write."""
+    from depgraph.extractors import reconcile
+
+    idx_dir = tmp_path / "_index"
+    monkeypatch.setattr(reconcile, "INDEX_DIR", idx_dir)
+    monkeypatch.setattr(reconcile, "DEPENDENTS_INDEX", idx_dir / "by_target.json")
+
+    by_target = {
+        "r::a.py::callee": [{
+            "source": "r::a.py::caller", "kind": "calls",
+            "via": "callee", "where": "a.py:2", "confidence": "exact",
+        }]
+    }
+    changed, path = reconcile.write_dependents_index(by_target)
+    assert changed is True
+
+    data = json.loads(path.read_text())
+    # Flat schema: target ids are top-level keys, no wrapper.
+    assert "schema_version" not in data
+    assert "by_target" not in data
+    assert data["r::a.py::callee"][0]["source"] == "r::a.py::caller"

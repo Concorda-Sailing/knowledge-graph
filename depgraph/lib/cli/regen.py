@@ -61,6 +61,7 @@ from depgraph.extractors.reconcile import (  # noqa: E402
 from depgraph.lib.edges import (  # noqa: E402
     FORWARD_INDEX_FILENAME,
     REVERSE_INDEX_FILENAME,
+    build_reverse_index,
 )
 
 from ._shared import is_dossier_eligible, mark_regen_in_progress
@@ -313,24 +314,13 @@ def _run_cross_passes(all_primitives: list[dict], repo_paths: dict[str, Path]) -
 # ---------------------------------------------------------------------------
 
 def _build_by_target(primitives: list[dict]) -> dict[str, list[dict]]:
-    """Build target_id → [incoming edge records] from edges_out across all primitives."""
-    by_target: dict[str, list[dict]] = {}
-    for p in primitives:
-        for e in p.get("edges_out", []) or []:
-            tgt = e.get("target")
-            if not tgt:
-                continue
-            by_target.setdefault(tgt, []).append({
-                "source": p["id"],
-                "kind": e.get("kind"),
-                "via": e.get("via"),
-                "where": e.get("where"),
-                "confidence": e.get("confidence", "exact"),
-            })
-    for k in by_target:
-        by_target[k].sort(key=lambda e: (
-            e.get("source", ""), e.get("kind", ""), e.get("via") or "", e.get("where") or ""
-        ))
+    """Build target_id → [incoming edge records] from edges_out across all primitives.
+
+    Delegates to the single-source builder in ``depgraph.lib.edges`` so this
+    fresh-extraction path and the reindex-existing-corpus path
+    (``extractors.reconcile``, run by the post-edit hook) cannot drift on which
+    edge field they read or how records are shaped."""
+    by_target, _edge_count = build_reverse_index(primitives)
     return by_target
 
 
