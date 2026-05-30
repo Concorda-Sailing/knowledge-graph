@@ -43,10 +43,19 @@ def resolve_data_dir(env_var: str) -> Path:
     for d in [cwd, *cwd.parents]:
         if (d / "project.toml").exists() and (d / "nodes").is_dir():
             return d
+    # Final fallback: the machine-local registry's default project — the same
+    # resolution `kg` uses. Lets the bare `depgraph` / `logigraph` binaries
+    # work from any cwd (matching the documented aliases) instead of erroring
+    # when the env var is unset and cwd isn't inside a project dir.
+    subsystem = env_var.split("_", 1)[0].lower()  # LOGIGRAPH_DATA_DIR -> "logigraph"
+    registry_dir = _registry_default_data_dir(subsystem)
+    if registry_dir is not None:
+        return registry_dir
     raise SystemExit(
-        f"{env_var} is not set and no project root found in cwd or ancestors. "
-        f"Either export {env_var}=/path/to/project/data, or cd into a "
-        f"directory containing project.toml + nodes/."
+        f"{env_var} is not set, no project root found in cwd or ancestors, and "
+        f"no default project is registered. Either export "
+        f"{env_var}=/path/to/project/data, cd into a directory containing "
+        f"project.toml + nodes/, or set a default with `kg project use <name>`."
     )
 
 
@@ -60,6 +69,33 @@ def _load_tomllib():
             return tomli
         except ImportError:
             return None
+
+
+def _registry_default_data_dir(subsystem: str) -> Optional[Path]:
+    """Resolve ``<default-project-path>/<subsystem>`` from the machine-local
+    kg registry (``~/.claude/kg-graphs.toml``), or None if unavailable.
+
+    Reads the registry file directly rather than importing the kg orchestrator
+    package — logigraph stays self-contained, and the registry location/shape
+    is a stable, documented contract. Returns the subsystem data dir only when
+    it actually carries a ``project.toml`` (a scaffolded project)."""
+    tomllib = _load_tomllib()
+    if tomllib is None:
+        return None
+    registry = Path.home() / ".claude" / "kg-graphs.toml"
+    try:
+        data = tomllib.loads(registry.read_text())
+    except (OSError, ValueError):
+        return None
+    default = data.get("default")
+    if not default:
+        return None
+    for graph in data.get("graph", []) or []:
+        if graph.get("name") == default and graph.get("path"):
+            d = Path(graph["path"]).expanduser() / subsystem
+            if (d / "project.toml").exists():
+                return d.resolve()
+    return None
 
 
 @lru_cache(maxsize=None)

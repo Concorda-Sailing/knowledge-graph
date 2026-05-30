@@ -1,8 +1,59 @@
 """Tests for lib.config additions — {kg_dir} substitution and repo_detectors."""
 from pathlib import Path
 
+import pytest
+
 import depgraph.lib.config as config
-from depgraph.lib.config import repo_detectors
+from depgraph.lib.config import repo_detectors, resolve_data_dir
+
+
+# ---------------------------------------------------------------------------
+# resolve_data_dir registry fallback
+# ---------------------------------------------------------------------------
+
+def test_resolve_data_dir_falls_back_to_registry_default(tmp_path, monkeypatch):
+    """With no env var and a cwd outside any project, resolve_data_dir resolves
+    the kg registry's default project — so the bare `depgraph` binary works from
+    any directory (regression for the first-run "DATA_DIR not set" fumble)."""
+    proj = tmp_path / "proj-knowledge-graph"
+    (proj / "depgraph" / "nodes").mkdir(parents=True)
+    (proj / "depgraph" / "project.toml").write_text('[project]\nname = "proj"\n')
+
+    home = tmp_path / "home"
+    (home / ".claude").mkdir(parents=True)
+    (home / ".claude" / "kg-graphs.toml").write_text(
+        f'default = "proj"\n\n[[graph]]\nname = "proj"\npath = "{proj}"\n'
+    )
+
+    monkeypatch.setenv("HOME", str(home))          # Path.home() honors $HOME on POSIX
+    monkeypatch.delenv("DEPGRAPH_DATA_DIR", raising=False)
+    monkeypatch.chdir(tmp_path)                     # cwd is not inside a project
+
+    assert resolve_data_dir("DEPGRAPH_DATA_DIR") == (proj / "depgraph").resolve()
+
+
+def test_resolve_data_dir_env_var_beats_registry(tmp_path, monkeypatch):
+    """An explicit env var still wins over the registry fallback."""
+    home = tmp_path / "home"
+    (home / ".claude").mkdir(parents=True)
+    (home / ".claude" / "kg-graphs.toml").write_text(
+        'default = "proj"\n\n[[graph]]\nname = "proj"\npath = "/some/other"\n'
+    )
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("DEPGRAPH_DATA_DIR", str(tmp_path / "explicit"))
+    assert resolve_data_dir("DEPGRAPH_DATA_DIR") == (tmp_path / "explicit").resolve()
+
+
+def test_resolve_data_dir_raises_when_no_default_registered(tmp_path, monkeypatch):
+    """No env var, no project in cwd, no registry default → clear SystemExit."""
+    home = tmp_path / "home"
+    (home / ".claude").mkdir(parents=True)
+    (home / ".claude" / "kg-graphs.toml").write_text("# empty\n")
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.delenv("DEPGRAPH_DATA_DIR", raising=False)
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(SystemExit):
+        resolve_data_dir("DEPGRAPH_DATA_DIR")
 
 
 # ---------------------------------------------------------------------------
