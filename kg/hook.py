@@ -137,7 +137,12 @@ def _run_health(subsystem: str, graph_dir: Path) -> tuple[bool, str]:
             env=env,
             capture_output=True,
             text=True,
-            timeout=20,
+            # Headroom for a fully-populated corpus on a cold cache. `health`
+            # itself is near-linear now (compiled validator + single walk),
+            # but a large graph + contended IO can still exceed a tight bound;
+            # 60s keeps a healthy graph from reporting a false "failed to
+            # launch" at SessionStart.
+            timeout=60,
         )
     except (OSError, subprocess.SubprocessError) as exc:
         return True, f"  ⚠ {subsystem} health failed to launch: {exc}"

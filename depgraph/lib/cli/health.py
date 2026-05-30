@@ -44,13 +44,21 @@ def cmd_health(args: argparse.Namespace, ctx: Context) -> int:
     # each node JSON on every pass, so cost scaled as 4 × corpus_size.
     # Collapse to one walk: parse each node once, then apply each pass's
     # filters and counters in turn.
+    # Compile the schema validator ONCE. `jsonschema.validate()` re-runs
+    # `check_schema` (validating the *schema itself*) on every call — at
+    # corpus scale that dominated SessionStart health and blew the hook's
+    # time budget (6.8k nodes × full-schema re-check ≈ 24s, CPU-bound).
+    # Building the validator a single time and reusing `is_valid()` per node
+    # turns the pass near-linear.
     try:
-        import jsonschema  # type: ignore[import-untyped]
+        from jsonschema.validators import validator_for  # type: ignore[import-untyped]
         schema = json.loads((ctx.tool_root / "schema" / "node.schema.json").read_text())
+        _validator_cls = validator_for(schema)
+        _validator_cls.check_schema(schema)
+        _validator = _validator_cls(schema)
         validate_enabled = True
     except ImportError:
-        jsonschema = None  # type: ignore[assignment]
-        schema = None
+        _validator = None
         validate_enabled = False
         summary.append("validate: skipped (jsonschema not installed)")
 
@@ -60,6 +68,9 @@ def cmd_health(args: argparse.Namespace, ctx: Context) -> int:
     drift_n = 0
     a_total = 0
     a_covered = 0
+    # Coverage-caveat histogram, accumulated during the single walk below
+    # (folding the former second full corpus re-read — #70 regression).
+    caveat_counts: dict[str, int] = {}
     basename_to_path = basename_path_map(ctx.DEPGRAPH)
     dependents = load_dependents_index(ctx)
 
@@ -81,12 +92,14 @@ def cmd_health(args: argparse.Namespace, ctx: Context) -> int:
                 invalid += 1
             continue
 
-        # Pass 1: schema validate.
-        if validate_enabled:
-            try:
-                jsonschema.validate(data, schema)
-            except jsonschema.ValidationError:
-                invalid += 1
+        # Caveat histogram — counted here in the single walk for every parsed
+        # node (must precede the tier-A `continue`s below).
+        for c in data.get("coverage_caveats") or []:
+            caveat_counts[c] = caveat_counts.get(c, 0) + 1
+
+        # Pass 1: schema validate (compiled validator — see above).
+        if validate_enabled and not _validator.is_valid(data):
+            invalid += 1
 
         # Pass 2: orphans (node points at missing source file).
         src = data.get("source") or {}
@@ -149,19 +162,10 @@ def cmd_health(args: argparse.Namespace, ctx: Context) -> int:
     # operator knows where investment in extractors would pay off.
     from depgraph.lib.coverage_caveats import (
         CAVEAT_REGISTRY,
-        aggregate_caveat_counts,
         caveat_title,
     )
-    caveat_counts: dict[str, int] = {}
-    for node_file in ctx.NODES.rglob("*.json"):
-        if node_file.name.startswith("_") or any(p.startswith("_") for p in node_file.parts):
-            continue
-        try:
-            data = json.loads(node_file.read_text())
-        except (OSError, json.JSONDecodeError):
-            continue
-        for c in data.get("coverage_caveats") or []:
-            caveat_counts[c] = caveat_counts.get(c, 0) + 1
+    # caveat_counts was accumulated during the single corpus walk above —
+    # no second full re-read of the corpus here.
     if caveat_counts:
         summary.append("coverage caveats stamped:")
         for c in sorted(caveat_counts, key=lambda k: -caveat_counts[k]):
