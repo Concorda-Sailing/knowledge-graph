@@ -47,12 +47,28 @@ def cmd_health(args: argparse.Namespace, ctx: Context) -> int:
     try:
         import jsonschema  # type: ignore[import-untyped]
         schema = json.loads((ctx.tool_root / "schema" / "node.schema.json").read_text())
+        # Build the validator once: jsonschema.validate() re-runs check_schema
+        # on every call, which dominates the corpus walk (84s of 88s on a
+        # 6.8k-node corpus per cProfile). Constructing the validator up-front
+        # checks the schema once.
+        _validator_cls = jsonschema.validators.validator_for(schema)
+        _validator_cls.check_schema(schema)
+        validator = _validator_cls(schema)
         validate_enabled = True
     except ImportError:
         jsonschema = None  # type: ignore[assignment]
         schema = None
+        validator = None  # type: ignore[assignment]
         validate_enabled = False
         summary.append("validate: skipped (jsonschema not installed)")
+
+    # Coverage caveats are aggregated in the same corpus walk below; the
+    # previous implementation did a separate rglob+parse pass for them.
+    from depgraph.lib.coverage_caveats import (
+        CAVEAT_REGISTRY,
+        caveat_title,
+    )
+    caveat_counts: dict[str, int] = {}
 
     invalid = 0
     orphan_n = 0
@@ -81,10 +97,17 @@ def cmd_health(args: argparse.Namespace, ctx: Context) -> int:
                 invalid += 1
             continue
 
+        # Pass 1a: coverage caveats. Aggregated here (before any pass-
+        # specific `continue`) so the histogram reflects every node, not
+        # just tier-A-eligible ones. Previously this was a separate
+        # rglob+parse pass; folding it in halved the parse work.
+        for c in data.get("coverage_caveats") or []:
+            caveat_counts[c] = caveat_counts.get(c, 0) + 1
+
         # Pass 1: schema validate.
         if validate_enabled:
             try:
-                jsonschema.validate(data, schema)
+                validator.validate(data)
             except jsonschema.ValidationError:
                 invalid += 1
 
@@ -147,21 +170,7 @@ def cmd_health(args: argparse.Namespace, ctx: Context) -> int:
     # view. Counts are informational — not a problem to be fixed (extractor
     # coverage gaps aren't graph-health bugs), but visible signal so the
     # operator knows where investment in extractors would pay off.
-    from depgraph.lib.coverage_caveats import (
-        CAVEAT_REGISTRY,
-        aggregate_caveat_counts,
-        caveat_title,
-    )
-    caveat_counts: dict[str, int] = {}
-    for node_file in ctx.NODES.rglob("*.json"):
-        if node_file.name.startswith("_") or any(p.startswith("_") for p in node_file.parts):
-            continue
-        try:
-            data = json.loads(node_file.read_text())
-        except (OSError, json.JSONDecodeError):
-            continue
-        for c in data.get("coverage_caveats") or []:
-            caveat_counts[c] = caveat_counts.get(c, 0) + 1
+    # `caveat_counts` is populated in the single walk above.
     if caveat_counts:
         summary.append("coverage caveats stamped:")
         for c in sorted(caveat_counts, key=lambda k: -caveat_counts[k]):
