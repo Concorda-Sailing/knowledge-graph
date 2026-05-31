@@ -14,7 +14,7 @@ from pathlib import Path
 # bin/kg, or tests/conftest.py). Use fully-qualified imports throughout.
 from logigraph.lib.config import (
     project_repos,
-    path_to_repo_relative,
+    path_to_repo_key_relative,
     load_project_config,
 )
 from kg.shared.git import git_commit_if_changed as _kg_git_commit, default_actor
@@ -100,9 +100,11 @@ def validate_json_schema(data: dict, schema_path: Path) -> str | None:
 # ---------------------------------------------------------------------------
 
 def repo_relative(ctx: Context, abs_path: str) -> tuple[str, str] | None:
-    """Resolve any absolute path under a configured [repos.*].path to
-    (basename, rel). Same shape as depgraph's helper."""
-    return path_to_repo_relative(abs_path, ctx.LOGIGRAPH)
+    """Resolve any absolute path under a configured [repos.<key>].path to
+    (repo_key, rel). The repo key — not the directory basename — is the
+    prefix the by_file/by_code indexes are keyed on. Same shape as
+    depgraph's helper."""
+    return path_to_repo_key_relative(abs_path, ctx.LOGIGRAPH)
 
 
 def find_rules_for_target(ctx: Context, target: str) -> list[str]:
@@ -129,16 +131,20 @@ def find_rules_for_target(ctx: Context, target: str) -> list[str]:
     idx = json.loads(by_file_index.read_text())
     rr = repo_relative(ctx, target)
     if not rr:
-        repos = project_repos(ctx.LOGIGRAPH)
-        for info in repos.values():
-            basename = info["basename"]
-            if target.startswith(f"{basename}/"):
-                rel = target[len(basename) + 1:]
-                if (info["path"] / rel).exists():
-                    rr = (basename, rel)
-                    break
-            elif (info["path"] / target).exists():
-                rr = (info["basename"], target)
+        # Fallback for repo-relative string targets (not absolute paths).
+        # Accept either the repo-key prefix (canonical, e.g. "api/...") or
+        # the directory-basename prefix (e.g. "myproject-api/..."); both
+        # resolve to the repo key the by_file index is keyed on.
+        for key_, info in project_repos(ctx.LOGIGRAPH).items():
+            for prefix in (key_, info["basename"]):
+                if target.startswith(f"{prefix}/"):
+                    rel = target[len(prefix) + 1:]
+                    if (info["path"] / rel).exists():
+                        rr = (key_, rel)
+                        break
+            if rr is None and (info["path"] / target).exists():
+                rr = (key_, target)
+            if rr:
                 break
     if not rr:
         return []

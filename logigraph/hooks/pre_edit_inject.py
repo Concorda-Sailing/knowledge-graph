@@ -45,7 +45,7 @@ from logigraph.lib.config import (  # noqa: E402
     resolve_data_dir,
     load_project_config,
     repo_basenames,
-    path_to_repo_relative,
+    path_to_repo_key_relative,
 )
 
 
@@ -139,9 +139,12 @@ def target_files(tool_name: str, tool_input: dict) -> list[str]:
 
 
 def repo_relative(abs_path: str) -> tuple[str, str] | None:
-    """Resolve an absolute filesystem path to (basename, rel) by consulting
-    [repos.*].path. Works for any checkout layout."""
-    return path_to_repo_relative(abs_path, LOGIGRAPH)
+    """Resolve an absolute filesystem path to (repo_key, rel) by consulting
+    [repos.<key>].path. The by_file index is keyed by the repo KEY (the
+    prefix of canonical node ids), so the lookup must match — basename and
+    key differ whenever a repo's table name isn't its folder name. Works
+    for any checkout layout."""
+    return path_to_repo_key_relative(abs_path, LOGIGRAPH)
 
 
 def load_meta_and_status() -> tuple[dict, list[str]]:

@@ -73,16 +73,22 @@ def _load_tomllib():
 
 def _registry_default_data_dir(subsystem: str) -> Optional[Path]:
     """Resolve ``<default-project-path>/<subsystem>`` from the machine-local
-    kg registry (``~/.claude/kg-graphs.toml``), or None if unavailable.
+    kg registry (Grok or Claude location), or None if unavailable.
 
     Reads the registry file directly rather than importing the kg orchestrator
-    package — logigraph stays self-contained, and the registry location/shape
-    is a stable, documented contract. Returns the subsystem data dir only when
-    it actually carries a ``project.toml`` (a scaffolded project)."""
+    package — logigraph stays self-contained. Tries ~/.grok first when present,
+    then ~/.claude for compatibility.
+    """
     tomllib = _load_tomllib()
     if tomllib is None:
         return None
-    registry = Path.home() / ".claude" / "kg-graphs.toml"
+
+    home = Path.home()
+    candidates = [
+        home / ".grok" / "kg-graphs.toml",
+        home / ".claude" / "kg-graphs.toml",
+    ]
+    registry = next((c for c in candidates if c.exists()), candidates[-1])
     try:
         data = tomllib.loads(registry.read_text())
     except (OSError, ValueError):
@@ -231,6 +237,34 @@ def path_to_repo_relative(abs_path: Path, data_dir: Path) -> Optional[tuple[str,
         except ValueError:
             continue
         return info["basename"], str(rel)
+    return None
+
+
+def path_to_repo_key_relative(abs_path: Path, data_dir: Path) -> Optional[tuple[str, str]]:
+    """Given an absolute filesystem path, find which configured [repos.<key>]
+    checkout it lives under and return (repo_key, rel_path_str).
+
+    Same lookup as `path_to_repo_relative` but returns the repo KEY (the
+    [repos.<key>] table name), which is the prefix used in canonical
+    depgraph node ids (`<key>::<rel-path>::<symbol>`) and the prefix the
+    reverse-edge indexes (`by_file`, `by_code`) are keyed on. Path → rule
+    lookups must use the key, not the directory basename, since the two
+    differ whenever a repo's table name isn't its checkout's folder name
+    (e.g. `[repos.api]` → `~/myproject-api/`). Callers that genuinely want
+    the basename should use the sibling `path_to_repo_relative`.
+
+    Returns None if the path isn't under any configured repo's `path`.
+    """
+    try:
+        ap = Path(abs_path).expanduser().resolve()
+    except (OSError, RuntimeError):
+        return None
+    for key, info in project_repos(data_dir).items():
+        try:
+            rel = ap.relative_to(info["path"])
+        except ValueError:
+            continue
+        return key, str(rel)
     return None
 
 

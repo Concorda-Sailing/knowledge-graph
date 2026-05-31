@@ -39,12 +39,15 @@ def cmd_self_check(args: argparse.Namespace, ctx: Context) -> int:
         except (OSError, json.JSONDecodeError):
             idx = {}
         if idx.get("schema_version") == 1:
-            basename_to_path = {r["path"].name: r["path"] for r in repos.values()}
-            for key, rule_ids in (idx.get("by_file") or {}).items():
+            # by_file keys are `<repo_key>/<rel>` (repo_key = [repos.<key>]
+            # table name), matching canonical node-id prefixes — not the
+            # directory basename, which can differ.
+            key_to_path = {key: info["path"] for key, info in repos.items()}
+            for entry_key, rule_ids in (idx.get("by_file") or {}).items():
                 if not rule_ids:
                     continue
-                basename, _, rel = key.partition("/")
-                repo_path = basename_to_path.get(basename)
+                repo_key, _, rel = entry_key.partition("/")
+                repo_path = key_to_path.get(repo_key)
                 if repo_path is not None and rel:
                     sample_path = repo_path / rel
                     break

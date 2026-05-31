@@ -131,13 +131,50 @@ def test_find_rules_for_target_path_looks_up_by_file(tmp_path: Path) -> None:
     )
 
     ctx = Context.from_data_dir(data_dir)
-    key = "myproject-api/models/user.py"
+    # by_file is keyed by the repo KEY ("api", the [repos.<key>] table name),
+    # not the directory basename ("myproject-api"). reconcile builds keys from
+    # depgraph source.repo, which is the key. The path lookup must match.
+    key = "api/models/user.py"
     rule_ids = ["rule::auth::user_model"]
     _write_by_file_index(ctx, {key: rule_ids})
 
     result = find_rules_for_target(ctx, str(src_file))
 
     assert result == rule_ids
+
+
+def test_find_rules_for_target_resolves_repo_prefixed_string(tmp_path: Path) -> None:
+    """A repo-relative string target (not an absolute path) resolves through
+    the fallback to the repo KEY. Both the key prefix ("api/...") and the
+    directory-basename prefix ("myproject-api/...") map to the same key."""
+    repo_dir = tmp_path / "myproject-api"
+    repo_dir.mkdir()
+    src_file = repo_dir / "models" / "user.py"
+    src_file.parent.mkdir(parents=True)
+    src_file.touch()
+
+    data_dir = tmp_path / "logigraph"
+    (data_dir / "nodes" / "_index").mkdir(parents=True)
+    (data_dir / "dossiers").mkdir()
+    (data_dir / "calibration").mkdir()
+    (data_dir / "telemetry").mkdir()
+    depgraph_dir = tmp_path / "fake-depgraph"
+    (depgraph_dir / "nodes").mkdir(parents=True)
+    (depgraph_dir / "project.toml").write_text('[project]\nname = "fake"\n')
+    (data_dir / "project.toml").write_text(
+        f'[project]\nname = "test"\n\n'
+        f'[depgraph]\ndata_dir = "{depgraph_dir}"\n\n'
+        f'[repos.api]\npath = "{repo_dir}"\n'
+    )
+
+    ctx = Context.from_data_dir(data_dir)
+    rule_ids = ["rule::auth::user_model"]
+    _write_by_file_index(ctx, {"api/models/user.py": rule_ids})
+
+    # Canonical repo-key prefix.
+    assert find_rules_for_target(ctx, "api/models/user.py") == rule_ids
+    # Directory-basename prefix also accepted, mapped to the key.
+    assert find_rules_for_target(ctx, "myproject-api/models/user.py") == rule_ids
 
 
 # ---------------------------------------------------------------------------
@@ -272,8 +309,12 @@ def test_load_depgraph_corpus_skips_underscore_files(data_dir: Path) -> None:
 # repo_relative
 # ---------------------------------------------------------------------------
 
-def test_repo_relative_returns_basename_and_rel_for_known_repo(tmp_path: Path) -> None:
-    """repo_relative returns (basename, rel) for a path inside a configured repo."""
+def test_repo_relative_returns_repo_key_and_rel_for_known_repo(tmp_path: Path) -> None:
+    """repo_relative returns (repo_key, rel) for a path inside a configured repo.
+
+    The repo key is the [repos.<key>] table name ("api"), which can differ
+    from the checkout's directory basename ("myproject-api"). The by_file /
+    by_code indexes are keyed by the key, so the resolver must return it."""
     repo_dir = tmp_path / "myproject-api"
     repo_dir.mkdir()
     src = repo_dir / "routes" / "auth.py"
@@ -298,8 +339,8 @@ def test_repo_relative_returns_basename_and_rel_for_known_repo(tmp_path: Path) -
     result = repo_relative(ctx, str(src))
 
     assert result is not None
-    basename, rel = result
-    assert basename == "myproject-api"
+    repo_key, rel = result
+    assert repo_key == "api"
     assert rel == "routes/auth.py"
 
 
