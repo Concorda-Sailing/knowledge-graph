@@ -74,16 +74,23 @@ def _load_tomllib():
 
 def _registry_default_data_dir(subsystem: str) -> Optional[Path]:
     """Resolve ``<default-project-path>/<subsystem>`` from the machine-local
-    kg registry (``~/.claude/kg-graphs.toml``), or None if unavailable.
+    kg registry (Grok or Claude location), or None if unavailable.
 
     Reads the registry file directly rather than importing the kg orchestrator
-    package — depgraph stays self-contained, and the registry location/shape is
-    a stable, documented contract. Returns the subsystem data dir only when it
-    actually carries a ``project.toml`` (a scaffolded project)."""
+    package — depgraph stays self-contained. Tries ~/.grok first when present,
+    then ~/.claude for compatibility.
+    """
     tomllib = _load_tomllib()
     if tomllib is None:
         return None
-    registry = Path.home() / ".claude" / "kg-graphs.toml"
+
+    home = Path.home()
+    candidates = [
+        home / ".grok" / "kg-graphs.toml",
+        home / ".claude" / "kg-graphs.toml",
+    ]
+    registry = next((c for c in candidates if c.exists()), candidates[-1])
+
     try:
         data = tomllib.loads(registry.read_text())
     except (OSError, ValueError):

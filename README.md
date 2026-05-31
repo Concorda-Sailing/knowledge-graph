@@ -15,13 +15,15 @@ All four ship from this repo. Framework code lives in `~/tools/knowledge-graph/{
 
 ---
 
-## For humans: install with Claude Code
+## For humans: install with Claude Code or Grok
 
-Open Claude Code in any directory and ask. Claude reads this README and runs the steps.
+Open your AI coding environment (Claude Code or Grok) in any directory and ask it to install.
 
 > **"Install knowledge-graph for this codebase."**
 
-Claude clones the framework to `~/tools/`, scaffolds your project's data dirs, wires the Claude Code hooks, starts the graphui daemon, and verifies everything. Idempotent — safe to re-run.
+The AI clones the framework to `~/tools/`, scaffolds your project's data dirs, wires hooks (both Claude Code and Grok are supported), starts the graphui daemon, and verifies everything. Idempotent — safe to re-run.
+
+`kg install hooks --for grok` (or `--for both`) writes a native Grok hook file to `~/.grok/hooks/knowledge-graph.json` in addition to (or instead of) the shared `~/.claude/settings.json` block. Grok reads both locations.
 
 Other useful asks (Claude follows the runbook in the next section):
 
@@ -58,7 +60,7 @@ you set the framework up manually (clone-only, no `bootstrap`), run
 
 ---
 
-## For Claude: runbook
+## For Claude / Grok: runbook
 
 This section is the source of truth for what to do when a user asks for knowledge-graph operations. Read carefully before acting. **For the full command tree, see [`docs/CLI.md`](./docs/CLI.md)** — this runbook covers the common workflows.
 

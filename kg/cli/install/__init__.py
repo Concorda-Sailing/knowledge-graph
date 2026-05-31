@@ -57,6 +57,14 @@ def _run_installer(args: argparse.Namespace, extra: list[str]) -> int:
         return _tools_mod.cmd_tools(tools_args)
     if extra and extra[0] == "hooks":
         hooks_parser = argparse.ArgumentParser(prog="kg install hooks")
+        hooks_parser.add_argument(
+            "--for",
+            dest="targets",
+            default="both",
+            choices=["claude", "grok", "both"],
+            help="Which AI(s) to install hooks for (default: both). "
+                 "Grok reads both ~/.claude/settings.json and ~/.grok/hooks/ files.",
+        )
         hooks_parser.add_argument("--project", help="Project data dir (used in hook command paths)")
         hooks_parser.add_argument("--apply", action="store_true")
         hooks_parser.add_argument("--force", action="store_true")
@@ -81,7 +89,7 @@ def _run_installer(args: argparse.Namespace, extra: list[str]) -> int:
             prog="kg install bootstrap",
             description=(
                 "One-shot setup: install tools, scaffold the project's "
-                "knowledge-graph data dir, write Claude Code hooks, register "
+                "knowledge-graph data dir, write hooks (Claude Code + Grok), register "
                 "with the kg orchestrator, install the graphui systemd unit, "
                 "and write the framework's bin dirs into ~/.profile."
             ),
@@ -115,9 +123,9 @@ def _run_installer(args: argparse.Namespace, extra: list[str]) -> int:
             description=(
                 "Inverse of `kg install bootstrap`. Stops + removes the "
                 "graphui systemd unit, strips kg-hook entries from "
-                "~/.claude/settings.json, removes the kg-graphs.toml "
-                "registry, deletes the data dir(s), strips the PATH block "
-                "from the rcfile, and removes the framework dir. Idempotent."
+                "~/.claude/settings.json and ~/.grok/hooks/, removes the "
+                "kg-graphs.toml registry, deletes the data dir(s), strips "
+                "the PATH block from the rcfile, and removes the framework dir. Idempotent."
             ),
         )
         td_parser.add_argument(
@@ -175,13 +183,14 @@ def _print_install_help() -> None:
         "Subcommands:\n"
         "  tools     [--target ... --data ...]              Install/upgrade framework binaries\n"
         "  init      <data-dir>                             Scaffold a fresh project layout\n"
-        "  hooks     [--project <dir>] [--apply] [--force]  Write Claude Code hook block to settings.json\n"
+        "  hooks     [--for claude|grok|both] [--project <dir>] [--apply] [--force]\n"
+        "                                               Write hook blocks (Claude + Grok supported)\n"
         "  systemd   [--project <dir>] [--apply]            Generate + apply graphui systemd unit\n"
         "            [--depgraph-data-dir <p>] [--logigraph-data-dir <p>]\n"
         "  path      [--rcfile ...] [--apply] [--force]     Add framework bin dirs to shell PATH\n"
         "  cascade   <repo> [--depgraph ... --logigraph ...] [--apply] [--force]\n"
         "                                                   Install pre-push hook in a target repo\n"
-        "  bootstrap <data-dir> [--data ...]                One-shot: tools + init + hooks + systemd + path\n"
+        "  bootstrap <data-dir> [--data ...]                One-shot: tools + init + hooks (Claude+Grok) + systemd + path\n"
         "  teardown  [--data-dir <p>] [--keep-data]         Inverse of bootstrap; idempotent\n"
         "            [--keep-framework] [--dry-run]\n"
     )

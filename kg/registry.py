@@ -1,14 +1,17 @@
 """Registry of knowledge-graph repos installed on this machine.
 
-The registry lives at ``~/.claude/kg-graphs.toml`` (overridable via
-``KG_REGISTRY_PATH`` for tests). It is plain TOML, machine-maintained by
-``kg add`` / ``kg remove``. The file header tells a human reader where it
-lives and why; manual edits are tolerated but not the documented path.
+The registry is looked up in this order (first match wins):
+  1. $KG_REGISTRY_PATH (explicit override)
+  2. ~/.grok/kg-graphs.toml   — when ~/.grok/ exists or running under Grok
+  3. ~/.claude/kg-graphs.toml — Claude Code + Grok compatibility fallback
+
+It is plain TOML, machine-maintained by ``kg add`` / ``kg remove``.
+Manual edits are tolerated but `kg` (and `kg project`) are the documented interface.
 
 Format on disk::
 
     # Managed by `kg add` and `kg remove`.
-    # Lives in ~/.claude/ because Claude Code hooks consume it.
+    # Lives in ~/.grok/kg-graphs.toml (or ~/.claude/ for legacy installs).
 
     [[graph]]
     name = "example"
@@ -26,11 +29,65 @@ from pathlib import Path
 from typing import Optional
 
 
-DEFAULT_REGISTRY = Path.home() / ".claude" / "kg-graphs.toml"
+# Preferred registry locations (checked in order).
+_GROK_REGISTRY = Path.home() / ".grok" / "kg-graphs.toml"
+_CLAUDE_REGISTRY = Path.home() / ".claude" / "kg-graphs.toml"
+
+DEFAULT_REGISTRY = _CLAUDE_REGISTRY  # legacy name for tests / external readers
 
 _SENTINEL = object()  # marker for "argument not supplied" in save()
 
-_HEADER = (
+
+def _effective_registry_path() -> Path:
+    """Return the registry file to use on this machine.
+
+    Resolution order:
+    1. $KG_REGISTRY_PATH (explicit override, for tests and advanced use)
+    2. ~/.grok/kg-graphs.toml if the ~/.grok dir exists or GROK_* env vars are set
+    3. ~/.claude/kg-graphs.toml (Claude Code + Grok compatibility layer)
+    4. Fall back to creating the Grok location when neither exists and ~/.grok is present.
+    """
+    override = os.environ.get("KG_REGISTRY_PATH")
+    if override:
+        return Path(override).expanduser()
+
+    # Resolve all candidates from the *current* home so the result honors a
+    # runtime $HOME (tests, and any env that relocates home). The module-level
+    # _GROK_REGISTRY / _CLAUDE_REGISTRY constants remain the import-time export
+    # (DEFAULT_REGISTRY) for external readers.
+    home = Path.home()
+    grok_registry = home / ".grok" / "kg-graphs.toml"
+    claude_registry = home / ".claude" / "kg-graphs.toml"
+    grok_exists = (home / ".grok").exists()
+    is_grok_session = bool(os.environ.get("GROK_SESSION_ID") or os.environ.get("GROK_HOOK_EVENT"))
+
+    if grok_exists or is_grok_session:
+        # Prefer the Grok-native location when the user has a Grok environment,
+        # but don't orphan an existing Claude registry: only switch to Grok if
+        # it already holds the registry, or Claude has none yet.
+        if grok_registry.exists():
+            return grok_registry
+        if not claude_registry.exists():
+            return grok_registry
+
+    # Default / backward-compat: Claude location (Grok also reads ~/.claude/settings.json)
+    return claude_registry
+
+
+def _registry_header() -> str:
+    p = _effective_registry_path()
+    loc = f"~/{p.relative_to(Path.home())}" if p.is_relative_to(Path.home()) else str(p)
+    return (
+        "# Managed by `kg add` and `kg remove`.\n"
+        f"# Lives in {loc}.\n"
+        "# Both Claude Code and Grok read this file (Grok also reads ~/.claude/settings.json hooks).\n"
+        "# Manual edits are allowed but `kg` is the documented interface.\n"
+        "\n"
+    )
+
+
+# Back-compat alias used by older call sites
+_DEFAULT_HEADER = (
     "# Managed by `kg add` and `kg remove`.\n"
     "# Lives in ~/.claude/ because Claude Code hooks consume it.\n"
     "# Manual edits are allowed but `kg` is the documented interface.\n"
@@ -47,11 +104,8 @@ class GraphEntry:
 
 
 def path() -> Path:
-    """Return the registry path, honoring ``KG_REGISTRY_PATH``."""
-    override = os.environ.get("KG_REGISTRY_PATH")
-    if override:
-        return Path(override).expanduser()
-    return DEFAULT_REGISTRY
+    """Return the registry path, honoring ``KG_REGISTRY_PATH`` and preferring Grok location when appropriate."""
+    return _effective_registry_path()
 
 
 def _read_raw() -> dict:
@@ -107,7 +161,7 @@ def save(entries: list[GraphEntry], *, default=_SENTINEL) -> None:
     else:
         default_to_write = default
 
-    body = _HEADER
+    body = _registry_header()
     if default_to_write:
         body += f'default = "{default_to_write}"\n\n'
     for e in entries:

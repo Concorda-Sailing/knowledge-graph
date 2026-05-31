@@ -1,9 +1,11 @@
-"""kg install hooks — write Claude Code hook block to settings.json.
+"""kg install hooks — write hook blocks for Claude Code and/or Grok.
 
-Mirrors install.sh:cmd_hooks() and generate_hooks_json(). The hook
-commands all point at ``bin/kg hook <phase>`` so the kg orchestrator
-handles per-graph dispatch — settings.json carries no project-specific
-paths.
+The hook commands all point at ``bin/kg hook <phase>`` so the kg orchestrator
+handles per-graph dispatch. No project-specific paths are embedded.
+
+Grok natively reads ~/.claude/settings.json (for compatibility) **and**
+~/.grok/hooks/*.json. We can therefore provide first-class Grok support by
+writing a native hook file when requested.
 """
 from __future__ import annotations
 
@@ -18,6 +20,78 @@ from kg.hook import HOOK_PHASES
 from ._shared import backup_file, log, ok, warn
 
 
+# ---------------------------------------------------------------------------
+# Hook block generators (shared shape, different targets)
+# ---------------------------------------------------------------------------
+
+
+def _hook_block(tool_root: Path) -> dict:
+    """Return the hooks dict used for both Claude settings.json and Grok native hooks.
+
+    The structure is the Claude Code shape. Grok accepts it (with tool name
+    aliasing for Bash/Edit/Read/etc.) and also understands the
+    hookSpecificOutput envelope that kg hook emits for context injection.
+    """
+    kg = str(tool_root / "bin" / "kg")
+    return {
+        "PreToolUse": [
+            {
+                "matcher": "Edit|Write|MultiEdit",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": f"{kg} hook pre-edit",
+                        "timeout": 10,
+                    }
+                ],
+            },
+            {
+                "matcher": "Bash|mcp__.*",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": f"{kg} hook pre-irreversible",
+                        "timeout": 5,
+                    }
+                ],
+            },
+        ],
+        "Stop": [
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": f"{kg} hook post-edit",
+                        "timeout": 120,
+                    }
+                ]
+            }
+        ],
+        "SessionStart": [
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": f"{kg} hook session-start",
+                        "timeout": 30,
+                    }
+                ]
+            }
+        ],
+        "SessionEnd": [
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": f"{kg} hook session-end",
+                        "timeout": 30,
+                    }
+                ]
+            }
+        ],
+    }
+
+
 # Local lookup so the f-strings below read the phase names from the
 # single-source HOOK_PHASES tuple instead of repeating string literals.
 # If a phase is renamed in kg/hook.py, this dict's KeyError surfaces the
@@ -29,82 +103,10 @@ _SETTINGS_REL = Path(".claude") / "settings.json"
 _BUNDLE_DIR = "knowledge-graph"
 
 
-def _hook_block(tool_root: Path) -> dict:
-    """Return the hooks dict matching install.sh:generate_hooks_json() exactly.
-
-    Structure::
-
-        {
-          "PreToolUse": [
-            {"matcher": "Edit|Write|MultiEdit", "hooks": [{"type": "command",
-              "command": "<kg> hook pre-edit", "timeout": 10}]},
-            {"matcher": "Bash|mcp__.*", "hooks": [{"type": "command",
-              "command": "<kg> hook pre-irreversible", "timeout": 5}]},
-          ],
-          "Stop": [{"hooks": [{"type": "command",
-              "command": "<kg> hook post-edit", "timeout": 120}]}],
-          "SessionStart": [...],
-          "SessionEnd": [...],
-        }
-    """
-    kg = str(tool_root / "bin" / "kg")
-    return {
-        "PreToolUse": [
-            {
-                "matcher": "Edit|Write|MultiEdit",
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": f"{kg} hook {_PHASE['pre-edit']}",
-                        "timeout": 10,
-                    }
-                ],
-            },
-            {
-                "matcher": "Bash|mcp__.*",
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": f"{kg} hook {_PHASE['pre-irreversible']}",
-                        "timeout": 5,
-                    }
-                ],
-            },
-        ],
-        "Stop": [
-            {
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": f"{kg} hook {_PHASE['post-edit']}",
-                        "timeout": 120,
-                    }
-                ]
-            }
-        ],
-        "SessionStart": [
-            {
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": f"{kg} hook {_PHASE['session-start']}",
-                        "timeout": 30,
-                    }
-                ]
-            }
-        ],
-        "SessionEnd": [
-            {
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": f"{kg} hook {_PHASE['session-end']}",
-                        "timeout": 30,
-                    }
-                ]
-            }
-        ],
-    }
+# The canonical _hook_block() implementation lives above (lines ~20-92).
+# It is used for both Claude settings.json and native Grok ~/.grok/hooks/ files.
+# This stub is intentionally left as a no-op marker to avoid accidental
+# re-introduction of the old duplicated definition during edits.
 
 
 def _flatten(h: dict | None) -> set[tuple[str, str | None, str]]:
@@ -125,98 +127,154 @@ def _flatten(h: dict | None) -> set[tuple[str, str | None, str]]:
     return out
 
 
-def cmd_hooks(args: argparse.Namespace) -> int:
-    """Port of install.sh:cmd_hooks().
+def _resolve_targets(args: argparse.Namespace) -> list[str]:
+    """Return list of targets from --for value."""
+    t = (getattr(args, "targets", "both") or "both").lower()
+    if t == "both":
+        return ["claude", "grok"]
+    if t in ("claude", "grok"):
+        return [t]
+    return ["claude", "grok"]
 
-    Generates the Claude Code hook block and, with --apply, merges it into
-    ~/.claude/settings.json.  Backs up the file before any write.  Refuses
-    to clobber hook entries that install.sh could not reproduce (even with
-    --force).
-    """
-    # tool_root is the repository root (parents[3] from kg/cli/install/hooks.py)
-    tool_root = Path(__file__).resolve().parents[3]
+
+def _write_grok_native_hooks(tool_root: Path, apply: bool, force: bool) -> int:
+    """Write (or dry-run) a native Grok hook file at ~/.grok/hooks/knowledge-graph.json."""
     block = _hook_block(tool_root)
+    hooks_dir = Path(os.environ.get("HOME", str(Path.home()))).expanduser() / ".grok" / "hooks"
+    hooks_file = hooks_dir / "knowledge-graph.json"
 
-    if not args.apply:
-        # Dry-run: print valid JSON so the user can copy or pipe it.
+    if not apply:
         print(json.dumps({"hooks": block}, indent=2))
+        # Annotation goes to stderr so stdout stays parseable JSON.
+        print(f"# Would write the above to {hooks_file}", file=sys.stderr)
         return 0
 
-    # --apply: idempotent merge into ~/.claude/settings.json
-    settings_path = (
-        Path(os.environ.get("HOME", str(Path.home()))).expanduser()
-        / ".claude"
-        / "settings.json"
-    )
-    settings_path.parent.mkdir(parents=True, exist_ok=True)
+    hooks_dir.mkdir(parents=True, exist_ok=True)
 
-    existing_text = settings_path.read_text() if settings_path.exists() else ""
+    existing_text = hooks_file.read_text() if hooks_file.exists() else ""
     if existing_text.strip():
         try:
-            settings: dict = json.loads(existing_text)
+            existing: dict = json.loads(existing_text)
         except json.JSONDecodeError:
-            backup_file(settings_path)
-            settings = {}
+            backup_file(hooks_file)
+            existing = {}
     else:
-        settings = {}
+        existing = {}
 
-    existing_hooks: dict | None = settings.get("hooks")
+    existing_block = existing.get("hooks")
 
-    # Fast path: already identical — no-op success.
-    if existing_hooks == block:
-        ok(f"hooks already match in {settings_path} — no-op")
+    if existing_block == block:
+        ok(f"Grok hooks already match in {hooks_file} — no-op")
         return 0
 
-    new_flat = _flatten(block)
-    existing_flat = _flatten(existing_hooks)
-    extras = sorted(existing_flat - new_flat)
-
-    if extras:
+    # For the native Grok file we are more lenient than Claude settings.json.
+    # We still warn on --force, but we allow overwrite of our own keys.
+    if existing_block is not None and not force:
         print(
-            "⚠ refusing to write: settings.json has hook entries beyond what "
-            "install.sh would generate.",
-            file=sys.stderr,
+            f"⚠ {hooks_file} already has a 'hooks' section.", file=sys.stderr
         )
         print(
-            "  --force will NOT bypass this check; these entries can't be "
-            "reproduced from install.sh args.",
-            file=sys.stderr,
-        )
-        print("  Entries that would be lost:", file=sys.stderr)
-        for top, matcher, cmd in extras:
-            loc = top + (f" / {matcher}" if matcher else "")
-            print(f"    [{loc}] {cmd}", file=sys.stderr)
-        print("", file=sys.stderr)
-        print(
-            "  To proceed: back up settings.json, remove the conflicting entries "
-            "(or the entire 'hooks' key),",
-            file=sys.stderr,
-        )
-        print(
-            "  and re-run. Run without --apply to see the snippet install.sh "
-            "would write.",
+            "  Re-run with '--apply --force' to overwrite, or edit manually.",
             file=sys.stderr,
         )
         return 2
 
-    if existing_hooks is not None and not args.force:
-        print(
-            "⚠ settings.json has a different 'hooks' section.", file=sys.stderr
-        )
-        print(
-            f"  Existing keys: {list(existing_hooks.keys())}", file=sys.stderr
-        )
-        print(
-            "  Re-run with '--apply --force' to overwrite, or merge manually",
-            file=sys.stderr,
-        )
-        print(
-            "  (run without --apply to see the snippet).", file=sys.stderr
-        )
-        return 2
-
-    backup_file(settings_path)
-    settings["hooks"] = block
-    settings_path.write_text(json.dumps(settings, indent=2) + "\n")
-    ok(f"wrote hooks into {settings_path}")
+    backup_file(hooks_file)
+    existing["hooks"] = block
+    hooks_file.write_text(json.dumps(existing, indent=2) + "\n")
+    ok(f"wrote Grok native hooks into {hooks_file}")
     return 0
+
+
+def cmd_hooks(args: argparse.Namespace) -> int:
+    """Install knowledge-graph hooks for Claude Code and/or Grok.
+
+    --for both (default)  → writes to ~/.claude/settings.json (read by both)
+                            + writes ~/.grok/hooks/knowledge-graph.json (Grok native)
+    --for claude          → only the Claude settings.json path
+    --for grok            → only the native Grok hooks file
+    """
+    tool_root = Path(__file__).resolve().parents[3]
+    targets = _resolve_targets(args)
+
+    # Dry-run path: show the block once
+    if not args.apply:
+        block = _hook_block(tool_root)
+        print(json.dumps({"hooks": block}, indent=2))
+        # Annotation goes to stderr so stdout stays parseable JSON (callers pipe it).
+        print(f"# Targets that would be written: {', '.join(targets)}", file=sys.stderr)
+        return 0
+
+    overall_rc = 0
+
+    if "claude" in targets:
+        # --- Claude / shared settings.json path (Grok also reads this) ---
+        settings_path = (
+            Path(os.environ.get("HOME", str(Path.home()))).expanduser()
+            / ".claude"
+            / "settings.json"
+        )
+        settings_path.parent.mkdir(parents=True, exist_ok=True)
+
+        block = _hook_block(tool_root)
+
+        existing_text = settings_path.read_text() if settings_path.exists() else ""
+        if existing_text.strip():
+            try:
+                settings: dict = json.loads(existing_text)
+            except json.JSONDecodeError:
+                backup_file(settings_path)
+                settings = {}
+        else:
+            settings = {}
+
+        existing_hooks: dict | None = settings.get("hooks")
+
+        if existing_hooks == block:
+            ok(f"hooks already match in {settings_path} — no-op")
+        else:
+            new_flat = _flatten(block)
+            existing_flat = _flatten(existing_hooks)
+            extras = sorted(existing_flat - new_flat)
+
+            if extras:
+                # Extras are hook entries kg install can't reproduce (e.g. a
+                # user's custom hook or an arbitrary old kg path). We never
+                # clobber them — not even with --force, since we can't restore
+                # what we can't reproduce. The caller must remove them manually.
+                print(
+                    "⚠ refusing to write: settings.json has hook entries beyond what "
+                    "kg install hooks would generate.",
+                    file=sys.stderr,
+                )
+                if args.force:
+                    print(
+                        "  --force does not clobber these (kg can't reproduce them). "
+                        "Remove the extra entries manually, then re-run.",
+                        file=sys.stderr,
+                    )
+                else:
+                    print(
+                        "  Remove the extra entries manually, then re-run.",
+                        file=sys.stderr,
+                    )
+                overall_rc = 2
+            elif existing_hooks is not None and not args.force:
+                print(
+                    "⚠ settings.json has a different 'hooks' section. "
+                    "Re-run with '--apply --force' to overwrite.",
+                    file=sys.stderr,
+                )
+                overall_rc = 2
+            else:
+                backup_file(settings_path)
+                settings["hooks"] = block
+                settings_path.write_text(json.dumps(settings, indent=2) + "\n")
+                ok(f"wrote hooks into {settings_path}")
+
+    if "grok" in targets:
+        rc = _write_grok_native_hooks(tool_root, apply=True, force=args.force)
+        if rc != 0:
+            overall_rc = rc
+
+    return overall_rc

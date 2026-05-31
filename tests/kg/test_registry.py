@@ -99,10 +99,35 @@ def test_tilde_in_stored_path_expands_on_load(
     assert entries[0].path == fake_home_graph.resolve()
 
 
-def test_default_registry_path_is_in_claude_dir() -> None:
-    """Without KG_REGISTRY_PATH, default is ~/.claude/kg-graphs.toml."""
-    os.environ.pop("KG_REGISTRY_PATH", None)
-    assert registry.path() == Path.home() / ".claude" / "kg-graphs.toml"
+def test_default_registry_path_prefers_grok_when_present(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """registry.path() resolution when KG_REGISTRY_PATH is unset:
+
+    a Grok registry wins when present; an existing Claude registry is not
+    orphaned merely because ~/.grok exists; otherwise Claude is the default.
+    Isolated via a fake $HOME so it doesn't depend on the dev machine's dirs.
+    """
+    monkeypatch.delenv("KG_REGISTRY_PATH", raising=False)
+    monkeypatch.delenv("GROK_SESSION_ID", raising=False)
+    monkeypatch.delenv("GROK_HOOK_EVENT", raising=False)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    grok_reg = tmp_path / ".grok" / "kg-graphs.toml"
+    claude_reg = tmp_path / ".claude" / "kg-graphs.toml"
+
+    # No ~/.grok dir and nothing populated → Claude default.
+    assert registry.path() == claude_reg
+
+    # ~/.grok exists but only the Claude registry is populated → keep Claude.
+    (tmp_path / ".grok").mkdir()
+    claude_reg.parent.mkdir(parents=True, exist_ok=True)
+    claude_reg.write_text("")
+    assert registry.path() == claude_reg
+
+    # A Grok registry exists → it wins.
+    grok_reg.parent.mkdir(parents=True, exist_ok=True)
+    grok_reg.write_text("")
+    assert registry.path() == grok_reg
 
 
 def test_load_default_returns_none_when_unset(tmp_registry: Path) -> None:

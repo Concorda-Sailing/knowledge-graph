@@ -52,9 +52,9 @@ def cmd_bootstrap(args: argparse.Namespace) -> int:
         log(f"using existing project data at {bundle}")
         print()
 
-    # 3. hooks — bootstrap implies --force (overwrite any existing hooks block).
-    log(f"applying Claude Code hooks → ~/.claude/settings.json")
-    hooks_args = argparse.Namespace(project=str(bundle), apply=True, force=True)
+    # 3. hooks — bootstrap implies --force. Install for both Claude and Grok.
+    log("applying hooks for Claude Code + Grok (both read ~/.claude/settings.json; Grok also reads ~/.grok/hooks/)")
+    hooks_args = argparse.Namespace(targets="both", project=str(bundle), apply=True, force=True)
     rc = cmd_hooks(hooks_args)
     if rc != 0:
         return rc

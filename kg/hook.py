@@ -1,9 +1,15 @@
 """Hook dispatcher: ``kg hook <phase>``.
 
-Called by Claude Code settings.json. Reads the machine-local registry
-(``~/.claude/kg-graphs.toml``), routes the hook to each registered graph
-as appropriate for the phase, and emits a single combined envelope on
-stdout.
+Invoked by Claude Code (via ~/.claude/settings.json) **and** Grok
+(via ~/.claude/settings.json or ~/.grok/hooks/*.json).
+
+Reads the machine-local registry (~/.grok/kg-graphs.toml or ~/.claude/),
+routes the hook to each registered graph as appropriate for the phase,
+and emits a combined envelope on stdout.
+
+The emitted shape uses the Claude/Grok-compatible
+hookSpecificOutput + additionalContext convention for context injection
+on PreToolUse / Stop.
 
 Phases:
 
@@ -33,8 +39,8 @@ TOOL_ROOT = Path(__file__).resolve().parents[1]
 
 # Single source of truth for hook phase names. Consumed by:
 #   * ``kg.cli.orchestrator`` — argparse ``choices`` for ``kg hook <phase>``.
-#   * ``kg.cli.install.hooks`` — commands emitted into Claude Code's
-#     ``settings.json`` hook block.
+#   * ``kg.cli.install.hooks`` — commands emitted into Claude settings.json
+#     and/or native Grok ~/.grok/hooks/ files.
 #   * ``run()`` below — dispatch table.
 # Adding a phase means: (1) add the name here, (2) add the handler here,
 # (3) wire it into the installer's hook block. Tests in
@@ -64,7 +70,11 @@ def run(phase: str) -> int:
 
 
 def _emit(event_name: str, body: str) -> None:
-    """Print one Claude Code hook envelope to stdout."""
+    """Print a hook envelope understood by both Claude Code and Grok.
+
+    Both agents support the hookSpecificOutput + additionalContext shape
+    for injecting text into the model's context (especially on PreToolUse).
+    """
     payload = {
         "hookSpecificOutput": {
             "hookEventName": event_name,
@@ -455,7 +465,7 @@ def _run_phase_script(
 
 
 def _post_edit() -> int:
-    # Claude Code sends a Stop-hook payload (session_id, transcript_path, etc.)
+    # Claude Code / Grok send a Stop-hook payload (session_id, transcript_path, etc.)
     # on stdin. Forward it verbatim to each subsystem's regen/telemetry script
     # so they can find the session transcript.
     stdin_payload = sys.stdin.read()
