@@ -46,6 +46,11 @@
       "type": ["integer", "null"],
       "description": "Computed at regen time: count of claims_code entries. Reported by bin/logigraph fan-out for refactor signals."
     },
+    "enforced_in_processes": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^process::[a-z_]+::[a-z0-9_]+$" },
+      "description": "Derived at regen time (NOT authored): process ids whose enforces_rules (process-level or per-step) name this rule. Reverse of process.enforces_rules. Omitted when empty."
+    },
     "confidence": {
       "enum": ["high", "medium", "low"],
       "description": "How confident the author is in the rule's accuracy. Low = forward-looking or speculative."
