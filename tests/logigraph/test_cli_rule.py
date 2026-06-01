@@ -30,7 +30,7 @@ def _write_rule_node(ctx: Context, node_id: str, node: dict) -> Path:
     rules_dir = ctx.NODES / "rules"
     rules_dir.mkdir(parents=True, exist_ok=True)
     parts = node_id.split("::")
-    filename = f"{parts[1]}__{parts[2]}.json"
+    filename = f"{parts[0]}__{parts[1]}__{parts[2]}.json"
     p = rules_dir / filename
     p.write_text(json.dumps(node) + "\n")
     return p
@@ -51,7 +51,7 @@ def _minimal_rule_node(rule_id: str, **overrides) -> dict:
         "source": "",
         "definition_status": "stub",
         "structural_hash": "deadbeef",
-        "dossier": f"dossiers/rules/{parts[1]}__{parts[2]}.md",
+        "dossier": f"dossiers/rules/{parts[0]}__{parts[1]}__{parts[2]}.md",
     }
     node.update(overrides)
     return node
@@ -130,7 +130,7 @@ class TestCmdRuleStub:
         )
         rc = cmd_rule_stub(args, ctx)
         assert rc == 0
-        node_path = ctx.NODES / "rules" / "test__new_rule.json"
+        node_path = ctx.NODES / "rules" / "rule__test__new_rule.json"
         assert node_path.exists()
         node = json.loads(node_path.read_text())
         assert node["id"] == "rule::test::new_rule"
@@ -175,7 +175,7 @@ class TestCmdRuleStub:
         args.force = True
         rc = cmd_rule_stub(args, ctx)
         assert rc == 0
-        node_path = ctx.NODES / "rules" / "test__overwrite_me.json"
+        node_path = ctx.NODES / "rules" / "rule__test__overwrite_me.json"
         node = json.loads(node_path.read_text())
         assert node["title"] == "Title B"
 
@@ -253,7 +253,7 @@ class TestCmdRuleFinalize:
         (ctx.LOGIGRAPH / "dossiers" / "rules").mkdir(parents=True, exist_ok=True)
         rc = cmd_rule_finalize(args, ctx)
         assert rc == 0
-        dossier_path = ctx.LOGIGRAPH / "dossiers" / "rules" / "test__finalize_me.md"
+        dossier_path = ctx.LOGIGRAPH / "dossiers" / "rules" / "rule__test__finalize_me.md"
         assert dossier_path.exists()
         content = dossier_path.read_text()
         assert "node_id: rule::test::finalize_me" in content
@@ -269,7 +269,7 @@ class TestCmdRuleFinalize:
         args = argparse.Namespace(id=rule_id, body_file=str(body_file))
         (ctx.LOGIGRAPH / "dossiers" / "rules").mkdir(parents=True, exist_ok=True)
         cmd_rule_finalize(args, ctx)
-        node_path = ctx.NODES / "rules" / "test__bump_node.json"
+        node_path = ctx.NODES / "rules" / "rule__test__bump_node.json"
         node = json.loads(node_path.read_text())
         assert node["definition_status"] == "llm_drafted"
 
@@ -304,7 +304,7 @@ class TestCmdRuleBump:
         args = argparse.Namespace(id=rule_id, status="human_reviewed", actor="tester")
         rc = cmd_rule_bump(args, ctx)
         assert rc == 0
-        node_path = ctx.NODES / "rules" / "test__to_bump.json"
+        node_path = ctx.NODES / "rules" / "rule__test__to_bump.json"
         node = json.loads(node_path.read_text())
         assert node["definition_status"] == "human_reviewed"
 
@@ -318,7 +318,7 @@ class TestCmdRuleBump:
         _write_rule_node(ctx, rule_id, _minimal_rule_node(rule_id, definition_status="llm_drafted"))
         dossier_dir = ctx.LOGIGRAPH / "dossiers" / "rules"
         dossier_dir.mkdir(parents=True, exist_ok=True)
-        dossier_path = dossier_dir / "test__dossier_bump.md"
+        dossier_path = dossier_dir / "rule__test__dossier_bump.md"
         dossier_path.write_text(
             "---\nnode_id: rule::test::dossier_bump\n"
             "definition_status: llm_drafted\n"

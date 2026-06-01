@@ -17,6 +17,7 @@ from ._shared import (
     git_commit_if_changed,
     default_actor,
     rewrite_dossier_frontmatter,
+    analysis_stamp,
 )
 
 
@@ -26,12 +27,12 @@ from ._shared import (
 
 def _rule_dossier_path(ctx: Context, rule_id: str) -> Path:
     parts = rule_id.split("::", 2)
-    return ctx.LOGIGRAPH / "dossiers" / "rules" / f"{parts[1]}__{parts[2]}.md"
+    return ctx.LOGIGRAPH / "dossiers" / "rules" / f"{parts[0]}__{parts[1]}__{parts[2]}.md"
 
 
 def _rule_dossier_rel(rule_id: str) -> str:
     parts = rule_id.split("::", 2)
-    return f"dossiers/rules/{parts[1]}__{parts[2]}.md"
+    return f"dossiers/rules/{parts[0]}__{parts[1]}__{parts[2]}.md"
 
 
 # ---------------------------------------------------------------------------
@@ -225,14 +226,25 @@ def cmd_rule_bump(args: argparse.Namespace, ctx: Context) -> int:
     node = json.loads(node_path.read_text())
     new_status = args.status
     node["definition_status"] = new_status
+    analyzed_by = getattr(args, "analyzed_by", None)
+    analyzed_at = None
+    if analyzed_by:
+        analyzed_at = getattr(args, "analyzed_at", None) or analysis_stamp()
+        node["analyzed_by"] = analyzed_by
+        node["analyzed_at"] = analyzed_at
     node_path.write_text(json.dumps(node, indent=2) + "\n")
     print(f"bumped {node_path.relative_to(ctx.LOGIGRAPH)} → definition_status: {new_status}")
+    if analyzed_by:
+        print(f"  analyzed_by: {analyzed_by} @ {analyzed_at}")
 
     dossier_path = _rule_dossier_path(ctx, rule_id)
     actor = args.actor or default_actor()
     paths = [node_path]
     if dossier_path.exists():
-        rewrite_dossier_frontmatter(dossier_path, node.get("structural_hash", ""), new_status, actor)
+        rewrite_dossier_frontmatter(
+            dossier_path, node.get("structural_hash", ""), new_status, actor,
+            analyzed_by=analyzed_by, analyzed_at=analyzed_at,
+        )
         print(f"updated {dossier_path.relative_to(ctx.LOGIGRAPH)} frontmatter")
         paths.append(dossier_path)
 
@@ -332,4 +344,8 @@ def register(sub: argparse._SubParsersAction) -> None:  # type: ignore[type-arg]
     p_rb.add_argument("id")
     p_rb.add_argument("--status", default="human_reviewed", choices=["stub", "llm_drafted", "human_reviewed"])
     p_rb.add_argument("--actor", default=None, help="Reviewer (default: git config user.name)")
+    p_rb.add_argument("--analyzed-by", dest="analyzed_by", default=None,
+                      help="Who/what performed the analysis (e.g. the LLM model id); recorded distinctly from the human reviewer")
+    p_rb.add_argument("--analyzed-at", dest="analyzed_at", default=None,
+                      help="ISO timestamp of the analysis (default: now)")
     p_rb.set_defaults(func=cmd_rule_bump)

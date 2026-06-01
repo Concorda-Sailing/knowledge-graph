@@ -65,6 +65,14 @@
       "type": "string",
       "description": "Path to the plain-language dossier markdown (relative to logigraph/)."
     },
+    "analyzed_by": {
+      "type": "string",
+      "description": "Who/what performed the analysis behind this node (e.g. the LLM model id). Recorded distinctly from the human reviewer (flagged_by / dossier reviewed_by)."
+    },
+    "analyzed_at": {
+      "type": "string",
+      "description": "ISO-8601 timestamp of when the analysis ran."
+    },
     "warnings": {
       "type": "array",
       "items": { "$ref": "#/$defs/warning" }

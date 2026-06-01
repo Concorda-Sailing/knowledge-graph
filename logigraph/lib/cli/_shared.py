@@ -157,13 +157,19 @@ def find_rules_for_target(ctx: Context, target: str) -> list[str]:
 # ---------------------------------------------------------------------------
 
 def _rule_node_path(ctx: Context, rule_id: str) -> Path:
-    """rule::category::short_name → nodes/rules/category__short_name.json"""
+    """rule::category::short_name → nodes/rules/rule__category__short_name.json
+
+    The filename mirrors the full id with '::' → '__' (keeping the leading
+    'rule__' segment), matching _domain_node_path and the documented
+    convention. Dropping the prefix here desynced the path from the actual
+    on-disk file and from the domain helpers.
+    """
     if not rule_id.startswith("rule::"):
         raise ValueError(f"not a rule id: {rule_id}")
     parts = rule_id.split("::", 2)
     if len(parts) != 3:
         raise ValueError(f"malformed rule id (expected 3 segments): {rule_id}")
-    return ctx.NODES / "rules" / f"{parts[1]}__{parts[2]}.json"
+    return ctx.NODES / "rules" / f"{parts[0]}__{parts[1]}__{parts[2]}.json"
 
 
 def _domain_node_path(ctx: Context, domain_id: str) -> Path:
@@ -221,11 +227,19 @@ _load_telemetry_events = load_telemetry_events  # backward-compat alias (undersc
 # Dossier frontmatter rewrite (used by rule-bump, domain-bump, process-bump)
 # ---------------------------------------------------------------------------
 
+def analysis_stamp() -> str:
+    """ISO-8601 timestamp (to the second) for recording when an analysis ran."""
+    import datetime as _dt
+    return _dt.datetime.now().isoformat(timespec="seconds")
+
+
 def rewrite_dossier_frontmatter(
     dossier_path: Path,
     structural_hash: str,
     new_status: str,
     actor: str | None,
+    analyzed_by: str | None = None,
+    analyzed_at: str | None = None,
 ) -> None:
     """Rewrite a dossier's frontmatter for a bump action.
 
@@ -233,17 +247,23 @@ def rewrite_dossier_frontmatter(
     - When new_status == 'human_reviewed': sets last_reviewed +
       last_reviewed_against_hash + reviewed_by + reviewed_at.
     - When new_status != 'human_reviewed': drops those fields if present.
+    - When analyzed_by is provided: records analyzed_by + analyzed_at to
+      attribute the analysis (e.g. the LLM that drafted/verified the item),
+      kept distinct from reviewed_by (the human sign-off). These persist
+      across status changes.
     - Preserves every other frontmatter field (notably authored_by).
     """
-    import datetime as _dt
     text = dossier_path.read_text()
     if not text.startswith("---"):
         return
     end = text.index("\n---\n", 4)
     fm_block = text[4:end]
     body = text[end + 5:]
-    today = _dt.date.today().isoformat()
+    today = analysis_stamp()[:10]
     reviewed = (new_status == "human_reviewed")
+    record_analysis = analyzed_by is not None
+    if record_analysis and analyzed_at is None:
+        analyzed_at = analysis_stamp()
     handled: set[str] = set()
     out: list[str] = []
     for line in fm_block.splitlines():
@@ -268,6 +288,18 @@ def rewrite_dossier_frontmatter(
             if reviewed:
                 out.append(f"reviewed_at: {today}")
                 handled.add("reviewed_at")
+        elif s.startswith("analyzed_by:"):
+            if record_analysis:
+                out.append(f"analyzed_by: {analyzed_by}")
+                handled.add("analyzed_by")
+            else:
+                out.append(line)  # preserve an existing stamp
+        elif s.startswith("analyzed_at:"):
+            if record_analysis:
+                out.append(f"analyzed_at: {analyzed_at}")
+                handled.add("analyzed_at")
+            else:
+                out.append(line)
         else:
             out.append(line)
     if "definition_status" not in handled:
@@ -281,4 +313,9 @@ def rewrite_dossier_frontmatter(
             out.append(f"reviewed_by: {actor}")
         if "reviewed_at" not in handled:
             out.append(f"reviewed_at: {today}")
+    if record_analysis:
+        if "analyzed_by" not in handled:
+            out.append(f"analyzed_by: {analyzed_by}")
+        if "analyzed_at" not in handled:
+            out.append(f"analyzed_at: {analyzed_at}")
     dossier_path.write_text("---\n" + "\n".join(out).strip("\n") + "\n---\n" + body)

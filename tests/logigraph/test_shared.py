@@ -363,7 +363,7 @@ def test_resolve_node_path_rule_id_returns_correct_path(data_dir: Path) -> None:
 
     result = resolve_node_path(ctx, rule_id)
 
-    expected = ctx.NODES / "rules" / "auth__require_email_verified.json"
+    expected = ctx.NODES / "rules" / "rule__auth__require_email_verified.json"
     assert result == expected
 
 

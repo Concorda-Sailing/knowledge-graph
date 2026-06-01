@@ -26,13 +26,13 @@ def _make_fixture(tmp_path: Path) -> Path:
         "references_domain": [],
         "fan_out": 0,
         "definition_status": "human_reviewed",
-        "dossier": "dossiers/rules/test__sample.md",
+        "dossier": "dossiers/rules/rule__test__sample.md",
         "structural_hash": "deadbeef",
     }
-    (nodes / "test__sample.json").write_text(json.dumps(rule, indent=2) + "\n")
+    (nodes / "rule__test__sample.json").write_text(json.dumps(rule, indent=2) + "\n")
     dossier = tmp_path / "dossiers" / "rules"
     dossier.mkdir(parents=True)
-    (dossier / "test__sample.md").write_text(
+    (dossier / "rule__test__sample.md").write_text(
         "---\nnode_id: rule::test::sample\nnode_kind: rule\ndefinition_status: human_reviewed\n---\n\n## The rule\n\nSample body.\n"
     )
     (tmp_path / "nodes" / "_index").mkdir()
@@ -66,7 +66,7 @@ def test_flag_sets_node_fields_and_commits(tmp_path: Path):
     r = _run(["flag", "rule::test::sample", "--reason", "perf issue", "--actor", "alice"], data)
     assert r.returncode == 0, r.stderr
 
-    node = json.loads((data / "nodes/rules/test__sample.json").read_text())
+    node = json.loads((data / "nodes/rules/rule__test__sample.json").read_text())
     assert node["flagged"] is True
     assert node["flagged_by"] == "alice"
     assert node["flagged_at"]
@@ -85,7 +85,7 @@ def test_unflag_clears_node_fields_and_commits(tmp_path: Path):
     r = _run(["unflag", "rule::test::sample", "--actor", "bob"], data)
     assert r.returncode == 0, r.stderr
 
-    node = json.loads((data / "nodes/rules/test__sample.json").read_text())
+    node = json.loads((data / "nodes/rules/rule__test__sample.json").read_text())
     assert "flagged" not in node or node["flagged"] is False
     assert "flagged_by" not in node
     assert "flagged_at" not in node
@@ -123,14 +123,14 @@ def test_context_emits_flagged_marker_for_flagged_rule(tmp_path):
     data = _make_fixture(tmp_path)
     # Build a rule that claims a fake depgraph id so find_rules_for_target matches.
     nodes = data / "nodes" / "rules"
-    rule = json.loads((nodes / "test__sample.json").read_text())
+    rule = json.loads((nodes / "rule__test__sample.json").read_text())
     rule["claims_code"] = [{
         "depgraph_id": "test-api::models/foo.py::Foo",
         "role": "enforces",
         "where": "foo.py",
         "confidence": "high",
     }]
-    (nodes / "test__sample.json").write_text(json.dumps(rule, indent=2) + "\n")
+    (nodes / "rule__test__sample.json").write_text(json.dumps(rule, indent=2) + "\n")
     # Build the rules-index so find_rules_for_target works.
     (data / "nodes" / "_index" / "by_code.json").write_text(json.dumps({
         "schema_version": 1,

@@ -28,6 +28,16 @@ def git_commit_if_changed(
     """Stage `paths` in `repo_dir`, commit with `message`. Returns True if
     anything was actually committed (i.e. the staged diff was non-empty).
     """
+    # Tolerate a data dir that isn't under git: the node/dossier write has
+    # already happened, so a missing repo must degrade gracefully rather than
+    # crash the bump command with git's exit 128.
+    inside = subprocess.run(
+        ["git", "-C", str(repo_dir), "rev-parse", "--is-inside-work-tree"],
+        capture_output=True,
+    )
+    if inside.returncode != 0:
+        print(f"note: {repo_dir} is not a git repository; skipping auto-commit")
+        return False
     paths_str = [str(p) for p in paths]
     if paths_str:
         subprocess.run(
