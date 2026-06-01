@@ -27,6 +27,7 @@ from ._shared import (
     git_commit_if_changed,
     default_actor,
     rewrite_dossier_frontmatter,
+    analysis_stamp,
 )
 from depgraph.lib.edges import REVERSE_INDEX_FILENAME
 from logigraph.plugins import build_config_for_repos, get_logigraph_cues
@@ -800,14 +801,25 @@ def cmd_process_bump(args: argparse.Namespace, ctx: Context) -> int:
     node = json.loads(node_path.read_text())
     new_status = args.status
     node["definition_status"] = new_status
+    analyzed_by = getattr(args, "analyzed_by", None)
+    analyzed_at = None
+    if analyzed_by:
+        analyzed_at = getattr(args, "analyzed_at", None) or analysis_stamp()
+        node["analyzed_by"] = analyzed_by
+        node["analyzed_at"] = analyzed_at
     node_path.write_text(json.dumps(node, indent=2) + "\n")
     print(f"bumped {node_path.relative_to(ctx.LOGIGRAPH)} → definition_status: {new_status}")
+    if analyzed_by:
+        print(f"  analyzed_by: {analyzed_by} @ {analyzed_at}")
 
     dossier_path = _process_dossier_path(ctx, process_id)
     actor = args.actor or default_actor()
     paths = [node_path]
     if dossier_path.exists():
-        rewrite_dossier_frontmatter(dossier_path, node.get("structural_hash", ""), new_status, actor)
+        rewrite_dossier_frontmatter(
+            dossier_path, node.get("structural_hash", ""), new_status, actor,
+            analyzed_by=analyzed_by, analyzed_at=analyzed_at,
+        )
         print(f"updated {dossier_path.relative_to(ctx.LOGIGRAPH)} frontmatter")
         paths.append(dossier_path)
 
@@ -855,4 +867,8 @@ def register(sub: argparse._SubParsersAction) -> None:  # type: ignore[type-arg]
     p_pb.add_argument("id")
     p_pb.add_argument("--status", default="human_reviewed", choices=["stub", "llm_drafted", "human_reviewed"])
     p_pb.add_argument("--actor", default=None, help="Reviewer (default: git config user.name)")
+    p_pb.add_argument("--analyzed-by", dest="analyzed_by", default=None,
+                      help="Who/what performed the analysis (e.g. the LLM model id); recorded distinctly from the human reviewer")
+    p_pb.add_argument("--analyzed-at", dest="analyzed_at", default=None,
+                      help="ISO timestamp of the analysis (default: now)")
     p_pb.set_defaults(func=cmd_process_bump)
