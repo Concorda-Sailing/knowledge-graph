@@ -23,13 +23,13 @@ def _make_drafted_fixture(tmp_path: Path) -> Path:
         "references_domain": [],
         "fan_out": 0,
         "definition_status": "llm_drafted",
-        "dossier": "dossiers/rules/test__sample.md",
+        "dossier": "dossiers/rules/rule__test__sample.md",
         "structural_hash": "deadbeef",
     }
-    (nodes / "test__sample.json").write_text(json.dumps(rule, indent=2) + "\n")
+    (nodes / "rule__test__sample.json").write_text(json.dumps(rule, indent=2) + "\n")
     d = tmp_path / "dossiers" / "rules"
     d.mkdir(parents=True)
-    (d / "test__sample.md").write_text(
+    (d / "rule__test__sample.md").write_text(
         "---\n"
         "node_id: rule::test::sample\n"
         "node_kind: rule\n"
@@ -62,7 +62,7 @@ def test_rule_bump_to_human_reviewed_writes_reviewed_by_and_at(tmp_path):
     data = _make_drafted_fixture(tmp_path)
     r = _run(["rule-bump", "rule::test::sample", "--status", "human_reviewed", "--actor", "alice"], data)
     assert r.returncode == 0, r.stderr
-    dossier = (data / "dossiers/rules/test__sample.md").read_text()
+    dossier = (data / "dossiers/rules/rule__test__sample.md").read_text()
     assert "reviewed_by: alice" in dossier
     assert "reviewed_at:" in dossier
     # authored_by preserved
@@ -82,6 +82,6 @@ def test_rule_bump_back_to_llm_drafted_clears_reviewed_fields(tmp_path):
     data = _make_drafted_fixture(tmp_path)
     _run(["rule-bump", "rule::test::sample", "--status", "human_reviewed", "--actor", "alice"], data)
     _run(["rule-bump", "rule::test::sample", "--status", "llm_drafted", "--actor", "alice"], data)
-    dossier = (data / "dossiers/rules/test__sample.md").read_text()
+    dossier = (data / "dossiers/rules/rule__test__sample.md").read_text()
     assert "reviewed_by:" not in dossier
     assert "reviewed_at:" not in dossier

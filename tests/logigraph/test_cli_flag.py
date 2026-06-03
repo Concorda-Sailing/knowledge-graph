@@ -24,7 +24,7 @@ def _write_rule_node(ctx: Context, node_id: str, node: dict) -> Path:
     rules_dir = ctx.NODES / "rules"
     rules_dir.mkdir(parents=True, exist_ok=True)
     parts = node_id.split("::")
-    filename = f"{parts[1]}__{parts[2]}.json"
+    filename = f"{parts[0]}__{parts[1]}__{parts[2]}.json"
     p = rules_dir / filename
     p.write_text(json.dumps(node) + "\n")
     return p
@@ -96,7 +96,7 @@ class TestCmdFlag:
         args = argparse.Namespace(id=rule_id, reason=None, actor="tester")
         rc = cmd_flag(args, ctx)
         assert rc == 0
-        node_path = ctx.NODES / "rules" / "test__to_flag.json"
+        node_path = ctx.NODES / "rules" / "rule__test__to_flag.json"
         node = json.loads(node_path.read_text())
         assert node["flagged"] is True
         assert node["flagged_by"] == "tester"
@@ -123,7 +123,7 @@ class TestCmdFlag:
         args = argparse.Namespace(id=rule_id, reason="design defect", actor="tester")
         rc = cmd_flag(args, ctx)
         assert rc == 0
-        node = json.loads((ctx.NODES / "rules" / "test__reason_flag.json").read_text())
+        node = json.loads((ctx.NODES / "rules" / "rule__test__reason_flag.json").read_text())
         assert node.get("flagged_reason") == "design defect"
 
     def test_no_reason_clears_flagged_reason(self, ctx: Context, capsys, monkeypatch) -> None:
@@ -134,7 +134,7 @@ class TestCmdFlag:
         args = argparse.Namespace(id=rule_id, reason=None, actor="tester")
         rc = cmd_flag(args, ctx)
         assert rc == 0
-        node = json.loads((ctx.NODES / "rules" / "test__no_reason_flag.json").read_text())
+        node = json.loads((ctx.NODES / "rules" / "rule__test__no_reason_flag.json").read_text())
         assert "flagged_reason" not in node
 
     def test_idempotent_same_actor_and_reason(self, ctx: Context, capsys, monkeypatch) -> None:
@@ -201,7 +201,7 @@ class TestCmdUnflag:
         args = argparse.Namespace(id=rule_id, actor="tester")
         rc = cmd_unflag(args, ctx)
         assert rc == 0
-        node = json.loads((ctx.NODES / "rules" / "test__to_unflag.json").read_text())
+        node = json.loads((ctx.NODES / "rules" / "rule__test__to_unflag.json").read_text())
         for key in ("flagged", "flagged_by", "flagged_at", "flagged_reason"):
             assert key not in node
 

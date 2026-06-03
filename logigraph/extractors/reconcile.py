@@ -306,6 +306,20 @@ def refresh_claims_and_validate(
     orphan_domain: list[tuple[str, str]] = []
     stale_claims: list[tuple[str, str]] = []
 
+    # Derived reverse map: rule_id -> sorted [process_id, ...] that declare the
+    # rule in their enforces_rules (process-level or per-step). Written back
+    # onto each rule node as `enforced_in_processes` so the rule announces where
+    # it is enforced without the author maintaining it by hand.
+    enforced_in: dict[str, set[str]] = {}
+    for nid, (_, data) in nodes.items():
+        if data.get("kind") != "process":
+            continue
+        rule_refs = set(data.get("enforces_rules", []) or [])
+        for step in data.get("steps", []):
+            rule_refs.update(step.get("enforces_rules", []) or [])
+        for rrid in rule_refs:
+            enforced_in.setdefault(rrid, set()).add(nid)
+
     for nid, (_, data) in nodes.items():
         kind = data.get("kind")
         if kind == "rule":
@@ -317,6 +331,13 @@ def refresh_claims_and_validate(
             for ref in data.get("references_domain", []):
                 if ref not in domain_ids:
                     orphan_domain.append((nid, ref))
+            # Derived backlink (see enforced_in above). Omit the key entirely
+            # when empty so an unenforced rule's JSON stays clean and stable.
+            procs = sorted(enforced_in.get(nid, ()))
+            if procs:
+                data["enforced_in_processes"] = procs
+            else:
+                data.pop("enforced_in_processes", None)
         elif kind == "process":
             for step in data.get("steps", []):
                 _refresh_one_claim_list(
@@ -329,6 +350,11 @@ def refresh_claims_and_validate(
                 data.get("ui_surfaces", []),
                 depgraph_corpus, orphan_claims, stale_claims,
             )
+            # Flag enforces_rules that reference a rule id that doesn't exist
+            # (process-level only; per-step refs follow the same id space).
+            for rrid in data.get("enforces_rules", []) or []:
+                if rrid not in nodes:
+                    orphan_domain.append((nid, rrid))
 
     return orphan_claims, stale_claims, orphan_domain
 
@@ -369,25 +395,38 @@ def build_indexes(
     by_file: dict[str, list[str]] = {}
     by_domain: dict[str, list[str]] = {}
 
+    def _index_claim(node_id: str, cid: str | None) -> None:
+        """Add node_id under cid in by_code, and under cid's file in by_file."""
+        if not cid:
+            return
+        if node_id not in by_code.setdefault(cid, []):
+            by_code[cid].append(node_id)
+        depnode = depgraph_corpus.get(cid)
+        if depnode:
+            src = depnode.get("source") or {}
+            repo = src.get("repo")
+            rel = src.get("path")
+            if repo and rel:
+                key = f"{repo}/{rel}"
+                if node_id not in by_file.setdefault(key, []):
+                    by_file[key].append(node_id)
+
     for rid, (_, data) in nodes.items():
-        if data.get("kind") != "rule":
-            continue
-        for claim in data.get("claims_code", []):
-            cid = claim.get("depgraph_id")
-            if not cid:
-                continue
-            by_code.setdefault(cid, []).append(rid)
-            depnode = depgraph_corpus.get(cid)
-            if depnode:
-                src = depnode.get("source") or {}
-                repo = src.get("repo")
-                rel = src.get("path")
-                if repo and rel:
-                    key = f"{repo}/{rel}"
-                    if rid not in by_file.setdefault(key, []):
-                        by_file[key].append(rid)
-        for ref in data.get("references_domain", []):
-            by_domain.setdefault(ref, []).append(rid)
+        kind = data.get("kind")
+        if kind == "rule":
+            for claim in data.get("claims_code", []):
+                _index_claim(rid, claim.get("depgraph_id"))
+            for ref in data.get("references_domain", []):
+                by_domain.setdefault(ref, []).append(rid)
+        elif kind == "process":
+            # Process step-claims and ui_surfaces also point at depgraph nodes;
+            # index them so editing a claimed code/UI node surfaces the process
+            # (not just rules) at edit time.
+            for step in data.get("steps", []):
+                for claim in step.get("claims_code", []):
+                    _index_claim(rid, claim.get("depgraph_id"))
+            for surface in data.get("ui_surfaces", []):
+                _index_claim(rid, surface.get("depgraph_id"))
 
     # Sort lists deterministically so indexes are bit-stable.
     for d in (by_code, by_file, by_domain):
